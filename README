@@ -1,0 +1,10 @@
+Basic Setup Instructions
+
+1) Install Python 2.7
+2) Setup the following ENV variables
+	EBOOK_HOME - this is the directory under which all your ebooks reside
+	EBOOK_USER - the wiki user account
+	EBOOK_PASS - the wiki user's password
+3) Run client.py
+4) Log into the wiki and go to ebooks:<user> to see your listing
+

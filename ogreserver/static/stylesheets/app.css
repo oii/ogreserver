@@ -22,6 +22,8 @@ ol ol, ol ul { margin-top: 10px; }
 
 pre { font-family: Monaco, monospace; }
 
+.error { display: block; width: 50%; background-color:#ffcccc; }
+
 /* -----------------------------------------
    Page Name 1
 ----------------------------------------- */

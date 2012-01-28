@@ -2,12 +2,12 @@ from flaskext.wtf import Form, TextField, PasswordField, validators
 from ogreserver.models import User
 
 class LoginForm(Form):
-    username = TextField('Username', [validators.Required()])
-    password = PasswordField('Password', [validators.Required()])
+    username = TextField('username', [validators.Required()])
+    password = PasswordField('password', [validators.Required()])
 
     def validate(self):
-        #if not super(LoginForm, self).validate():
-        #    return False
+        if not super(LoginForm, self).validate():
+            return False
 
         user = User.authenticate(username=self.username.data, password=self.password.data)
         if not user:

@@ -1,0 +1,61 @@
+{% extends "layout.html" %}
+{% block body %}
+	<h2>Removing DRM</h2>
+
+	<p>Follow these instructions to get started removing DRM from your Amazon and Adobe purchased ebooks. As usual, it is slightly more complicated for Windows users.</p>
+
+	<p>Currently two formats are covered:</p>
+	<ul>
+		<li>Amazon Kindle - .AWZ or .MOBI</li>
+		<li>Adobe Digital Editions - .PDF</li>
+	</ul>
+
+	<h3>Amazon Kindle</h3>
+
+	<ol>
+		<li>
+			Download and install Python for Windows:
+			<ul>
+				<li>Download and run the <a href="http://downloads.activestate.com/ActivePython/releases/2.7.2.5/ActivePython-2.7.2.5-win32-x86.msi">Python installer</a> from Activestate.</li>
+				<li>Open a command prompt, by clicking the Start menu and then "Run.."</li>
+				<li>Type this command and hit enter: <pre>pypm install pycrypto</pre></li>
+			</ul>
+		</li>
+		<li>Install <a href="http://calibre-ebook.com/download">Calibre</a>.</li>
+		<li>
+			Download and unzip the DRM Tools for your OS:
+			<ul>
+				<li>On OSX, we use a single application called "DeDRM 3.1.app" - <a href="{{ url_for('static', filename='OGRE_DRM_Tools_OSX_3.1.zip') }}">OGRE_DRM_Tools_OSX_3.1.zip</a></li>
+				<li>On Windows, there is a folder containing "DeDRM_Drop_Target.bat" and some other stuff - <a href="{{ url_for('static', filename='OGRE_DRM_Tools_Win_2.8.zip') }}">OGRE_DRM_Tools_Win_2.8.zip</a></li>
+			</ul>
+		</li>
+		<li>
+			Download and install the Kindle App for your OS:
+			<ul>
+				<li><a href="http://www.amazon.com/gp/kindle/mac/download">OSX</a></li> 
+				<li><a href="http://www.amazon.com/gp/kindle/pc/download">Windows</a></li> 
+			</ul>
+		</li>
+		<li>
+			Setup the Kindle App:
+			<ol>
+				<li>Goto settings and choose a convenient folder for the application to store its books. Remember this folder.</li>
+				<li>Register the application with your Amazon account.</li>
+				<li>You will see a listing of all your books; click the link to download the file to your computer.</li>
+				<li>Your downloaded books will be in the directory you selected, conveniently named something like 'B005J578EW_EBOK.awz'.</li>
+			</ol>
+		</li>
+		<li>
+			Drag and drop your .AWZ file onto your DRM Tools file to clean the DRM:
+			<ul>
+				<li>OSX users drop onto <strong>DeDRM 3.1.app</strong></li>
+				<li>Windows users drop onto <strong>DeDRM_Drop_Target.bat</strong></li>
+			</ul>
+		</li>
+	</ol>
+
+	<h3>Adobe Digital Editions</h3>
+
+	<p>TBC</p>
+
+{% endblock %}

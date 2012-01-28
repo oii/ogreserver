@@ -29,7 +29,13 @@ def logout():
 @app.route("/home")
 @login_required
 def home():
-    return "Home"
+    return dedrm()
+
+
+@app.route("/dedrm")
+@login_required
+def dedrm():
+    return render_template("dedrm.html")
 
 
 @app.route("/post", methods=['POST'])

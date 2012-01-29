@@ -19,7 +19,6 @@ app = Flask(__name__)
 app.config.from_pyfile("config/config.py")
 
 # setup SQLAlchemy
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////var/db/ogre.db'
 db = SQLAlchemy(app)
 
 # setup Celery interface

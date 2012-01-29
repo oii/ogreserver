@@ -1,5 +1,7 @@
-from flaskext.wtf import Form, TextField, PasswordField, validators
+from flask.ext.wtf import Form, TextField, PasswordField, validators
+
 from ogreserver.models import User
+
 
 class LoginForm(Form):
     username = TextField('username', [validators.Required()])

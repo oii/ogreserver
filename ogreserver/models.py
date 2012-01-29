@@ -41,16 +41,12 @@ class User(db.Model, UserMixin):
 
     @staticmethod
     def validate_auth_key(username, api_key):
-        print username
         # load the user by name
         user = User.query.filter_by(username=username).first()
         if not user:
             return None
 
         # TODO check API key hasn't expired
-
-        print username
-        print api_key
 
         # reconstruct the key and verify it
         prekey = User._compile_pre_key(user.username, user.password, user.api_key_expires)

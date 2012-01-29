@@ -1,5 +1,6 @@
 from ogreserver import app, forms, celery
-from ogreserver.models import User
+
+from ogreserver.models.user import User
 
 from flask import Flask, request, redirect, session, url_for, abort, render_template, flash
 from flask.ext.login import login_required, login_user, logout_user
@@ -51,7 +52,17 @@ def dedrm():
 
 @app.route("/post", methods=['POST'])
 def post():
-    user = User.validate_auth_key(username=request.form.get("username"), api_key=request.form.get("api_key"))
-    if user is None:
-        return "API Auth Failed"
+    try:
+        user = User.validate_auth_key(
+            username=request.form.get("username"),
+            api_key=request.form.get("api_key")
+        )
+        if user is None:
+            return "API Auth Failed"
+
+        ebooks_json = request.form.get("ebooks")
+
+    except KeyError:
+        return "Bad Request"
+
 

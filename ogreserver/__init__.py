@@ -25,9 +25,7 @@ db = SQLAlchemy(app)
 celery = Celery(app)
 
 # import ogreserver
-import ogreserver.models
 import ogreserver.views
-import ogreserver.tasks
 
 # setup Flask-Login
 login_manager = LoginManager()
@@ -36,7 +34,8 @@ login_manager.login_view = "login"
 
 @login_manager.user_loader
 def load_user(userid):
-    user = models.User.query.filter_by(id=int(userid)).first()
+    from ogreserver.models.user import User
+    user = User.query.filter_by(id=int(userid)).first()
     return user
 
 

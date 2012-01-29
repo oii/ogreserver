@@ -2,9 +2,8 @@ from datetime import datetime
 
 from flask.ext.login import UserMixin
 
-from passlib.context import CryptContext
-
 from ogreserver import app, db
+from ogreserver.models import security
 
 
 class User(db.Model, UserMixin):
@@ -25,7 +24,7 @@ class User(db.Model, UserMixin):
         user = User.query.filter_by(username=username).first()
         if not user:
             return None
-        elif pwd_context.verify(password, user.password) is False:
+        elif security.pwd_context.verify(password, user.password) is False:
             return None
         return user
 
@@ -37,7 +36,7 @@ class User(db.Model, UserMixin):
     @staticmethod
     def create_auth_key(username, password, timestamp):
         # hash the value from _compile_pre_key()
-        return pwd_context.encrypt(User._compile_pre_key(username, password, timestamp))
+        return security.pwd_context.encrypt(User._compile_pre_key(username, password, timestamp))
 
     @staticmethod
     def validate_auth_key(username, api_key):
@@ -50,7 +49,7 @@ class User(db.Model, UserMixin):
 
         # reconstruct the key and verify it
         prekey = User._compile_pre_key(user.username, user.password, user.api_key_expires)
-        if pwd_context.verify(prekey, api_key) is True:
+        if security.pwd_context.verify(prekey, api_key) is True:
             return user
         else:
             return None
@@ -69,12 +68,4 @@ class User(db.Model, UserMixin):
             return True
         else:
             return False
-
-
-pwd_context = CryptContext(
-    schemes=["pbkdf2_sha256", "des_crypt" ],
-    default="pbkdf2_sha256",
-    all__vary_rounds = "10%",
-    pbkdf2_sha256__default_rounds = 8000,
-)
 

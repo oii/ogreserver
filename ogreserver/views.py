@@ -1,7 +1,9 @@
 from ogreserver import app, forms, celery
+from ogreserver.models import User
 
 from flask import Flask, request, redirect, session, url_for, abort, render_template, flash
-from flaskext.login import login_required, login_user, logout_user
+from flask.ext.login import login_required, login_user, logout_user
+
 
 @app.route("/")
 @login_required
@@ -17,6 +19,15 @@ def login():
         session['user_id'] = form.user.id
         return redirect(request.args.get("next") or url_for("index"))
     return render_template("login.html", form=form)
+
+
+@app.route("/auth", methods=['POST'])
+def auth():
+    user = User.authenticate(username=request.form.get("username"), password=request.form.get("password"))
+    if not user:
+        return "0"
+    else:
+        return user.assign_auth_key()
 
 
 @app.route("/logout")
@@ -40,5 +51,7 @@ def dedrm():
 
 @app.route("/post", methods=['POST'])
 def post():
-    return "Done"
+    user = User.validate_auth_key(username=request.form.get("username"), api_key=request.form.get("api_key"))
+    if user is None:
+        return "API Auth Failed"
 

@@ -5,7 +5,9 @@ from flask import Flask
 # import Flask extensions
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
-from flask.ext.celery import Celery
+from flask.ext.uploads import UploadSet, ALL, configure_uploads
+from flask.ext.script import Manager
+from flask.ext.celery import Celery, install_commands as install_celery_commands
 
 # import python core libraries
 import os, json
@@ -24,9 +26,6 @@ db = SQLAlchemy(app)
 # setup Celery interface
 celery = Celery(app)
 
-# import ogreserver
-import ogreserver.views
-
 # setup Flask-Login
 login_manager = LoginManager()
 login_manager.setup_app(app)
@@ -38,4 +37,11 @@ def load_user(userid):
     user = User.query.filter_by(id=int(userid)).first()
     return user
 
+# setup Flask-Upload
+uploads = UploadSet('ebooks', ALL)
+configure_uploads(app, (uploads))
+
+# import ogreserver
+import ogreserver.views
+import ogreserver.tasks
 

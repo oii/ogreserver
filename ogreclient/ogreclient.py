@@ -3,18 +3,19 @@
 from __future__ import division
 import urllib, urllib2
 from urllib2 import HTTPError, URLError
-import sys, os
+import sys, os, getpass
 from datetime import datetime
+
 
 def doit():
     # setup the environment
     ebook_home = os.getenv("EBOOK_HOME")
-    if ebook_home is None:
+    if ebook_home is None or len(ebook_home) == 0:
         print "You must set the $EBOOK_HOME environment variable"
         sys.exit(1)
 
     username = os.getenv("EBOOK_USER")
-    if username is None:
+    if username is None or len(username) == 0:
         username = getpass.getuser()
         if username is not None:
             print "$EBOOK_USER is not set. Please enter your username, or press enter to use '%s':" % username
@@ -29,9 +30,9 @@ def doit():
             sys.exit(1)
 
     password = os.getenv("EBOOK_PASS")
-    if password is None:
+    if password is None or len(password) == 0:
         print "$EBOOK_PASS is not set. Please enter your password, or press enter to exit:"
-        password = raw_input()
+        password = getpass.getpass()
         if len(password) == 0:
             sys.exit(1)
 

@@ -3,9 +3,12 @@
 from __future__ import division
 import urllib, urllib2
 from urllib2 import HTTPError, URLError
-import sys, os, getpass
+import MultipartPostHandler
+import sys, os, json, fnmatch, subprocess, getpass
 from datetime import datetime
+from utils import compute_md5
 
+PROGBAR_LEN = 30
 
 def doit():
     # setup the environment
@@ -49,10 +52,149 @@ def doit():
         api_key = f.read()
 
     except (HTTPError, URLError), e:
-        print "Failed to connect: %s" % e
+        print "Something went wrong.. Contact tha spodz: %s" % e
         sys.exit(1)
 
-    print api_key
+    ebooks = []
+    output = []
+    errors = []
+
+    # a relatively quick search for all ebooks
+    for root, dirs, files in os.walk(ebook_home):
+        for filename in files:
+            fn, ext = os.path.splitext(filename)
+            if ext == ".epub" or ext == ".mobi" or ext == ".azw" or ext == ".pdf":
+                filepath = os.path.join(root, filename)
+                md5_tup = compute_md5(filepath)
+                ebooks.append(
+                    (filepath, fn, ext, md5_tup[2], md5_tup[0])
+                )
+
+    i = 0
+    total = len(ebooks)
+    if total == 0:
+        print "No ebooks found. Is $EBOOK_HOME set correctly?"
+        sys.exit(1)
+
+    print "You have %s ebooks full of tasty meta. Nom nom.." % total
+    ebooks_dict = {}
+
+    # now parse all book meta data; building a complete dataset
+    for item in ebooks:
+        meta = subprocess.check_output(['ebook-meta', item[0]], stderr=subprocess.STDOUT)
+
+        if meta.find("EPubException") > 0:
+            # remove any corrupt
+            errors.append(("Corrupt ebook",item[1]+item[2]))
+        else:
+            # parse author/title
+            lines = meta.split("\n")
+            for line in lines:
+                if "Title" in line:
+                    title = line[22:]
+
+                if "Author" in line:
+                    author = line[22:]
+                    cut = author.find(" [")
+                    if(cut > -1):
+                        author = author[0:cut]
+
+            # check for duplicates
+            if author+" - "+title in ebooks_dict.keys() and item[2] in ebooks_dict[author+" - "+title].keys():
+                # TODO warn user on error stack
+                i = 0
+            else:
+                if author+" - "+title not in ebooks_dict.keys():
+                    ebooks_dict[author+" - "+title] = {}
+
+                # group books by meta data
+                ebooks_dict[author+" - "+title][item[2]] = {
+                    "path": item[0],
+                    "filename": item[1],
+                    "size": item[3],
+                    "filehash": item[4],
+                    "owner": username,
+                }
+
+        i += 1
+        update_progress(i/total)
+
+    sys.stdout.flush()
+    print "\nCome on sucker, lick my battery"
+
+    if len(errors) > 0:
+        print "Some of this shit's fucked up, yo"
+        print errors
+
+    try:
+        # post the json array of ebook data
+        params = urllib.urlencode({
+            'username':username,
+            'api_key':api_key,
+            'ebooks':json.dumps(ebooks_dict)
+        })
+        req = urllib2.Request(url='http://ogre.localhost/post', data=params)
+        f = urllib2.urlopen(req)
+        res = f.read()
+
+        if res == "0":
+            print "Something went wrong.. Contact tha spodz"
+            sys.exit(1)
+
+    except (HTTPError, URLError), e:
+        print "Something went wrong.. Contact tha spodz: %s" % e
+        sys.exit(1)
+
+    # smash any relevant books upto the server
+    ebooks_to_upload = json.loads(res)
+
+    # grammatically correct message are nice
+    if len(ebooks_to_upload) > 1:
+        plural = "s"
+    else:
+        plural = ""
+
+    print "Uploading %s ebook%s. Go make a brew." % (str(len(ebooks_to_upload)), plural)
+
+    # iterate all user's found books
+    for authortitle in ebooks_dict.keys():
+        for fmt in ebooks_dict[authortitle]:
+
+            # upload each requested by the server
+            for upload in ebooks_to_upload:
+                if upload['filehash'] == ebooks_dict[authortitle][fmt]['filehash']:
+                    try:
+                        # configure for uploads
+                        opener = urllib2.build_opener(MultipartPostHandler.MultipartPostHandler())
+                        urllib2.install_opener(opener)
+
+                        f = open(ebooks_dict[authortitle][fmt]['path'], "rb")
+
+                        # build the post params
+                        params = {
+                            'username': username,
+                            'api_key': api_key,
+                            'sdbkey': upload['sdbkey'],
+                            'filehash': upload['filehash'],
+                            'ebook': f,
+                        }
+                        a = opener.open("http://ogre.localhost/upload", params)
+                        msg = a.read()
+
+                        upload['celery_task_id'] = msg
+
+                    except (HTTPError, URLError), e:
+                        print "Something went wrong.. Contact tha spodz: %s" % e
+                        sys.exit(1)
+                    except IOError, e:
+                        continue
+                    finally:
+                        f.close()
+
+
+def update_progress(p):
+    i = round(p*100, 1)
+    sys.stdout.write("\r[{0}{1}] {2}%".format("#"*int(p*PROGBAR_LEN), " "*(PROGBAR_LEN-int(p*PROGBAR_LEN)), i))
 
 
 doit()

@@ -172,23 +172,19 @@ class DataStore():
             # TODO logging
             print 'upload corrupt!'
         else:
-            # push file to S3
-            k.set_contents_from_filename(filepath, None, False, None, 10, None, md5_tup)
+            try:
+                # push file to S3
+                k.set_contents_from_filename(filepath, None, False, None, 10, None, md5_tup)
 
-            # mark ebook as saved
-            self.set_uploaded(sdbkey)
+                # mark ebook as saved
+                self.set_uploaded(sdbkey)
+
+            except S3ResponseError as e:
+                # TODO log
+                print 'MD5 error at S3'
 
         # always delete local file
         os.remove(filepath)
-
-    def verify_ebook(self, sdbkey):
-        # TODO @periodic verify
-        # load SDB record
-        # get file from S3
-        # calculate file hash and verify
-        # update SDB verify=True or uploaded=False
-        # delete file
-        pass
 
     def find_missing_books(self):
         # query for books which have no uploaded file

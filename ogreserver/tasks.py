@@ -9,9 +9,6 @@ def store_ebook(sdbkey, filehash):
 
     # store the file into S3
     ds = DataStore(None)
-    print "store_ebook: %s %s" % (sdbkey, filehash)
     ds.store_ebook(sdbkey, filehash, filepath)
-
-
-# TODO @periodic verify
+    print "store_ebook: %s %s" % (sdbkey, filehash)
 

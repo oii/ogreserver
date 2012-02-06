@@ -41,13 +41,11 @@ def doit():
 
     try:
         # authenticate the user, generating an api_key for subsequent requests
-        #opener = urllib2.build_opener(urllib2.HTTPSHandler())
-        #urllib2.install_opener(opener)
         params = urllib.urlencode({
             'username':username,
             'password':password
         })
-        req = urllib2.Request(url='http://ogre.localhost/auth', data=params)
+        req = urllib2.Request(url='https://ogre.oii.me.uk/auth', data=params)
         f = urllib2.urlopen(req)
         api_key = f.read()
 
@@ -133,7 +131,7 @@ def doit():
             'api_key':api_key,
             'ebooks':json.dumps(ebooks_dict)
         })
-        req = urllib2.Request(url='http://ogre.localhost/post', data=params)
+        req = urllib2.Request(url='https://ogre.oii.me.uk/post', data=params)
         f = urllib2.urlopen(req)
         res = f.read()
 
@@ -164,11 +162,11 @@ def doit():
             for upload in ebooks_to_upload:
                 if upload['filehash'] == ebooks_dict[authortitle][fmt]['filehash']:
                     try:
+                        f = open(ebooks_dict[authortitle][fmt]['path'], "rb")
+
                         # configure for uploads
                         opener = urllib2.build_opener(MultipartPostHandler.MultipartPostHandler())
                         urllib2.install_opener(opener)
-
-                        f = open(ebooks_dict[authortitle][fmt]['path'], "rb")
 
                         # build the post params
                         params = {
@@ -178,7 +176,7 @@ def doit():
                             'filehash': upload['filehash'],
                             'ebook': f,
                         }
-                        a = opener.open("http://ogre.localhost/upload", params)
+                        a = opener.open("https://ogre.oii.me.uk/upload", params)
                         msg = a.read()
 
                         upload['celery_task_id'] = msg

@@ -144,22 +144,29 @@ def doit():
         sys.exit(1)
 
     # smash any relevant books upto the server
-    ebooks_to_upload = json.loads(res)
+    response = json.loads(res)
 
-    # grammatically correct message are nice
-    if len(ebooks_to_upload) > 1:
+    # uploading zero ebooks message
+    if len(response['ebooks_to_upload']) == 0:
+        for msg in response['messages']:
+            print "%s %s" % msg
+
+        return
+
+    # grammatically correct messages are nice
+    if len(response['ebooks_to_upload']) > 1:
         plural = "s"
     else:
         plural = ""
 
-    print "Uploading %s ebook%s. Go make a brew." % (str(len(ebooks_to_upload)), plural)
+    print "Uploading %s ebook%s. Go make a brew." % (str(len(response['ebooks_to_upload'])), plural)
 
     # iterate all user's found books
     for authortitle in ebooks_dict.keys():
         for fmt in ebooks_dict[authortitle]:
 
             # upload each requested by the server
-            for upload in ebooks_to_upload:
+            for upload in response['ebooks_to_upload']:
                 if upload['filehash'] == ebooks_dict[authortitle][fmt]['filehash']:
                     try:
                         f = open(ebooks_dict[authortitle][fmt]['path'], "rb")
@@ -188,6 +195,11 @@ def doit():
                         continue
                     finally:
                         f.close()
+
+    for msg in response['messages']:
+        print "%s %s" % msg
+
+    return
 
 
 def update_progress(p):

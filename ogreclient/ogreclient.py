@@ -135,16 +135,15 @@ def doit():
         f = urllib2.urlopen(req)
         res = f.read()
 
-        if res == "0":
-            print "Something went wrong.. Contact tha spodz"
+        try:
+            response = json.loads(res)
+        except ValueError:
+            print "Something went wrong.. Contact tha spodz: %s" % res
             sys.exit(1)
 
     except (HTTPError, URLError), e:
         print "Something went wrong.. Contact tha spodz: %s" % e
         sys.exit(1)
-
-    # smash any relevant books upto the server
-    response = json.loads(res)
 
     # uploading zero ebooks message
     if len(response['ebooks_to_upload']) == 0:

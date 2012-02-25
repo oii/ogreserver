@@ -1,60 +1,7 @@
 from ogreserver import app, boto, datetime
-from boto.s3.key import Key
+from ogreserver.models.test.factory import Factory
+
 import os, hashlib
-
-
-class Factory():
-
-    sdb = None
-    bookdb = None
-    formatdb = None
-    versiondb = None
-    s3 = None
-    bucket = None
-
-    @staticmethod
-    def connect_sdb():
-        if Factory.sdb is None:
-            Factory.sdb = boto.connect_sdb(app.config['AWS_ACCESS_KEY'], app.config['AWS_SECRET_KEY'])
-
-        return Factory.sdb
-
-    @staticmethod
-    def connect_bookdb():
-        Factory.connect_sdb()
-
-        if Factory.bookdb is None:
-            Factory.bookdb = Factory.sdb.get_domain("ogre_books")
-
-        return Factory.bookdb
-
-    @staticmethod
-    def connect_formatdb():
-        Factory.connect_sdb()
-
-        if Factory.formatdb is None:
-            Factory.formatdb = Factory.sdb.get_domain("ogre_formats")
-
-        return Factory.formatdb
-
-    @staticmethod
-    def connect_versiondb():
-        Factory.connect_sdb()
-
-        if Factory.versiondb is None:
-            Factory.versiondb = Factory.sdb.get_domain("ogre_versions")
-
-        return Factory.versiondb
-
-    @staticmethod
-    def connect_s3():
-        if Factory.s3 is None:
-            Factory.s3 = boto.connect_s3(app.config['AWS_ACCESS_KEY'], app.config['AWS_SECRET_KEY'])
-
-        if Factory.bucket is None:
-            Factory.bucket = Factory.s3.get_bucket(app.config['S3_BUCKET'])
-
-        return Factory.bucket
 
 
 class DataStore():
@@ -63,6 +10,7 @@ class DataStore():
         self.user = user
 
     def update_library(self, ebooks):
+        new_ebook_count = 0
         bookdb = Factory.connect_bookdb()
         formatdb = Factory.connect_formatdb()
         versiondb = Factory.connect_versiondb()
@@ -78,6 +26,7 @@ class DataStore():
                 for fmt in ebooks[authortitle].keys():
                     self.create_format_entry(authortitle, fmt)
                     key = self.create_version_entry(authortitle, fmt, 1, ebooks[authortitle][fmt]['size'], ebooks[authortitle][fmt]['filehash'])
+                    new_ebook_count += 1
 
             # update an existing book
             else:
@@ -97,6 +46,7 @@ class DataStore():
                         # create the new format and version entries
                         self.create_format_entry(authortitle, fmt)
                         key = self.create_version_entry(authortitle, fmt, 1, ebooks[authortitle][fmt]['size'], ebooks[authortitle][fmt]['filehash'])
+                        new_ebook_count += 1
                     else:
                         # format exists; ensure this exact version hasn't already been uploaded
                         if self.check_version_exists(ebooks[authortitle][fmt]['filehash']):
@@ -106,8 +56,11 @@ class DataStore():
 
                             # create the new version entry
                             key = self.create_version_entry(authortitle, fmt, f['version_count'], ebooks[authortitle][fmt]['size'], ebooks[authortitle][fmt]['filehash'])
+                            new_ebook_count += 1
                         else:
                             print "ignoring exact duplicate %s" % authortitle
+
+        return new_ebook_count
 
 
     def create_book_entry(self, authortitle, formats):
@@ -159,7 +112,7 @@ class DataStore():
     def store_ebook(self, sdbkey, filehash, filepath):
         # connect to S3
         bucket = Factory.connect_s3()
-        k = Key(bucket)
+        k = Factory.get_key(bucket)
         k.key = sdbkey
 
         # calculate uploaded file md5

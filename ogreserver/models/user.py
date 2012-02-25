@@ -4,15 +4,18 @@ from flask.ext.login import UserMixin
 
 from ogreserver import app, db
 from ogreserver.models import security
+from ogreserver.models.reputation import UserBadge
 
 
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True)
+    username = db.Column(db.String(80))
     password = db.Column(db.String(256))
     email = db.Column(db.String(120), unique=True)
     display_name = db.Column(db.String(50), unique=True)
     api_key_expires = db.Column(db.DateTime)
+    points = db.Column(db.Integer)
+    badges = db.relationship(UserBadge, backref='user', lazy='dynamic')
 
     def __init__(self, username, password, email):
         self.username = username
@@ -24,7 +27,7 @@ class User(db.Model, UserMixin):
         user = User.query.filter_by(username=username).first()
         if not user:
             return None
-        elif security.pwd_context.verify(password, user.password) is False:
+        elif security.pwd_context.verify(password, user.password) == False:
             return None
         return user
 
@@ -49,7 +52,7 @@ class User(db.Model, UserMixin):
 
         # reconstruct the key and verify it
         prekey = User._compile_pre_key(user.username, user.password, user.api_key_expires)
-        if security.pwd_context.verify(prekey, api_key) is True:
+        if security.pwd_context.verify(prekey, api_key) == True:
             return user
         else:
             return None
@@ -57,6 +60,7 @@ class User(db.Model, UserMixin):
     def assign_auth_key(self):
         # generate a new API key and save against the user
         self.api_key_expires = datetime.utcnow()
+        self.api_key_expires = self.api_key_expires.replace(microsecond=0)    # remove microseconds for mysql
         api_key = User.create_auth_key(self.username, self.password, self.api_key_expires)
         db.session.add(self)
         db.session.commit()
@@ -68,4 +72,10 @@ class User(db.Model, UserMixin):
             return True
         else:
             return False
+
+    def has_badge(self, badge):
+        for b in self.badges:
+            if b.badge == badge:
+                return True
+        return False
 

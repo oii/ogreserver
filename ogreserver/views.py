@@ -2,6 +2,8 @@ from ogreserver import app, forms, tasks, json, uploads
 
 from ogreserver.models.user import User
 from ogreserver.models.datastore import DataStore
+from ogreserver.models.reputation import Reputation
+from ogreserver.models.log import Log
 
 from ogreserver.tasks import store_ebook
 
@@ -64,18 +66,33 @@ def post():
         if user is None:
             return "API Auth Failed: Post"
 
-        ebooks_json = request.form.get("ebooks")
+        # decode the json payload
+        data = json.loads(request.form.get("ebooks"))
 
     except KeyError:
         return "Bad Request"
 
+    # stats log the upload
+    log = Log(user, request.form.get("api_key"))
+    log.save("CONNECT", len(data))
+
     # update the library
     ds = DataStore(user)
-    ds.update_library(json.loads(ebooks_json))
+    new_ebook_count = ds.update_library(data)
+    log.save("NEW", new_ebook_count)
 
-    # send to the client the list of books they need to upload
+    # handle badge and reputation changes
+    r = Reputation(user)
+    r.new_ebooks(new_ebook_count)
+    r.earn_badges()
+    msgs = r.get_new_badges()
+
+    # query books missing from S3 and supply back to the client
     rs = ds.find_missing_books()
-    return json.dumps(rs)
+    return json.dumps({
+        'ebooks_to_upload': rs,
+        'messages': msgs
+    })
 
 
 @app.route("/upload", methods=['POST'])
@@ -86,6 +103,10 @@ def upload():
     )
     if user is None:
         return "API Auth Failed: Upload"
+
+    # stats log the upload
+    log = Log(user, request.form.get("api_key"))
+    log.save("UPLOAD", 1)
 
     fname = uploads.save(request.files['ebook'], None, request.form.get("filehash"))
     res = store_ebook.apply_async((request.form.get("sdbkey"), request.form.get("filehash")))

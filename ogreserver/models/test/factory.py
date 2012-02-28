@@ -1,7 +1,6 @@
-from boto.s3.key import Key as BotoKey
+from ogreserver import db
 from hashlib import md5
 import base64
-
 
 class Factory():
     sdb = None
@@ -9,57 +8,78 @@ class Factory():
 
     @staticmethod
     def connect_sdb():
-        return Factory.create_testsdb()
+        return TestBucket()
 
     @staticmethod
     def connect_bookdb():
-        return TestSDB()
+        return TestBucket()
 
     @staticmethod
     def connect_formatdb():
-        return TestSDB()
+        return TestBucket()
 
     @staticmethod
     def connect_versiondb():
-        return Factory.create_testsdb()
+        if Factory.versiondb is None:
+            Factory.versiondb = TestVersionBucket()
+
+        return Factory.versiondb
 
     @staticmethod
     def connect_s3():
-        return TestSDB()
+        if Factory.versiondb is None:
+            Factory.versiondb = TestVersionBucket()
 
-    @staticmethod
-    def create_testsdb():
-        if Factory.sdb is None:
-            Factory.sdb = TestSDB()
-
-        return Factory.sdb
+        return Factory.versiondb
 
     @staticmethod
     def get_key(bucket):
-        return TestKey()
+        return TestKey(Factory.versiondb)
 
 
-class TestSDB():
-    def __init__(self):
-        self.items = []
-
+class TestBucket():
     def select(self, bucket, sql):
-        out = []
-        for i in self.items:
-            out.append({'sdbkey':i.sdbkey, 'filehash':i.filehash})
-
-        return out
+        if bucket == "ogre_versions":
+            return Factory.versiondb.select(bucket, sql)
 
     def new_item(self, sdbkey):
-        ti = TestItem(sdbkey)
-        self.items.append(ti)
-        return ti
+        return TestItem()
 
     def get_item(self, sdbkey):
         return None
 
 
 class TestItem():
+    def add_value(self, name, value):
+        pass
+
+    def save(self):
+        pass
+
+
+class TestVersionBucket():
+    def select(self, bucket, sql):
+        out = []
+        items = TestVersion.query.all()
+        for ti in items:
+            out.append({'sdbkey':ti.sdbkey, 'filehash':ti.filehash, 'format':ti.format})
+
+        return out
+
+    def new_item(self, sdbkey):
+        return TestVersion(sdbkey)
+
+    def get_item(self, sdbkey):
+        return TestVersion(sdbkey)
+
+
+class TestVersion(db.Model):
+    __tablename__ = 'testsdb'
+    id = db.Column(db.Integer, primary_key=True)
+    sdbkey = db.Column(db.String(256))
+    filehash = db.Column(db.String(256))
+    format = db.Column(db.String(20))
+
     def __init__(self, sdbkey):
         self.sdbkey = sdbkey
         self.filehash = None
@@ -68,29 +88,35 @@ class TestItem():
         if name is "filehash":
             self.filehash = value
 
+        if name is "format":
+            self.format = value
+
     def save(self):
-        pass
+        db.session.add(self)
+        db.session.commit()
 
 
 class TestKey():
+    sdb = None
+    key = None
+
+    def __init__(self, sdb):
+        self.sdb = sdb
+
     def compute_md5(self, f):
-        return self._compute_md5(f)
+        items = self.sdb.select(None, None)
+        for ti in items:
+            if ti['sdbkey'] == self.key:
+                return (ti['filehash'],)
 
-    def _compute_md5(fp, buf_size=8192):
-        m = md5()
-        fp.seek(0)
-        s = fp.read(buf_size)
-        while s:
-            m.update(s)
-            s = fp.read(buf_size)
+    def set_contents_from_filename(self, filepath, a, b, c, d, e, md5_tup):
+        pass
 
-        hex_md5 = m.hexdigest()
-        base64md5 = base64.encodestring(m.digest())
+    def seek(self, a):
+        return None
 
-        if base64md5[-1] == '\n':
-            base64md5 = base64md5[0:-1]
+    def read(self, a):
+        return None
 
-        file_size = fp.tell()
-        fp.seek(0)
-        return (hex_md5, base64md5, file_size)
-
+    def tell(self):
+        return None

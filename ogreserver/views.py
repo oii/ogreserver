@@ -106,8 +106,8 @@ def upload():
     # stats log the upload
     Log.create(user.id, "UPLOAD", 1, request.form.get("api_key"))
 
-    fname = uploads.save(request.files['ebook'], None, request.form.get("filehash"))
-    res = store_ebook.apply_async((request.form.get("sdbkey"), request.form.get("filehash")))
+    uploads.save(request.files['ebook'], None, "%s%s" % (request.form.get("filehash"), request.form.get("format")))
+    res = store_ebook.apply_async((user.id, request.form.get("sdbkey"), request.form.get("filehash"), request.form.get("format")))
     return res.task_id
 
 

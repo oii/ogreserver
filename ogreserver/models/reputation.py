@@ -50,8 +50,8 @@ class Reputation():
                 self.award(Badges.Contributor)
 
         if self.user.has_badge(Badges.Pirate) == False:
-            # TODO work out how to check for DRM removal
-            self.award(Badges.Pirate)
+            if Log.query.filter_by(user_id=self.user.id, type="DEDRM", data=1).first() is not None:
+                self.award(Badges.Pirate)
 
     def award(self, badge):
         try:

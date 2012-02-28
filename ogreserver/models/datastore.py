@@ -1,7 +1,11 @@
 from ogreserver import app, boto, datetime
-from ogreserver.models.test.factory import Factory
 
-import os, hashlib
+from ogreserver.models.test.factory import Factory
+from ogreserver.models.log import Log
+
+from boto.exception import S3ResponseError
+
+import os, hashlib, subprocess
 
 
 class DataStore():
@@ -109,6 +113,12 @@ class DataStore():
         v.add_value("uploaded", True)
         v.save()
 
+    def set_dedrm_flag(self, sdbkey):
+        versiondb = Factory.connect_versiondb()
+        v = versiondb.get_item(sdbkey)
+        v.add_value("dedrm", True)
+        v.save()
+
     def store_ebook(self, sdbkey, filehash, filepath):
         # connect to S3
         bucket = Factory.connect_s3()
@@ -126,6 +136,12 @@ class DataStore():
             print 'upload corrupt!'
         else:
             try:
+                # check for DeDRM meta tag
+                meta = subprocess.Popen(['ebook-meta', filepath], stdout=subprocess.PIPE).communicate()[0]
+                if "Tags                : DeDRM" in meta:
+                    Log.create(self.user.id, "DEDRM", 1)
+                    self.set_dedrm_flag(sdbkey)
+
                 # push file to S3
                 k.set_contents_from_filename(filepath, None, False, None, 10, None, md5_tup)
 
@@ -142,7 +158,7 @@ class DataStore():
     def find_missing_books(self):
         # query for books which have no uploaded file
         sdb = Factory.connect_sdb()
-        return sdb.select("ogre_versions", "select sdbkey, filehash from ogre_versions where uploaded is null and user = '%s'" % self.user.username)
+        return sdb.select("ogre_versions", "select sdbkey, filehash, format from ogre_versions where uploaded is null and user = '%s'" % self.user.username)
 
     def update_timestamp(self):
         bookdb = Factory.connect_bookdb()

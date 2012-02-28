@@ -11,15 +11,16 @@ class Log(db.Model):
     type = db.Column(db.String(30))
     data = db.Column(db.String(200))
 
-    def __init__(self, user, api_session_key):
-        self.user_id = user.id
+    def __init__(self, user_id, api_session_key, type, data):
+        self.user_id = user_id
         self.api_session_key = api_session_key
-
-    def save(self, type, data):
-        print "%s %s" % (type, data)
         self.timestamp = datetime.utcnow()
         self.type = type
         self.data = str(data)
-        db.session.add(self)
+
+    @staticmethod
+    def create(user_id, type, data, api_session_key=None):
+        print "%s %s" % (type, data)
+        db.session.add(Log(user_id, api_session_key, type, data))
         db.session.commit()
 

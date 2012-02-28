@@ -73,13 +73,12 @@ def post():
         return "Bad Request"
 
     # stats log the upload
-    log = Log(user, request.form.get("api_key"))
-    log.save("CONNECT", len(data))
+    Log.create(user.id, "CONNECT", request.form.get("total"), request.form.get("api_key"))
 
     # update the library
     ds = DataStore(user)
     new_ebook_count = ds.update_library(data)
-    log.save("NEW", new_ebook_count)
+    Log.create(user.id, "NEW", new_ebook_count, request.form.get("api_key"))
 
     # handle badge and reputation changes
     r = Reputation(user)
@@ -105,8 +104,7 @@ def upload():
         return "API Auth Failed: Upload"
 
     # stats log the upload
-    log = Log(user, request.form.get("api_key"))
-    log.save("UPLOAD", 1)
+    Log.create(user.id, "UPLOAD", 1, request.form.get("api_key"))
 
     fname = uploads.save(request.files['ebook'], None, request.form.get("filehash"))
     res = store_ebook.apply_async((request.form.get("sdbkey"), request.form.get("filehash")))

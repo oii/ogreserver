@@ -100,7 +100,7 @@ def doit():
             # check for duplicates
             if author+" - "+title in ebooks_dict.keys() and item[2] in ebooks_dict[author+" - "+title].keys():
                 # TODO warn user on error stack
-                i = 0
+                pass
             else:
                 if author+" - "+title not in ebooks_dict.keys():
                     ebooks_dict[author+" - "+title] = {}
@@ -129,32 +129,38 @@ def doit():
         params = urllib.urlencode({
             'username':username,
             'api_key':api_key,
-            'ebooks':json.dumps(ebooks_dict)
+            'ebooks':json.dumps(ebooks_dict),
+            'total':total
         })
         req = urllib2.Request(url='https://ogre.oii.me.uk/post', data=params)
         f = urllib2.urlopen(req)
         res = f.read()
 
-        try:
-            response = json.loads(res)
-        except ValueError:
-            print "Something went wrong.. Contact tha spodz: %s" % res
-            sys.exit(1)
+        response = json.loads(res)
+
+    except ValueError:
+        print "Something went wrong.. Contact tha spodz: %s" % res
+        sys.exit(1)
 
     except (HTTPError, URLError), e:
         print "Something went wrong.. Contact tha spodz: %s" % e
         sys.exit(1)
 
-    # uploading zero ebooks message
-    if len(response['ebooks_to_upload']) == 0:
-        for msg in response['messages']:
+    # print server messages
+    for msg in response['messages']:
+        if len(msg) == 2:
             print "%s %s" % msg
+        else:
+            print msg
 
-        return
+    if len(response['ebooks_to_upload']) == 0:
+        print "Nothing to upload.."
+        sys.exit(1)
 
-    # grammatically correct messages are nice
-    if len(response['ebooks_to_upload']) > 1:
+    elif len(response['ebooks_to_upload']) > 1:
+        # grammatically correct messages are nice
         plural = "s"
+
     else:
         plural = ""
 
@@ -180,6 +186,7 @@ def doit():
                             'api_key': api_key,
                             'sdbkey': upload['sdbkey'],
                             'filehash': upload['filehash'],
+                            'format': upload['format'],
                             'ebook': f,
                         }
                         a = opener.open("https://ogre.oii.me.uk/upload", params)
@@ -194,9 +201,6 @@ def doit():
                         continue
                     finally:
                         f.close()
-
-    for msg in response['messages']:
-        print "%s %s" % msg
 
     return
 

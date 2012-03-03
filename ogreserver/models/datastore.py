@@ -21,7 +21,8 @@ class DataStore():
 
         for authortitle in ebooks.keys():
             # check for this in the library
-            b = bookdb.get_item(authortitle)
+            key = hashlib.md5(authortitle).hexdigest()
+            b = bookdb.get_item(key)
 
             if b is None:
                 self.create_book_entry(authortitle, ebooks[authortitle].keys())
@@ -29,7 +30,7 @@ class DataStore():
                 # create format and version entries
                 for fmt in ebooks[authortitle].keys():
                     self.create_format_entry(authortitle, fmt)
-                    key = self.create_version_entry(authortitle, fmt, 1, ebooks[authortitle][fmt]['size'], ebooks[authortitle][fmt]['filehash'])
+                    self.create_version_entry(authortitle, fmt, 1, ebooks[authortitle][fmt]['size'], ebooks[authortitle][fmt]['filehash'])
                     new_ebook_count += 1
 
             # update an existing book
@@ -40,7 +41,8 @@ class DataStore():
 
                 # check if supplied formats already exist
                 for fmt in ebooks[authortitle].keys():
-                    f = formatdb.get_item(authortitle+fmt)
+                    key = hashlib.md5(authortitle).hexdigest()
+                    f = formatdb.get_item(key)
 
                     # append to the set of this book's formats
                     if fmt not in b['formats']:
@@ -49,7 +51,7 @@ class DataStore():
                     if f is None:
                         # create the new format and version entries
                         self.create_format_entry(authortitle, fmt)
-                        key = self.create_version_entry(authortitle, fmt, 1, ebooks[authortitle][fmt]['size'], ebooks[authortitle][fmt]['filehash'])
+                        self.create_version_entry(authortitle, fmt, 1, ebooks[authortitle][fmt]['size'], ebooks[authortitle][fmt]['filehash'])
                         new_ebook_count += 1
                     else:
                         # format exists; ensure this exact version hasn't already been uploaded
@@ -59,7 +61,7 @@ class DataStore():
                             f.save()
 
                             # create the new version entry
-                            key = self.create_version_entry(authortitle, fmt, f['version_count'], ebooks[authortitle][fmt]['size'], ebooks[authortitle][fmt]['filehash'])
+                            self.create_version_entry(authortitle, fmt, f['version_count'], ebooks[authortitle][fmt]['size'], ebooks[authortitle][fmt]['filehash'])
                             new_ebook_count += 1
                         else:
                             print "ignoring exact duplicate %s" % authortitle
@@ -70,7 +72,7 @@ class DataStore():
     def create_book_entry(self, authortitle, formats):
         bookdb = Factory.connect_bookdb()
         key = hashlib.md5(authortitle).hexdigest()
-        b = bookdb.new_item(authortitle)
+        b = bookdb.new_item(key)
         b.add_value("authortitle", authortitle)
         b.add_value("users", self.user.username)
         b.add_value("formats", formats)
@@ -94,6 +96,7 @@ class DataStore():
         key = hashlib.md5(authortitle + '-' + str(version) + fmt).hexdigest()
         v = versiondb.new_item(key)
         v.add_value("authortitle", authortitle)
+        v.add_value("version", version)
         v.add_value("format", fmt)
         v.add_value("user", self.user.username)
         v.add_value("size", size)

@@ -70,7 +70,6 @@ class TestItem():
 
 class TestBookBucket():
     def select(self, bucket, sql):
-        print sql
         if sql is not None:
             items = db.session.execute(sql)
         else:

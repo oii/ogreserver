@@ -41,13 +41,11 @@ def doit():
 
     try:
         # authenticate the user, generating an api_key for subsequent requests
-        #opener = urllib2.build_opener(urllib2.HTTPSHandler())
-        #urllib2.install_opener(opener)
         params = urllib.urlencode({
             'username':username,
             'password':password
         })
-        req = urllib2.Request(url='http://ogre.localhost/auth', data=params)
+        req = urllib2.Request(url='https://ogre.oii.me.uk/auth', data=params)
         f = urllib2.urlopen(req)
         api_key = f.read()
 
@@ -102,7 +100,7 @@ def doit():
             # check for duplicates
             if author+" - "+title in ebooks_dict.keys() and item[2] in ebooks_dict[author+" - "+title].keys():
                 # TODO warn user on error stack
-                i = 0
+                pass
             else:
                 if author+" - "+title not in ebooks_dict.keys():
                     ebooks_dict[author+" - "+title] = {}
@@ -131,44 +129,56 @@ def doit():
         params = urllib.urlencode({
             'username':username,
             'api_key':api_key,
-            'ebooks':json.dumps(ebooks_dict)
+            'ebooks':json.dumps(ebooks_dict),
+            'total':total
         })
-        req = urllib2.Request(url='http://ogre.localhost/post', data=params)
+        req = urllib2.Request(url='https://ogre.oii.me.uk/post', data=params)
         f = urllib2.urlopen(req)
         res = f.read()
 
-        if res == "0":
-            print "Something went wrong.. Contact tha spodz"
-            sys.exit(1)
+        response = json.loads(res)
+
+    except ValueError:
+        print "Something went wrong.. Contact tha spodz: %s" % res
+        sys.exit(1)
 
     except (HTTPError, URLError), e:
         print "Something went wrong.. Contact tha spodz: %s" % e
         sys.exit(1)
 
-    # smash any relevant books upto the server
-    ebooks_to_upload = json.loads(res)
+    # print server messages
+    for msg in response['messages']:
+        if len(msg) == 2:
+            print "%s %s" % msg
+        else:
+            print msg
 
-    # grammatically correct message are nice
-    if len(ebooks_to_upload) > 1:
+    if len(response['ebooks_to_upload']) == 0:
+        print "Nothing to upload.."
+        sys.exit(1)
+
+    elif len(response['ebooks_to_upload']) > 1:
+        # grammatically correct messages are nice
         plural = "s"
+
     else:
         plural = ""
 
-    print "Uploading %s ebook%s. Go make a brew." % (str(len(ebooks_to_upload)), plural)
+    print "Uploading %s ebook%s. Go make a brew." % (str(len(response['ebooks_to_upload'])), plural)
 
     # iterate all user's found books
     for authortitle in ebooks_dict.keys():
         for fmt in ebooks_dict[authortitle]:
 
             # upload each requested by the server
-            for upload in ebooks_to_upload:
+            for upload in response['ebooks_to_upload']:
                 if upload['filehash'] == ebooks_dict[authortitle][fmt]['filehash']:
                     try:
+                        f = open(ebooks_dict[authortitle][fmt]['path'], "rb")
+
                         # configure for uploads
                         opener = urllib2.build_opener(MultipartPostHandler.MultipartPostHandler())
                         urllib2.install_opener(opener)
-
-                        f = open(ebooks_dict[authortitle][fmt]['path'], "rb")
 
                         # build the post params
                         params = {
@@ -176,9 +186,10 @@ def doit():
                             'api_key': api_key,
                             'sdbkey': upload['sdbkey'],
                             'filehash': upload['filehash'],
+                            'format': upload['format'],
                             'ebook': f,
                         }
-                        a = opener.open("http://ogre.localhost/upload", params)
+                        a = opener.open("https://ogre.oii.me.uk/upload", params)
                         msg = a.read()
 
                         upload['celery_task_id'] = msg
@@ -190,6 +201,8 @@ def doit():
                         continue
                     finally:
                         f.close()
+
+    return
 
 
 def update_progress(p):

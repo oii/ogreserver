@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block body %}
+<h2>Listing</h2>
+
+<ul class="ebooks">
+
+{% for b in ebooks %}
+
+<li class="ebook {{ loop.cycle('odd', 'even') }}">
+	<div class="firstsection">
+		<a class="title" href="/view/{{b.sdbkey}}">{{b.authortitle}}</a>
+		<span class="info">
+			<span class="rating">4.5</span>
+			<span class="comments">1</span>
+		</span>
+	</div>
+	<div class="secondsection">
+		<ul class="formats">
+			<li><a href="/download/{{b.sdbkey}}/mobi">.mobi</a></li>
+		</ul>
+		<ul class="users">
+			<li><a href="/search?user=mafro">mafro</a>,&nbsp;</li>
+			<li><a href="/search?user=pj">pj</a></li>
+		</ul>
+	</div>
+</li>
+
+{% endfor %}
+
+</ul>
+{% endblock %}

@@ -26,3 +26,4 @@ class ChangePasswordForm(LoginForm):
     new_password = PasswordField('New Password', [validators.Length(6)])
     confirm_password = PasswordField('Confirm Password', [validators.EqualTo('new_password')])
 
+

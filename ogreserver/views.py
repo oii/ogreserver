@@ -1,4 +1,7 @@
-from ogreserver import app, forms, tasks, json, uploads
+from ogreserver import app, tasks, json, uploads
+
+from ogreserver.forms.auth import LoginForm
+from ogreserver.forms.search import SearchForm
 
 from ogreserver.models.user import User
 from ogreserver.models.datastore import DataStore
@@ -8,7 +11,7 @@ from ogreserver.models.log import Log
 from ogreserver.tasks import store_ebook
 
 from flask import Flask, request, redirect, session, url_for, abort, render_template, flash
-from flask.ext.login import login_required, login_user, logout_user
+from flask.ext.login import login_required, login_user, logout_user, current_user
 
 
 @app.route("/")
@@ -19,7 +22,7 @@ def index():
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
-    form = forms.LoginForm()
+    form = LoginForm()
     if form.validate_on_submit():
         login_user(form.user)
         session['user_id'] = form.user.id
@@ -49,10 +52,75 @@ def home():
     return dedrm()
 
 
+@app.route("/list")
+@login_required
+def list(searchtext=None):
+    form = SearchForm(request.args)
+
+    ds = DataStore(current_user)
+    rs = ds.list()
+    return render_template("list.html", ebooks=rs)
+
+
+@app.route("/search", methods=['GET', 'POST'])
+@login_required
+def search():
+    print dir(request)
+
+    # TODO handle normal for post; feed list()
+    if request.method == "POST":
+        return list(form.searchtext)
+    return render_template("search.html", form=form)
+
+
+@app.route("/view")
+@login_required
+def view(sdbkey=None):
+    ds = DataStore(current_user)
+    rs = ds.list()
+    return render_template("view.html", ebooks=rs)
+
+
 @app.route("/dedrm")
 @login_required
 def dedrm():
     return render_template("dedrm.html")
+
+
+@app.route("/kill")
+def kill():
+    import boto
+    sdb = boto.connect_sdb(app.config['AWS_ACCESS_KEY'], app.config['AWS_SECRET_KEY'])
+    sdb.delete_domain("ogre_books")
+    sdb.delete_domain("ogre_formats")
+    sdb.delete_domain("ogre_versions")
+    sdb.create_domain("ogre_books")
+    sdb.create_domain("ogre_formats")
+    sdb.create_domain("ogre_versions")
+    return "Killed"
+
+
+@app.route("/show")
+def show():
+    import boto
+    sdb = boto.connect_sdb(app.config['AWS_ACCESS_KEY'], app.config['AWS_SECRET_KEY'])
+
+    out = ""
+    rs = sdb.select("ogre_books", "select * from ogre_books")
+    for item in rs:
+        out += str(item) + "\n"
+
+    out += "\n"
+    rs = sdb.select("ogre_formats", "select * from ogre_formats")
+    for item in rs:
+        out += str(item) + "\n"
+
+    out += "\n"
+    rs = sdb.select("ogre_versions", "select * from ogre_versions")
+    for item in rs:
+        out += str(item) + "\n"
+
+    return out
 
 
 @app.route("/post", methods=['POST'])

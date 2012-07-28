@@ -5,8 +5,7 @@
    Table of Contents
 -----------------------------------------------------
 :: Shared Styles
-:: Page Name 1
-:: Page Name 2
+:: Listing
 */
 
 
@@ -25,14 +24,24 @@ pre { font-family: Monaco, monospace; }
 .error { display: block; width: 50%; background-color:#ffcccc; }
 
 /* -----------------------------------------
-   Page Name 1
+   Listing
 ----------------------------------------- */
+ul.ebooks, ul.users, ul.formats { list-style-type: none; margin-left: 0px; }
+ul.ebooks { margin-left: 20px; width: 600px; }
+
+li.ebook { clear: both; padding: 6px; }
+li.ebook .secondsection { height: 1.3em; clear: both; }
+li.odd { background-color: #aaa }
+li.even { background-color: #ddd }
+li.ebook a.title { font-size: 1.2em; }
+
+li.ebook span.info { float: right; line-height:20px; }
+
+ul.users li, ul.formats li { float: left; margin-bottom: 0px; font-size: 0.9em; }
+ul.users { float: right; margin-bottom: 0px; }
+ul.formats { float: left; margin-bottom: 0px; }
 
 
 
-
-/* -----------------------------------------
-   Page Name 2
------------------------------------------ */
 
 

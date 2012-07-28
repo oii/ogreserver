@@ -13,6 +13,10 @@ class DataStore():
     def __init__(self, user):
         self.user = user
 
+    def list(self):
+        sdb = Factory.connect_sdb()
+        return sdb.select("ogre_books", "select authortitle, sdbkey, users, formats from ogre_books")
+
     def update_library(self, ebooks):
         new_ebook_count = 0
         bookdb = Factory.connect_bookdb()

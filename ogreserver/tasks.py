@@ -21,3 +21,8 @@ def store_ebook(user_id, sdbkey, filehash, fmt):
     r = Reputation(user)
     r.earn_badges()
 
+
+# TODO background thread which recalculates book ratings: 10% of entire database per night (LOG the total and time spent)
+
+
+

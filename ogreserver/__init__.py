@@ -7,8 +7,10 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from flask.ext.uploads import UploadSet, ALL, configure_uploads
 from flask.ext.script import Manager
-from flask.ext.celery import Celery, install_commands as install_celery_commands
-from flask.ext.cache import Cache
+#from flask.ext.cache import Cache
+
+# setup Celery
+from ogreserver.celery import celery
 
 # import python core libraries
 import os, json
@@ -19,16 +21,13 @@ import boto
 
 # instantiate Flask application
 app = Flask(__name__)
-app.config.from_pyfile("config/config.py")
+app.config.from_pyfile("config/flask.app.conf.py")
 
 # setup SQLAlchemy
 db = SQLAlchemy(app)
 
-# setup Celery interface
-celery = Celery(app)
-
 # memcache config
-cache = Cache(app)
+#cache = Cache(app)
 
 # setup Flask-Login
 login_manager = LoginManager()

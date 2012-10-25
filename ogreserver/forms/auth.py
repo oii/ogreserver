@@ -25,5 +25,3 @@ class ChangePasswordForm(LoginForm):
     password = PasswordField('Old Password', [validators.Required()])
     new_password = PasswordField('New Password', [validators.Length(6)])
     confirm_password = PasswordField('Confirm Password', [validators.EqualTo('new_password')])
-
-

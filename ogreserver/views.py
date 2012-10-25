@@ -179,7 +179,7 @@ def upload():
     return res.task_id
 
 
-@app.route("/result/<task_id>")
+@app.route("/result/<int:task_id>")
 def show_result(task_id):
     retval = store_ebook.AsyncResult(task_id).get(timeout=1.0)
     return repr(retval)

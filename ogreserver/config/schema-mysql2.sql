@@ -1,6 +1,6 @@
 START TRANSACTION;
 
-DROP DATABASE ogre;
+DROP DATABASE IF EXISTS ogre;
 CREATE DATABASE ogre;
 USE ogre;
 
@@ -16,7 +16,7 @@ CREATE TABLE user (
 
 INSERT INTO user (username, password, email, display_name) 
 VALUES
-	('mafro','$pbkdf2-sha256$7550$tva.F2KM8R6jtHaOMWYMQQ$4lbvBPGpaJXJMR/I6zS3zzGvo/TkHPFtOutdI9Iadbo','m@mafro.net','mafro'),
+	('mafro','$pbkdf2-sha256$8487$hRCC8F7LuRcipNS6F6J0Lg$C0scVARwUBq4hZ0ct9sUYLrfATdh10fpv1tpL/6T57Y','m@mafro.net','mafro'),
 	('goff','$pbkdf2-sha256$8471$QOj9P4fwfm8NodS6N2YsBQ$qK.UMk3xFEQRjCXpFFBTe0wQwEqHmbQUogNwZ2UGPEU','geoffpaddison@gmail.com','goff'),
 	('steve','$pbkdf2-sha256$8448$mVPKWesdI.Tce4.R8r7X.g$797F0PuuwHHxqvoXih.FwCu1x/YHFOlSvM2OnElQ0B8','steve@little-steve.co.uk','steve'),
 	('holden','$pbkdf2-sha256$8304$XcuZ05oTghAipLQWIgTAGA$2s8gn8E8BJ04xNRnov2SLQ/vxAIh3ISdPslZSK6A0iY','thomasjohnholden@gmail.com','holden'),

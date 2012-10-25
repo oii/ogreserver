@@ -1,2 +1,3 @@
 *.pyc
-config.py
+flask.app.conf.py
+OGRE_DRM_Tools*.zip

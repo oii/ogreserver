@@ -1,0 +1,17 @@
+# AWS config
+AWS_ACCESS_KEY = ""
+AWS_SECRET_KEY = ""
+S3_BUCKET = ""
+
+# Flask app
+DATABASE = ""
+DEBUG = True
+SECRET_KEY = ""
+USERNAME = ""
+PASSWORD = ""
+
+# DB
+SQLALCHEMY_DATABASE_URI = ""
+
+# Upload path
+UPLOADED_EBOOKS_DEST = ""

@@ -1,11 +1,10 @@
-from ogreserver import app, boto, datetime
-
-from ogreserver.models.test.factory import Factory
-from ogreserver.models.log import Log
+import datetime
+import hashlib
+import re
 
 from boto.exception import S3ResponseError
 
-import os, hashlib, subprocess
+from ogreserver.models.factory import Factory
 
 
 class DataStore():
@@ -15,122 +14,147 @@ class DataStore():
 
     def list(self):
         sdb = Factory.connect_sdb()
-        return sdb.select("ogre_books", "select authortitle, sdbkey, users, formats from ogre_books")
+        return sdb.select("ogre_books", "select authortitle, sdb_key, users, formats from ogre_books")
+
+    def search(self, s):
+        sdb = Factory.connect_sdb()
+        return sdb.select("ogre_books", "select authortitle, sdb_key, users, formats from ogre_books where searchtext like '%%%s%%'" % s)
 
     def update_library(self, ebooks):
         new_ebook_count = 0
         bookdb = Factory.connect_bookdb()
-        formatdb = Factory.connect_formatdb()
-        versiondb = Factory.connect_versiondb()
 
         for authortitle in ebooks.keys():
-            # check for this in the library
-            key = hashlib.md5(authortitle).hexdigest()
-            b = bookdb.get_item(key)
+            try:
+                # first check if this exact file has been uploaded before
+                found_duplicate = False
 
-            if b is None:
-                self.create_book_entry(authortitle, ebooks[authortitle].keys())
-
-                # create format and version entries
                 for fmt in ebooks[authortitle].keys():
-                    self.create_format_entry(authortitle, fmt)
-                    self.create_version_entry(authortitle, fmt, 1, ebooks[authortitle][fmt]['size'], ebooks[authortitle][fmt]['filehash'])
+                    if DataStore.check_ebook_exists(ebooks[authortitle][fmt]['filemd5']) == True:
+                        found_duplicate = True
+                        # TODO any way we can import meta data from this book?
+                        break
+
+                if found_duplicate == True:
+                    print "ignoring exact duplicate %s" % authortitle
+                    continue
+
+                # check for this book by meta data in the library
+                bkey = hashlib.md5(authortitle.encode("UTF-8")).hexdigest()
+                b = bookdb.get_item(bkey)
+
+                # create this as a new book
+                if b is None:
+                    self.create_book_entry(authortitle, ebooks[authortitle].keys())
+
+                    # create format and version entries
+                    for fmt in ebooks[authortitle].keys():
+                        self.create_version_entry(authortitle, 1, fmt, ebooks[authortitle][fmt]['size'])
+                        self.create_format_entry(authortitle, 1, fmt, ebooks[authortitle][fmt]['filemd5'])
+                        new_ebook_count += 1
+
+                else:
+                    # add another version to the existing book entry
+                    next_version = self.get_version_count(authortitle) + 1
+                    self.create_version_entry(authortitle, next_version, fmt, ebooks[authortitle][fmt]['size'])
+                    self.create_format_entry(authortitle, next_version, fmt, ebooks[authortitle][fmt]['filemd5'])
                     new_ebook_count += 1
 
-            # update an existing book
-            else:
-                # add user to set of owners
-                if self.user.username not in b['users']:
-                    b.add_value("users", self.user.username)
+                    save_book = False
 
-                # check if supplied formats already exist
-                for fmt in ebooks[authortitle].keys():
-                    key = hashlib.md5(authortitle).hexdigest()
-                    f = formatdb.get_item(key)
+                    # add user to set of owners
+                    if self.user.username not in b['users']:
+                        b.add_value("users", self.user.username)
+                        save_book = True
 
                     # append to the set of this book's formats
                     if fmt not in b['formats']:
                         b.add_value("formats", fmt)
+                        save_book = True
 
-                    if f is None:
-                        # create the new format and version entries
-                        self.create_format_entry(authortitle, fmt)
-                        self.create_version_entry(authortitle, fmt, 1, ebooks[authortitle][fmt]['size'], ebooks[authortitle][fmt]['filehash'])
-                        new_ebook_count += 1
-                    else:
-                        # format exists; ensure this exact version hasn't already been uploaded
-                        if self.check_version_exists(ebooks[authortitle][fmt]['filehash']):
-                            # increment the count of different versions of this format
-                            f['version_count'] = int(f['version_count']) + 1
-                            f.save()
+                    if save_book == True:
+                        b.save()
 
-                            # create the new version entry
-                            self.create_version_entry(authortitle, fmt, f['version_count'], ebooks[authortitle][fmt]['size'], ebooks[authortitle][fmt]['filehash'])
-                            new_ebook_count += 1
-                        else:
-                            print "ignoring exact duplicate %s" % authortitle
+            except Exception as e:
+                print "[EXCP] %s" % authortitle
+                print "\t%s" % e
 
         return new_ebook_count
 
 
-    def create_book_entry(self, authortitle, formats):
+    def create_book_entry(self, authortitle, fmt):
         bookdb = Factory.connect_bookdb()
-        key = hashlib.md5(authortitle).hexdigest()
+        key = hashlib.md5(authortitle.encode("UTF-8")).hexdigest()
         b = bookdb.new_item(key)
-        b.add_value("authortitle", authortitle)
-        b.add_value("users", self.user.username)
-        b.add_value("formats", formats)
-        b.add_value("sdbkey", key)
+        b['authortitle'] = authortitle
+        b['searchtext'] = authortitle.lower()
+        b['users'] = self.user.username
+        b['formats'] = fmt
+        b['sdb_key'] = key
         b.save()
         return key
 
-    def create_format_entry(self, authortitle, fmt):
+    def create_version_entry(self, authortitle, version, fmt, size):
+        versiondb = Factory.connect_versiondb()
+        key = hashlib.md5(("%s.%s" % (authortitle, version)).encode("UTF-8")).hexdigest()
+        v = versiondb.new_item(key)
+        v['authortitle'] = authortitle
+        v['version'] = version
+        v['user'] = self.user.username
+        v['size'] = size
+        v['original_format'] = fmt
+        v['sdb_key'] = key
+        v.save()
+        return key
+
+    def create_format_entry(self, authortitle, version, fmt, filemd5):
         formatdb = Factory.connect_formatdb()
-        key = hashlib.md5(authortitle + fmt).hexdigest()
+        key = hashlib.md5(("%s-%s.%s" % (authortitle, version, fmt)).encode("UTF-8")).hexdigest()
         f = formatdb.new_item(key)
-        f.add_value("authortitle", authortitle)
-        f.add_value("format", fmt)
-        f.add_value("version_count", 1)
-        f.add_value("sdbkey", key)
+        f['authortitle'] = authortitle
+        f['version'] = version
+        f['user'] = self.user.username
+        f['format'] = fmt
+        f['filemd5'] = filemd5
+        f['sdb_key'] = key
         f.save()
         return key
 
-    def create_version_entry(self, authortitle, fmt, version, size, filehash):
-        versiondb = Factory.connect_versiondb()
-        key = hashlib.md5(authortitle + '-' + str(version) + fmt).hexdigest()
-        v = versiondb.new_item(key)
-        v.add_value("authortitle", authortitle)
-        v.add_value("version", version)
-        v.add_value("format", fmt)
-        v.add_value("user", self.user.username)
-        v.add_value("size", size)
-        v.add_value("filehash", filehash)
-        v.add_value("sdbkey", key)
-        v.save()
-        return key
-
-    def check_version_exists(self, filehash):
+    @staticmethod
+    def get_version_count(authortitle):
         sdb = Factory.connect_sdb()
-        rs = sdb.select("ogre_versions", "select filehash from ogre_versions where filehash = '%s'" % filehash)
+        rs = sdb.select("ogre_versions", "select version from ogre_versions where authortitle = '%s'" % authortitle)
+        return len(rs)
+
+    @staticmethod
+    def check_ebook_exists(filemd5):
+        sdb = Factory.connect_sdb()
+        rs = sdb.select("ogre_formats", "select authortitle, version, fmt from ogre_formats where filemd5 = '%s'" % filemd5)
         return (len(rs) > 0)
 
-    def set_uploaded(self, sdbkey):
+    @staticmethod
+    def set_uploaded(sdb_key, isit=True):
+        formatdb = Factory.connect_formatdb()
+        f = formatdb.get_item(sdb_key)
+        if isit == False:
+            f['uploaded'] = None
+        else:
+            f['uploaded'] = True
+        f.save()
+
+    @staticmethod
+    def set_dedrm_flag(sdb_key):
         versiondb = Factory.connect_versiondb()
-        v = versiondb.get_item(sdbkey)
-        v.add_value("uploaded", True)
+        v = versiondb.get_item(sdb_key)
+        v['dedrm'] = True
         v.save()
 
-    def set_dedrm_flag(self, sdbkey):
-        versiondb = Factory.connect_versiondb()
-        v = versiondb.get_item(sdbkey)
-        v.add_value("dedrm", True)
-        v.save()
-
-    def store_ebook(self, sdbkey, filehash, filepath):
+    @staticmethod
+    def store_ebook(sdb_key, filemd5, filename, filepath):
         # connect to S3
         bucket = Factory.connect_s3()
         k = Factory.get_key(bucket)
-        k.key = sdbkey
+        k.key = filename
 
         # calculate uploaded file md5
         f = open(filepath, "rb")
@@ -138,36 +162,55 @@ class DataStore():
         f.close()
 
         # error check uploaded file
-        if filehash != md5_tup[0]:
+        if filemd5 != md5_tup[0]:
             # TODO logging
-            print 'upload corrupt!'
+            raise S3DatastoreError("Upload failed checksum 1")
         else:
             try:
-                # check for DeDRM meta tag
-                meta = subprocess.Popen(['ebook-meta', filepath], stdout=subprocess.PIPE).communicate()[0]
-                if "Tags                : DeDRM" in meta:
-                    Log.create(self.user.id, "DEDRM", 1)
-                    self.set_dedrm_flag(sdbkey)
-
+                # TODO time this and print
                 # push file to S3
-                k.set_contents_from_filename(filepath, None, False, None, 10, None, md5_tup)
+                k.set_contents_from_filename(filepath, {'x-amz-meta-ogre-key': sdb_key}, False, None, 10, 'public-read', md5_tup)
 
                 # mark ebook as saved
-                self.set_uploaded(sdbkey)
+                DataStore.set_uploaded(sdb_key)
 
-            except S3ResponseError as e:
+            except S3ResponseError:
                 # TODO log
-                print 'MD5 error at S3'
+                raise S3DatastoreError("Upload failed checksum 2")
 
-        # always delete local file
-        os.remove(filepath)
+    @staticmethod
+    def generate_filename(title, filemd5, fmt):
+        # TODO transpose unicode
+        return "%s.%s.%s" % (re.sub("[^a-zA-Z0-9]", "_", title), filemd5[0:6], fmt)
 
-    def find_missing_books(self):
-        # query for books which have no uploaded file
+    @staticmethod
+    def get_missing_books(username=None, verify_s3=False):
         sdb = Factory.connect_sdb()
-        return sdb.select("ogre_versions", "select sdbkey, filehash, format from ogre_versions where uploaded is null and user = '%s'" % self.user.username)
 
-    def update_timestamp(self):
+        if username is not None:
+            if verify_s3 == True:
+                rs = sdb.select("ogre_formats", "select sdb_key, authortitle, filemd5, format from ogre_formats where user = '%s'" % username)
+            else:
+                rs = sdb.select("ogre_formats", "select sdb_key, authortitle, filemd5, format from ogre_formats where uploaded is null and user = '%s'" % username)
+        else:
+            if verify_s3 == True:
+                rs = sdb.select("ogre_formats", "select sdb_key, authortitle, filemd5, format from ogre_formats")
+            else:
+                rs = sdb.select("ogre_formats", "select sdb_key, authortitle, filemd5, format from ogre_formats where uploaded is null")
+
+        if verify_s3 == True:
+            # verify books are on S3
+            bucket = Factory.connect_s3()
+            for r in rs:
+                filename = DataStore.generate_filename(r['authortitle'], r['filemd5'], r['format'])
+                k = Factory.get_key(bucket, filename)
+                DataStore.set_uploaded(r['sdb_key'], k.exists())
+                # TODO update rs when verify=True
+
+        return rs
+
+    @staticmethod
+    def update_timestamp():
         bookdb = Factory.connect_bookdb()
 
         # set library updated timestamp
@@ -175,7 +218,9 @@ class DataStore():
         if meta == None:
             meta = bookdb.new_item("meta")
 
-        meta['updated'] = datetime.utcnow().isoformat()
+        meta['updated'] = datetime.datetime.utcnow().isoformat()
         meta.save()
 
 
+class S3DatastoreError(Exception):
+    pass

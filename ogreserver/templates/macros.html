@@ -1,7 +1,7 @@
-{% macro search(searchtext='') -%}
+{% macro search(s='') -%}
 <form action="{{ url_for('list') }}" method="get">
 	<dl>
-		<dd><input type="text" name="searchtext" value="{{ searchtext }}" /></dd>
+		<dd><input type="text" name="s" value="{{ s }}" /></dd>
 		<dd><input type="submit" value="Search" /></dd>
 	</dl>
 </form>

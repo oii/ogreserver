@@ -40,26 +40,31 @@ class Reputation():
             logs = Log.query.filter_by(user_id=self.user.id, type="NEW", data=0).all()
 
         if self.user.has_badge(Badges.Librarian) == False:
-            count = db.session.query(func.count(Log.id)).filter_by(user_id=self.user.id, type="UPLOAD").scalar()
+            count = db.session.query(func.count(Log.id)).filter_by(user_id=self.user.id, type="STORED").scalar()
 
             if count > 200:
                 self.award(Badges.Librarian)
-            elif count > 100:
+            elif Reputation.has_badge(self.user, Badges.Scholar) == False and count > 100:
                 self.award(Badges.Scholar)
-            elif count > 20:
+            elif Reputation.has_badge(self.user, Badges.Contributor) == False and count > 20:
                 self.award(Badges.Contributor)
 
-        if self.user.has_badge(Badges.Pirate) == False:
+        if Reputation.has_badge(self.user, Badges.Pirate) == False:
             if Log.query.filter_by(user_id=self.user.id, type="DEDRM", data=1).first() is not None:
                 self.award(Badges.Pirate)
 
     def award(self, badge):
-        try:
-            ub = UserBadge(user_id=self.user.id, badge=badge)
-            db.session.add(ub)
-            db.session.commit()
-        except exc.IntegrityError:
-            pass
+        ub = UserBadge(user_id=self.user.id, badge=badge)
+        db.session.add(ub)
+        db.session.commit()
+
+    @staticmethod
+    def has_badge(user, badge):
+        for b in user.badges:
+            if b.badge == badge:
+                return True
+        return False
+
 
 
 class UserBadge(db.Model):
@@ -86,4 +91,3 @@ class UserBadge(db.Model):
         self.been_alerted = True
         db.session.add(self)
         db.session.commit()
-

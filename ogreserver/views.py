@@ -1,4 +1,12 @@
-from ogreserver import app, tasks, json, uploads
+import base64
+import json
+
+from flask import request, redirect, session, url_for, render_template
+from flask.ext.login import login_required, login_user, logout_user, current_user
+
+from werkzeug.exceptions import Forbidden
+
+from ogreserver import app, uploads
 
 from ogreserver.forms.auth import LoginForm
 from ogreserver.forms.search import SearchForm
@@ -9,9 +17,6 @@ from ogreserver.models.reputation import Reputation
 from ogreserver.models.log import Log
 
 from ogreserver.tasks import store_ebook
-
-from flask import Flask, request, redirect, session, url_for, abort, render_template, flash
-from flask.ext.login import login_required, login_user, logout_user, current_user
 
 
 @app.route("/")
@@ -33,10 +38,10 @@ def login():
 @app.route("/auth", methods=['POST'])
 def auth():
     user = User.authenticate(username=request.form.get("username"), password=request.form.get("password"))
-    if not user:
-        return "0"
+    if user == None:
+        raise Forbidden
     else:
-        return user.assign_auth_key()
+        return base64.b64encode(user.assign_auth_key())
 
 
 @app.route("/logout")
@@ -54,22 +59,24 @@ def home():
 
 @app.route("/list")
 @login_required
-def list(searchtext=None):
-    form = SearchForm(request.args)
-
+def list():
     ds = DataStore(current_user)
-    rs = ds.list()
+    s = request.args.get("s")
+    if s is None:
+        rs = ds.list()
+    else:
+        rs = ds.search(s)
     return render_template("list.html", ebooks=rs)
 
 
 @app.route("/search", methods=['GET', 'POST'])
 @login_required
 def search():
-    print dir(request)
+    form = SearchForm(request.args)
 
     # TODO handle normal for post; feed list()
     if request.method == "POST":
-        return list(form.searchtext)
+        return list(form.s)
     return render_template("search.html", form=form)
 
 
@@ -87,66 +94,27 @@ def dedrm():
     return render_template("dedrm.html")
 
 
-@app.route("/kill")
-def kill():
-    import boto
-    sdb = boto.connect_sdb(app.config['AWS_ACCESS_KEY'], app.config['AWS_SECRET_KEY'])
-    sdb.delete_domain("ogre_books")
-    sdb.delete_domain("ogre_formats")
-    sdb.delete_domain("ogre_versions")
-    sdb.create_domain("ogre_books")
-    sdb.create_domain("ogre_formats")
-    sdb.create_domain("ogre_versions")
-    return "Killed"
+@app.route("/post/<auth_key>", methods=['POST'])
+def post(auth_key):
+    # authenticate user
+    key_parts = base64.b64decode(str(auth_key), "_-").split("+")
+    user = User.validate_auth_key(
+        username=key_parts[0],
+        api_key=key_parts[1]
+    )
+    if user is None:
+        raise Forbidden
 
-
-@app.route("/show")
-def show():
-    import boto
-    sdb = boto.connect_sdb(app.config['AWS_ACCESS_KEY'], app.config['AWS_SECRET_KEY'])
-
-    out = ""
-    rs = sdb.select("ogre_books", "select * from ogre_books")
-    for item in rs:
-        out += str(item) + "\n"
-
-    out += "\n"
-    rs = sdb.select("ogre_formats", "select * from ogre_formats")
-    for item in rs:
-        out += str(item) + "\n"
-
-    out += "\n"
-    rs = sdb.select("ogre_versions", "select * from ogre_versions")
-    for item in rs:
-        out += str(item) + "\n"
-
-    return out
-
-
-@app.route("/post", methods=['POST'])
-def post():
-    try:
-        # authenticate user
-        user = User.validate_auth_key(
-            username=request.form.get("username"),
-            api_key=request.form.get("api_key")
-        )
-        if user is None:
-            return "API Auth Failed: Post"
-
-        # decode the json payload
-        data = json.loads(request.form.get("ebooks"))
-
-    except KeyError:
-        return "Bad Request"
+    # decode the json payload
+    data = json.loads(request.form.get("ebooks"))
 
     # stats log the upload
-    Log.create(user.id, "CONNECT", request.form.get("total"), request.form.get("api_key"))
+    Log.create(user.id, "CONNECT", request.form.get("total"), key_parts[1])
 
     # update the library
     ds = DataStore(user)
     new_ebook_count = ds.update_library(data)
-    Log.create(user.id, "NEW", new_ebook_count, request.form.get("api_key"))
+    Log.create(user.id, "NEW", new_ebook_count, key_parts[1])
 
     # handle badge and reputation changes
     r = Reputation(user)
@@ -155,27 +123,37 @@ def post():
     msgs = r.get_new_badges()
 
     # query books missing from S3 and supply back to the client
-    rs = ds.find_missing_books()
+    rs = DataStore.get_missing_books(username=user.username)
     return json.dumps({
         'ebooks_to_upload': rs,
         'messages': msgs
     })
 
 
-@app.route("/upload", methods=['POST'])
-def upload():
+@app.route("/upload/<auth_key>", methods=['POST'])
+def upload(auth_key):
+    key_parts = base64.b64decode(str(auth_key), "_-").split("+")
     user = User.validate_auth_key(
-        username=request.form.get("username"),
-        api_key=request.form.get("api_key")
+        username=key_parts[0],
+        api_key=key_parts[1]
     )
     if user is None:
-        return "API Auth Failed: Upload"
+        return "OGRESERVER Auth Failed in upload()"
 
     # stats log the upload
-    Log.create(user.id, "UPLOAD", 1, request.form.get("api_key"))
+    Log.create(user.id, "UPLOADED", 1, key_parts[1])
 
-    uploads.save(request.files['ebook'], None, "%s%s" % (request.form.get("filehash"), request.form.get("format")))
-    res = store_ebook.apply_async((user.id, request.form.get("sdbkey"), request.form.get("filehash"), request.form.get("format")))
+    print key_parts[1], request.form.get("sdb_key"), request.files['ebook'].content_length
+
+    # write uploaded ebook to disk, named as the hash and filetype
+    uploads.save(request.files['ebook'], None, "%s.%s" % (request.form.get("filemd5"), request.form.get("format")))
+
+    # let celery process the upload
+    res = store_ebook.delay(user.id,
+                            request.form.get("sdb_key"),
+                            request.form.get("authortitle"),
+                            request.form.get("filemd5"),
+                            request.form.get("format"))
     return res.task_id
 
 
@@ -183,4 +161,3 @@ def upload():
 def show_result(task_id):
     retval = store_ebook.AsyncResult(task_id).get(timeout=1.0)
     return repr(retval)
-

@@ -4,7 +4,7 @@ from flask.ext.login import UserMixin
 
 from ogreserver import app, db
 from ogreserver.models import security
-from ogreserver.models.reputation import UserBadge
+from ogreserver.models.reputation import Reputation, UserBadge
 
 
 class User(db.Model, UserMixin):
@@ -17,10 +17,10 @@ class User(db.Model, UserMixin):
     points = db.Column(db.Integer)
     badges = db.relationship(UserBadge, backref='user', lazy='dynamic')
 
-    def __init__(self, username, password, email):
-        self.username = username
-        self.password = pwd_context.encrypt(password)
-        self.email = email
+    #def __init__(self, username, password, email):
+    #    self.username = username
+    #    self.password = security.pwd_context.encrypt(password)
+    #    self.email = email
 
     @staticmethod
     def authenticate(username, password):
@@ -64,7 +64,7 @@ class User(db.Model, UserMixin):
         api_key = User.create_auth_key(self.username, self.password, self.api_key_expires)
         db.session.add(self)
         db.session.commit()
-        return api_key
+        return "%s+%s" % (self.username, api_key)
 
     # Flask-Login method
     def is_authenticated(self):
@@ -74,8 +74,7 @@ class User(db.Model, UserMixin):
             return False
 
     def has_badge(self, badge):
-        for b in self.badges:
-            if b.badge == badge:
-                return True
-        return False
+        return Reputation.has_badge(self, badge)
 
+    def __str__(self):
+        return "<User: %s, %s>" % (self.id, self.username)

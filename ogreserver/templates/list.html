@@ -8,19 +8,29 @@
 
 <li class="ebook {{ loop.cycle('odd', 'even') }}">
 	<div class="firstsection">
-		<a class="title" href="/view/{{b.sdbkey}}">{{b.authortitle}}</a>
+		<a class="title" href="/view/{{b.sdb_key}}">{{b.authortitle}}</a>
 		<span class="info">
-			<span class="rating">4.5</span>
-			<span class="comments">1</span>
+			<span class="rating">?</span>
+			<span class="comments">?</span>
 		</span>
 	</div>
 	<div class="secondsection">
 		<ul class="formats">
-			<li><a href="/download/{{b.sdbkey}}/mobi">.mobi</a></li>
+			{% for f in b.formats %}
+			<li>
+				<a href="/download/{{b.sdb_key}}/{{f}}">{{f}}</a>
+				{% if not loop.last %},&nbsp;{% endif %}
+			</li>
+			{% endfor %}
 		</ul>
 		<ul class="users">
-			<li><a href="/search?user=mafro">mafro</a>,&nbsp;</li>
-			<li><a href="/search?user=pj">pj</a></li>
+			{% for u in b.users %}
+				<li>
+					<a href="/search?user={{u}}">{{u}}</a>
+					{% if not loop.last %},&nbsp;{% endif %}
+				</li>
+			</li>
+			{% endfor %}
 		</ul>
 	</div>
 </li>

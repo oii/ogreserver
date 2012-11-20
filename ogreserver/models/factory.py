@@ -1,4 +1,7 @@
+import boto
 from boto.s3.key import Key
+
+from ogreserver import app
 
 
 class Factory():
@@ -54,9 +57,12 @@ class Factory():
         return Factory.bucket
     
     @staticmethod
-    def get_key(bucket):
+    def get_key(bucket, key=None):
         if Factory.s3 is None or bucket is None:
             raise AttributeError
 
-        return Key(bucket)
+        if key is not None:
+            return Key(bucket, key)
+        else:
+            return Key(bucket)
 

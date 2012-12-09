@@ -8,11 +8,6 @@ from ogreserver import app
 manager = Manager(app)
 
 @manager.command
-def hello():
-    print "hello"
-
-
-@manager.command
 def verify_s3():
     import logging
     logging.basicConfig(filename="boto.log", level=logging.DEBUG)
@@ -30,36 +25,21 @@ def create_password_hash(password):
 def kill():
     import boto
     sdb = boto.connect_sdb(app.config['AWS_ACCESS_KEY'], app.config['AWS_SECRET_KEY'])
-    sdb.delete_domain("ogre_books")
-    sdb.delete_domain("ogre_formats")
-    sdb.delete_domain("ogre_versions")
-    sdb.create_domain("ogre_books")
-    sdb.create_domain("ogre_formats")
-    sdb.create_domain("ogre_versions")
+    sdb.delete_domain("ogre_ebooks")
+    sdb.create_domain("ogre_ebooks")
     print "Killed"
 
 
 @manager.command
 def show():
     import boto
+    import json
+
     sdb = boto.connect_sdb(app.config['AWS_ACCESS_KEY'], app.config['AWS_SECRET_KEY'])
 
-    out = ""
-    rs = sdb.select("ogre_books", "select * from ogre_books")
+    rs = sdb.select("ogre_ebooks", "select sdb_key, data from ogre_ebooks")
     for item in rs:
-        out += str(item) + "\n"
-
-    out += "\n"
-    rs = sdb.select("ogre_versions", "select * from ogre_versions")
-    for item in rs:
-        out += str(item) + "\n"
-
-    out += "\n"
-    rs = sdb.select("ogre_formats", "select * from ogre_formats")
-    for item in rs:
-        out += str(item) + "\n"
-
-    print out
+        print json.dumps(json.loads(item['data']), indent=4)
 
 
 @manager.command

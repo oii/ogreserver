@@ -88,6 +88,12 @@ def view(sdbkey=None):
     return render_template("view.html", ebooks=rs)
 
 
+@app.route("/download/<sdb_key>/<fmt>")
+@login_required
+def download(sdb_key, fmt):
+    return DataStore.get_ebook_url(sdb_key, fmt)
+
+
 @app.route("/dedrm")
 @login_required
 def dedrm():
@@ -105,7 +111,7 @@ def post(auth_key):
     if user is None:
         raise Forbidden
 
-    # decode the json payload
+    # get the json payload
     data = json.loads(request.form.get("ebooks"))
 
     # stats log the upload
@@ -153,6 +159,7 @@ def upload(auth_key):
                             request.form.get("sdb_key"),
                             request.form.get("authortitle"),
                             request.form.get("filemd5"),
+                            request.form.get("version"),
                             request.form.get("format"))
     return res.task_id
 

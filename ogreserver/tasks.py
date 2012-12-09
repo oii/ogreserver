@@ -10,13 +10,13 @@ from ogreserver.models.log import Log
 
 
 @celery.task(name="ogreserver.store_ebook")
-def store_ebook(user_id, sdb_key, title, filemd5, fmt):
+def store_ebook(user_id, sdb_key, authortitle, filemd5, version, fmt):
     """
     Store an ebook in the datastore
     """
     try:
         filepath = "%s/%s.%s" % (app.config['UPLOADED_EBOOKS_DEST'], filemd5, fmt)
-        filename = DataStore.generate_filename(title, filemd5, fmt)
+        filename = DataStore.generate_filename(authortitle, filemd5, fmt)
 
         # extract ebook meta
         meta = subprocess.Popen(['ebook-meta', filepath], 
@@ -27,7 +27,7 @@ def store_ebook(user_id, sdb_key, title, filemd5, fmt):
         print "store_ebook: %s %s %s" % (filename, filemd5, user)
 
         # store the file into S3
-        DataStore.store_ebook(sdb_key, filemd5, filename, filepath)
+        DataStore.store_ebook(sdb_key, filemd5, filename, filepath, version, fmt)
 
         # flag the book as having DRM removed
         if "Tags                : DeDRM" in meta:

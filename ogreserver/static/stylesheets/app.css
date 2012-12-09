@@ -31,8 +31,8 @@ ul.ebooks { margin-left: 20px; width: 600px; }
 
 li.ebook { clear: both; padding: 6px; }
 li.ebook .secondsection { height: 1.3em; clear: both; }
-li.odd { background-color: #aaa }
-li.even { background-color: #ddd }
+li.odd { background-color: #aaa; color: #0A65C8; }
+li.even { background-color: #ddd; color: #2A85E8; }
 li.ebook a.title { font-size: 1.2em; }
 
 li.ebook span.info { float: right; line-height:20px; }

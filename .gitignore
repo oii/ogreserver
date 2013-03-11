@@ -2,3 +2,6 @@
 *.pyc
 flask.app.conf.py
 OGRE_DRM_Tools*.zip
+search.db
+.sass-cache
+ogreserver/static/stylesheets

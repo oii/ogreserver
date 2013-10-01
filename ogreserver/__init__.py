@@ -3,7 +3,6 @@ from __future__ import absolute_import
 # import Flask library
 from flask import Flask
 
-
 def create_app(config):
     # instantiate Flask application
     app = Flask(__name__)

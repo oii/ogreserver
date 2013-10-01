@@ -1,84 +1,53 @@
 O.G.R.E.
 ========
 
-OGRE is an ebook storage and synchronisation service. It helps a group maintain a single set of ebooks across many users.
+OGRE is an ebook storage and synchronisation service.
 
 OGRE comes in two parts:
-  - a server built in python relying on Flask and Celery
-  - a cross-platform client script (again in python) which synchronises ebooks to the server.
+  - a server built in Python relying on Flask and Celery
+  - a cross-platform client script in Python which synchronises ebooks to the server.
+
+OGRE is principally self-contained - you will just need some Amazon S3 credentials to get started.
 
 
-Ogreserver Prerequisites
-------------------------
+Building with Salt
+------------------
 
-* aptitude install virtualenvwrapper python-pip python-dev
-* aptitude install libevent-dev
-* aptitude install rabbitmq-server
-* aptitude install mysql-server libmysqlclient-dev
-* aptitude install supervisor
+The ogreserver component is built of many components which operate togther in some semblance of harmony. For this reason, it's highly impractical to setup the project manually. Sticking with a pure Python solution, we opted for the gateway drug of [Salt](http://saltstack.com/) as our configuration management system.
 
 
-Ogreserver
-----------
+Install with Vagrant
+--------------------
 
-0. Create a directory for this project:
-
-    ```bash
-    mkdir -p /srv/www
-    cd /srv/www
-    ```
+These basic install instructions use Vagrant to quickly get an OGRE server running. If you've never setup a Vagrant box with Salt before, please refer to [this blog post](http://blog.mafro.net/setting-up-a-local-machine-with-saltstack.html).
 
 1. Clone this repo:
 
-    ```bash
-    git clone git@github.com:mafrosis/ogre.git
-    cd ogre/ogreserver
-    git checkout develop
-    ```
+    :::bash
+    git clone git@github.com:oii/ogre.git
 
-2. Init a virtualenv for OGRE:
+3. Before building the server, you need to setup the Salt Pillar config file with your S3 credentials (and other optional things like github username, shell, location). The comments in the default config should be explanatory enough:
 
-    ```bash
-    mkvirtualenv ogre
-    pip install -r config/requirements.txt
-    ```
+    :::bash
+    vim ../pillar/dev_vars.sls
 
-    On OSX you might get an error when compiling `gevent`. In order to fix this install Xcode 4.4+
-	and install the command line tools http://stackoverflow.com/q/11716107/425050.
+4. Create a github key if you want your dotfiles deployed.
 
-3. Setup the mysql app database. The optional second mysql command will create a new
-user for OGRE; which will subsequently be used in the SQLALCHEMY_DATABASE_URI config var:
+2. Build a Vagrant VM:
 
-    ```bash
-    mysql -u root -p -e "create database ogre character set utf8;"
-    mysql -u root -p -e "GRANT SELECT,INSERT,UPDATE,DELETE,CREATE,ALTER,INDEX,DROP,LOCK TABLES ON ogre.* TO 'db_username'@'localhost' IDENTIFIED BY 'password';"
-    ```
+    :::bash
+    cd ogre/ogreserver/config/salty-vagrant
+    vagrant up
 
-4. Initialize your OGRE SDB bucket, S3 storage and local mysql DB:
+5. Now run highstate with Salt:
 
-    ```bash
-    ./manage.py init_ogre
-    ```
+    vagrant ssh
+    > sudo salt-call state.highstate
 
-5. Create yourself a new user for OGRE:
+6. :
 
-    ```bash
-    ./manage.py create_user <username> <password> <email_address>
-    ```
-
-6. Modify the supervisor config. You will be looking to replace all paths in this 
-file with ones that match your setup. Then run the following:
-
-    ```bash
-    ln -s /path/to/project/ogreserver/supervisor.conf /etc/supervisor/conf.d/ogre.conf
-    sudo supervisorctl update
-    ```
-
-7. You should then be able to view and log into the website at:
-
-    ```bash
+    :::bash
     http://127.0.0.1:8005/ogre
-    ```
 
 8. Now you'll want to synchronise some ebooks from Ogreclient.
 
@@ -88,41 +57,40 @@ Ogreclient
 
 This command is the baseline for you to first synchronise ebooks to your new ogreserver:
 
-```bash
-python ogreclient --ogreserver 127.0.0.1:8005 -u mafro -p password -H /home/mafro/ebooks
-```
+    :::bash
+    python ogreclient --ogreserver 127.0.0.1:8005 -u mafro -p password -H /home/mafro/ebooks
 
 The help for that command should make things more clear:
 
-```bash
-python ogreclient -h
-usage: ogreclient [-h] [--ebook-home EBOOK_HOME] [--ogreserver OGRESERVER]
-                  [--username USERNAME] [--password PASSWORD] [--verbose]
-                  [--quiet] [--dry-run]
+    :::bash
+    usage: ogreclient [-h] [--ebook-home EBOOK_HOME] [--host HOST]
+                    	[--username USERNAME] [--password PASSWORD] [--verbose]
+                    	[--quiet] [--dry-run]
 
-O.G.R.E. client application
+    O.G.R.E. client application
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --ebook-home EBOOK_HOME, -H EBOOK_HOME
-                        The directory where you keep your ebooks. You can also
-                        set the environment variable $EBOOK_HOME
-  --ogreserver OGRESERVER
-                        Override the default server host of oii.ogre.me.uk
-  --username USERNAME, -u USERNAME
-                        Your O.G.R.E. username. You can also set the
-                        environment variable $EBOOK_USER
-  --password PASSWORD, -p PASSWORD
-                        Your O.G.R.E. password. You can also set the
-                        environment variable $EBOOK_PASS
-  --verbose, -v         Produce more output
-  --quiet, -q           Don't produce any output
-  --dry-run, -d         Dry run the sync; don't actually upload anything to
-                        the server
-```
+    optional arguments:
+    	-h, --help            show this help message and exit
+    	--ebook-home EBOOK_HOME, -H EBOOK_HOME
+                            The directory where you keep your ebooks. You can also
+                            set the environment variable $EBOOK_HOME
+    	--host HOST           Override the default server host of oii.ogre.yt
+    	--username USERNAME, -u USERNAME
+                            Your O.G.R.E. username. You can also set the
+                            environment variable $EBOOK_USER
+    	--password PASSWORD, -p PASSWORD
+                            Your O.G.R.E. password. You can also set the
+                            environment variable $EBOOK_PASS
+    	--verbose, -v         Produce lots of output
+    	--quiet, -q           Don't produce any output
+    	--dry-run, -d         Dry run the sync; don't actually upload anything to
+                            the server
 
-Troubleshooting
----------------
+
+Sesame Config
+-------------
+
+You can add your recently minted dev config to the Git repo. Use sesame to encrypt and raise a pull request. 
 
 
 Hacking
@@ -198,3 +166,9 @@ Then in another screen/tmux window or tab, set compass to watch the static direc
 ```bash
 compass watch ogreserver/static
 ```
+
+
+Troubleshooting
+---------------
+
+If you have a problem, raise an issue or pull request with a problem/solution!

@@ -1,0 +1,3 @@
+[submodule "ogreserver/config/salt-formulae"]
+	path = ogreserver/config/salt-formulae
+	url = git@github.com:mafrosis/salt-formulae.git

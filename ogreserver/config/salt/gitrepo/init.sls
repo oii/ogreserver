@@ -22,7 +22,7 @@ git-clone-app:
     - name: git@github.com:oii/ogre.git
     - rev: develop
     - target: /srv/{{ pillar['project_name'] }}
-    - user: {{ pillar['app_user'] }}
+    - runas: {{ pillar['app_user'] }}
     - require:
       - pkg: git
       - file: github.pky

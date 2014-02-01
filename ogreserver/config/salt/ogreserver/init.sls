@@ -2,7 +2,7 @@ include:
   - calibre
   - common
   - compass
-  - gitrepo
+  - github
   - gunicorn
   - logs
   - mysql
@@ -44,6 +44,25 @@ extend:
           port: 8233
           runas: {{ pillar['app_user'] }}
 
+
+{% set project_path = "/srv/" ~ pillar['project_name'] %}
+
+{{ project_path }}:
+  file.directory:
+    - user: {{ pillar['app_user'] }}
+    - group: {{ pillar['app_user'] }}
+    - makedirs: true
+
+git-clone-app:
+  git.latest:
+    - name: git@github.com:oii/ogre.git
+    - rev: develop
+    - target: {{ project_path }}
+    - runas: {{ pillar['app_user'] }}
+    - require:
+      - pkg: git
+      - file: github.pky
+      - file: {{ project_path }}
 
 pip-dependencies-extra:
   pkg.latest:

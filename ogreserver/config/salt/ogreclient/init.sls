@@ -1,6 +1,6 @@
 include:
   - common
-  - gitrepo
+  - github
   - virtualenv-base
 
 app-virtualenv:

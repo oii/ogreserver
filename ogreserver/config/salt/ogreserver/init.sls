@@ -10,7 +10,6 @@ include:
   - pypiserver
   - rabbitmq
   - rethinkdb
-  - salt-hack
   - supervisor
   - virtualenv-base
 

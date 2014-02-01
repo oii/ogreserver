@@ -2,7 +2,6 @@ include:
   - common
   - gitrepo
   - virtualenv-base
-  - salt-hack
 
 app-virtualenv:
   virtualenv.managed:

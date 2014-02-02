@@ -77,7 +77,7 @@ app-virtualenv:
     - pre_releases: true
     - runas: {{ pillar['app_user'] }}
     - require:
-      - pip: virtualenv-init-distribute
+      - pip: virtualenv-init-setuptools
       - pkg: pip-dependencies-extra
       - git: git-clone-app
 

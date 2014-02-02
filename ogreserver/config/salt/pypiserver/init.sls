@@ -2,7 +2,7 @@ pypiserver-virtualenv:
   virtualenv.managed:
     - name: /home/{{ pillar['app_user'] }}/.virtualenvs/pypiserver
     - requirements: salt://pypiserver/requirements.txt
-    - runas: {{ pillar['app_user'] }}
+    - user: {{ pillar['app_user'] }}
     - require:
       - pip: virtualenv-init-setuptools
 

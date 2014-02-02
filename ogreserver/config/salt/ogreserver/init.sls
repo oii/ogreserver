@@ -75,7 +75,7 @@ app-virtualenv:
     - name: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}
     - requirements: /srv/ogre/ogreserver/config/requirements.txt
     - pre_releases: true
-    - runas: {{ pillar['app_user'] }}
+    - user: {{ pillar['app_user'] }}
     - require:
       - pip: virtualenv-init-setuptools
       - pkg: pip-dependencies-extra

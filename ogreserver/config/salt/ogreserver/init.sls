@@ -1,6 +1,5 @@
 include:
   - calibre
-  - common
   - github
   - gunicorn
   - logs

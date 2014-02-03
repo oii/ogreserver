@@ -1,5 +1,4 @@
 include:
-  - common
   - github
   - virtualenv-base
 

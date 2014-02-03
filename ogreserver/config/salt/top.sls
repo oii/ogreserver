@@ -1,4 +1,7 @@
 base:
+  '*':
+    - common
+
   'role:ogreserver':
     - match: grain
     - ogreserver

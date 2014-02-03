@@ -16,8 +16,6 @@ extend:
   supervisor:
     pip.installed:
       - require:
-        - file: /etc/supervisor/conf.d/gunicorn.ogreserver.conf
-        - file: /etc/supervisor/conf.d/celeryd.ogreserver.conf
         - virtualenv: app-virtualenv
         - git: git-clone-app
 

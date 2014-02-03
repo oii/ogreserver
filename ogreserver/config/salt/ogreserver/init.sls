@@ -1,7 +1,6 @@
 include:
   - calibre
   - common
-  - compass
   - github
   - gunicorn
   - logs
@@ -22,11 +21,6 @@ extend:
         - file: /etc/supervisor/conf.d/celeryd.ogreserver.conf
         - virtualenv: app-virtualenv
         - git: git-clone-app
-
-  compass-supervisor-config:
-    file.managed:
-      - context:
-          directory: /srv/ogre/ogreserver/static
 
   gunicorn-config:
     file.managed:

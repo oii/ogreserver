@@ -7,13 +7,13 @@ compass-sass-gem:
     - name: sass
     - version: 3.2.10
     - require:
-      - pkg: rubygems
+      - pkg: compass-rubygems
 
 compass-gem:
   gem.installed:
     - name: compass
     - require:
-      - pkg: rubygems
+      - pkg: compass-rubygems
       - gem: compass-sass-gem
 
 compass-supervisor-config:

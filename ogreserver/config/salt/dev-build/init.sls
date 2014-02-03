@@ -1,4 +1,5 @@
 include:
+  - compass
   - watchdog
 
 extend:
@@ -29,6 +30,11 @@ extend:
       - context:
           gunicorn: true
           celeryd: true
+
+  compass-supervisor-config:
+    file.managed:
+      - context:
+          directory: /srv/ogre/ogreserver/static
 
   rethinkdb-config:
     file.managed:
@@ -65,14 +71,17 @@ ogre-create-user:
       - virtualenv: app-virtualenv
       - cmd: ogre-init
 
-rubygems:
-  pkg.installed
+zurb-rubygems:
+  pkg.installed:
+    - name: rubygems
 
 zurb-foundation-gem:
   gem.installed:
     - name: zurb-foundation
     - require:
-      - pkg: rubygems
+      - pkg: zurb-rubygems
+    - require_in:
+      - supervisord: compass-supervisor-service
 
 # install tmux segments for gunicorn & celeryd state
 {% for app in ('gunicorn', 'celeryd') %}

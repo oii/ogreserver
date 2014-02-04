@@ -48,6 +48,11 @@ extend:
           runas: {{ pillar['app_user'] }}
           overwrite: true
 
+  app-virtualenv:
+    virtualenv.managed:
+      - require_in:
+        - pip: watchdog
+
 
 logs-chown:
   file.directory:

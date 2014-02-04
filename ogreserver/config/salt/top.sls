@@ -4,6 +4,7 @@ base:
 
   'role:ogreserver':
     - match: grain
+    - salt-backports
     - ogreserver
   'role:ogreclient':
     - match: grain

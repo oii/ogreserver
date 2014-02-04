@@ -15,10 +15,6 @@ from ogreserver import app, db
 
 manager = Manager(app)
 
-# include the sesame manager
-from sesame.flask.script import manager as sesame_manager
-manager.add_command("sesame", sesame_manager)
-
 
 @manager.command
 def verify_s3():

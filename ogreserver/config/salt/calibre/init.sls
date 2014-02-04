@@ -5,7 +5,7 @@ calibre-install:
     - template: jinja
     - mode: 744
     - context:
-        version: 1.4.0
+        version: 1.22.0
   cmd.wait:
     - name: /opt/calibre_installer.py
     - watch:

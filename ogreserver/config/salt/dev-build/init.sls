@@ -25,6 +25,11 @@ extend:
     file.managed:
       - user: {{ pillar['login_user'] }}
 
+  /etc/supervisor/conf.d/ogreserver.conf:
+    file.managed:
+      - context:
+          purge: true
+
   tmux-powerline-theme:
     file.managed:
       - context:

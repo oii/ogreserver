@@ -95,13 +95,18 @@ ogre-init:
       - pip: rethinkdb-python-driver
 
 
-/etc/supervisor/conf.d/gunicorn.ogreserver.conf:
+/etc/supervisor/conf.d/ogreserver.conf:
   file.managed:
-    - source: salt://ogreserver/supervisord.gunicorn.conf
+    - source: salt://ogreserver/supervisord.conf
     - template: jinja
+    - defaults:
+        purge: false
+        app_name: {{ pillar['app_name'] }}
+        app_user: {{ pillar['app_user'] }}
     - require:
       - user: {{ pillar['app_user'] }}
       - file: flask-config
+      - cmd: rabbitmq-server-running
     - require_in:
       - service: supervisor
 
@@ -112,20 +117,8 @@ gunicorn-service:
     - require:
       - service: supervisor
     - watch:
-      - file: /etc/supervisor/conf.d/gunicorn.ogreserver.conf
+      - file: /etc/supervisor/conf.d/ogreserver.conf
       - file: /etc/gunicorn.d/{{ pillar['app_name'] }}.conf.py
-
-
-/etc/supervisor/conf.d/celeryd.ogreserver.conf:
-  file.managed:
-    - source: salt://ogreserver/supervisord.celeryd.conf
-    - template: jinja
-    - require:
-      - user: {{ pillar['app_user'] }}
-      - file: flask-config
-      - cmd: rabbitmq-server-running
-    - require_in:
-      - service: supervisor
 
 celeryd-service:
   supervisord.running:
@@ -134,7 +127,7 @@ celeryd-service:
     - require:
       - service: supervisor
     - watch:
-      - file: /etc/supervisor/conf.d/celeryd.ogreserver.conf
+      - file: /etc/supervisor/conf.d/ogreserver.conf
 
 
 #/etc/nginx/conf.d/upstream.conf:

@@ -109,24 +109,15 @@ ogre-init:
     - require_in:
       - service: supervisor
 
-gunicorn-service:
+ogreserver-service:
   supervisord.running:
-    - name: gunicorn
+    - name: "ogreserver:"
     - update: true
     - require:
       - service: supervisor
     - watch:
       - file: /etc/supervisor/conf.d/ogreserver.conf
       - file: /etc/gunicorn.d/{{ pillar['app_name'] }}.conf.py
-
-celeryd-service:
-  supervisord.running:
-    - name: celeryd
-    - update: true
-    - require:
-      - service: supervisor
-    - watch:
-      - file: /etc/supervisor/conf.d/ogreserver.conf
 
 
 #/etc/nginx/conf.d/upstream.conf:

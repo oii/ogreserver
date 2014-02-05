@@ -101,7 +101,6 @@ ogre-init:
     - template: jinja
     - defaults:
         purge: false
-        app_name: {{ pillar['app_name'] }}
         app_user: {{ pillar['app_user'] }}
     - require:
       - user: {{ pillar['app_user'] }}
@@ -112,7 +111,7 @@ ogre-init:
 
 gunicorn-service:
   supervisord.running:
-    - name: ogreserver.gunicorn
+    - name: gunicorn
     - update: true
     - require:
       - service: supervisor
@@ -122,7 +121,7 @@ gunicorn-service:
 
 celeryd-service:
   supervisord.running:
-    - name: ogreserver.celeryd
+    - name: celeryd
     - update: true
     - require:
       - service: supervisor

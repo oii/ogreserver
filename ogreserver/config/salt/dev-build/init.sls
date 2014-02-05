@@ -39,7 +39,7 @@ extend:
   compass-supervisor-config:
     file.managed:
       - context:
-          directory: /srv/ogre/ogreserver/static
+          watch_directory: /srv/ogre/ogreserver/static
 
   rethinkdb-config:
     file.managed:

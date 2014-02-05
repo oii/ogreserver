@@ -13,8 +13,10 @@ compass-supervisor-config:
     - name: /etc/supervisor/conf.d/compass.{{ pillar['app_name'] }}.conf
     - source: salt://compass/supervisord.conf
     - template: jinja
-    - default:
-        directory: /srv/{{ pillar['app_name'] }}
+    - defaults:
+        watch_directory: /srv/{{ pillar['app_name'] }}
+        app_name: {{ pillar['app_name'] }}
+        app_user: {{ pillar['app_user'] }}
     - require:
       - gem: compass-gem
     - require_in:
@@ -22,7 +24,7 @@ compass-supervisor-config:
 
 compass-supervisor-service:
   supervisord.running:
-    - name: {{ pillar['app_name'] }}.compass
+    - name: compass
     - update: true
     - require:
       - service: supervisor

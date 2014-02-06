@@ -36,9 +36,7 @@ extend:
           runas: {{ pillar['app_user'] }}
 
 
-{% set project_path = "/srv/" ~ pillar['project_name'] %}
-
-{{ project_path }}:
+/srv/ogre:
   file.directory:
     - user: {{ pillar['app_user'] }}
     - group: {{ pillar['app_user'] }}
@@ -48,12 +46,12 @@ git-clone-app:
   git.latest:
     - name: git@github.com:oii/ogre.git
     - rev: develop
-    - target: {{ project_path }}
+    - target: /srv/ogre
     - runas: {{ pillar['app_user'] }}
     - require:
       - pkg: git
       - file: github.pky
-      - file: {{ project_path }}
+      - file: /srv/ogre
 
 pip-dependencies-extra:
   pkg.latest:

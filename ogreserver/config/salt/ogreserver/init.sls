@@ -22,6 +22,7 @@ extend:
     file.managed:
       - context:
           worker_class: gevent
+          gunicorn_port: {{ pillar['gunicorn_port'] }}
 
   app-virtualenv:
     virtualenv.managed:
@@ -37,10 +38,11 @@ extend:
 
   ogreserver-supervisor-service:
     supervisord.running:
+      - require:
+        - cmd: rabbitmq-server-running
       - watch:
         - file: /etc/supervisor/conf.d/ogreserver.conf
         - file: /etc/gunicorn.d/ogreserver.conf.py
-        - cmd: rabbitmq-server-running
 
   pypiserver-log-dir:
     file.directory:
@@ -52,6 +54,21 @@ extend:
       - context:
           port: 8233
           runas: {{ pillar['app_user'] }}
+
+  {% if grains.get('env', '') == 'prod' %}
+  nginx:
+    service.running:
+      - watch:
+        - file: /etc/nginx/conf.d/http.conf
+        - file: /etc/nginx/conf.d/proxy.conf
+        - file: /etc/nginx/sites-enabled/ogreserver.conf
+
+  /etc/nginx/sites-available/ogreserver.conf:
+    file.managed:
+      - context:
+          server_name: ogre.oii.yt
+          root: /srv/ogreserver
+  {% endif %}
 
 
 pip-dependencies-extra:

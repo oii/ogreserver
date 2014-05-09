@@ -10,6 +10,10 @@ base:
     - match: grain
     - ogreclient
 
+  'G@role:ogreserver and G@env:prod':
+    - match: compound
+    - nginx.config
+
   'env:dev':
     - match: grain
     - dev-user

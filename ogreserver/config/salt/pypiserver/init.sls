@@ -66,5 +66,6 @@ pypiserver-supervisor-service:
     - update: True
     - require:
       - service: supervisor
+      - cmd: pypiserver-htpasswd
     - watch:
       - file: pypiserver-supervisor-config

@@ -17,7 +17,5 @@ flask.app.conf.py
 
 sesame.ogre.key
 github.*.pky
-dev_vars.sls
-!dev_vars.sls.encrypted
 prod_vars.sls
 !prod_vars.sls.encrypted

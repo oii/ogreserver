@@ -62,7 +62,7 @@ pip-dependencies-extra:
 
 flask-config:
   file.managed:
-    - name: /srv/ogre/ogreserver/config/flask.app.conf.py
+    - name: /srv/ogreserver/ogreserver/config/flask.app.conf.py
     - source: salt://ogreserver/flask.app.conf.py
     - template: jinja
     - user: {{ pillar['app_user'] }}
@@ -75,7 +75,7 @@ flask-config:
 ogre-init:
   cmd.run:
     - name: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}/bin/python manage.py init_ogre
-    - cwd: /srv/ogre
+    - cwd: /srv/ogreserver
     - unless: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}/bin/python manage.py init_ogre --test
     - user: {{ pillar['app_user'] }}
     - require:

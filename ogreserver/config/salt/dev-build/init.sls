@@ -39,7 +39,7 @@ extend:
   compass-supervisor-config:
     file.managed:
       - context:
-          watch_directory: /srv/ogre/ogreserver/static
+          watch_directory: /srv/ogreserver/ogreserver/static
 
   rethinkdb-config:
     file.managed:
@@ -79,7 +79,7 @@ ogre-create-user:
   cmd.run:
     - name: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}/bin/python manage.py create_user {{ pillar['ogre_user_name'] }} {{ pillar['ogre_user_pass'] }} {{ pillar['ogre_user_email'] }}
     - unless: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}/bin/python manage.py create_user {{ pillar['ogre_user_name'] }} null null --test
-    - cwd: /srv/ogre
+    - cwd: /srv/ogreserver
     - user: {{ pillar['app_user'] }}
     - require:
       - virtualenv: app-virtualenv

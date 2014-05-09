@@ -58,7 +58,7 @@ extend:
       - require_in:
         - pip: watchdog
 
-  ogreserver-service:
+  ogreserver-supervisor-service:
     supervisord.running:
       - require_in:
         - supervisord: watchdog-service
@@ -73,7 +73,7 @@ logs-chown:
     - user: {{ pillar['login_user'] }}
     - group: {{ pillar['login_user'] }}
     - require:
-      - supervisord: ogreserver-service
+      - supervisord: ogreserver-supervisor-service
 
 ogre-create-user:
   cmd.run:

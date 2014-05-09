@@ -1,15 +1,14 @@
 include:
+  - app.virtualenv
+  - app.supervisor
   - calibre
   - github
   - gunicorn
   - logs
   - mysql
-  - nginx
   - pypiserver
   - rabbitmq
   - rethinkdb
-  - supervisor
-  - virtualenv-base
 
 
 extend:
@@ -24,6 +23,25 @@ extend:
       - context:
           worker_class: gevent
 
+  app-virtualenv:
+    virtualenv.managed:
+      - requirements: /srv/ogreserver/ogreserver/config/requirements.txt
+      - pre_releases: true
+      - require:
+        - pkg: pip-dependencies-extra
+
+  app-log-directory:
+    file.directory:
+      - require_in:
+        - service: supervisor
+
+  ogreserver-supervisor-service:
+    supervisord.running:
+      - watch:
+        - file: /etc/supervisor/conf.d/ogreserver.conf
+        - file: /etc/gunicorn.d/ogreserver.conf.py
+        - cmd: rabbitmq-server-running
+
   pypiserver-log-dir:
     file.directory:
       - user: {{ pillar['app_user'] }}
@@ -36,39 +54,11 @@ extend:
           runas: {{ pillar['app_user'] }}
 
 
-/srv/ogre:
-  file.directory:
-    - user: {{ pillar['app_user'] }}
-    - group: {{ pillar['app_user'] }}
-    - makedirs: true
-
-git-clone-app:
-  git.latest:
-    - name: git@github.com:oii/ogre.git
-    - rev: develop
-    - target: /srv/ogre
-    - runas: {{ pillar['app_user'] }}
-    - require:
-      - pkg: git
-      - file: github.pky
-      - file: /srv/ogre
-
 pip-dependencies-extra:
   pkg.latest:
     - names:
       - libmysqlclient-dev
       - libevent-dev
-
-app-virtualenv:
-  virtualenv.managed:
-    - name: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}
-    - requirements: /srv/ogre/ogreserver/config/requirements.txt
-    - pre_releases: true
-    - user: {{ pillar['app_user'] }}
-    - require:
-      - pip: virtualenv-init-setuptools
-      - pkg: pip-dependencies-extra
-      - git: git-clone-app
 
 flask-config:
   file.managed:
@@ -79,6 +69,8 @@ flask-config:
     - group: {{ pillar['app_user'] }}
     - require:
       - git: git-clone-app
+    - require_in:
+      - service: supervisor
 
 ogre-init:
   cmd.run:
@@ -91,50 +83,3 @@ ogre-init:
       - file: flask-config
       - mysql_grants: create-mysql-user-perms
       - pip: rethinkdb-python-driver
-
-
-/etc/supervisor/conf.d/ogreserver.conf:
-  file.managed:
-    - source: salt://ogreserver/supervisord.conf
-    - template: jinja
-    - defaults:
-        purge: false
-        app_user: {{ pillar['app_user'] }}
-    - require:
-      - user: {{ pillar['app_user'] }}
-      - file: flask-config
-      - cmd: rabbitmq-server-running
-    - require_in:
-      - service: supervisor
-
-ogreserver-service:
-  supervisord.running:
-    - name: "ogreserver:"
-    - update: true
-    - require:
-      - service: supervisor
-    - watch:
-      - file: /etc/supervisor/conf.d/ogreserver.conf
-      - file: /etc/gunicorn.d/{{ pillar['app_name'] }}.conf.py
-
-
-#/etc/nginx/conf.d/upstream.conf:
-#  file.managed:
-#    - source: salt://app_server/upstream.conf
-#    - require:
-#      - pkg: nginx
-#
-#/etc/nginx/sites-available/app.basketchaser.com.conf:
-#  file.managed:
-#    - source: salt://app_server/app.basketchaser.com.conf.sls
-#    - template: jinja
-#    - require:
-#      - pkg: nginx
-#      - file: /etc/ssl/app.basketchaser.com.combined.crt
-#      - file: /etc/ssl/app.basketchaser.com.key
-#
-#/etc/nginx/sites-enabled/app.basketchaser.com.conf:
-#  file.symlink:
-#    - target: /etc/nginx/sites-available/app.basketchaser.com.conf
-#    - require:
-#      - file: /etc/nginx/sites-available/app.basketchaser.com.conf

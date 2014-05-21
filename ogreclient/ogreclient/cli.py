@@ -20,6 +20,10 @@ def entrypoint():
         # setup and run argparse
         args = parse_command_line()
 
+        # set default hostname
+        if 'host' not in args or args.host is None:
+            args.host = OGRESERVER
+
         # global printer for init phase
         prntr = CliPrinter(None)
 
@@ -256,9 +260,6 @@ def prerequisites(args, prntr):
 
         with open(os.path.join(config_dir, 'app.config'), 'w') as f_config:
             f_config.write(json.dumps(conf))
-
-    if args.host is None:
-        args.host = OGRESERVER
 
     # check if we have decrypt capability
     from .dedrm import CAN_DECRYPT

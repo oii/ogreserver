@@ -73,15 +73,12 @@ def authenticate(host, username, password):
         return RETURN_CODES.error_auth
 
 
-def doit(ebook_home, username, password,
-         host=None, config_dir=None, ebook_cache_path=None,
+def doit(ebook_home, username, password, host,
+         config_dir=None, ebook_cache_path=None,
          ebook_cache_temp_path=None, ebook_convert_path=None,
          calibre_ebook_meta_bin=None, verbose=False, quiet=False):
 
     global last_error
-
-    if host is None:
-        host = OGRESERVER
 
     # load the user's database of previously scanned ebooks
     if os.path.exists(ebook_cache_path):

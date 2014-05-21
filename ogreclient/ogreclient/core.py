@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from __future__ import division
 
 import datetime
@@ -5,20 +6,17 @@ import json
 import os
 import shutil
 import subprocess
-import sys
 
 import urllib
 import urllib2
 from urllib2 import HTTPError, URLError
-from urllib2_file import newHTTPHandler
+from .urllib2_file import newHTTPHandler
 
-from utils import capture
-from utils import compute_md5
-from utils import id_generator
-from utils import make_temp_directory
-from utils import update_progress
-from utils import CliPrinter
-from utils import enum
+from .utils import compute_md5
+from .utils import id_generator
+from .utils import make_temp_directory
+from .utils import CliPrinter
+from .utils import enum
 
 
 PROGBAR_LEN = 30

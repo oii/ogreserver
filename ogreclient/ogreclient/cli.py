@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import argparse
 import getpass
 import json
@@ -6,16 +8,14 @@ import subprocess
 import sys
 import urllib
 
-import core
-
-from utils import capture
-from utils import make_temp_directory
-from utils import update_progress
-from utils import CliPrinter
+from .core import authenticate, doit, last_error, OGRESERVER, PROGBAR_LEN, RETURN_CODES
+from .utils import capture, make_temp_directory, update_progress, CliPrinter
 
 
 def entrypoint():
     parser = argparse.ArgumentParser(description='O.G.R.E. client application')
+
+
     parser.add_argument(
         '--ebook-home', '-H',
         help=('The directory where you keep your ebooks. '
@@ -87,7 +87,7 @@ def entrypoint():
 
     # setup a temp path for DRM checks with ebook-convert
     with make_temp_directory() as ebook_convert_path:
-        ret = core.doit(
+        ret = doit(
             ebook_home=ebook_home,
             username=username,
             password=password,
@@ -103,19 +103,19 @@ def entrypoint():
 
     # print messages on error
     if ret > 0:
-        if ret == core.RETURN_CODES.error_auth:
-            msg = 'Something went wrong, contact tha spodz with..\nCode egg: {}'.format(core.last_error)
-        elif ret == core.RETURN_CODES.error_bacon:
-            msg = 'Something went wrong, contact tha spodz with..\nCode bacon: {}'.format(core.last_error)
-        elif ret == core.RETURN_CODES.error_mushroom:
-            msg = 'Something went wrong, contact tha spodz with..\nCode mushroom: {}'.format(core.last_error)
-        elif ret == core.RETURN_CODES.error_spinach:
-            msg = 'Something went wrong, contact tha spodz with..\nCode spinach: {}'.format(core.last_error)
-        elif ret == core.RETURN_CODES.auth_denied:
+        if ret == RETURN_CODES.error_auth:
+            msg = 'Something went wrong, contact tha spodz with..\nCode egg: {}'.format(last_error)
+        elif ret == RETURN_CODES.error_bacon:
+            msg = 'Something went wrong, contact tha spodz with..\nCode bacon: {}'.format(last_error)
+        elif ret == RETURN_CODES.error_mushroom:
+            msg = 'Something went wrong, contact tha spodz with..\nCode mushroom: {}'.format(last_error)
+        elif ret == RETURN_CODES.error_spinach:
+            msg = 'Something went wrong, contact tha spodz with..\nCode spinach: {}'.format(last_error)
+        elif ret == RETURN_CODES.auth_denied:
             msg = 'Permission denied. This is a private system.'
-        elif ret == core.RETURN_CODES.no_ebooks:
+        elif ret == RETURN_CODES.no_ebooks:
             msg = 'No ebooks found. Is $EBOOK_HOME set correctly?'
-        elif ret == core.RETURN_CODES.no_uploads:
+        elif ret == RETURN_CODES.no_uploads:
             msg = 'Nothing to upload..'
 
         sys.stderr.write('{}\n'.format(msg))
@@ -163,7 +163,7 @@ def prerequisites(host, username, password):
             f_config.write(json.dumps(conf))
 
     if host is None:
-        host = core.OGRESERVER
+        host = OGRESERVER
 
     try:
         import dedrm
@@ -200,7 +200,7 @@ def prerequisites(host, username, password):
         prntr.p('Downloading latest DRM tools')
 
         # retrieve the DRM tools
-        session_key = core.authenticate(host, username, password)
+        session_key = authenticate(host, username, password)
         if type(session_key) is not str:
             prntr.p("Couldn't get DRM tools")
         else:
@@ -228,4 +228,4 @@ def prerequisites(host, username, password):
 
 def dl_progress(count, size, total):
     progress = float(count * size) / float(total)
-    update_progress(progress if progress < 1 else 1, length=core.PROGBAR_LEN)
+    update_progress(progress if progress < 1 else 1, length=PROGBAR_LEN)

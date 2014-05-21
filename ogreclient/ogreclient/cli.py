@@ -42,6 +42,7 @@ def parse_command_line():
     parser = argparse.ArgumentParser(
         description='O.G.R.E. client application'
     )
+    subparsers = parser.add_subparsers()
 
     # print the current sesame version
     parser.add_argument(
@@ -49,29 +50,37 @@ def parse_command_line():
         version='sesame {}'.format(__version__),
         help='Print the current Sesame version')
 
-    parser.add_argument(
+    parent_parser = argparse.ArgumentParser(add_help=False)
+
+    # setup parser for sync command
+    psync = subparsers.add_parser('sync',
+        parents=[parent_parser],
+        help='Synchronise with the OGRE server',
+    )
+    psync.set_defaults(mode='sync')
+    psync.add_argument(
         '--ebook-home', '-H',
         help=('The directory where you keep your ebooks. '
               'You can also set the environment variable $EBOOK_HOME'))
-    parser.add_argument(
+    psync.add_argument(
         '--host',
         help='Override the default server host of oii.ogre.yt')
-    parser.add_argument(
+    psync.add_argument(
         '--username', '-u',
         help=('Your O.G.R.E. username. '
               'You can also set the environment variable $EBOOK_USER'))
-    parser.add_argument(
+    psync.add_argument(
         '--password', '-p',
         help=('Your O.G.R.E. password. '
               'You can also set the environment variable $EBOOK_PASS'))
 
-    parser.add_argument(
+    psync.add_argument(
         '--verbose', '-v', action='store_true',
         help='Produce lots of output')
-    parser.add_argument(
+    psync.add_argument(
         '--quiet', '-q', action='store_true',
         help="Don't produce any output")
-    parser.add_argument(
+    psync.add_argument(
         '--dry-run', '-d', action='store_true',
         help="Dry run the sync; don't actually upload anything to the server")
 

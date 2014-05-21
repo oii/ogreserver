@@ -19,23 +19,20 @@ def entrypoint():
     try:
         # setup and run argparse
         args = parse_command_line()
-        ebook_home, username, password = validate_input(args)
 
         # global printer for init phase
         prntr = CliPrinter(None)
 
         # run some checks and create some config variables
-        conf = prerequisites(prntr, args.host, username, password)
+        conf = prerequisites(args, prntr)
 
-        if conf is None:
-            ret = 1
-
-        elif args.mode == 'dedrm':
+        if args.mode == 'dedrm':
             # decrypt a single book
             ret = dedrm_single_ebook(conf, args, prntr, args.inputfile, args.output_dir)
 
         elif args.mode == 'sync':
             # run ogreclient
+            ebook_home, username, password = validate_input(args)
             ret = main(conf, args, ebook_home, username, password)
 
     except OgreError as e:
@@ -222,7 +219,7 @@ def main(conf, args, ebook_home, username, password):
     return ret
 
 
-def prerequisites(prntr, host=None, username=None, password=None):
+def prerequisites(args, prntr):
     # setup some ebook cache file paths
     config_dir = os.path.join(os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config')), 'ogre')
     ebook_cache_path = os.path.join(config_dir, 'ebook_cache')
@@ -260,20 +257,18 @@ def prerequisites(prntr, host=None, username=None, password=None):
         with open(os.path.join(config_dir, 'app.config'), 'w') as f_config:
             f_config.write(json.dumps(conf))
 
-    if host is None:
-        host = OGRESERVER
+    if args.host is None:
+        args.host = OGRESERVER
 
     # check if we have decrypt capability
     from .dedrm import CAN_DECRYPT
 
     if CAN_DECRYPT is False:
-        if username is None or password is None:
-            prntr.p('Please run ogreclient dedrm --install first')
-            return None
+        ebook_home, username, password = validate_input(args)
 
         # attempt to download and setup dedrm
         attempted_download = True
-        download_dedrm(host, username, password, prntr)
+        download_dedrm(args.host, username, password, prntr)
     else:
         attempted_download = False
 

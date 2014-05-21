@@ -18,6 +18,8 @@ from .utils import make_temp_directory
 from .utils import CliPrinter
 from .utils import enum
 
+from .dedrm import decrypt, DRM
+
 
 PROGBAR_LEN = 30
 OGRESERVER = "ogre.oii.yt"
@@ -34,8 +36,6 @@ EBOOK_FORMATS = {
     'azw1': 8,
     'tpz': 9,
 }
-
-DRM = enum('unknown', 'decrypted', 'none', 'wrong_key', 'failed', 'corrupt')
 
 RETURN_CODES = enum(
     'error_auth',
@@ -83,8 +83,6 @@ def doit(ebook_home, username, password,
     if host is None:
         host = OGRESERVER
 
-    ebook_cache = []
-
     # load the user's database of previously scanned ebooks
     if os.path.exists(ebook_cache_path):
         with open(ebook_cache_path, "r") as f:
@@ -126,15 +124,6 @@ def doit(ebook_home, username, password,
     prntr.p("Scanning ebook meta data and checking DRM..")
     #update_progress(0, length=PROGBAR_LEN)
     ebooks_dict = {}
-    can_decrypt = None
-
-    try:
-        # import DeDRM libs, capturing anything that's shat out on STDOUT
-        with capture() as out:
-            from dedrm.scriptinterface import decryptepub, decryptpdf, decryptpdb, decryptk4mobi
-        can_decrypt = True
-    except ImportError:
-        can_decrypt = False
 
     # write good ebooks into the local ogre cache to skip DRM test next run
     with open(ebook_cache_temp_path, "w") as f_ogre_cache:
@@ -151,74 +140,28 @@ def doit(ebook_home, username, password,
                     prntr.e("{0}{1}".format(item[1], item[2]), CliPrinter.CORRUPT)
                 continue
 
-            if can_decrypt:
-                try:
-                    out = ""
-                    # attempt to decrypt each book, capturing STDOUT
-                    with capture() as out:
-                        if item[2] == '.epub':
-                            decryptepub(item[0], ebook_convert_path, config_dir)
-                        elif item[2] == '.pdb':
-                            decryptpdb(item[0], ebook_convert_path, config_dir)
-                        elif item[2] in ('.mobi', '.azw', '.azw1', '.azw3', '.azw4', '.tpz'):
-                            decryptk4mobi(item[0], ebook_convert_path, config_dir)
-                        elif item[2] == '.pdf':
-                            decryptpdf(item[0], ebook_convert_path, config_dir)
+            try:
+                state, out = decrypt(item[0], item[2], ebook_convert_path, config_dir)
 
-                    # decryption state of current book
-                    state = DRM.unknown
+                if verbose:
+                    if state == DRM.none:
+                        prntr.p("{0}".format(item[0]), CliPrinter.NONE)
+                    elif state == DRM.decrypted:
+                        prntr.p("{0}".format(item[0]), CliPrinter.DEDRM, success=True)
+                    elif state == DRM.wrong_key:
+                        prntr.e("{0}".format(item[0]), CliPrinter.WRONG_KEY)
+                    elif state == DRM.failed:
+                        prntr.e("{0}".format(item[0]), CliPrinter.DEDRM,
+                            extra=' '.join([l.strip() for l in out])
+                        )
+                    elif state == DRM.corrupt:
+                        prntr.e("{0}".format(item[0]), CliPrinter.CORRUPT)
+                    else:
+                        prntr.p("{0}\t{1}".format(item[0], out), CliPrinter.UNKNOWN)
 
-                    if item[2] == '.epub':
-                        for line in out:
-                            if ' is not DRMed.' in line:
-                                state = DRM.none
-                                break
-                            elif 'Decrypted Adobe ePub' in line:
-                                state = DRM.decrypted
-                                break
-                            elif 'Could not decrypt' in line and 'Wrong key' in line:
-                                state = DRM.wrong_key
-                                break
-                            elif 'Error while trying to fix epub' in line:
-                                state = DRM.corrupt
-                                break
-                    elif item[2] in ('.mobi', '.azw', '.azw1', '.azw3', '.azw4', '.tpz'):
-                        for line in out:
-                            if 'This book is not encrypted.' in line:
-                                state = DRM.none
-                                break
-                            elif 'Decryption succeeded' in line:
-                                state = DRM.decrypted
-                                break
-                            elif 'DrmException: No key found' in line:
-                                state = DRM.wrong_key
-                                break
-                    elif item[2] == '.pdf':
-                        state = DRM.none
-                        for line in out:
-                            if 'Error serializing pdf' in line:
-                                state = DRM.failed
-                                break
-
-                    if verbose:
-                        if state == DRM.none:
-                            prntr.p("{0}".format(item[0]), CliPrinter.NONE)
-                        elif state == DRM.decrypted:
-                            prntr.p("{0}".format(item[0]), CliPrinter.DEDRM, success=True)
-                        elif state == DRM.wrong_key:
-                            prntr.e("{0}".format(item[0]), CliPrinter.WRONG_KEY)
-                        elif state == DRM.failed:
-                            prntr.e("{0}".format(item[0]), CliPrinter.DEDRM,
-                                extra=' '.join([l.strip() for l in out])
-                            )
-                        elif state == DRM.corrupt:
-                            prntr.e("{0}".format(item[0]), CliPrinter.CORRUPT)
-                        else:
-                            prntr.p("{0}\t{1}".format(item[0], out), CliPrinter.UNKNOWN)
-
-                except Exception as e:
-                    prntr.e("Fatal Exception on {0}".format(item[0]), excp=e)
-                    continue
+            except Exception as e:
+                prntr.e("Fatal Exception on {0}".format(item[0]), excp=e)
+                continue
 
             # initialize all the metadata we attempt to extract
             meta = {}

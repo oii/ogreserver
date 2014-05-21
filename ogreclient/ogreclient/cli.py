@@ -30,7 +30,11 @@ def entrypoint():
         # run some checks and create some config variables
         conf = prerequisites(args, prntr)
 
-        if args.mode == 'dedrm':
+        if args.mode == 'update':
+            ebook_home, username, password = validate_input(args)
+            ret = download_dedrm(args.host, username, password, prntr)
+
+        elif args.mode == 'dedrm':
             # decrypt a single book
             ret = dedrm_single_ebook(conf, args, prntr, args.inputfile, args.output_dir)
 
@@ -74,17 +78,6 @@ def parse_command_line():
         '--ebook-home', '-H',
         help=('The directory where you keep your ebooks. '
               'You can also set the environment variable $EBOOK_HOME'))
-    psync.add_argument(
-        '--host',
-        help='Override the default server host of oii.ogre.yt')
-    psync.add_argument(
-        '--username', '-u',
-        help=('Your O.G.R.E. username. '
-              'You can also set the environment variable $EBOOK_USER'))
-    psync.add_argument(
-        '--password', '-p',
-        help=('Your O.G.R.E. password. '
-              'You can also set the environment variable $EBOOK_PASS'))
 
     psync.add_argument(
         '--verbose', '-v', action='store_true',
@@ -95,6 +88,27 @@ def parse_command_line():
     psync.add_argument(
         '--dry-run', '-d', action='store_true',
         help="Dry run the sync; don't actually upload anything to the server")
+
+    # setup parser for update command
+    pupdate = subparsers.add_parser('update',
+        parents=[parent_parser],
+        help='Install the latest DeDRM tools',
+    )
+    pupdate.set_defaults(mode='update')
+
+    # set ogreserver params which apply to sync & update
+    for p in (psync, pupdate):
+        p.add_argument(
+            '--host',
+            help='Override the default server host of oii.ogre.yt')
+        p.add_argument(
+            '--username', '-u',
+            help=('Your O.G.R.E. username. '
+                  'You can also set the environment variable $EBOOK_USER'))
+        p.add_argument(
+            '--password', '-p',
+            help=('Your O.G.R.E. password. '
+                  'You can also set the environment variable $EBOOK_PASS'))
 
     # setup parser for dedrm command
     pdedrm = subparsers.add_parser('dedrm',
@@ -295,13 +309,16 @@ def prerequisites(args, prntr):
 
 
 def download_dedrm(host, username, password, prntr):
-    prntr.p('Downloading latest DRM tools')
+    prntr.p('Downloading latest DRM tools from {}'.format(host))
 
     # retrieve the DRM tools
     session_key = authenticate(host, username, password)
+
     if type(session_key) is not str:
         prntr.p("Couldn't get DRM tools")
         return False
+    elif verbose:
+        prntr.p('Authenticated with Ogreserver. Downloading..')
 
     # download the tarball
     urllib.urlretrieve(
@@ -313,7 +330,6 @@ def download_dedrm(host, username, password, prntr):
     # install DRM tools
     subprocess.check_output('pip install /tmp/dedrm.tar.gz', shell=True)
     prntr.p('Installed dedrm latest')
-
     return True
 
 

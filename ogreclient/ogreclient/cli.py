@@ -8,13 +8,46 @@ import subprocess
 import sys
 import urllib
 
+from . import __version__
+from . import OgreError
+
 from .core import authenticate, doit, last_error, OGRESERVER, PROGBAR_LEN, RETURN_CODES
 from .utils import capture, make_temp_directory, update_progress, CliPrinter
 
 
 def entrypoint():
-    parser = argparse.ArgumentParser(description='O.G.R.E. client application')
+    try:
+        # setup and run argparse
+        args = parse_command_line()
+        ebook_home, username, password = validate_input(args)
 
+        # run some checks and create some config variables
+        conf = prerequisites(args.host, username, password)
+
+        # run ogreclient
+        ret = main(conf, args, ebook_home, username, password)
+
+    except OgreError as e:
+        sys.stderr.write('{}\n'.format(e))
+        sys.stderr.flush()
+        sys.exit(1)
+
+    # exit with return code
+    if type(ret) is bool:
+        ret = True if ret == 0 else False
+    sys.exit(ret)
+
+
+def parse_command_line():
+    parser = argparse.ArgumentParser(
+        description='O.G.R.E. client application'
+    )
+
+    # print the current sesame version
+    parser.add_argument(
+        '--version', action='version',
+        version='sesame {}'.format(__version__),
+        help='Print the current Sesame version')
 
     parser.add_argument(
         '--ebook-home', '-H',
@@ -47,6 +80,10 @@ def entrypoint():
     if args.verbose and args.quiet:
         parser.error('You cannot specify --verbose and --quiet together!')
 
+    return args
+
+
+def validate_input(args):
     ebook_home = args.ebook_home
     username = args.username
     password = args.password
@@ -82,9 +119,10 @@ def entrypoint():
             if len(password) == 0:
                 sys.exit(1)
 
-    # run some checks and create some config variables
-    conf = prerequisites(args.host, username, password)
+    return ebook_home, username, password
 
+
+def main(conf, args, ebook_home, username, password):
     # setup a temp path for DRM checks with ebook-convert
     with make_temp_directory() as ebook_convert_path:
         ret = doit(
@@ -119,7 +157,8 @@ def entrypoint():
             msg = 'Nothing to upload..'
 
         sys.stderr.write('{}\n'.format(msg))
-        sys.exit(ret)
+
+    return ret
 
 
 def prerequisites(host, username, password):

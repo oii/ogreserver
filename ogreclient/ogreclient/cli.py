@@ -21,15 +21,18 @@ def entrypoint():
         args = parse_command_line()
         ebook_home, username, password = validate_input(args)
 
+        # global printer for init phase
+        prntr = CliPrinter(None)
+
         # run some checks and create some config variables
-        conf = prerequisites(args.host, username, password)
+        conf = prerequisites(prntr, args.host, username, password)
 
         if conf is None:
             ret = 1
 
         elif args.mode == 'dedrm':
             # decrypt a single book
-            ret = dedrm_single_ebook(conf, args, args.inputfile, args.output_dir)
+            ret = dedrm_single_ebook(conf, args, prntr, args.inputfile, args.output_dir)
 
         elif args.mode == 'sync':
             # run ogreclient
@@ -156,11 +159,9 @@ def validate_input(args):
     return ebook_home, username, password
 
 
-def dedrm_single_ebook(conf, args, inputfile, output_dir=None):
+def dedrm_single_ebook(conf, args, prntr, inputfile, output_dir=None):
     filename, ext = os.path.splitext(inputfile)
     from .dedrm import decrypt, DRM, DecryptionError
-
-    prntr = CliPrinter(None)
 
     try:
         with make_temp_directory() as ebook_convert_path:
@@ -221,13 +222,11 @@ def main(conf, args, ebook_home, username, password):
     return ret
 
 
-def prerequisites(host=None, username=None, password=None):
+def prerequisites(prntr, host=None, username=None, password=None):
     # setup some ebook cache file paths
     config_dir = os.path.join(os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config')), 'ogre')
     ebook_cache_path = os.path.join(config_dir, 'ebook_cache')
     ebook_cache_temp_path = os.path.join(config_dir, 'ebook_cache.tmp')
-
-    prntr = CliPrinter(None)
 
     # use existing config if available
     if os.path.exists(config_dir) and os.path.exists(os.path.join(config_dir, 'app.config')):

@@ -24,8 +24,13 @@ def entrypoint():
         # run some checks and create some config variables
         conf = prerequisites(args.host, username, password)
 
-        # run ogreclient
-        ret = main(conf, args, ebook_home, username, password)
+        elif args.mode == 'dedrm':
+            # decrypt a single book
+            ret = dedrm_single_ebook(conf, args, args.inputfile, args.output_dir)
+
+        elif args.mode == 'sync':
+            # run ogreclient
+            ret = main(conf, args, ebook_home, username, password)
 
     except OgreError as e:
         sys.stderr.write('{}\n'.format(e))
@@ -84,16 +89,33 @@ def parse_command_line():
         '--dry-run', '-d', action='store_true',
         help="Dry run the sync; don't actually upload anything to the server")
 
+    # setup parser for dedrm command
+    pdedrm = subparsers.add_parser('dedrm',
+        parents=[parent_parser],
+        help='Strip a single ebook of DRM',
+    )
+    pdedrm.set_defaults(mode='dedrm')
+    pdedrm.add_argument(
+        'inputfile',
+        help='Ebook to be decrypted')
+    pdedrm.add_argument(
+        '-O', '--output-dir', default=os.getcwd(),
+        help='Extract files into a specific directory')
+
     args = parser.parse_args()
 
-    if args.verbose and args.quiet:
+    if args.mode == 'sync' and args.verbose and args.quiet:
         parser.error('You cannot specify --verbose and --quiet together!')
 
     return args
 
 
 def validate_input(args):
-    ebook_home = args.ebook_home
+    if 'ebook_home' in args:
+        ebook_home = args.ebook_home
+    else:
+        ebook_home = None
+
     username = args.username
     password = args.password
 
@@ -129,6 +151,32 @@ def validate_input(args):
                 sys.exit(1)
 
     return ebook_home, username, password
+
+
+def dedrm_single_ebook(conf, args, inputfile, output_dir=None):
+    filename, ext = os.path.splitext(inputfile)
+    from .dedrm import decrypt, DRM, DecryptionError
+
+    prntr = CliPrinter(None)
+
+    try:
+        with make_temp_directory() as ebook_convert_path:
+            state, decrypted_filename = decrypt(
+                inputfile, ext, ebook_convert_path, conf['config_dir'], output_dir
+            )
+            if output_dir:
+                decrypted_filename = os.path.join(output_dir, decrypted_filename)
+
+            prntr.p('Book decrypted at {}'.format(decrypted_filename))
+
+    except DecryptionError as e:
+        prntr.p(str(e))
+        state = None
+
+    if state == DRM.decrypted:
+        return 0
+    else:
+        return 1
 
 
 def main(conf, args, ebook_home, username, password):
@@ -170,7 +218,7 @@ def main(conf, args, ebook_home, username, password):
     return ret
 
 
-def prerequisites(host, username, password):
+def prerequisites(host=None, username=None, password=None):
     # setup some ebook cache file paths
     config_dir = os.path.join(os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config')), 'ogre')
     ebook_cache_path = os.path.join(config_dir, 'ebook_cache')

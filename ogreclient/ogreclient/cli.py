@@ -12,7 +12,7 @@ from . import __version__
 from . import OgreError
 
 from .core import authenticate, doit, last_error, OGRESERVER, PROGBAR_LEN, RETURN_CODES
-from .utils import capture, make_temp_directory, update_progress, CliPrinter
+from .utils import make_temp_directory, update_progress, CliPrinter
 
 
 def entrypoint():
@@ -23,6 +23,9 @@ def entrypoint():
 
         # run some checks and create some config variables
         conf = prerequisites(args.host, username, password)
+
+        if conf is None:
+            ret = 1
 
         elif args.mode == 'dedrm':
             # decrypt a single book
@@ -261,65 +264,62 @@ def prerequisites(host=None, username=None, password=None):
     if host is None:
         host = OGRESERVER
 
-    try:
-        import dedrm
-        prntr.p('Initialized DRM tools v{}'.format(dedrm.PLUGIN_VERSION))
+    # check if we have decrypt capability
+    from .dedrm import CAN_DECRYPT
 
-        # extract the Kindle key
-        kindlekeyfile = os.path.join(config_dir, 'kindlekey.k4i')
-        if not os.path.exists(kindlekeyfile):
-            import dedrm.kindlekey
-            with capture() as out:
-                dedrm.kindlekey.getkey(kindlekeyfile)
+    if CAN_DECRYPT is False:
+        if username is None or password is None:
+            prntr.p('Please run ogreclient dedrm --install first')
+            return None
 
-            for line in out:
-                if 'K4PC' in line:
-                    prntr.p('Extracted Kindle4PC key')
-                    break
-                elif 'k4Mac' in line:
-                    prntr.p('Extracted Kindle4Mac key')
-                    break
+        # attempt to download and setup dedrm
+        attempted_download = True
+        download_dedrm(host, username, password, prntr)
+    else:
+        attempted_download = False
 
-        # extract the Adobe key
-        adeptkeyfile = os.path.join(config_dir, 'adeptkey.der')
-        if not os.path.exists(adeptkeyfile):
-            import dedrm.adobekey
-            with capture() as out:
-                dedrm.adobekey.getkey(adeptkeyfile)
+    # initialise dedrm lib
+    from .dedrm import init_keys
 
-            for line in out:
-                if 'Saved a key' in line:
-                    prntr.p('Extracted Adobe DE key')
-                    break
+    if CAN_DECRYPT is True:
+        from dedrm import PLUGIN_VERSION
+        prntr.p('Initialized DRM tools v{}'.format(PLUGIN_VERSION))
 
-    except ImportError:
-        prntr.p('Downloading latest DRM tools')
+        msgs = init_keys(config_dir, ignore_check=True)
+        for m in msgs:
+            prntr.p(m)
 
-        # retrieve the DRM tools
-        session_key = authenticate(host, username, password)
-        if type(session_key) is not str:
-            prntr.p("Couldn't get DRM tools")
-        else:
-            urllib.urlretrieve(
-                'http://{}/download-dedrm/{}'.format(host, session_key),
-                '/tmp/dedrm.tar.gz',
-                dl_progress
-            )
-
-        # install DRM tools
-        subprocess.check_output('pip install /tmp/dedrm.tar.gz', shell=True)
-
-        try:
-            import dedrm
-            prntr.p('Initialized DRM tools v{}'.format(dedrm.PLUGIN_VERSION))
-        except ImportError:
-            prntr.e('Failed to download DRM tools. Please report this error.', notime=True)
+    elif attempted_download is True:
+        prntr.e('Failed to download DRM tools. Please report this error.', notime=True)
 
     # return config object
     conf['config_dir'] = config_dir
     conf['ebook_cache_path'] = ebook_cache_path
     conf['ebook_cache_temp_path'] = ebook_cache_temp_path
     return conf
+
+
+def download_dedrm(host, username, password, prntr):
+    prntr.p('Downloading latest DRM tools')
+
+    # retrieve the DRM tools
+    session_key = authenticate(host, username, password)
+    if type(session_key) is not str:
+        prntr.p("Couldn't get DRM tools")
+        return False
+
+    # download the tarball
+    urllib.urlretrieve(
+        'http://{}/download-dedrm/{}'.format(host, session_key),
+        '/tmp/dedrm.tar.gz',
+        dl_progress
+    )
+
+    # install DRM tools
+    subprocess.check_output('pip install /tmp/dedrm.tar.gz', shell=True)
+    prntr.p('Installed dedrm latest')
+
+    return True
 
 
 def dl_progress(count, size, total):

@@ -101,6 +101,42 @@ def decrypt(filepath, suffix, ebook_convert_path, config_dir, output_dir=None):
     return state, output_filename
 
 
+def init_keys(config_dir, ignore_check=False):
+    if ignore_check is False and CAN_DECRYPT is False:
+        raise DeDrmMissingError
+
+    msgs = []
+
+    # extract the Kindle key
+    kindlekeyfile = os.path.join(config_dir, 'kindlekey.k4i')
+    if not os.path.exists(kindlekeyfile):
+        from dedrm import kindlekey
+        with capture() as out:
+            kindlekey.getkey(kindlekeyfile)
+
+        for line in out:
+            if 'K4PC' in line:
+                msgs.append('Extracted Kindle4PC key')
+                break
+            elif 'k4Mac' in line:
+                msgs.append('Extracted Kindle4Mac key')
+                break
+
+    # extract the Adobe key
+    adeptkeyfile = os.path.join(config_dir, 'adeptkey.der')
+    if not os.path.exists(adeptkeyfile):
+        from dedrm import adobekey
+        with capture() as out:
+            adobekey.getkey(adeptkeyfile)
+
+        for line in out:
+            if 'Saved a key' in line:
+                msgs.append('Extracted Adobe DE key')
+                break
+
+    return msgs
+
+
 class DeDrmMissingError(OgreError):
     pass
 

@@ -15,8 +15,7 @@ from .urllib2_file import newHTTPHandler
 from .utils import compute_md5
 from .utils import id_generator
 from .utils import make_temp_directory
-from .utils import CliPrinter
-
+from .printer import CliPrinter
 from .dedrm import decrypt, DRM
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError

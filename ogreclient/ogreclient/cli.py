@@ -12,13 +12,17 @@ from . import __version__
 from . import OgreError
 
 from .core import authenticate, doit, OGRESERVER, PROGBAR_LEN
-from .utils import make_temp_directory, update_progress, CliPrinter, format_excp
+from .utils import make_temp_directory, update_progress
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
 from .exceptions import BaconError, MushroomError, SpinachError
 
+from .printer import CliPrinter
+
 
 def entrypoint():
+    ret = False
+
     try:
         # setup and run argparse
         args = parse_command_line()
@@ -27,8 +31,8 @@ def entrypoint():
         if 'host' not in args or args.host is None:
             args.host = OGRESERVER
 
-        # global printer for init phase
-        prntr = CliPrinter(None)
+        # global CLI printer
+        prntr = CliPrinter()
 
         # run some checks and create some config variables
         conf = prerequisites(args, prntr)
@@ -44,7 +48,7 @@ def entrypoint():
         elif args.mode == 'sync':
             # run ogreclient
             ebook_home, username, password = validate_input(args)
-            ret = main(conf, args, ebook_home, username, password)
+            ret = main(conf, args, prntr, ebook_home, username, password)
 
     except OgreError as e:
         sys.stderr.write('{}\n'.format(e))
@@ -201,7 +205,7 @@ def dedrm_single_ebook(conf, args, prntr, inputfile, output_dir=None):
         return 1
 
 
-def main(conf, args, ebook_home, username, password):
+def main(conf, args, prntr, ebook_home, username, password):
     try:
         # setup a temp path for DRM checks with ebook-convert
         with make_temp_directory() as ebook_convert_path:
@@ -221,15 +225,15 @@ def main(conf, args, ebook_home, username, password):
 
     # print messages on error
     except (AuthError, BaconError, MushroomError, SpinachError) as e:
-        sys.stderr.write('Something went wrong\n{}\n'.format(e))
+        prntr.e('Something went wrong.', excp=e)
     except AuthDeniedError:
-        sys.stderr.write('Permission denied. This is a private system.\n')
+        prntr.e('Permission denied. This is a private system.')
     except NoEbooksError:
-        sys.stderr.write('No ebooks found. Pass --ebook-home or set $EBOOK_HOME\n')
+        prntr.e('No ebooks found. Pass --ebook-home or set $EBOOK_HOME.')
     except NoUploadsError:
-        sys.stderr.write('Nothing to upload..\n')
+        prntr.e('Nothing to upload..')
     except Exception as e:
-        sys.stderr.write('Something very went wrong\n{}\n'.format(format_excp(e)))
+        prntr.e('Something very went wrong.', excp=e)
 
     return ret
 

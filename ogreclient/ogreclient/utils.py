@@ -7,6 +7,7 @@ import shutil
 import string
 import sys
 import tempfile
+import traceback
 
 
 def compute_md5(filepath, buf_size=8192):
@@ -207,3 +208,13 @@ class CliPrinter:
 def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
     return type('Enum', (), enums)
+
+
+def format_excp(ex, debug=False):
+    msg = '{}: {}'.format(ex.__class__.__name__, ex)
+
+    if debug is True:
+        ex_type, ex, tb = sys.exc_info()
+        msg += '\n{}'.format(traceback.extract_tb(tb))
+
+    return msg

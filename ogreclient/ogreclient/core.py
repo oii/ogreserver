@@ -16,9 +16,11 @@ from .utils import compute_md5
 from .utils import id_generator
 from .utils import make_temp_directory
 from .utils import CliPrinter
-from .utils import enum
 
 from .dedrm import decrypt, DRM
+
+from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
+from .exceptions import BaconError, MushroomError, SpinachError
 
 
 PROGBAR_LEN = 30
@@ -37,21 +39,8 @@ EBOOK_FORMATS = {
     'tpz': 9,
 }
 
-RETURN_CODES = enum(
-    'error_auth',
-    'error_bacon',
-    'error_mushroom',
-    'error_spinach',
-    'auth_denied',
-    'no_ebooks',
-    'no_uploads',
-)
-
-last_error = None
-
 
 def authenticate(host, username, password):
-    global last_error
     try:
         # authenticate the user; retrieve an session_key for subsequent requests
         params = urllib.urlencode({
@@ -64,21 +53,17 @@ def authenticate(host, username, password):
 
     except HTTPError as e:
         if e.getcode() == 403:
-            return RETURN_CODES.auth_denied
+            raise AuthDeniedError
         else:
-            last_error = e
-            return RETURN_CODES.error_auth
+            raise AuthError(str(e))
     except URLError as e:
-        last_error = e
-        return RETURN_CODES.error_auth
+        raise AuthError(str(e))
 
 
 def doit(ebook_home, username, password, host,
          config_dir=None, ebook_cache_path=None,
          ebook_cache_temp_path=None, ebook_convert_path=None,
          calibre_ebook_meta_bin=None, verbose=False, quiet=False):
-
-    global last_error
 
     # load the user's database of previously scanned ebooks
     if os.path.exists(ebook_cache_path):
@@ -87,11 +72,7 @@ def doit(ebook_home, username, password, host,
             #ebook_cache = json.loads(data)
 
     # authenticate user and generate session API key
-    ret = authenticate(host, username, password)
-    if ret in (RETURN_CODES.error_auth, RETURN_CODES.auth_denied):
-        return ret
-    else:
-        session_key = ret
+    session_key = authenticate(host, username, password)
 
     ebooks = []
 
@@ -116,7 +97,7 @@ def doit(ebook_home, username, password, host,
     total = len(ebooks)
     prntr.p("Discovered {0} files".format(total))
     if total == 0:
-        return RETURN_CODES.no_ebooks
+        raise NoEbooksError()
 
     prntr.p("Scanning ebook meta data and checking DRM..")
     #update_progress(0, length=PROGBAR_LEN)
@@ -295,11 +276,9 @@ def doit(ebook_home, username, password, host,
         response = json.loads(data)
 
     except ValueError as e:
-        last_error = e
-        return RETURN_CODES.error_bacon
+        raise BaconError(str(e))
     except (HTTPError, URLError) as e:
-        last_error = e
-        return RETURN_CODES.error_mushroom
+        raise MushroomError(str(e))
 
     # display server messages
     for msg in response['messages']:
@@ -309,7 +288,7 @@ def doit(ebook_home, username, password, host,
             prntr.p(msg, CliPrinter.RESPONSE)
 
     if len(response['ebooks_to_upload']) == 0:
-        return RETURN_CODES.no_uploads
+        raise NoUploadsError()
 
     # grammatically correct messages are nice
     plural = "s" if len(response['ebooks_to_upload']) > 1 else ""
@@ -391,9 +370,10 @@ def doit(ebook_home, username, password, host,
                     prntr.p(data)
 
                 except (HTTPError, URLError), e:
-                    last_error = e
-                    return RETURN_CODES.error_spinach
+                    raise SpinachError(str(e))
                 except IOError, e:
                     continue
                 finally:
                     f.close()
+
+    return True

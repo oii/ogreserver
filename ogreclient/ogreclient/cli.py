@@ -11,8 +11,11 @@ import urllib
 from . import __version__
 from . import OgreError
 
-from .core import authenticate, doit, last_error, OGRESERVER, PROGBAR_LEN, RETURN_CODES
-from .utils import make_temp_directory, update_progress, CliPrinter
+from .core import authenticate, doit, OGRESERVER, PROGBAR_LEN
+from .utils import make_temp_directory, update_progress, CliPrinter, format_excp
+
+from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
+from .exceptions import BaconError, MushroomError, SpinachError
 
 
 def entrypoint():
@@ -199,40 +202,34 @@ def dedrm_single_ebook(conf, args, prntr, inputfile, output_dir=None):
 
 
 def main(conf, args, ebook_home, username, password):
-    # setup a temp path for DRM checks with ebook-convert
-    with make_temp_directory() as ebook_convert_path:
-        ret = doit(
-            ebook_home=ebook_home,
-            username=username,
-            password=password,
-            host=args.host,
-            config_dir=conf['config_dir'],
-            ebook_cache_path=conf['ebook_cache_path'],
-            ebook_cache_temp_path=conf['ebook_cache_temp_path'],
-            ebook_convert_path=ebook_convert_path,
-            calibre_ebook_meta_bin=conf['calibre_ebook_meta_bin'],
-            verbose=args.verbose,
-            quiet=args.quiet,
-        )
+    try:
+        # setup a temp path for DRM checks with ebook-convert
+        with make_temp_directory() as ebook_convert_path:
+            ret = doit(
+                ebook_home=ebook_home,
+                username=username,
+                password=password,
+                host=args.host,
+                config_dir=conf['config_dir'],
+                ebook_cache_path=conf['ebook_cache_path'],
+                ebook_cache_temp_path=conf['ebook_cache_temp_path'],
+                ebook_convert_path=ebook_convert_path,
+                calibre_ebook_meta_bin=conf['calibre_ebook_meta_bin'],
+                verbose=args.verbose,
+                quiet=args.quiet,
+            )
 
     # print messages on error
-    if ret > 0:
-        if ret == RETURN_CODES.error_auth:
-            msg = 'Something went wrong, contact tha spodz with..\nCode egg: {}'.format(last_error)
-        elif ret == RETURN_CODES.error_bacon:
-            msg = 'Something went wrong, contact tha spodz with..\nCode bacon: {}'.format(last_error)
-        elif ret == RETURN_CODES.error_mushroom:
-            msg = 'Something went wrong, contact tha spodz with..\nCode mushroom: {}'.format(last_error)
-        elif ret == RETURN_CODES.error_spinach:
-            msg = 'Something went wrong, contact tha spodz with..\nCode spinach: {}'.format(last_error)
-        elif ret == RETURN_CODES.auth_denied:
-            msg = 'Permission denied. This is a private system.'
-        elif ret == RETURN_CODES.no_ebooks:
-            msg = 'No ebooks found. Is $EBOOK_HOME set correctly?'
-        elif ret == RETURN_CODES.no_uploads:
-            msg = 'Nothing to upload..'
-
-        sys.stderr.write('{}\n'.format(msg))
+    except (AuthError, BaconError, MushroomError, SpinachError) as e:
+        sys.stderr.write('Something went wrong\n{}\n'.format(e))
+    except AuthDeniedError:
+        sys.stderr.write('Permission denied. This is a private system.\n')
+    except NoEbooksError:
+        sys.stderr.write('No ebooks found. Pass --ebook-home or set $EBOOK_HOME\n')
+    except NoUploadsError:
+        sys.stderr.write('Nothing to upload..\n')
+    except Exception as e:
+        sys.stderr.write('Something very went wrong\n{}\n'.format(format_excp(e)))
 
     return ret
 
@@ -311,14 +308,19 @@ def prerequisites(args, prntr):
 def download_dedrm(host, username, password, prntr):
     prntr.p('Downloading latest DRM tools from {}'.format(host))
 
-    # retrieve the DRM tools
-    session_key = authenticate(host, username, password)
+    try:
+        # authenticate with ogreserver to get DRM tools
+        session_key = authenticate(host, username, password)
 
-    if type(session_key) is not str:
-        prntr.p("Couldn't get DRM tools")
+    except (AuthError, AuthDeniedError) as e:
+        prntr.e('Permission denied. This is a private system.')
         return False
-    elif verbose:
-        prntr.p('Authenticated with Ogreserver. Downloading..')
+    except (AuthError, AuthDeniedError) as e:
+        prntr.e("Couldn't get DRM tools", excp=e)
+        return False
+
+    prntr.p('Authenticated with Ogreserver')
+    prntr.p('Downloading..')
 
     # download the tarball
     urllib.urlretrieve(
@@ -326,9 +328,17 @@ def download_dedrm(host, username, password, prntr):
         '/tmp/dedrm.tar.gz',
         dl_progress
     )
+    sys.stdout.write('\n')
+    sys.stdout.flush()
 
-    # install DRM tools
-    subprocess.check_output('pip install /tmp/dedrm.tar.gz', shell=True)
+    try:
+        # install DRM tools
+        subprocess.check_output('pip install /tmp/dedrm.tar.gz', shell=True)
+
+    except subprocess.CalledProcessError as e:
+        prntr.e('Failed installing dedrm tools', excp=e)
+        return False
+
     prntr.p('Installed dedrm latest')
     return True
 

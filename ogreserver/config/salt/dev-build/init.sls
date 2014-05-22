@@ -51,6 +51,23 @@ extend:
         - supervisord: watchdog-service
 
 
+# build dedrm and stick it in the pypiserver cache
+build-dedrm:
+  cmd.run:
+    - name: python setup.py sdist
+    - cwd: /srv/ogreserver/dedrm
+    - require:
+      - git: git-clone-app
+  file.rename:
+    - name: /var/pypiserver-cache/dedrm-6.0.7.tar.gz
+    - source: /srv/ogreserver/dedrm/dist/dedrm-6.0.7.tar.gz
+    - force: true
+    - require:
+      - file: pypiserver-package-dir
+    - watch:
+      - cmd: build-dedrm
+
+# make the logs readable by the login user
 logs-chown:
   file.directory:
     - name: /var/log/{{ pillar['app_name'] }}
@@ -62,6 +79,7 @@ logs-chown:
     - require:
       - supervisord: ogreserver-supervisor-service
 
+# setup a dev OGRE user
 ogre-create-user:
   cmd.run:
     - name: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}/bin/python manage.py create_user {{ pillar['ogre_user_name'] }} {{ pillar['ogre_user_pass'] }} {{ pillar['ogre_user_email'] }}
@@ -72,6 +90,7 @@ ogre-create-user:
       - virtualenv: app-virtualenv
       - cmd: ogre-init
 
+# ruby plumbing for Zurb Sass framework
 zurb-rubygems:
   pkg.installed:
     - name: rubygems

@@ -15,7 +15,7 @@ from .urllib2_file import newHTTPHandler
 from .utils import compute_md5
 from .utils import id_generator
 from .utils import make_temp_directory
-from .printer import CliPrinter
+from .printer import CliPrinter, DummyPrinter
 from .dedrm import decrypt, DRM
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
@@ -75,7 +75,10 @@ def doit(ebook_home, username, password, host,
 
     ebooks = []
 
-    prntr = CliPrinter(datetime.datetime.now(), quiet=quiet)
+    if quiet is True:
+        prntr = DummyPrinter()
+    else:
+        prntr = CliPrinter(datetime.datetime.now())
 
     # let the user know something is happening
     prntr.p("Searching for ebooks.. ", nonl=True)

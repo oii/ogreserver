@@ -23,9 +23,8 @@ class CliPrinter:
     NONE = 'NONE'
     RESPONSE = 'RESPONSE'
 
-    def __init__(self, start=None, quiet=False):
+    def __init__(self, start=None):
         self.start = start
-        self.quiet = quiet
         self.progress_running = False
         self.line_needs_finishing = False
 
@@ -66,9 +65,6 @@ class CliPrinter:
         if self.start is None:
             notime = True
 
-        if self.quiet is True:
-            return
-
         if self.line_needs_finishing is True:
             self.line_needs_finishing = False
             sys.stdout.write('{}\n'.format(msg))
@@ -106,9 +102,6 @@ class CliPrinter:
             out.write('\n')
 
     def progress(self, amount, mode):
-        if self.quiet is True:
-            return
-
         self.progress_running = True
         colour, prefix = self._get_colour_and_prefix(mode)
 
@@ -139,3 +132,14 @@ class CliPrinter:
                 msg += '\n{}'.format(traceback.extract_tb(tb))
 
         return msg
+
+
+class DummyPrinter:
+    def e(self, msg, mode=None, excp=None, notime=False):
+        pass
+
+    def p(self, msg, mode=None, notime=False, success=None, extra=None, nonl=False):
+        pass
+
+    def progress(self, amount, mode):
+        pass

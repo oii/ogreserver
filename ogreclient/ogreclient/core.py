@@ -22,7 +22,6 @@ from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsErro
 from .exceptions import BaconError, MushroomError, SpinachError
 
 
-PROGBAR_LEN = 30
 OGRESERVER = "ogre.oii.yt"
 
 # ranked ebook formats

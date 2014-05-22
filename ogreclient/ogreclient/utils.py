@@ -66,11 +66,6 @@ def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for x in range(size))
 
 
-def update_progress(p, length=30):
-    i = round(p * 100, 1)
-    sys.stdout.write("\r[{0}{1}] {2}%".format("#" * int(p * length), " " * (length - int(p * length)), i))
-
-
 @contextlib.contextmanager
 def capture():
     """

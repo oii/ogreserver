@@ -12,8 +12,8 @@ import urllib
 from . import __version__
 from . import OgreError
 
-from .core import authenticate, doit, OGRESERVER, PROGBAR_LEN
-from .utils import make_temp_directory, update_progress
+from .core import authenticate, doit, OGRESERVER
+from .utils import make_temp_directory
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
 from .exceptions import BaconError, MushroomError, SpinachError
@@ -332,10 +332,8 @@ def download_dedrm(host, username, password, prntr):
     urllib.urlretrieve(
         'http://{}/download-dedrm/{}'.format(host, session_key),
         '/tmp/dedrm.tar.gz',
-        dl_progress
+        prntr.progressf
     )
-    sys.stdout.write('\n')
-    sys.stdout.flush()
 
     try:
         # install DRM tools
@@ -353,8 +351,3 @@ def download_dedrm(host, username, password, prntr):
 
     prntr.p('Installed dedrm {}'.format(mod.PLUGIN_VERSION))
     return True
-
-
-def dl_progress(count, size, total):
-    progress = float(count * size) / float(total)
-    update_progress(progress if progress < 1 else 1, length=PROGBAR_LEN)

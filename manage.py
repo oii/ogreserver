@@ -39,10 +39,10 @@ def create_user(username, password, email, test=False):
     if test is True:
         # only report state in test mode
         if user is None:
-            print "User exists"
+            print "User doesn't exist"
             sys.exit(1)
         else:
-            print "User doesn't exist"
+            print "User {} exists".format(username)
             sys.exit(0)
     else:
         if user is None:

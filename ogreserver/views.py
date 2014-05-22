@@ -7,6 +7,7 @@ from flask.ext.login import login_required, login_user, logout_user, current_use
 from werkzeug.exceptions import Forbidden
 
 from . import app, uploads
+from .utils import debug_print as dp
 
 from forms.auth import LoginForm
 

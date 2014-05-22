@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import argparse
 import getpass
+import importlib
 import json
 import os
 import subprocess
@@ -284,20 +285,21 @@ def prerequisites(args, prntr):
 
         # attempt to download and setup dedrm
         attempted_download = True
-        download_dedrm(args.host, username, password, prntr)
+        installed = download_dedrm(args.host, username, password, prntr)
     else:
         attempted_download = False
+        installed = False
 
-    # initialise dedrm lib
     from .dedrm import init_keys
 
-    if CAN_DECRYPT is True:
-        from dedrm import PLUGIN_VERSION
-        prntr.p('Initialized DRM tools v{}'.format(PLUGIN_VERSION))
-
+    # initialise a working dedrm lib
+    if CAN_DECRYPT is True or installed is True:
         msgs = init_keys(config_dir, ignore_check=True)
         for m in msgs:
             prntr.p(m)
+
+        from dedrm import PLUGIN_VERSION
+        prntr.p('Initialised DRM tools v{}'.format(PLUGIN_VERSION))
 
     elif attempted_download is True:
         prntr.e('Failed to download DRM tools. Please report this error.', notime=True)
@@ -339,11 +341,17 @@ def download_dedrm(host, username, password, prntr):
         # install DRM tools
         subprocess.check_output('pip install /tmp/dedrm.tar.gz', shell=True)
 
+        # attempt a dynamic load of the newly imported tools
+        mod = importlib.import_module('dedrm')
+
     except subprocess.CalledProcessError as e:
         prntr.e('Failed installing dedrm tools', excp=e)
         return False
+    except ImportError as e:
+        prntr.e('Failed installing dedrm tools', excp=e)
+        return False
 
-    prntr.p('Installed dedrm latest')
+    prntr.p('Installed dedrm {}'.format(mod.PLUGIN_VERSION))
     return True
 
 

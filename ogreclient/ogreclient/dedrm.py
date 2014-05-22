@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import importlib
 import os
 
 from . import OgreError
@@ -8,9 +9,9 @@ from .utils import capture, enum
 try:
     # import DeDRM libs, capturing anything that's shat out on STDOUT
     with capture() as out:
-        from dedrm.scriptinterface import decryptepub, decryptpdf, decryptpdb, decryptk4mobi
+        moddedrm = importlib.import_module('dedrm.scriptinterface')
     CAN_DECRYPT = True
-except ImportError:
+except ImportError as e:
     CAN_DECRYPT = False
 
 
@@ -18,8 +19,17 @@ DRM = enum('unknown', 'decrypted', 'none', 'wrong_key', 'failed', 'corrupt')
 
 
 def decrypt(filepath, suffix, ebook_convert_path, config_dir, output_dir=None):
+    # use the globally imported dedrm module ..
+    global moddedrm
+
+    # .. unless CAN_DECRYPT is false
     if CAN_DECRYPT is False:
-        raise DeDrmMissingError
+        try:
+            # attempt dynamic import of dedrm in case it has been installed since original import
+            with capture() as out:
+                moddedrm = importlib.import_module('dedrm.scriptinterface')
+        except ImportError:
+            raise DeDrmMissingError
 
     if os.path.exists(filepath) is False or os.path.isfile(filepath) is False:
         raise DeDrmMissingError
@@ -29,13 +39,13 @@ def decrypt(filepath, suffix, ebook_convert_path, config_dir, output_dir=None):
     # attempt to decrypt each book, capturing STDOUT
     with capture() as out:
         if suffix == '.epub':
-            decryptepub(filepath, ebook_convert_path, config_dir)
+            moddedrm.decryptepub(filepath, ebook_convert_path, config_dir)
         elif suffix == '.pdb':
-            decryptpdb(filepath, ebook_convert_path, config_dir)
+            moddedrm.decryptpdb(filepath, ebook_convert_path, config_dir)
         elif suffix in ('.mobi', '.azw', '.azw1', '.azw3', '.azw4', '.tpz'):
-            decryptk4mobi(filepath, ebook_convert_path, config_dir)
+            moddedrm.decryptk4mobi(filepath, ebook_convert_path, config_dir)
         elif suffix == '.pdf':
-            decryptpdf(filepath, ebook_convert_path, config_dir)
+            moddedrm.decryptpdf(filepath, ebook_convert_path, config_dir)
 
     # decryption state of current book
     state = DRM.unknown

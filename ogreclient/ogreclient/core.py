@@ -251,6 +251,9 @@ def doit(ebook_home, username, password, host,
 
     prntr.p("\nFound {0} ebooks".format(len(ebooks_dict)))
 
+    if len(ebooks_dict) == 0:
+        return {}
+
     # move the temp cache onto the real ogre cache
     statinfo = os.stat(ebook_cache_temp_path)
     if statinfo.st_size > 0:

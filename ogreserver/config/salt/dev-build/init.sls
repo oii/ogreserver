@@ -6,11 +6,11 @@ extend:
   gunicorn-config:
     file.managed:
       - context:
-          bind_hostname: "0.0.0.0"
+          gunicorn_host: "0.0.0.0"
           gunicorn_port: {{ pillar['gunicorn_port'] }}
           worker_class: sync
           timeout: 300
-          loglevel: info
+          loglevel: debug
 
   /etc/supervisor/conf.d/ogreserver.conf:
     file.managed:

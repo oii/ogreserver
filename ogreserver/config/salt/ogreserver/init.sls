@@ -4,7 +4,6 @@ include:
   - calibre
   - github
   - gunicorn
-  - logs
   - mysql
   - pypiserver
   - rabbitmq
@@ -30,11 +29,6 @@ extend:
       - pre_releases: true
       - require:
         - pkg: pip-dependencies-extra
-
-  app-log-directory:
-    file.directory:
-      - require_in:
-        - service: supervisor
 
   ogreserver-supervisor-service:
     supervisord.running:

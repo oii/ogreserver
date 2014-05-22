@@ -1,5 +1,6 @@
 include:
   - compass
+  - logs
   - watchdog
 
 extend:
@@ -44,6 +45,11 @@ extend:
     virtualenv.managed:
       - require_in:
         - pip: watchdog
+
+  app-log-directory:
+    file.directory:
+      - require_in:
+        - service: supervisor
 
   ogreserver-supervisor-service:
     supervisord.running:

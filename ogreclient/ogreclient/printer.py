@@ -62,9 +62,6 @@ class CliPrinter:
             self.p(msg, mode, success=False, notime=notime)
 
     def p(self, msg, mode=None, notime=False, success=None, extra=None, nonl=False):
-        if self.start is None:
-            notime = True
-
         if self.line_needs_finishing is True:
             self.line_needs_finishing = False
             sys.stdout.write('{}\n'.format(msg))
@@ -81,15 +78,10 @@ class CliPrinter:
         if success is False:
             out = sys.stderr
 
-        if notime is True:
-            out.write('{}[{: <10}]          {}{}{}'.format(
-                CliPrinter.YELLOW, prefix, colour, msg, CliPrinter.END
-            ))
-        else:
-            t = self._get_time_elapsed()
-            out.write('{}[{: <10}]{} {: >4} {}{}{}'.format(
-                CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour, msg, CliPrinter.END
-            ))
+        t = self._get_time_elapsed(notime)
+        out.write('{}[{: <10}]{} {: >4} {}{}{}'.format(
+            CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour, msg, CliPrinter.END
+        ))
 
         if extra is not None:
             out.write('\n{}[{: <10}]          {}> {}{}'.format(
@@ -111,7 +103,10 @@ class CliPrinter:
         ))
         sys.stdout.flush()
 
-    def _get_time_elapsed(self, formatted=True):
+    def _get_time_elapsed(self, notime=False, formatted=True):
+        if notime is True or self.start is None:
+            return ' ' * 8
+
         ts = datetime.datetime.now() - self.start
         if formatted is True:
             formatted_ts = '{:02}:{:02}:{:02}'.format(

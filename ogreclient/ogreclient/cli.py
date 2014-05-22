@@ -253,7 +253,7 @@ def prerequisites(args, prntr):
     # create a config directory in $HOME on first run
     elif not os.path.exists(config_dir):
         prntr.p('Please note that DRM scanning means the first run of ogreclient '
-                'will be much slower than subsequent runs.', notime=True)
+                'will be much slower than subsequent runs.')
 
         os.makedirs(config_dir)
 
@@ -302,7 +302,7 @@ def prerequisites(args, prntr):
         prntr.p('Initialised DRM tools v{}'.format(PLUGIN_VERSION))
 
     elif attempted_download is True:
-        prntr.e('Failed to download DRM tools. Please report this error.', notime=True)
+        prntr.e('Failed to download DRM tools. Please report this error.')
 
     # return config object
     conf['config_dir'] = config_dir

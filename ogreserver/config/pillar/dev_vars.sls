@@ -29,11 +29,11 @@ ogre_user_email: test@example.come
 watchdog:
   gunicorn:
     pattern: "*.py"
-    command: "supervisorctl restart"
+    command: "kill -HUP $(cat /tmp/gunicorn-ogreserver.pid)"
     dir: /srv/ogreserver/ogreserver
   celeryd:
-    pattern: "*.py"
-    command: "supervisorctl restart"
+    pattern: "*/tasks.py"
+    command: "sudo supervisorctl restart ogreserver:celeryd"
     dir: /srv/ogreserver/ogreserver
 
 timezone: "Australia/Melbourne"

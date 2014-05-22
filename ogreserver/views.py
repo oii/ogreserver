@@ -124,18 +124,18 @@ def download_dedrm(auth_key):
 
 @app.route("/post/<auth_key>", methods=['POST'])
 def post(auth_key):
-    check_auth(auth_key)
+    user = check_auth(auth_key)
 
     # get the json payload
     data = json.loads(request.form.get("ebooks"))
 
     # stats log the upload
-    Log.create(user.id, "CONNECT", request.form.get("total"), key_parts[1])
+    Log.create(user.id, "CONNECT", request.form.get("total"), user.session_api_key)
 
     # update the library
     ds = DataStore(user)
     new_books = ds.update_library(data)
-    Log.create(user.id, "NEW", len(new_books), key_parts[1])
+    Log.create(user.id, "NEW", len(new_books), user.session_api_key)
 
     # handle badge and reputation changes
     r = Reputation(user)
@@ -168,12 +168,12 @@ def confirm(auth_key):
 
 @app.route("/upload/<auth_key>", methods=['POST'])
 def upload(auth_key):
-    check_auth(auth_key)
+    user = check_auth(auth_key)
 
     # stats log the upload
-    Log.create(user.id, "UPLOADED", 1, key_parts[1])
+    Log.create(user.id, "UPLOADED", 1, user.session_api_key)
 
-    print key_parts[1], request.form.get("pk"), request.files['ebook'].content_length
+    dp(user.session_api_key, request.form.get("pk"), request.files['ebook'].content_length)
 
     # write uploaded ebook to disk, named as the hash and filetype
     uploads.save(request.files['ebook'], None, "{0}.{1}".format(
@@ -205,3 +205,4 @@ def check_auth(auth_key):
     )
     if user is None:
         raise Forbidden
+    return user

@@ -19,6 +19,7 @@ class User(db.Model, UserMixin):
     needs_password_reset = db.Column(db.Boolean, default=1)
     badges = db.relationship(UserBadge, backref='user', lazy='dynamic')
     total_users = None
+    session_api_key = None
 
     def __init__(self, username, password, email):
         self.username = username
@@ -63,6 +64,7 @@ class User(db.Model, UserMixin):
         # reconstruct the key and verify it
         prekey = User._compile_pre_key(user.username, user.password, user.api_key_expires)
         if pwd_context.verify(prekey, api_key) == True:
+            user.session_api_key = api_key
             return user
         else:
             return None

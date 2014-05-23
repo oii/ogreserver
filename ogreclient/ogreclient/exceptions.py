@@ -21,3 +21,6 @@ class MushroomError(OgreError):
 
 class SpinachError(OgreError):
     pass
+
+class CorruptEbookError(OgreError):
+    pass

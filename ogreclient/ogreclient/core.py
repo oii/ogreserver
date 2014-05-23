@@ -19,7 +19,7 @@ from .printer import CliPrinter, DummyPrinter
 from .dedrm import decrypt, DRM
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
-from .exceptions import BaconError, MushroomError, SpinachError
+from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
 
 
 OGRESERVER = "ogre.oii.yt"
@@ -109,17 +109,8 @@ def doit(ebook_home, username, password, host,
 
         # now parse all book meta data; building a complete dataset
         for item in ebooks:
-            extracted = subprocess.check_output(
-                [calibre_ebook_meta_bin, item[0]], stderr=subprocess.STDOUT
-            )
-
-            if extracted.find("EPubException") > 0:
-                # remove any corrupt
-                if verbose:
-                    prntr.e("{0}{1}".format(item[1], item[2]), CliPrinter.CORRUPT)
-                continue
-
             try:
+                # strip DRM
                 state, out = decrypt(item[0], item[2], ebook_convert_path, config_dir)
 
                 if verbose:
@@ -142,60 +133,14 @@ def doit(ebook_home, username, password, host,
                 prntr.e("Fatal Exception on {0}".format(item[0]), excp=e)
                 continue
 
-            # initialize all the metadata we attempt to extract
-            meta = {}
-            for prop in ('title', 'author', 'firstname', 'lastname', 'publisher',
-                         'published', 'tags', 'isbn', 'asin', 'uri', 'ogre_id', 'dedrm'):
-                meta[prop] = None
-
-            for line in extracted.splitlines():
-                # extract the simple metadata
-                for prop in ('title', 'publisher', 'published'):
-                    if line.lower().startswith(prop):
-                        meta[prop] = line[line.find(':')+1:].strip()
-
-                if 'Tags' in line:
-                    meta['tags'] = line[line.find(':')+1:].strip()
-
-                    # extract the ogre_id which may be embedded into the tags field
-                    if 'ogre_id' in meta['tags']:
-                        tags = meta['tags'].split(', ')
-                        for j in reversed(xrange(len(tags))):
-                            if 'ogre_id' in tags[j]:
-                                meta['ogre_id'] = tags[j][8:]
-                                del(tags[j])
-                        meta['tags'] = ', '.join(tags)
-
-                    # extract the DeDRM flag
-                    #if 'DeDRM' in meta['tags']:
-                    #    import pdb;pdb.set_trace()
-                    #    tags = meta['tags'].split(', ')
-                    #    for j in reversed(xrange(len(tags))):
-                    #        if 'DeDRM' in tags[j]:
-                    #            meta['dedrm'] = tags[j][6:]
-                    #            del(tags[j])
-                    #    meta['tags'] = ', '.join(tags)
-
-                if 'Author' in line:
-                    meta['author'] = line[line.find(':')+1:].strip()
-                    bracketpos = meta['author'].find('[')
-                    if(bracketpos > -1):
-                        commapos = meta['author'].find(',', bracketpos)
-                        meta['lastname'] = meta['author'][bracketpos+1:commapos]
-                        meta['firstname'] = meta['author'][commapos+1:-1].strip()
-                        meta['author'] = meta['author'][0:bracketpos].strip()
-
-                if 'Identifiers' in line:
-                    identifiers = line[line.find(':')+1:].strip()
-                    for ident in identifiers.split(","):
-                        if ident.startswith("isbn"):
-                            meta['isbn'] = ident[5:].strip()
-                        if ident.startswith("mobi-asin"):
-                            meta['asin'] = ident[9:].strip()
-                        if ident.startswith("uri"):
-                            meta['uri'] = ident[3:].strip()
-                        if ident.startswith("epubbud"):
-                            meta['uri'] = ident[7:].strip()
+            try:
+                # extract and parse ebook metadata
+                meta = metadata_extract(calibre_ebook_meta_bin, item[0])
+            except CorruptEbookError as e:
+                # skip books which can't have metadata extracted
+                if verbose:
+                    prntr.e("{}{}".format(item[1], item[2]), CliPrinter.CORRUPT)
+                    continue
 
             # books are indexed by "authortitle" to handle multiple copies of the same book
             authortitle = "{0} - {1}".format(meta['author'], meta['title'])
@@ -390,3 +335,73 @@ def upload_single_book(host, session_key, filepath, upload_obj):
         raise SpinachError(str(e))
     except IOError, e:
         pass
+
+
+def metadata_extract(calibre_ebook_meta_bin, filepath):
+    extracted = subprocess.check_output(
+        [calibre_ebook_meta_bin, filepath], stderr=subprocess.STDOUT
+    )
+
+    if extracted.find('EPubException') > 0:
+        raise CorruptEbookError(extracted)
+
+    # initialize all the metadata we attempt to extract
+    meta = {}
+    for prop in ('title', 'author', 'firstname', 'lastname', 'publisher',
+                 'published', 'tags', 'isbn', 'asin', 'uri', 'ogre_id', 'dedrm'):
+        meta[prop] = None
+
+    for line in extracted.splitlines():
+        # extract the simple metadata
+        for prop in ('title', 'publisher', 'published'):
+            if line.lower().startswith(prop):
+                meta[prop] = line[line.find(':')+1:].strip()
+                continue
+
+        if 'Tags' in line:
+            meta['tags'] = line[line.find(':')+1:].strip()
+
+            # extract the ogre_id which may be embedded into the tags field
+            if 'ogre_id' in meta['tags']:
+                tags = meta['tags'].split(', ')
+                for j in reversed(xrange(len(tags))):
+                    if 'ogre_id' in tags[j]:
+                        meta['ogre_id'] = tags[j][8:]
+                        del(tags[j])
+                meta['tags'] = ', '.join(tags)
+
+            # extract the DeDRM flag
+            #if 'DeDRM' in meta['tags']:
+            #    import pdb;pdb.set_trace()
+            #    tags = meta['tags'].split(', ')
+            #    for j in reversed(xrange(len(tags))):
+            #        if 'DeDRM' in tags[j]:
+            #            meta['dedrm'] = tags[j][6:]
+            #            del(tags[j])
+            #    meta['tags'] = ', '.join(tags)
+            continue
+
+        if 'Author' in line:
+            meta['author'] = line[line.find(':')+1:].strip()
+            bracketpos = meta['author'].find('[')
+            if(bracketpos > -1):
+                commapos = meta['author'].find(',', bracketpos)
+                meta['lastname'] = meta['author'][bracketpos+1:commapos]
+                meta['firstname'] = meta['author'][commapos+1:-1].strip()
+                meta['author'] = meta['author'][0:bracketpos].strip()
+            continue
+
+        if 'Identifiers' in line:
+            identifiers = line[line.find(':')+1:].strip()
+            for ident in identifiers.split(','):
+                if ident.startswith('isbn'):
+                    meta['isbn'] = ident[5:].strip()
+                if ident.startswith('mobi-asin'):
+                    meta['asin'] = ident[8:].strip()
+                if ident.startswith('uri'):
+                    meta['uri'] = ident[3:].strip()
+                if ident.startswith('epubbud'):
+                    meta['epubbud'] = ident[7:].strip()
+            continue
+
+    return meta

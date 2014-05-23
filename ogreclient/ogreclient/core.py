@@ -354,30 +354,39 @@ def doit(ebook_home, username, password, host,
         for authortitle in ebooks_dict.keys():
             if upload['file_md5'] == ebooks_dict[authortitle]['file_md5']:
                 try:
-                    f = open(ebooks_dict[authortitle]['path'], "rb")
-
-                    # configure for uploads
-                    opener = urllib2.build_opener(newHTTPHandler())
-
-                    # build the post params
-                    params = {
-                        'ebook_id': upload['ebook_id'],
-                        'file_md5': upload['file_md5'],
-                        'format': upload['format'],
-                        'ebook': f,
-                    }
-                    req = opener.open(
-                        "http://{0}/upload/{1}".format(host, urllib.quote_plus(session_key)), params
+                    data = upload_single_book(
+                        host,
+                        session_key,
+                        ebooks_dict[authortitle]['path'],
+                        upload,
                     )
-                    data = req.read()
-
                     prntr.p(data)
 
-                except (HTTPError, URLError), e:
-                    raise SpinachError(str(e))
-                except IOError, e:
-                    continue
-                finally:
-                    f.close()
+                except SpinachError as e:
+                    prntr.e('Failed uploading {}'.format(ebooks_dict[authortitle]['path']), excp=e)
 
     return True
+
+
+def upload_single_book(host, session_key, filepath, upload_obj):
+    try:
+        with open(filepath, "rb") as f:
+            # configure for uploads
+            opener = urllib2.build_opener(newHTTPHandler())
+
+            # build the post params
+            params = {
+                'ebook_id': upload_obj['ebook_id'],
+                'file_md5': upload_obj['file_md5'],
+                'format': upload_obj['format'],
+                'ebook': f,
+            }
+            req = opener.open(
+                "http://{0}/upload/{1}".format(host, urllib.quote_plus(session_key)), params
+            )
+            return req.read()
+
+    except (HTTPError, URLError), e:
+        raise SpinachError(str(e))
+    except IOError, e:
+        pass

@@ -12,7 +12,7 @@ import urllib
 from . import __version__
 from . import OgreError
 
-from .core import authenticate, doit, OGRESERVER
+from .core import authenticate, doit, OGRESERVER, metadata_extract
 from .utils import make_temp_directory
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
@@ -120,6 +120,16 @@ def parse_command_line():
         '-O', '--output-dir', default=os.getcwd(),
         help='Extract files into a specific directory')
 
+    # setup parser for info command
+    pinfo = subparsers.add_parser('info',
+        parents=[parent_parser],
+        help="Display an ebook's info",
+    )
+    pinfo.set_defaults(mode='info')
+    pinfo.add_argument(
+        'inputfile',
+        help='Ebook for which to display info')
+
     args = parser.parse_args()
 
     if args.mode == 'sync' and args.verbose and args.quiet:
@@ -176,6 +186,10 @@ def main(conf, args, prntr):
         ebook_home, username, password = validate_input(args)
         ret = download_dedrm(args.host, username, password, prntr)
 
+    elif args.mode == 'info':
+        # display metadata from a single book
+        ret = display_info(conf, args, prntr, args.inputfile)
+
     elif args.mode == 'dedrm':
         # decrypt a single book
         ret = dedrm_single_ebook(conf, args, prntr, args.inputfile, args.output_dir)
@@ -210,6 +224,11 @@ def dedrm_single_ebook(conf, args, prntr, inputfile, output_dir=None):
         return 0
     else:
         return 1
+
+
+def display_info(conf, args, prntr, filepath):
+    meta = metadata_extract(conf['calibre_ebook_meta_bin'], filepath)
+    prntr.p('Book meta', extra=meta)
 
 
 def sync(conf, args, prntr, ebook_home, username, password):

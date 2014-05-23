@@ -38,18 +38,7 @@ def entrypoint():
         # run some checks and create some config variables
         conf = prerequisites(args, prntr)
 
-        if args.mode == 'update':
-            ebook_home, username, password = validate_input(args)
-            ret = download_dedrm(args.host, username, password, prntr)
-
-        elif args.mode == 'dedrm':
-            # decrypt a single book
-            ret = dedrm_single_ebook(conf, args, prntr, args.inputfile, args.output_dir)
-
-        elif args.mode == 'sync':
-            # run ogreclient
-            ebook_home, username, password = validate_input(args)
-            ret = main(conf, args, prntr, ebook_home, username, password)
+        ret = main(conf, args, prntr)
 
     except OgreError as e:
         sys.stderr.write('{}\n'.format(e))
@@ -182,6 +171,23 @@ def validate_input(args):
     return ebook_home, username, password
 
 
+def main(conf, args, prntr):
+    if args.mode == 'update':
+        ebook_home, username, password = validate_input(args)
+        ret = download_dedrm(args.host, username, password, prntr)
+
+    elif args.mode == 'dedrm':
+        # decrypt a single book
+        ret = dedrm_single_ebook(conf, args, prntr, args.inputfile, args.output_dir)
+
+    elif args.mode == 'sync':
+        # run ogreclient
+        ebook_home, username, password = validate_input(args)
+        ret = sync(conf, args, prntr, ebook_home, username, password)
+
+    return ret
+
+
 def dedrm_single_ebook(conf, args, prntr, inputfile, output_dir=None):
     filename, ext = os.path.splitext(inputfile)
     from .dedrm import decrypt, DRM, DecryptionError
@@ -206,7 +212,8 @@ def dedrm_single_ebook(conf, args, prntr, inputfile, output_dir=None):
         return 1
 
 
-def main(conf, args, prntr, ebook_home, username, password):
+def sync(conf, args, prntr, ebook_home, username, password):
+    ret = False
     try:
         # setup a temp path for DRM checks with ebook-convert
         with make_temp_directory() as ebook_convert_path:

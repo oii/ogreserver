@@ -25,8 +25,9 @@ class CliPrinter:
     NONE = 'NONE'
     RESPONSE = 'RESPONSE'
 
-    def __init__(self, start=None, progressbar_len=PROGBAR_LEN, progressbar_char="#"):
+    def __init__(self, start=None, debug=False, progressbar_len=PROGBAR_LEN, progressbar_char="#"):
         self.start = start
+        self.debug = debug
         self.progressbar_len = progressbar_len
         self.progressbar_char = progressbar_char
 
@@ -63,7 +64,7 @@ class CliPrinter:
 
     def e(self, msg, mode=ERROR, excp=None, notime=False):
         if excp is not None:
-            self.p(msg, mode, success=False, notime=notime, extra=self.format_excp(excp))
+            self.p(msg, mode, success=False, notime=notime, extra=self.format_excp(excp, self.debug))
         else:
             self.p(msg, mode, success=False, notime=notime)
 

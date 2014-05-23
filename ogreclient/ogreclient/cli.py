@@ -33,7 +33,7 @@ def entrypoint():
             args.host = OGRESERVER
 
         # global CLI printer
-        prntr = CliPrinter()
+        prntr = CliPrinter(debug=args.debug if 'args' in args else False)
 
         # run some checks and create some config variables
         conf = prerequisites(args, prntr)
@@ -79,6 +79,9 @@ def parse_command_line():
     psync.add_argument(
         '--verbose', '-v', action='store_true',
         help='Produce lots of output')
+    psync.add_argument(
+        '--debug', action='store_true',
+        help='Print debug information on error')
     psync.add_argument(
         '--quiet', '-q', action='store_true',
         help="Don't produce any output")
@@ -197,7 +200,7 @@ def main(conf, args, prntr):
     elif args.mode == 'sync':
         # run ogreclient
         ebook_home, username, password = validate_input(args)
-        ret = sync(conf, args, prntr, ebook_home, username, password)
+        ret = sync(conf, args, prntr, ebook_home, username, password, debug=args.debug)
 
     return ret
 
@@ -231,7 +234,7 @@ def display_info(conf, args, prntr, filepath):
     prntr.p('Book meta', extra=meta)
 
 
-def sync(conf, args, prntr, ebook_home, username, password):
+def sync(conf, args, prntr, ebook_home, username, password, debug=False):
     ret = False
     try:
         # setup a temp path for DRM checks with ebook-convert

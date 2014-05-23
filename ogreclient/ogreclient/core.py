@@ -77,7 +77,7 @@ def doit(ebook_home, username, password, host,
     if quiet is True:
         prntr = DummyPrinter()
     else:
-        prntr = CliPrinter(datetime.datetime.now())
+        prntr = CliPrinter(start=datetime.datetime.now(), debug=config['debug'])
 
     # let the user know something is happening
     prntr.p("Searching for ebooks.. ", nonl=True)

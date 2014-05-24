@@ -1,6 +1,6 @@
-import datetime
+from __future__ import absolute_import
+
 import hashlib
-import json
 import re
 
 import rethinkdb as r
@@ -13,7 +13,7 @@ from whoosh.query import Every
 from whoosh.qparser import MultifieldParser, OrGroup
 
 from .. import app, whoosh
-from user import User
+from .user import User
 
 
 class DataStore():

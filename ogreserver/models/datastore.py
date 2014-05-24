@@ -15,6 +15,10 @@ from whoosh.qparser import MultifieldParser, OrGroup
 from .. import app, whoosh
 from .user import User
 
+from ..exceptions import BadMetaDataError
+
+from ..utils import debug_print as dp
+
 
 class DataStore():
     def __init__(self, user):
@@ -30,140 +34,140 @@ class DataStore():
 
         conn = r.connect("localhost", 28015, db="ogreserver")
 
-        lib_updated = False
-
         for authortitle in ebooks.keys():
-            #try:
-            incoming = ebooks[authortitle]
+            try:
+                incoming = ebooks[authortitle]
 
-            # first check if this exact file has been uploaded before
-            # query formats table by key, joining to versions to get ebook pk
-            res = r.table('formats').filter(
-                {'id': incoming['file_md5']}
-            ).eq_join(
-                'version_id', r.table('versions')
-            ).zip().run(conn)
+                # first check if this exact file has been uploaded before
+                # query formats table by key, joining to versions to get ebook pk
+                res = r.table('formats').filter(
+                    {'id': incoming['file_md5']}
+                ).eq_join(
+                    'version_id', r.table('versions')
+                ).zip().run(conn)
 
-            if len(list(res)) > 0:
-                print "Ignoring exact duplicate {0}".format(authortitle.encode("UTF-8"))
-                continue
-
-            elif incoming['ogre_id'] is None:
-                # TODO file hash match, with no ogre_id is an exception
-                pass
-
-            # create firstname, lastname (these are often the wrong way around)
-            if 'firstname' in incoming:
-                firstname = incoming['firstname']
-                lastname = incoming['lastname']
-            else:
-                firstname, lastname = incoming['author'].split(',')
-
-            # check for this book by meta data in the library
-            ebook_id = DataStore.build_ebook_key(lastname, firstname, incoming['title'])
-            existing = r.table('ebooks').get(ebook_id).run(conn)
-
-            if existing is None:
-                # create this as a new book
-                new_book = {
-                    'id': ebook_id,
-                    'title': incoming['title'],
-                    'firstname': firstname,
-                    'lastname': lastname,
-                    'rating': None,
-                    'comments': [],
-                    'publisher': incoming['publisher'] if 'publisher' in incoming else None,
-                    'publish_date': incoming['published'] if 'published' in incoming else None,
-                    'meta': {
-                        'isbn': incoming['isbn'] if 'isbn' in incoming else None,
-                        'asin': incoming['asin'] if 'asin' in incoming else None,
-                        'uri': incoming['uri'] if 'uri' in incoming else None,
-                        'raw_tags': incoming['tags'] if 'tags' in incoming else None,
-                    },
-                }
-                r.table('ebooks').insert(new_book).run(conn)
-
-                # add the first version
-                new_version = {
-                    'ebook_id': ebook_id,
-                    'user': self.user.username,
-                    'size': incoming['size'],
-                    'popularity': 1,
-                    'quality': 0,
-                    'original_format': incoming['format'],
-                }
-                ret = r.table('versions').insert(new_version).run(conn)
-
-                new_format = {
-                    'id': incoming['file_md5'],
-                    'version_id': ret['generated_keys'][0],
-                    'format': incoming['format'],
-                    'uploaded': False,
-                    'source_patched': False,
-                }
-                r.table('formats').insert(new_format).run(conn)
-
-                # return a list of new books to the client
-                output.append({
-                    'ebook_id': ebook_id,
-                    'path': incoming['path'],
-                    'file_md5': incoming['file_md5'],
-                })
-                lib_updated = True
-
-                # update the whoosh text search interface
-                self.index_for_search(new_book)
-
-            else:
-                # parse the ebook data
-                other_versions = r.table('versions').filter(
-                    {'ebook_id': ebook_id, 'user': self.user.username}
-                ).count().run(conn)
-
-                if other_versions > 0:
-                    print "Rejecting new version of {0} from {1}".format(
-                        authortitle.encode("UTF-8"), self.user.username
-                    )
+                if len(list(res)) > 0:
+                    print "Ignoring exact duplicate {}".format(authortitle.encode("UTF-8"))
                     continue
 
-                # TODO favour mobi format in uploads.. epub after that - dont upload multiple formats of same book
-                # test user upload of a mobi, then same user tries to upload epub version
-                # then user could upload a re-mobi of that book - which becomes a new version
+                elif incoming['ogre_id'] is None:
+                    # TODO file hash match, with no ogre_id is an exception
+                    pass
 
-                new_version = {
-                    'ebook_id': ebook_id,
-                    'user': self.user.username,
-                    'size': incoming['size'],
-                    'popularity': 1,
-                    'quality': 0,
-                    'original_format': incoming['format'],
-                }
-                ret = r.table('versions').insert(new_version).run(conn)
+                # create firstname, lastname (these are often the wrong way around)
+                if 'firstname' in incoming:
+                    firstname = incoming['firstname']
+                    lastname = incoming['lastname']
+                else:
+                    firstname, lastname = incoming['author'].split(',')
 
-                new_format = {
-                    'id': incoming['file_md5'],
-                    'ebook_id': ebook_id,
-                    'version_id': ret['generated_keys'][0],
-                    'format': incoming['format'],
-                    'uploaded': False,
-                }
-                r.table('formats').insert(new_format).run(conn)
+                # check for this book by meta data in the library
+                ebook_id = DataStore.build_ebook_key(lastname, firstname, incoming['title'])
+                existing = r.table('ebooks').get(ebook_id).run(conn)
 
-                #print json.dumps(existing, indent=2)
+                if existing is None:
+                    # create this as a new book
+                    new_book = {
+                        'id': ebook_id,
+                        'title': incoming['title'],
+                        'firstname': firstname,
+                        'lastname': lastname,
+                        'rating': None,
+                        'comments': [],
+                        'publisher': incoming['publisher'] if 'publisher' in incoming else None,
+                        'publish_date': incoming['published'] if 'published' in incoming else None,
+                        'meta': {
+                            'isbn': incoming['isbn'] if 'isbn' in incoming else None,
+                            'asin': incoming['asin'] if 'asin' in incoming else None,
+                            'uri': incoming['uri'] if 'uri' in incoming else None,
+                            'raw_tags': incoming['tags'] if 'tags' in incoming else None,
+                        },
+                    }
+                    r.table('ebooks').insert(new_book).run(conn)
 
-                output.append({
-                    'ebook_id': ebook_id,
-                    'path': incoming['path'],
-                    'file_md5': incoming['file_md5'],
-                })
-                lib_updated = True
+                    # add the first version
+                    new_version = {
+                        'ebook_id': ebook_id,
+                        'user': self.user.username,
+                        'size': incoming['size'],
+                        'popularity': 1,
+                        'quality': 0,
+                        'original_format': incoming['format'],
+                    }
+                    ret = r.table('versions').insert(new_version).run(conn)
 
-                # TODO version popularity determines which formats appear on ebook base top-level
-                # popularity += 1 for download
-                # popularity += 1 for new owner
-                # use quality as co-efficient when calculating most popular
-                # see: versions_rank_algorithm()
+                    new_format = {
+                        'id': incoming['file_md5'],
+                        'version_id': ret['generated_keys'][0],
+                        'format': incoming['format'],
+                        'uploaded': False,
+                        'source_patched': False,
+                    }
+                    r.table('formats').insert(new_format).run(conn)
 
+                    # return a list of new books to the client
+                    output.append({
+                        'ebook_id': ebook_id,
+                        'path': incoming['path'],
+                        'file_md5': incoming['file_md5'],
+                    })
+
+                    # update the whoosh text search interface
+                    self.index_for_search(new_book)
+
+                else:
+                    # parse the ebook data
+                    other_versions = r.table('versions').filter(
+                        {'ebook_id': ebook_id, 'user': self.user.username}
+                    ).count().run(conn)
+
+                    if other_versions > 0:
+                        msg = "Rejecting new version of {} from {}".format(
+                            authortitle.encode("UTF-8"), self.user.username
+                        )
+                        dp(msg)
+                        continue
+
+                    # TODO favour mobi format in uploads.. epub after that - dont upload multiple formats of same book
+                    # test user upload of a mobi, then same user tries to upload epub version
+                    # then user could upload a re-mobi of that book - which becomes a new version
+
+                    new_version = {
+                        'ebook_id': ebook_id,
+                        'user': self.user.username,
+                        'size': incoming['size'],
+                        'popularity': 1,
+                        'quality': 0,
+                        'original_format': incoming['format'],
+                    }
+                    ret = r.table('versions').insert(new_version).run(conn)
+
+                    new_format = {
+                        'id': incoming['file_md5'],
+                        'ebook_id': ebook_id,
+                        'version_id': ret['generated_keys'][0],
+                        'format': incoming['format'],
+                        'uploaded': False,
+                    }
+                    r.table('formats').insert(new_format).run(conn)
+
+                    #print json.dumps(existing, indent=2)
+
+                    output.append({
+                        'ebook_id': ebook_id,
+                        'path': incoming['path'],
+                        'file_md5': incoming['file_md5'],
+                    })
+
+                    # TODO version popularity determines which formats appear on ebook base top-level
+                    # popularity += 1 for download
+                    # popularity += 1 for new owner
+                    # use quality as co-efficient when calculating most popular
+                    # see: versions_rank_algorithm()
+
+            except BadMetaDataError as e:
+                # TODO log this and report back to client
+                dp(e)
             #except Exception as e:
             #    print "[EXCP] %s" % authortitle
             #    print "\t%s: %s" % (type(e), e)

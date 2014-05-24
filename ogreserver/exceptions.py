@@ -1,0 +1,2 @@
+class BadMetaDataError(Exception):
+    pass

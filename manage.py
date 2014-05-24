@@ -2,6 +2,7 @@
 
 from __future__ import absolute_import
 
+import datetime
 import os
 import sys
 
@@ -151,6 +152,21 @@ def init_ogre(test=False):
             set_indexes()
 
     print "Succesfully initialized OGRE"
+
+
+@manager.command
+def set_indexes():
+    def create_index(table, name):
+        conn = r.connect("localhost", 28015, db='ogreserver')
+        if name not in r.table(table).index_list().run(conn):
+            start = datetime.datetime.now()
+            r.table(table).index_create(name).run(conn)
+            r.table(table).index_wait(name).run(conn)
+            print "index '{}' created in {}".format(name, datetime.datetime.now()-start)
+
+    # create the rethinkdb indexes used by ogreserver
+    create_index('versions', 'ebook_id')
+    create_index('formats', 'version_id')
 
 
 @manager.command

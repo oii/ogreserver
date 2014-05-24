@@ -40,14 +40,20 @@ class DataStore():
 
                 # first check if this exact file has been uploaded before
                 # query formats table by key, joining to versions to get ebook pk
-                res = r.table('formats').filter(
-                    {'id': incoming['file_md5']}
-                ).eq_join(
-                    'version_id', r.table('versions')
-                ).zip().run(conn)
+                existing = list(
+                    r.table('formats').filter(
+                        {'md5_hash': incoming['file_md5']}
+                    ).eq_join(
+                        'version_id', r.table('versions')
+                    ).zip().run(conn)
+                )
 
-                if len(list(res)) > 0:
-                    print "Ignoring exact duplicate {}".format(authortitle.encode("UTF-8"))
+                if len(existing) > 0:
+                    print "Ignoring exact duplicate {} {}".format(
+                        existing[0]['ebook_id'],
+                        authortitle.encode("UTF-8"),
+                    )
+                    output[incoming['file_md5']]['ebook_id'] = existing[0]['ebook_id']
                     continue
 
                 elif incoming['ogre_id'] is None:
@@ -68,7 +74,7 @@ class DataStore():
                 if existing is None:
                     # create this as a new book
                     new_book = {
-                        'id': ebook_id,
+                        'ebook_id': ebook_id,
                         'title': incoming['title'],
                         'firstname': firstname,
                         'lastname': lastname,
@@ -97,7 +103,7 @@ class DataStore():
                     ret = r.table('versions').insert(new_version).run(conn)
 
                     new_format = {
-                        'id': incoming['file_md5'],
+                        'md5_hash': incoming['file_md5'],
                         'version_id': ret['generated_keys'][0],
                         'format': incoming['format'],
                         'uploaded': False,
@@ -143,7 +149,7 @@ class DataStore():
                     ret = r.table('versions').insert(new_version).run(conn)
 
                     new_format = {
-                        'id': incoming['file_md5'],
+                        'md5_hash': incoming['file_md5'],
                         'ebook_id': ebook_id,
                         'version_id': ret['generated_keys'][0],
                         'format': incoming['format'],
@@ -182,7 +188,7 @@ class DataStore():
         # add info about this book to the search index
         writer = whoosh.writer()
         try:
-            writer.add_document(ebook_id=unicode(book_data['id']), author=author, title=title)
+            writer.add_document(ebook_id=unicode(book_data['ebook_id']), author=author, title=title)
             writer.commit()
         except Exception as e:
             print e
@@ -264,7 +270,7 @@ class DataStore():
 
         if version_id is None:
             versions = list(r.table('versions').filter({'ebook_id': ebook_id}).eq_join(
-                'id', r.table('formats'), index='version_id'
+                'version_id', r.table('formats'), index='version_id'
             ).zip().run(conn))
 
             if len(versions) > 1:
@@ -280,32 +286,32 @@ class DataStore():
                 # serve the OGRE preferred format
                 for fmt in app.config['EBOOK_FORMATS']:
                     if fmt == version['format']:
-                        file_md5 = version['id']
+                        file_md5 = version['md5_hash']
                         break
             else:
                 # serve the requested format from best version possible
                 for version in versions:
                     if fmt == version['format']:
-                        file_md5 = version['id']
+                        file_md5 = version['md5_hash']
                         break
         else:
             # get the specific requested version
-            version = r.table('versions').filter({'id': version_id}).eq_join(
-                'id', r.table('formats'), index='version_id'
+            version = r.table('versions').filter({'version_id': version_id}).eq_join(
+                'version_id', r.table('formats'), index='version_id'
             ).zip().run(conn)
 
             if fmt is None:
                 # serve the OGRE preferred format
                 for fmt in app.config['EBOOK_FORMATS']:
                     if fmt == version['format']:
-                        file_md5 = version['id']
+                        file_md5 = version['version_id']
                         break
             else:
                 # verify requested format is available on requested version
                 if fmt != version['format']:
                     raise Exception("Requested format not available on requested version.")
                 else:
-                    file_md5 = version['id']
+                    file_md5 = version['version_id']
 
         # generate the filename - which is the key on S3
         filename = DataStore.generate_filename(ebook_id, file_md5, fmt)
@@ -320,13 +326,13 @@ class DataStore():
     @staticmethod
     def update_book_md5(current_file_md5, updated_file_md5):
         """
-        Update a formats entry with a new PK
+        Update a format's entry with a new PK
         This is called after the OGRE-ID meta data is written into an ebook on the client
         """
         conn = r.connect("localhost", 28015, db="ogreserver")
         try:
             data = r.table('formats').get(current_file_md5).run(conn)
-            data['id'] = updated_file_md5
+            data['md5_hash'] = updated_file_md5
             data['source_patched'] = True
             r.table('formats').insert(data).run(conn)
             r.table('formats').get(current_file_md5).delete().run(conn)
@@ -427,15 +433,26 @@ class DataStore():
         """
         conn = r.connect("localhost", 28015, db="ogreserver")
 
-        # build a query joining ebooks and versions
-        query = r.table('ebooks').eq_join('id', r.table('versions'), index='ebook_id').zip()
-        
+        # query the formats table for missing ebooks
+        query = r.table('formats').filter({'uploaded': False})
+
+        # filter by list of md5 file hashes
+        if md5_filter is not None:
+            query = r.expr(md5_filter).do(
+                lambda md5_filter: query.filter(
+                    lambda d: md5_filter.contains(d['md5_hash'])
+                )
+            )
+
+        # join up to the versions table
+        query = query.eq_join('version_id', r.table('versions'), index='version_id').zip()
+
         # filter by username
         if username is not None:
             query = query.filter({'user': 'mafro'})
             
         # join to formats filtering for un-uploaded files
-        query = query.eq_join('id', r.table('formats'), index='version_id').zip().filter(
+        query = query.eq_join('format_hash', r.table('formats'), index='version_id').zip().filter(
             {'uploaded': False}
         )
         
@@ -450,7 +467,7 @@ class DataStore():
         for ebook in cursor:
             output.append({
                 'ebook_id': ebook['ebook_id'],
-                'file_md5': ebook['id'], 
+                'file_md5': ebook['md5_hash'],
                 'format': ebook['format'],
             })
 

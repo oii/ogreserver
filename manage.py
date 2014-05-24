@@ -145,11 +145,10 @@ def init_ogre(test=False):
         if rdb_setup is False:
             # create a database and a couple of tables
             r.db_create('ogreserver').run(conn)
-            r.db('ogreserver').table_create('ebooks').run(conn)
-            r.db('ogreserver').table_create('versions').run(conn)
-            r.db('ogreserver').table_create('formats').run(conn)
-            r.db('ogreserver').table('versions').index_create('ebook_id').run(conn)
-            r.db('ogreserver').table('formats').index_create('version_id').run(conn)
+            r.db('ogreserver').table_create('ebooks', primary_key='ebook_id').run(conn)
+            r.db('ogreserver').table_create('versions', primary_key='version_id').run(conn)
+            r.db('ogreserver').table_create('formats', primary_key='md5_hash').run(conn)
+            set_indexes()
 
     print "Succesfully initialized OGRE"
 

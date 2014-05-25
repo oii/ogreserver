@@ -424,13 +424,16 @@ class DataStore():
         return '{0}.{1}.{2}'.format(authortitle, file_md5[0:6], fmt)
 
     @staticmethod
-    def get_missing_books(username=None, verify_s3=False):
+    def get_missing_books(username=None, md5_filter=None, verify_s3=False):
         """
         Query the DB for books marked as not uploaded
 
         The verify_s3 flag enables a further check to be run against S3 to ensure 
         the file is actually there
         """
+        if username is None and md5_filter is None and verify_s3 is True:
+            raise Exception("Can't verify entire library in one go.")
+
         conn = r.connect("localhost", 28015, db="ogreserver")
 
         # query the formats table for missing ebooks
@@ -449,21 +452,12 @@ class DataStore():
 
         # filter by username
         if username is not None:
-            query = query.filter({'user': 'mafro'})
-            
-        # join to formats filtering for un-uploaded files
-        query = query.eq_join('format_hash', r.table('formats'), index='version_id').zip().filter(
-            {'uploaded': False}
-        )
-        
+            query = query.filter({'user': username})
+
         cursor = query.run(conn)
 
-        if username is None and verify_s3 is True:
-            raise Exception("Can't verify entire library in one go.")
-
-        output = []
-
         # flatten for output
+        output = []
         for ebook in cursor:
             output.append({
                 'ebook_id': ebook['ebook_id'],

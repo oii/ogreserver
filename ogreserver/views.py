@@ -143,8 +143,11 @@ def post(auth_key):
     r.earn_badges()
     msgs = r.get_new_badges()
 
+    # only request books for upload which are in client's current set
+    incoming = [item['file_md5'] for item in data.values()]
+
     # query books missing from S3 and supply back to the client
-    missing_books = DataStore.get_missing_books(username=user.username)
+    missing_books = DataStore.get_missing_books(username=user.username, md5_filter=incoming)
     return json.dumps({
         'new_books': new_books,
         'ebooks_to_upload': missing_books,

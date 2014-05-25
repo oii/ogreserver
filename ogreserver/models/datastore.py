@@ -214,8 +214,8 @@ class DataStore():
 
         with whoosh.searcher() as s:
             results = s.search(query)
-            for r in results:
-                output.append(r.fields())
+            for res in results:
+                output.append(res.fields())
 
         return output
 

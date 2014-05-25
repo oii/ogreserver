@@ -30,13 +30,16 @@ class DataStore():
         A dict containing ebook metadata and file hashes is sent by each client
         and synchronised against the contents of the OGRE database.
         """
-        output = []
+        output = {}
 
         conn = r.connect("localhost", 28015, db="ogreserver")
 
         for authortitle in ebooks.keys():
             try:
                 incoming = ebooks[authortitle]
+
+                # build output to return to client
+                output[incoming['file_md5']] = {'new': False}
 
                 # first check if this exact file has been uploaded before
                 # query formats table by key, joining to versions to get ebook pk
@@ -111,12 +114,9 @@ class DataStore():
                     }
                     r.table('formats').insert(new_format).run(conn)
 
-                    # return a list of new books to the client
-                    output.append({
-                        'ebook_id': ebook_id,
-                        'path': incoming['path'],
-                        'file_md5': incoming['file_md5'],
-                    })
+                    # mark book as new
+                    output[incoming['file_md5']]['ebook_id'] = ebook_id
+                    output[incoming['file_md5']]['new'] = True
 
                     # update the whoosh text search interface
                     self.index_for_search(new_book)
@@ -157,13 +157,8 @@ class DataStore():
                     }
                     r.table('formats').insert(new_format).run(conn)
 
-                    #print json.dumps(existing, indent=2)
-
-                    output.append({
-                        'ebook_id': ebook_id,
-                        'path': incoming['path'],
-                        'file_md5': incoming['file_md5'],
-                    })
+                    # mark with ebook_id and return
+                    output[incoming['file_md5']]['ebook_id'] = ebook_id
 
                     # TODO version popularity determines which formats appear on ebook base top-level
                     # popularity += 1 for download

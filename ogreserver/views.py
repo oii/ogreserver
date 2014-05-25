@@ -134,7 +134,11 @@ def post(auth_key):
 
     # update the library
     ds = DataStore(user)
-    new_books = ds.update_library(data)
+    syncd_books = ds.update_library(data)
+
+    # extract the subset of newly supplied books
+    new_books = [item for key, item in syncd_books.items() if item['new'] is True]
+
     Log.create(user.id, "NEW", len(new_books), user.session_api_key)
 
     # handle badge and reputation changes

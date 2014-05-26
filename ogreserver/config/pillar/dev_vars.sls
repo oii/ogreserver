@@ -1,6 +1,7 @@
 app_name: ogreserver
 app_user: vagrant
 app_repo: oii/ogre
+app_repo_rev: develop
 login_user: vagrant
 
 gunicorn_host: localhost
@@ -20,7 +21,7 @@ flask_secret: its_a_secret
 aws_access_key: ""
 aws_secret_key: ""
 aws_region: ap-southeast-2
-s3_bucket: oii-ogre
+s3_bucket: oii-ogre-dev
 
 ogre_user_name: test
 ogre_user_pass: test

@@ -20,6 +20,7 @@ from .dedrm import decrypt, DRM
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
 from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
+from .exceptions import FailedWritingMetaDataError, FailedConfirmError
 
 
 OGRESERVER = "ogre.oii.yt"
@@ -244,54 +245,26 @@ def doit(ebook_home, username, password, host,
 
     prntr.p("Uploading {0} file{1}. Go make a brew.".format(len(response['ebooks_to_upload']), plural))
 
-    # tag each book with ogre supplied ebook_id
-    for newbook in response['new_books']:
+    # update any books with ogre_id supplied from ogreserver
+    for md5, item in response['ebooks_to_update'].items():
         # find this book in the scan data
         for authortitle in ebooks_dict.keys():
-            if newbook['file_md5'] == ebooks_dict[authortitle]['file_md5']:
-                # append ogre's ebook_id to the tags list
-                if 'tags' in ebooks_dict[authortitle]:
-                    new_tags = "{0}, ogre_id={1}".format(
-                        ebooks_dict[authortitle]['tags'], newbook['ebook_id']
+            if md5 == ebooks_dict[authortitle]['file_md5']:
+                try:
+                    add_ogre_id_to_ebook(
+                        calibre_ebook_meta_bin,
+                        md5,
+                        ebooks_dict[authortitle]['path'],
+                        ebooks_dict[authortitle]['format'],
+                        item['ebook_id'],
+                        host,
+                        session_key,
                     )
-                else:
-                    new_tags = "ogre_id={0}".format(newbook['ebook_id'])
+                    if verbose:
+                        prntr.p('Wrote OGRE_ID to {}'.format(ebooks_dict[authortitle]['path']))
 
-                with make_temp_directory() as temp_dir:
-                    # copy the ebook to a temp file
-                    tmp_name = "{0}.{1}".format(
-                        os.path.join(temp_dir, id_generator()), 
-                        ebooks_dict[authortitle]['format']
-                    )
-                    shutil.copy(newbook['path'], tmp_name)
-                    # write new tags
-                    subprocess.check_output(
-                        [calibre_ebook_meta_bin, tmp_name, '--tags', new_tags]
-                    )
-                    # calculate new MD5
-                    md5 = compute_md5(tmp_name)[0]
-                    try:
-                        # ping ogreserver with the book's new hash
-                        req = urllib2.Request(
-                            url='http://{0}/confirm/{1}'.format(
-                                host,
-                                urllib.quote_plus(session_key)
-                            )
-                        )
-                        req.add_data(urllib.urlencode({
-                            'file_md5': newbook['file_md5'],
-                            'new_md5': md5
-                        }))
-                        resp = urllib2.urlopen(req)
-                        data = resp.read()
-
-                        if data == "ok":
-                            # move file back into place
-                            shutil.copy(tmp_name, newbook['path'])
-
-                    except (HTTPError, URLError) as e:
-                        # TODO
-                        pass
+                except (FailedWritingMetaDataError, FailedConfirmError) as e:
+                    prntr.e('Failed saving OGRE_ID in source ebook', excp=e)
 
     # upload each requested by the server
     for upload in response['ebooks_to_upload']:
@@ -361,15 +334,6 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
         if 'Tags' in line:
             meta['tags'] = line[line.find(':')+1:].strip()
 
-            # extract the ogre_id which may be embedded into the tags field
-            if 'ogre_id' in meta['tags']:
-                tags = meta['tags'].split(', ')
-                for j in reversed(xrange(len(tags))):
-                    if 'ogre_id' in tags[j]:
-                        meta['ogre_id'] = tags[j][8:]
-                        del(tags[j])
-                meta['tags'] = ', '.join(tags)
-
             # extract the DeDRM flag
             #if 'DeDRM' in meta['tags']:
             #    import pdb;pdb.set_trace()
@@ -402,6 +366,48 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
                     meta['uri'] = ident[3:].strip()
                 if ident.startswith('epubbud'):
                     meta['epubbud'] = ident[7:].strip()
+                if ident.startswith('ogre_id'):
+                    meta['ogre_id'] = ident[7:].strip()
             continue
 
     return meta
+
+
+def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_md5, filepath, format, ogre_id, host, session_key):
+    with make_temp_directory() as temp_dir:
+        # copy the ebook to a temp file
+        tmp_name = '{}.{}'.format(os.path.join(temp_dir, id_generator()), format)
+        shutil.copy(filepath, tmp_name)
+
+        try:
+            # write new tags
+            subprocess.check_output(
+                [calibre_ebook_meta_bin, tmp_name, '--identifier', 'ogre_id:{}'.format(ogre_id)],
+                stderr=subprocess.STDOUT
+            )
+
+            # calculate new MD5 after updating metadata
+            new_md5 = compute_md5(tmp_name)[0]
+
+            # ping ogreserver with the book's new hash
+            req = urllib2.Request(
+                url='http://{}/confirm/{}'.format(host, urllib.quote_plus(session_key))
+            )
+            req.add_data(urllib.urlencode({
+                'file_md5': file_md5,
+                'new_md5': new_md5
+            }))
+            resp = urllib2.urlopen(req)
+            data = resp.read()
+
+            if data == 'ok':
+                # move file back into place
+                shutil.copy(tmp_name, filepath)
+            else:
+                raise FailedConfirmError("Server said 'no'")
+
+        except subprocess.CalledProcessError as e:
+            raise FailedWritingMetaDataError(str(e))
+
+        except (HTTPError, URLError) as e:
+            raise FailedConfirmError(str(e))

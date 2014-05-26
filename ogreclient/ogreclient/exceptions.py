@@ -24,3 +24,9 @@ class SpinachError(OgreError):
 
 class CorruptEbookError(OgreError):
     pass
+
+class FailedWritingMetaDataError(OgreError):
+    pass
+
+class FailedConfirmError(OgreError):
+    pass

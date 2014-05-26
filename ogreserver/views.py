@@ -139,6 +139,12 @@ def post(auth_key):
     # extract the subset of newly supplied books
     new_books = [item for key, item in syncd_books.items() if item['new'] is True]
 
+    # extract the subset of books with missing ogre_id
+    update_books = {
+        key: item for key, item in syncd_books.items()
+        if item['update'] is True
+    }
+
     Log.create(user.id, "NEW", len(new_books), user.session_api_key)
 
     # handle badge and reputation changes
@@ -153,7 +159,7 @@ def post(auth_key):
     # query books missing from S3 and supply back to the client
     missing_books = DataStore.get_missing_books(username=user.username, md5_filter=incoming)
     return json.dumps({
-        'new_books': new_books,
+        'ebooks_to_update': update_books,
         'ebooks_to_upload': missing_books,
         'messages': msgs
     })

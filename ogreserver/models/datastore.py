@@ -39,7 +39,11 @@ class DataStore():
                 incoming = ebooks[authortitle]
 
                 # build output to return to client
-                output[incoming['file_md5']] = {'new': False}
+                output[incoming['file_md5']] = {'new': False, 'update': False}
+
+                # mark book for ogre_id embedding on client
+                if incoming['ogre_id'] is None:
+                    output[incoming['file_md5']]['update'] = True
 
                 # first check if this exact file has been uploaded before
                 # query formats table by key, joining to versions to get ebook pk
@@ -51,6 +55,7 @@ class DataStore():
                     ).zip().run(conn)
                 )
 
+                # skip existing books
                 if len(existing) > 0:
                     print "Ignoring exact duplicate {} {}".format(
                         existing[0]['ebook_id'],
@@ -58,10 +63,6 @@ class DataStore():
                     )
                     output[incoming['file_md5']]['ebook_id'] = existing[0]['ebook_id']
                     continue
-
-                elif incoming['ogre_id'] is None:
-                    # TODO file hash match, with no ogre_id is an exception
-                    pass
 
                 # create firstname, lastname (these are often the wrong way around)
                 if 'firstname' in incoming:

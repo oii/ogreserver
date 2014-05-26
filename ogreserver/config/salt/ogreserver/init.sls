@@ -11,12 +11,6 @@ include:
 
 
 extend:
-  supervisor:
-    pip.installed:
-      - require:
-        - virtualenv: app-virtualenv
-        - git: git-clone-app
-
   gunicorn-config:
     file.managed:
       - context:

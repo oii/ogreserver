@@ -10,11 +10,11 @@ import sys
 import urllib
 
 from . import __version__
-from . import OgreError
 
 from .core import authenticate, doit, OGRESERVER, metadata_extract
 from .utils import make_temp_directory
 
+from .exceptions import OgreException
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
 from .exceptions import BaconError, MushroomError, SpinachError
 
@@ -40,7 +40,7 @@ def entrypoint():
 
         ret = main(conf, args, prntr)
 
-    except OgreError as e:
+    except OgreException as e:
         sys.stderr.write('{}\n'.format(e))
         sys.stderr.flush()
         sys.exit(1)

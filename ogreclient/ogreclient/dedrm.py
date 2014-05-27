@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import importlib
 import os
 
-from . import OgreError
+from .exceptions import OgreException
 from .utils import capture, enum
 
 try:
@@ -147,8 +147,8 @@ def init_keys(config_dir, ignore_check=False):
     return msgs
 
 
-class DeDrmMissingError(OgreError):
+class DeDrmMissingError(OgreException):
     pass
 
-class DecryptionError(OgreError):
+class DecryptionError(OgreException):
     pass

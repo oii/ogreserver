@@ -1,32 +1,32 @@
-from . import OgreError
-
-
-class AuthDeniedError(OgreError):
+class OgreException(Exception):
     pass
 
-class AuthError(OgreError):
+class AuthDeniedError(OgreException):
     pass
 
-class NoEbooksError(OgreError):
+class AuthError(OgreException):
     pass
 
-class NoUploadsError(OgreError):
+class NoEbooksError(OgreException):
     pass
 
-class BaconError(OgreError):
+class NoUploadsError(OgreException):
     pass
 
-class MushroomError(OgreError):
+class BaconError(OgreException):
     pass
 
-class SpinachError(OgreError):
+class MushroomError(OgreException):
     pass
 
-class CorruptEbookError(OgreError):
+class SpinachError(OgreException):
     pass
 
-class FailedWritingMetaDataError(OgreError):
+class CorruptEbookError(OgreException):
     pass
 
-class FailedConfirmError(OgreError):
+class FailedWritingMetaDataError(OgreException):
+    pass
+
+class FailedConfirmError(OgreException):
     pass

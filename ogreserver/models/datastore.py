@@ -14,7 +14,7 @@ from whoosh.qparser import MultifieldParser, OrGroup
 from .. import app, whoosh
 from .user import User
 
-from ..exceptions import BadMetaDataError
+from ..exceptions import OgreException, BadMetaDataError, ExactDuplicateError
 
 from ..utils import debug_print as dp
 
@@ -38,7 +38,7 @@ class DataStore():
                 incoming = ebooks[authortitle]
 
                 # build output to return to client
-                output[incoming['file_md5']] = {'new': False, 'update': False}
+                output[incoming['file_md5']] = {'new': False, 'update': False, 'dupe': False}
 
                 # mark book for ogre_id embedding on client
                 if incoming['ogre_id'] is None:
@@ -56,12 +56,15 @@ class DataStore():
 
                 # skip existing books
                 if len(existing) > 0:
-                    print "Ignoring exact duplicate {} {}".format(
-                        existing[0]['ebook_id'],
-                        authortitle.encode("UTF-8"),
-                    )
                     output[incoming['file_md5']]['ebook_id'] = existing[0]['ebook_id']
-                    continue
+                    output[incoming['file_md5']]['dupe'] = True
+
+                    raise ExactDuplicateError(
+                        'Ignoring exact duplicate {} {}'.format(
+                            existing[0]['ebook_id'],
+                            authortitle.encode("UTF-8"),
+                        )
+                    )
 
                 # create firstname, lastname (these are often the wrong way around)
                 if 'firstname' in incoming:
@@ -69,6 +72,12 @@ class DataStore():
                     lastname = incoming['lastname']
                 else:
                     firstname, lastname = incoming['author'].split(',')
+
+                # error handle incoming data
+                if lastname is None:
+                    raise BadMetaDataError()
+                if firstname is None:
+                    firstname = ''
 
                 # check for this book by meta data in the library
                 ebook_id = DataStore.build_ebook_key(lastname, firstname, incoming['title'])
@@ -166,7 +175,7 @@ class DataStore():
                     # use quality as co-efficient when calculating most popular
                     # see: versions_rank_algorithm()
 
-            except BadMetaDataError as e:
+            except OgreException as e:
                 # TODO log this and report back to client
                 dp(e)
             #except Exception as e:

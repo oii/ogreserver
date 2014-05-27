@@ -86,7 +86,7 @@ configure_uploads(app, (uploads))
 
 
 # import views to register them with Flask
-import ogreserver.views
+from . import views
 views.noop()
 
 # HACK to support dev

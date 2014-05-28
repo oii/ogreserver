@@ -1,7 +1,11 @@
-from .. import app, db
-from log import Log
+from __future__ import absolute_import
 
+from sqlalchemy import Column, Integer, Boolean, ForeignKey
 from sqlalchemy.sql import func
+
+from .. import app
+from ..database import Base, db_session
+from .log import Log
 
 
 class Badges:
@@ -18,8 +22,8 @@ class Reputation():
         Each new book uploaded earns a user a point
         """
         self.user.points += count
-        db.session.add(self.user)
-        db.session.commit()
+        db_session.add(self.user)
+        db_session.commit()
 
     def get_new_badges(self):
         """
@@ -47,7 +51,7 @@ class Reputation():
             logs = Log.query.filter_by(user_id=self.user.id, type="NEW", data=0).all()
 
         if self.user.has_badge(Badges.Librarian) == False:
-            count = db.session.query(func.count(Log.id)).filter_by(user_id=self.user.id, type="STORED").scalar()
+            count = db_session.query(func.count(Log.id)).filter_by(user_id=self.user.id, type="STORED").scalar()
 
             if count > 200:
                 self.award(Badges.Librarian)
@@ -65,8 +69,8 @@ class Reputation():
         Award a badge to a user in the DB
         """
         ub = UserBadge(user_id=self.user.id, badge=badge)
-        db.session.add(ub)
-        db.session.commit()
+        db_session.add(ub)
+        db_session.commit()
 
     @staticmethod
     def has_badge(user, badge):
@@ -79,11 +83,12 @@ class Reputation():
         return False
 
 
-class UserBadge(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    badge = db.Column(db.Integer)
-    been_alerted = db.Column(db.Boolean, default=False)
+class UserBadge(Base):
+    __tablename__ = 'user_badge'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    badge = Column(Integer)
+    been_alerted = Column(Boolean, default=False)
 
     def __str__(self):
         if self.badge == Badges.Beta_Tester:
@@ -104,5 +109,5 @@ class UserBadge(db.Model):
         Flag that the has been alerted about earning this badge
         """
         self.been_alerted = True
-        db.session.add(self)
-        db.session.commit()
+        db_session.add(self)
+        db_session.commit()

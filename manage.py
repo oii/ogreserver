@@ -11,7 +11,8 @@ from sqlalchemy.exc import IntegrityError, ProgrammingError
 import rethinkdb as r
 from rethinkdb.errors import RqlRuntimeError
 
-from ogreserver import app, db
+from ogreserver import app
+from ogreserver.database import db_session, create_tables
 
 manager = Manager(app)
 
@@ -47,9 +48,9 @@ def create_user(username, password, email, test=False):
     else:
         if user is None:
             user = User(username, password, email)
-            db.session.add(user)
+            db_session.add(user)
             try:
-                db.session.commit()
+                db_session.commit()
             except IntegrityError:
                 print "A user with this email address already exists"
                 sys.exit(1)
@@ -118,7 +119,7 @@ def init_ogre(test=False):
 
         # create the local mysql database from our models
         if db_setup is False:
-            db.create_all()
+            create_tables()
 
         if aws_setup is False:
             try:

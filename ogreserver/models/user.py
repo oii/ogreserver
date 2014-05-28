@@ -1,23 +1,31 @@
-from datetime import datetime
+from __future__ import absolute_import
+
+import datetime
 
 from flask.ext.login import UserMixin
+
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-from .. import app, db
-from security import pwd_context
-from reputation import Reputation, UserBadge
+from .security import pwd_context
+from .reputation import Reputation, UserBadge
+
+from .. import app
+from ..database import Base, db_session
 
 
-class User(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80))
-    password = db.Column(db.String(256))
-    email = db.Column(db.String(120), unique=True)
-    display_name = db.Column(db.String(50), unique=True)
-    api_key_expires = db.Column(db.DateTime)
-    points = db.Column(db.Integer, default=0)
-    needs_password_reset = db.Column(db.Boolean, default=1)
-    badges = db.relationship(UserBadge, backref='user', lazy='dynamic')
+class User(Base, UserMixin):
+    __tablename__ = 'user'
+    id = Column(Integer, primary_key=True)
+    username = Column(String(80))
+    password = Column(String(256))
+    email = Column(String(120), unique=True)
+    display_name = Column(String(50), unique=True)
+    api_key_expires = Column(DateTime)
+    points = Column(Integer, default=0)
+    needs_password_reset = Column(Boolean, default=1)
+    badges = relationship(UserBadge, backref='user', lazy='dynamic')
     total_users = None
     session_api_key = None
 
@@ -73,11 +81,11 @@ class User(db.Model, UserMixin):
         """
         Generate a new API key and save against the user
         """
-        self.api_key_expires = datetime.utcnow()
+        self.api_key_expires = datetime.datetime.utcnow()
         self.api_key_expires = self.api_key_expires.replace(microsecond=0)    # remove microseconds for mysql
         api_key = User.create_auth_key(self.username, self.password, self.api_key_expires)
-        db.session.add(self)
-        db.session.commit()
+        db_session.add(self)
+        db_session.commit()
         return "%s+%s" % (self.username, api_key)
 
     # Flask-Login method
@@ -102,8 +110,8 @@ class User(db.Model, UserMixin):
         Return the total number of registered users
         """
         if User.total_users is None:
-            q = db.session.query(func.count(User.id))
-            User.total_users = db.session.execute(q).scalar()
+            q = db_session.query(func.count(User.id))
+            User.total_users = db_session.execute(q).scalar()
         return User.total_users
 
     def __str__(self):

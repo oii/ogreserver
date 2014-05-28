@@ -6,7 +6,6 @@ import os
 from flask import Flask, render_template
 
 # import Flask extensions
-from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.login import LoginManager
 from flask.ext.uploads import UploadSet, ALL, configure_uploads
 
@@ -38,7 +37,10 @@ celery.config_from_object(app.config)
 
 
 # setup SQLAlchemy
-db = SQLAlchemy(app)
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    from .database import db_session
+    db_session.remove()
 
 
 # declare some error handler pages
@@ -48,7 +50,8 @@ def page_not_found(error):
 
 @app.errorhandler(500)
 def internal_error(error):
-    db.session.rollback()
+    from .database import db_session
+    db_session.rollback()
     return render_template("500.html"), 500
 
 

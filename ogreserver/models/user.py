@@ -11,8 +11,9 @@ from sqlalchemy.sql import func
 from .security import pwd_context
 from .reputation import Reputation, UserBadge
 
-from .. import app
-from ..database import Base, db_session
+from flask import current_app as app
+
+from ..database import Base, get_db
 
 
 class User(Base, UserMixin):
@@ -84,6 +85,7 @@ class User(Base, UserMixin):
         self.api_key_expires = datetime.datetime.utcnow()
         self.api_key_expires = self.api_key_expires.replace(microsecond=0)    # remove microseconds for mysql
         api_key = User.create_auth_key(self.username, self.password, self.api_key_expires)
+        db_session = get_db(app)
         db_session.add(self)
         db_session.commit()
         return "%s+%s" % (self.username, api_key)
@@ -110,6 +112,7 @@ class User(Base, UserMixin):
         Return the total number of registered users
         """
         if User.total_users is None:
+            db_session = get_db(app)
             q = db_session.query(func.count(User.id))
             User.total_users = db_session.execute(q).scalar()
         return User.total_users

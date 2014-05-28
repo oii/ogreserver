@@ -1,13 +1,17 @@
+from __future__ import absolute_import
+
 import os
 import json
 import subprocess
 
-from . import app, celery
+import celery
 
-from models.user import User
-from models.datastore import DataStore, S3DatastoreError
-from models.reputation import Reputation
-from models.log import Log
+from flask import current_app as app
+
+from .models.user import User
+from .models.datastore import DataStore, S3DatastoreError
+from .models.reputation import Reputation
+from .models.log import Log
 
 
 @celery.task(name="ogreserver.store_ebook")

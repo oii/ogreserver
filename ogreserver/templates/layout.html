@@ -9,11 +9,11 @@
 
 		<title>O.G.R.E.</title>
 
-		<link rel="stylesheet" href="{{ url_for('static', filename='stylesheets/normalize.css') }}">
-		<link rel="stylesheet" href="{{ url_for('static', filename='stylesheets/app.css') }}">
-		<link rel="stylesheet" href="{{ url_for('static', filename='stylesheets/flat-ui/flat-ui.css') }}">
+		<link rel="stylesheet" href="{{ url_for('views.static', filename='stylesheets/normalize.css') }}">
+		<link rel="stylesheet" href="{{ url_for('views.static', filename='stylesheets/app.css') }}">
+		<link rel="stylesheet" href="{{ url_for('views.static', filename='stylesheets/flat-ui/flat-ui.css') }}">
 
-		<script src="{{ url_for('static', filename='javascripts/vendor/custom.modernizr.js') }}"></script>
+		<script src="{{ url_for('views.static', filename='javascripts/vendor/custom.modernizr.js') }}"></script>
 	</head>
 
 	<body>
@@ -29,15 +29,15 @@
 					<li class="divider"></li>
 					<li>
 						{% if not session.user_id %}
-						<a href="{{ url_for('login') }}">log in</a>
+						<a href="{{ url_for('views.login') }}">log in</a>
 						{% else %}
-						<a href="{{ url_for('logout') }}">log out</a>
+						<a href="{{ url_for('views.logout') }}">log out</a>
 						{% endif %}
 					</li>
 					<li class="divider"></li>
 					<li>
 						<a href="http://en.wikipedia.org/wiki/Ogre" target="_blank" class="ogre">
-							<img src="{{ url_for('static', filename='images/ogrew.png') }}" width="38" height="38" />
+							<img src="{{ url_for('views.static', filename='images/ogrew.png') }}" width="38" height="38" />
 						</a>
 					</li>
 				</ul>
@@ -97,15 +97,15 @@
 
 		<!-- Check for Zepto support, load jQuery if necessary -->
 		<script>
-			document.write("<script src={{ url_for('static', filename='javascripts/vendor/') }}"
+			document.write("<script src={{ url_for('views.static', filename='javascripts/vendor/') }}"
 				+ ('__proto__' in {} ? 'zepto' : 'jquery')
 				+ '.js><\/script>');
 		</script>
-		<script src="{{ url_for('static', filename='javascripts/foundation/foundation.js') }}"></script>
-		<script src="{{ url_for('static', filename='javascripts/foundation/foundation.topbar.js') }}"></script>
+		<script src="{{ url_for('views.static', filename='javascripts/foundation/foundation.js') }}"></script>
+		<script src="{{ url_for('views.static', filename='javascripts/foundation/foundation.topbar.js') }}"></script>
 		<script>
 		  $(document).foundation();
 		</script>
-		<script src="{{ url_for('static', filename='javascripts/app.js') }}"></script>
+		<script src="{{ url_for('views.static', filename='javascripts/app.js') }}"></script>
 	</body>
 </html>

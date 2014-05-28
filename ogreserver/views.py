@@ -1,12 +1,14 @@
 import base64
 import json
 
-from flask import request, redirect, session, url_for, render_template, jsonify, make_response
+from flask import g, current_app as app
+
+from flask import request, redirect, session, Blueprint
+from flask import url_for, render_template, jsonify, make_response
 from flask.ext.login import login_required, login_user, logout_user
 
 from werkzeug.exceptions import Forbidden
 
-from . import app, uploads
 from .utils import debug_print as dp
 
 from forms.auth import LoginForm
@@ -19,31 +21,41 @@ from models.log import Log
 from tasks import store_ebook
 
 
-def noop():
-    pass
+views = Blueprint('views', __name__, static_folder='static')
 
 
-@app.route("/")
+# declare some error handler pages
+@views.app_errorhandler(404)
+def page_not_found(error):
+    return render_template('404.html'), 404
+
+@views.app_errorhandler(500)
+def internal_error(error):
+    g.db_session.rollback()
+    return render_template('500.html'), 500
+
+
+@views.route('/')
 @login_required
 def index():
-    return redirect(url_for("home"))
+    return redirect(url_for('views.home'))
 
 
-@app.route("/login", methods=['GET', 'POST'])
+@views.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
         login_user(form.user)
         session['user_id'] = form.user.id
-        return redirect(request.args.get("next") or url_for("index"))
-    return render_template("login.html", form=form)
+        return redirect(request.args.get('next') or url_for('views.index'))
+    return render_template('login.html', form=form)
 
 
-@app.route("/auth", methods=['POST'])
+@views.route('/auth', methods=['POST'])
 def auth():
     user = User.authenticate(
-        username=request.form.get("username"),
-        password=request.form.get("password")
+        username=request.form.get('username'),
+        password=request.form.get('password')
     )
     if user == None:
         raise Forbidden
@@ -51,20 +63,20 @@ def auth():
         return base64.b64encode(user.assign_auth_key())
 
 
-@app.route("/logout")
+@views.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('views.login'))
 
 
-@app.route("/home")
+@views.route('/home')
 @login_required
 def home():
     return dedrm()
 
 
-@app.route("/list", methods=['GET', 'POST'])
+@views.route('/list', methods=['GET', 'POST'])
 @login_required
 def list():
     ds = DataStore()
@@ -73,64 +85,64 @@ def list():
         rs = ds.list()
     else:
         rs = ds.search(s)
-    return render_template("list.html", ebooks=rs)
+    return render_template('list.html', ebooks=rs)
 
 
-@app.route("/ajax/rating/<pk>")
+@views.route('/ajax/rating/<pk>')
 @login_required
 def get_rating(pk):
     rating = DataStore.get_rating(pk)
     return jsonify({'rating': rating})
 
 
-@app.route("/ajax/comment-count/<pk>")
+@views.route('/ajax/comment-count/<pk>')
 @login_required
 def get_comment_count(pk):
     comments = DataStore.get_comments(pk)
     return jsonify({'comments': len(comments)})
 
 
-@app.route("/view")
+@views.route('/view')
 @login_required
 def view(sdbkey=None):
     ds = DataStore()
     rs = ds.list()
-    return render_template("view.html", ebooks=rs)
+    return render_template('view.html', ebooks=rs)
 
 
-@app.route('/download/<pk>/', defaults={'fmt': None})
-@app.route("/download/<pk>/<fmt>")
+@views.route('/download/<pk>/', defaults={'fmt': None})
+@views.route('/download/<pk>/<fmt>')
 @login_required
 def download(pk, fmt=None):
     return redirect(DataStore.get_ebook_url(pk, fmt))
 
 
-@app.route("/dedrm")
+@views.route('/dedrm')
 @login_required
 def dedrm():
-    return render_template("dedrm.html")
+    return render_template('dedrm.html')
 
 
-@app.route("/download-dedrm/<auth_key>")
+@views.route('/download-dedrm/<auth_key>')
 def download_dedrm(auth_key):
     check_auth(auth_key)
 
     # supply the latest DRM tools to the client
-    with open("/var/pypiserver-cache/dedrm-6.0.7.tar.gz", "r") as f:
+    with open('/var/pypiserver-cache/dedrm-6.0.7.tar.gz', 'r') as f:
         data = f.read()
         response = make_response(data)
         return response
 
 
-@app.route("/post/<auth_key>", methods=['POST'])
+@views.route('/post/<auth_key>', methods=['POST'])
 def post(auth_key):
     user = check_auth(auth_key)
 
     # get the json payload
-    data = json.loads(request.form.get("ebooks"))
+    data = json.loads(request.form.get('ebooks'))
 
     # stats log the upload
-    Log.create(user.id, "CONNECT", request.form.get("total"), user.session_api_key)
+    Log.create(user.id, 'CONNECT', request.form.get('total'), user.session_api_key)
 
     # update the library
     ds = DataStore()
@@ -145,7 +157,7 @@ def post(auth_key):
         if item['update'] is True
     }
 
-    Log.create(user.id, "NEW", len(new_books), user.session_api_key)
+    Log.create(user.id, 'NEW', len(new_books), user.session_api_key)
 
     # handle badge and reputation changes
     r = Reputation(user)
@@ -165,45 +177,45 @@ def post(auth_key):
     })
 
 
-@app.route("/confirm/<auth_key>", methods=['POST'])
+@views.route('/confirm/<auth_key>', methods=['POST'])
 def confirm(auth_key):
     check_auth(auth_key)
 
     # update a file's md5 hash
-    current_file_md5 = request.form.get("file_md5")
-    updated_file_md5 = request.form.get("new_md5")
+    current_file_md5 = request.form.get('file_md5')
+    updated_file_md5 = request.form.get('new_md5')
 
     if DataStore.update_book_md5(current_file_md5, updated_file_md5):
-        return "ok"
+        return 'ok'
     else:
-        return "fail"
+        return 'fail'
 
 
-@app.route("/upload/<auth_key>", methods=['POST'])
+@views.route('/upload/<auth_key>', methods=['POST'])
 def upload(auth_key):
     user = check_auth(auth_key)
 
     # stats log the upload
-    Log.create(user.id, "UPLOADED", 1, user.session_api_key)
+    Log.create(user.id, 'UPLOADED', 1, user.session_api_key)
 
-    dp(user.session_api_key, request.form.get("pk"), request.files['ebook'].content_length)
+    dp(user.session_api_key, request.form.get('pk'), request.files['ebook'].content_length)
 
     # write uploaded ebook to disk, named as the hash and filetype
-    uploads.save(request.files['ebook'], None, "{0}.{1}".format(
-        request.form.get("file_md5"), request.form.get("format")
+    app.uploads.save(request.files['ebook'], None, '{0}.{1}'.format(
+        request.form.get('file_md5'), request.form.get('format')
     ))
 
     # let celery process the upload
     res = store_ebook.delay(
         user_id=user.id,
-        ebook_id=request.form.get("ebook_id"),
-        file_md5=request.form.get("file_md5"),
-        fmt=request.form.get("format")
+        ebook_id=request.form.get('ebook_id'),
+        file_md5=request.form.get('file_md5'),
+        fmt=request.form.get('format')
     )
     return res.task_id
 
 
-@app.route("/result/<int:task_id>")
+@views.route('/result/<int:task_id>')
 def show_result(task_id):
     retval = store_ebook.AsyncResult(task_id).get(timeout=1.0)
     return repr(retval)
@@ -211,7 +223,7 @@ def show_result(task_id):
 
 def check_auth(auth_key):
     # authenticate user
-    key_parts = base64.b64decode(str(auth_key), "_-").split("+")
+    key_parts = base64.b64decode(str(auth_key), '_-').split('+')
     user = User.validate_auth_key(
         username=key_parts[0],
         api_key=key_parts[1]

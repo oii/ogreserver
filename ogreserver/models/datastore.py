@@ -11,7 +11,8 @@ from boto.exception import S3ResponseError
 from whoosh.query import Every
 from whoosh.qparser import MultifieldParser, OrGroup
 
-from .. import app, whoosh
+from flask import current_app as app
+
 from .user import User
 
 from ..exceptions import OgreException, BadMetaDataError, ExactDuplicateError

@@ -3,8 +3,9 @@ from __future__ import absolute_import
 from sqlalchemy import Column, Integer, Boolean, ForeignKey
 from sqlalchemy.sql import func
 
-from .. import app
-from ..database import Base, db_session
+from flask import current_app as app
+
+from ..database import Base, get_db
 from .log import Log
 
 
@@ -22,6 +23,7 @@ class Reputation():
         Each new book uploaded earns a user a point
         """
         self.user.points += count
+        db_session = get_db(app)
         db_session.add(self.user)
         db_session.commit()
 
@@ -51,6 +53,7 @@ class Reputation():
             logs = Log.query.filter_by(user_id=self.user.id, type="NEW", data=0).all()
 
         if self.user.has_badge(Badges.Librarian) == False:
+            db_session = get_db(app)
             count = db_session.query(func.count(Log.id)).filter_by(user_id=self.user.id, type="STORED").scalar()
 
             if count > 200:
@@ -69,6 +72,7 @@ class Reputation():
         Award a badge to a user in the DB
         """
         ub = UserBadge(user_id=self.user.id, badge=badge)
+        db_session = get_db(app)
         db_session.add(ub)
         db_session.commit()
 
@@ -109,5 +113,6 @@ class UserBadge(Base):
         Flag that the has been alerted about earning this badge
         """
         self.been_alerted = True
+        db_session = get_db(app)
         db_session.add(self)
         db_session.commit()

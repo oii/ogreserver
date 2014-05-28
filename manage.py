@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 
 import datetime
+import os
 import sys
 
 from flask.ext.script import Manager
@@ -11,9 +12,12 @@ from sqlalchemy.exc import IntegrityError, ProgrammingError
 import rethinkdb as r
 from rethinkdb.errors import RqlRuntimeError
 
-from ogreserver import app
-from ogreserver.database import db_session, create_tables
+from ogreserver import create_app
+from ogreserver.database import get_db, create_tables
 
+app = create_app(
+    os.path.join(os.getcwd(), 'ogreserver/config/flask.app.conf.py')
+)
 manager = Manager(app)
 
 
@@ -34,6 +38,7 @@ def create_user(username, password, email, test=False):
         Only check if user has been created; don't actually do anything
     """
     # load a user
+    get_db(app)
     from ogreserver.models.user import User
     user = User.query.filter_by(username=username).first()
 
@@ -43,19 +48,22 @@ def create_user(username, password, email, test=False):
             print "User doesn't exist"
             sys.exit(1)
         else:
-            print "User {} exists".format(username)
+            print 'User {} exists'.format(username)
             sys.exit(0)
     else:
         if user is None:
             user = User(username, password, email)
+            db_session = get_db(app)
             db_session.add(user)
             try:
                 db_session.commit()
             except IntegrityError:
-                print "A user with this email address already exists"
+                print 'A user with this email address already exists'
                 sys.exit(1)
+
+            print 'Created user {}'.format(username)
         else:
-            print "User {0} already exists".format(username)
+            print 'User {} already exists'.format(username)
             sys.exit(1)
 
 
@@ -90,6 +98,7 @@ def init_ogre(test=False):
 
     # check mysql DB created
     try:
+        get_db(app)
         from ogreserver.models.user import User
         User.query.first()
         db_setup = True
@@ -119,7 +128,7 @@ def init_ogre(test=False):
 
         # create the local mysql database from our models
         if db_setup is False:
-            create_tables()
+            create_tables(app)
 
         if aws_setup is False:
             try:

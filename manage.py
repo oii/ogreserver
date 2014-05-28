@@ -3,7 +3,6 @@
 from __future__ import absolute_import
 
 import datetime
-import os
 import sys
 
 from flask.ext.script import Manager
@@ -69,7 +68,7 @@ def rebuild_index():
 @manager.command
 def init_ogre(test=False):
     """
-    Initialize the AWS S3 bucket and SDB endpoints for OGRE.
+    Initialize the AWS S3 bucket & RethinkDB storage for OGRE.
 
     test (bool)
         Only check if OGRE has been setup; don't actually do anything
@@ -131,18 +130,6 @@ def init_ogre(test=False):
                     sys.stderr.write("{0}\n".format(e.error_message))
                 sys.exit(1)
 
-            # init SDB
-            import boto.sdb
-            sdb = boto.sdb.connect_to_region(app.config['AWS_REGION'],
-                aws_access_key_id=app.config['AWS_ACCESS_KEY'],
-                aws_secret_access_key=app.config['AWS_SECRET_KEY']
-            )
-            try:
-                sdb.create_domain("ogre_ebooks")
-            except boto.exception.SDBResponseError as e:
-                sys.stderr.write("Failed creating SDB domain!\n  {0}\n".format(e.error_message))
-                sys.exit(1)
-
         if rdb_setup is False:
             # create a database and a couple of tables
             r.db_create('ogreserver').run(conn)
@@ -167,44 +154,6 @@ def set_indexes():
     # create the rethinkdb indexes used by ogreserver
     create_index('versions', 'ebook_id')
     create_index('formats', 'version_id')
-
-
-@manager.command
-def kill():
-    "Completely clear the SDB storage. USE WITH CAUTION!"
-    import shutil
-    import subprocess
-
-    # TODO add some kind of confirmation here...
-    conn = r.connect("localhost", 28015, db="ogreserver")
-
-    # truncate all tables in rethinkdb
-    for table in ('ebooks', 'versions', 'formats'):
-        r.table(table).delete().run(conn)
-
-    # delete the whoosh index
-    if os.path.exists(app.config['WHOOSH_BASE']):
-        shutil.rmtree(app.config['WHOOSH_BASE'])
-
-    # restart gunicorn to initialize whoosh
-    subprocess.call('supervisorctl restart ogre.gunicorn:ogreserver.gunicorn', shell=True)
-
-    print "Killed"
-
-
-@manager.command
-def show():
-    import boto.sdb
-    import json
-
-    sdb = boto.sdb.connect_to_region(app.config['AWS_REGION'],
-        aws_access_key_id=app.config['AWS_ACCESS_KEY'],
-        aws_secret_access_key=app.config['AWS_SECRET_KEY']
-    )
-
-    rs = sdb.select("ogre_ebooks", "select sdb_key, data from ogre_ebooks")
-    for item in rs:
-        print json.dumps(json.loads(item['data']), indent=4)
 
 
 @manager.command

@@ -6,7 +6,6 @@ import re
 import rethinkdb as r
 
 import boto
-import boto.sdb
 from boto.exception import S3ResponseError
 
 from whoosh.query import Every

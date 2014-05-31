@@ -20,10 +20,7 @@ from ..utils import debug_print as dp
 
 
 class DataStore():
-    def __init__(self, user):
-        self.user = user
-
-    def update_library(self, ebooks):
+    def update_library(self, ebooks, user):
         """
         The core library synchronisation method.
         A dict containing ebook metadata and file hashes is sent by each client
@@ -106,7 +103,7 @@ class DataStore():
                     # add the first version
                     new_version = {
                         'ebook_id': ebook_id,
-                        'user': self.user.username,
+                        'user': user.username,
                         'size': incoming['size'],
                         'popularity': 1,
                         'quality': 0,
@@ -133,12 +130,12 @@ class DataStore():
                 else:
                     # parse the ebook data
                     other_versions = r.table('versions').filter(
-                        {'ebook_id': ebook_id, 'user': self.user.username}
+                        {'ebook_id': ebook_id, 'user': user.username}
                     ).count().run(conn)
 
                     if other_versions > 0:
                         msg = "Rejecting new version of {} from {}".format(
-                            authortitle.encode("UTF-8"), self.user.username
+                            authortitle.encode('UTF-8'), user.username
                         )
                         dp(msg)
                         continue
@@ -149,7 +146,7 @@ class DataStore():
 
                     new_version = {
                         'ebook_id': ebook_id,
-                        'user': self.user.username,
+                        'user': user.username,
                         'size': incoming['size'],
                         'popularity': 1,
                         'quality': 0,

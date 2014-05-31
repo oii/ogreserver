@@ -2,7 +2,7 @@ import base64
 import json
 
 from flask import request, redirect, session, url_for, render_template, jsonify, make_response
-from flask.ext.login import login_required, login_user, logout_user, current_user
+from flask.ext.login import login_required, login_user, logout_user
 
 from werkzeug.exceptions import Forbidden
 
@@ -67,8 +67,8 @@ def home():
 @app.route("/list", methods=['GET', 'POST'])
 @login_required
 def list():
-    ds = DataStore(current_user)
-    s = request.args.get("s")
+    ds = DataStore()
+    s = request.args.get('s')
     if s is None:
         rs = ds.list()
     else:
@@ -93,7 +93,7 @@ def get_comment_count(pk):
 @app.route("/view")
 @login_required
 def view(sdbkey=None):
-    ds = DataStore(current_user)
+    ds = DataStore()
     rs = ds.list()
     return render_template("view.html", ebooks=rs)
 
@@ -133,8 +133,8 @@ def post(auth_key):
     Log.create(user.id, "CONNECT", request.form.get("total"), user.session_api_key)
 
     # update the library
-    ds = DataStore(user)
-    syncd_books = ds.update_library(data)
+    ds = DataStore()
+    syncd_books = ds.update_library(data, user)
 
     # extract the subset of newly supplied books
     new_books = [item for key, item in syncd_books.items() if item['new'] is True]

@@ -40,8 +40,11 @@ class DataStore():
                 # build output to return to client
                 output[incoming['file_md5']] = {'new': False, 'update': False, 'dupe': False}
 
-                # mark book for ogre_id embedding on client
-                if incoming['ogre_id'] is None:
+                skip_existing = False
+                if incoming['ogre_id'] is not None:
+                    skip_existing = True
+                else:
+                    # tell client to set ogre_id on this ebook
                     output[incoming['file_md5']]['update'] = True
 
                 # first check if this exact file has been uploaded before
@@ -55,7 +58,7 @@ class DataStore():
                 )
 
                 # skip existing books
-                if len(existing) > 0:
+                if skip_existing is True or len(existing) > 0:
                     output[incoming['file_md5']]['ebook_id'] = existing[0]['ebook_id']
                     output[incoming['file_md5']]['dupe'] = True
 

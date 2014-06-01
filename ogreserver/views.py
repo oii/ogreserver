@@ -79,7 +79,7 @@ def home():
 @views.route('/list', methods=['GET', 'POST'])
 @login_required
 def list():
-    ds = DataStore()
+    ds = DataStore(app.config, app.whoosh)
     s = request.args.get('s')
     if s is None:
         rs = ds.list()
@@ -91,21 +91,23 @@ def list():
 @views.route('/ajax/rating/<pk>')
 @login_required
 def get_rating(pk):
-    rating = DataStore.get_rating(pk)
+    ds = DataStore(app.config)
+    rating = ds.get_rating(pk)
     return jsonify({'rating': rating})
 
 
 @views.route('/ajax/comment-count/<pk>')
 @login_required
 def get_comment_count(pk):
-    comments = DataStore.get_comments(pk)
+    ds = DataStore(app.config)
+    comments = ds.get_comments(pk)
     return jsonify({'comments': len(comments)})
 
 
 @views.route('/view')
 @login_required
 def view(sdbkey=None):
-    ds = DataStore()
+    ds = DataStore(app.config, app.whoosh)
     rs = ds.list()
     return render_template('view.html', ebooks=rs)
 
@@ -114,7 +116,8 @@ def view(sdbkey=None):
 @views.route('/download/<pk>/<fmt>')
 @login_required
 def download(pk, fmt=None):
-    return redirect(DataStore.get_ebook_url(pk, fmt))
+    ds = DataStore(app.config)
+    return redirect(ds.get_ebook_url(pk, fmt))
 
 
 @views.route('/dedrm')
@@ -145,7 +148,7 @@ def post(auth_key):
     Log.create(user.id, 'CONNECT', request.form.get('total'), user.session_api_key)
 
     # update the library
-    ds = DataStore()
+    ds = DataStore(app.config, app.whoosh)
     syncd_books = ds.update_library(data, user)
 
     # extract the subset of newly supplied books
@@ -169,7 +172,7 @@ def post(auth_key):
     incoming = [item['file_md5'] for item in data.values()]
 
     # query books missing from S3 and supply back to the client
-    missing_books = DataStore.get_missing_books(username=user.username, md5_filter=incoming)
+    missing_books = ds.get_missing_books(username=user.username, md5_filter=incoming)
     return json.dumps({
         'ebooks_to_update': update_books,
         'ebooks_to_upload': missing_books,
@@ -185,7 +188,8 @@ def confirm(auth_key):
     current_file_md5 = request.form.get('file_md5')
     updated_file_md5 = request.form.get('new_md5')
 
-    if DataStore.update_book_md5(current_file_md5, updated_file_md5):
+    ds = DataStore(app.config)
+    if ds.update_book_md5(current_file_md5, updated_file_md5):
         return 'ok'
     else:
         return 'fail'

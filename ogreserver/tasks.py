@@ -20,13 +20,16 @@ def store_ebook(user_id, ebook_id, file_md5, fmt):
     Store an ebook in the datastore
     """
     try:
-        filepath = "{0}/{1}.{2}".format(app.config['UPLOADED_EBOOKS_DEST'], file_md5, fmt)
-        filename = DataStore.generate_filename(ebook_id, file_md5, fmt)
+        ds = DataStore(app.config)
+        filename = ds.generate_filename(ebook_id, file_md5, fmt)
+
+        # storage path
+        filepath = os.path.join(app.config['UPLOADED_EBOOKS_DEST'], '{}.{}'.format(file_md5, fmt))
 
         user = User.query.get(user_id)
 
         # store the file into S3
-        if DataStore.store_ebook(ebook_id, file_md5, filename, filepath, fmt):
+        if ds.store_ebook(ebook_id, file_md5, filename, filepath, fmt):
             # stats log the upload
             Log.create(user.id, "STORED", 1)
 

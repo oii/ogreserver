@@ -6,7 +6,7 @@ from whoosh.index import create_in, open_dir
 from whoosh.fields import Schema, TEXT
 
 
-def init_app(app):
+def init_whoosh(app):
     if os.path.exists(app.config['WHOOSH_BASE']):
         return open_dir(app.config['WHOOSH_BASE'])
     else:

@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from flask.ext.uploads import UploadSet, ALL, configure_uploads
 
 
-def init_app(app):
+def init_uploads(app):
     # setup Flask-Upload
     uploads = UploadSet('ebooks', ALL)
     configure_uploads(app, (uploads))

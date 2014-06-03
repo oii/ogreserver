@@ -4,7 +4,7 @@ from __future__ import absolute_import
 from flask.ext.login import LoginManager
 
 
-def init_app(app):
+def init_login(app):
     login_manager = LoginManager()
     login_manager.setup_app(app)
 

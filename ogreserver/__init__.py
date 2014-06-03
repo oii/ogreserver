@@ -3,6 +3,7 @@ from __future__ import absolute_import
 # import Flask library
 from flask import Flask
 
+
 def create_app(config):
     # instantiate Flask application
     app = Flask(__name__)
@@ -16,25 +17,25 @@ def create_app(config):
     elif type(config) is dict:
         app.config.update(config)
 
+    # create Celery
+    from .extensions.celery import init_celery
+    app.celery = init_celery(app)
+
     # import SQLAlchemy disconnect and map to Flask request shutdown
-    from .database import shutdown_db_session
+    from .extensions.database import shutdown_db_session
     app.before_request(setup_db_session)
     app.teardown_appcontext(shutdown_db_session)
 
-    # import Celery
-    from .celery import init_app as init_celery
-    app.celery = init_celery(app)
-
     # init Whoosh for full-text search
-    from .whoosh import init_app as init_whoosh
+    from .extensions.whoosh import init_whoosh
     app.whoosh = init_whoosh(app)
 
     # setup Flask-Login
-    from .flask_login import init_app as init_login
+    from .extensions.flask_login import init_login
     app.login_manager = init_login(app)
 
     # setup Flask-Uploads
-    from .flask_uploads import init_app as init_uploads
+    from .extensions.flask_uploads import init_uploads
     app.uploads = init_uploads(app)
 
     # import views as a blueprint and register with Flask the app

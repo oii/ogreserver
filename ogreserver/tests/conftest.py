@@ -9,7 +9,7 @@ import string
 import sqlalchemy
 
 from .. import create_app
-from ..database import get_db, create_tables
+from ..extensions.database import get_db, create_tables
 
 
 @pytest.fixture(scope='session')

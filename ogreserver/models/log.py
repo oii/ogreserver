@@ -6,7 +6,7 @@ from sqlalchemy import Column, Integer, String, DateTime
 
 from flask import current_app as app
 
-from ..database import Base, get_db
+from ..extensions.database import Base, get_db
 
 
 

@@ -13,7 +13,7 @@ import rethinkdb as r
 from rethinkdb.errors import RqlRuntimeError
 
 from ogreserver import create_app
-from ogreserver.database import get_db, create_tables
+from ogreserver.extensions.database import get_db, create_tables
 
 app = create_app(
     os.path.join(os.getcwd(), 'ogreserver/config/flask.app.conf.py')

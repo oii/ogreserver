@@ -5,7 +5,7 @@ from sqlalchemy.sql import func
 
 from flask import current_app as app
 
-from ..database import Base, get_db
+from ..extensions.database import Base, get_db
 from .log import Log
 
 

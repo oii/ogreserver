@@ -13,7 +13,7 @@ from .reputation import Reputation, UserBadge
 
 from flask import current_app as app
 
-from ..database import Base, get_db
+from ..extensions.database import Base, get_db
 
 
 class User(Base, UserMixin):

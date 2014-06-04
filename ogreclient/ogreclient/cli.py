@@ -11,7 +11,7 @@ import urllib
 
 from . import __version__
 
-from .core import authenticate, doit, OGRESERVER, metadata_extract
+from .core import authenticate, sync, OGRESERVER, metadata_extract
 from .utils import make_temp_directory
 
 from .exceptions import OgreException
@@ -200,7 +200,7 @@ def main(conf, args, prntr):
     elif args.mode == 'sync':
         # run ogreclient
         ebook_home, username, password = validate_input(args)
-        ret = sync(conf, args, prntr, ebook_home, username, password, debug=args.debug)
+        ret = run_sync(conf, args, prntr, ebook_home, username, password, debug=args.debug)
 
     return ret
 
@@ -234,24 +234,22 @@ def display_info(conf, args, prntr, filepath):
     prntr.p('Book meta', extra=meta)
 
 
-def sync(conf, args, prntr, ebook_home, username, password, debug=False):
+def run_sync(conf, args, prntr, ebook_home, username, password, debug=False):
     ret = False
+
+    # setup config for sync
+    conf.update({
+        'ebook_home': ebook_home,
+        'username': username,
+        'password': password,
+        'host': args.host,
+        'verbose': args.verbose,
+        'quiet': args.quiet,
+    })
+
     try:
-        # setup a temp path for DRM checks with ebook-convert
-        with make_temp_directory() as ebook_convert_path:
-            ret = doit(
-                ebook_home=ebook_home,
-                username=username,
-                password=password,
-                host=args.host,
-                config_dir=conf['config_dir'],
-                ebook_cache_path=conf['ebook_cache_path'],
-                ebook_cache_temp_path=conf['ebook_cache_temp_path'],
-                ebook_convert_path=ebook_convert_path,
-                calibre_ebook_meta_bin=conf['calibre_ebook_meta_bin'],
-                verbose=args.verbose,
-                quiet=args.quiet,
-            )
+        # doit
+        ret = sync(conf)
 
     # print messages on error
     except (AuthError, BaconError, MushroomError, SpinachError) as e:

@@ -59,23 +59,18 @@ def authenticate(host, username, password):
         raise AuthError(str(e))
 
 
-def doit(ebook_home, username, password, host,
-         config_dir=None, ebook_cache_path=None,
-         ebook_cache_temp_path=None, ebook_convert_path=None,
-         calibre_ebook_meta_bin=None, verbose=False, quiet=False):
-
+def sync(config):
     # load the user's database of previously scanned ebooks
-    if os.path.exists(ebook_cache_path):
-        with open(ebook_cache_path, "r") as f:
+    if os.path.exists(config['ebook_cache_path']):
+        with open(config['ebook_cache_path'], "r") as f:
             data = f.read()
-            #ebook_cache = json.loads(data)
 
     # authenticate user and generate session API key
-    session_key = authenticate(host, username, password)
+    session_key = authenticate(config['host'], config['username'], config['password'])
 
     ebooks = []
 
-    if quiet is True:
+    if config['quiet'] is True:
         prntr = DummyPrinter()
     else:
         prntr = CliPrinter(start=datetime.datetime.now(), debug=config['debug'])
@@ -84,7 +79,7 @@ def doit(ebook_home, username, password, host,
     prntr.p("Searching for ebooks.. ", nonl=True)
 
     # a relatively quick search for all ebooks
-    for root, dirs, files in os.walk(ebook_home):
+    for root, dirs, files in os.walk(config['ebook_home']):
         for filename in files:
             # TODO use timeit; compare to fnmatch.filter
             fn, ext = os.path.splitext(filename)
@@ -106,15 +101,16 @@ def doit(ebook_home, username, password, host,
     ebooks_dict = {}
 
     # write good ebooks into the local ogre cache to skip DRM test next run
-    with open(ebook_cache_temp_path, "w") as f_ogre_cache:
+    with open(config['ebook_cache_temp_path'], "w") as f_ogre_cache:
 
         # now parse all book meta data; building a complete dataset
         for item in ebooks:
             try:
-                # strip DRM
-                state, out = decrypt(item[0], item[2], ebook_convert_path, config_dir)
+                # decrypt into a temp path
+                with make_temp_directory() as ebook_convert_path:
+                    state, out = decrypt(item[0], item[2], ebook_convert_path, config['config_dir'])
 
-                if verbose:
+                if config['verbose']:
                     if state == DRM.none:
                         prntr.p("{0}".format(item[0]), CliPrinter.NONE)
                     elif state == DRM.decrypted:
@@ -136,10 +132,10 @@ def doit(ebook_home, username, password, host,
 
             try:
                 # extract and parse ebook metadata
-                meta = metadata_extract(calibre_ebook_meta_bin, item[0])
+                meta = metadata_extract(config['calibre_ebook_meta_bin'], item[0])
             except CorruptEbookError as e:
                 # skip books which can't have metadata extracted
-                if verbose:
+                if config['verbose']:
                     prntr.e("{}{}".format(item[1], item[2]), CliPrinter.CORRUPT)
                     continue
 
@@ -187,7 +183,7 @@ def doit(ebook_home, username, password, host,
                         'format': item[2][1:],
                         'size': item[3],
                         'file_md5': item[4],
-                        'owner': username,
+                        'owner': config['username'],
                     }
                     # merge all the meta data constructed above
                     ebooks_dict[authortitle].update(meta)
@@ -201,9 +197,9 @@ def doit(ebook_home, username, password, host,
         return {}
 
     # move the temp cache onto the real ogre cache
-    statinfo = os.stat(ebook_cache_temp_path)
+    statinfo = os.stat(config['ebook_cache_temp_path'])
     if statinfo.st_size > 0:
-        os.rename(ebook_cache_temp_path, ebook_cache_path)
+        os.rename(config['ebook_cache_temp_path'], config['ebook_cache_path'])
 
     prntr.p("Come on sucker, lick my battery")
 
@@ -215,7 +211,7 @@ def doit(ebook_home, username, password, host,
         })
         req = urllib2.Request(
             url='http://{0}/post/{1}'.format(
-                host,
+                config['host'],
                 urllib.quote_plus(session_key)
             )
         )
@@ -252,15 +248,15 @@ def doit(ebook_home, username, password, host,
             if md5 == ebooks_dict[authortitle]['file_md5']:
                 try:
                     add_ogre_id_to_ebook(
-                        calibre_ebook_meta_bin,
+                        config['calibre_ebook_meta_bin'],
                         md5,
                         ebooks_dict[authortitle]['path'],
                         ebooks_dict[authortitle]['format'],
                         item['ebook_id'],
-                        host,
+                        config['host'],
                         session_key,
                     )
-                    if verbose:
+                    if config['verbose']:
                         prntr.p('Wrote OGRE_ID to {}'.format(ebooks_dict[authortitle]['path']))
 
                 except (FailedWritingMetaDataError, FailedConfirmError) as e:
@@ -273,7 +269,7 @@ def doit(ebook_home, username, password, host,
             if upload['file_md5'] == ebooks_dict[authortitle]['file_md5']:
                 try:
                     data = upload_single_book(
-                        host,
+                        config['host'],
                         session_key,
                         ebooks_dict[authortitle]['path'],
                         upload,

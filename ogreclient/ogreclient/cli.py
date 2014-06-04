@@ -270,7 +270,6 @@ def prerequisites(args, prntr):
     # setup some ebook cache file paths
     config_dir = os.path.join(os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config')), 'ogre')
     ebook_cache_path = os.path.join(config_dir, 'ebook_cache')
-    ebook_cache_temp_path = os.path.join(config_dir, 'ebook_cache.tmp')
 
     # use existing config if available
     if os.path.exists(config_dir) and os.path.exists(os.path.join(config_dir, 'app.config')):
@@ -334,7 +333,6 @@ def prerequisites(args, prntr):
     # return config object
     conf['config_dir'] = config_dir
     conf['ebook_cache_path'] = ebook_cache_path
-    conf['ebook_cache_temp_path'] = ebook_cache_temp_path
     return conf
 
 

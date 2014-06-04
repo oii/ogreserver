@@ -65,6 +65,12 @@ def sync(config):
         with open(config['ebook_cache_path'], "r") as f:
             data = f.read()
 
+    # setup temporary cache path
+    ebook_cache_temp_path = os.path.join(
+        config['config_dir'],
+        '{}.tmp'.format(config['ebook_cache_path'])
+    )
+
     # authenticate user and generate session API key
     session_key = authenticate(config['host'], config['username'], config['password'])
 
@@ -101,7 +107,7 @@ def sync(config):
     ebooks_dict = {}
 
     # write good ebooks into the local ogre cache to skip DRM test next run
-    with open(config['ebook_cache_temp_path'], "w") as f_ogre_cache:
+    with open(ebook_cache_temp_path, 'w') as f_ogre_cache:
 
         # now parse all book meta data; building a complete dataset
         for item in ebooks:
@@ -197,9 +203,9 @@ def sync(config):
         return {}
 
     # move the temp cache onto the real ogre cache
-    statinfo = os.stat(config['ebook_cache_temp_path'])
+    statinfo = os.stat(ebook_cache_temp_path)
     if statinfo.st_size > 0:
-        os.rename(config['ebook_cache_temp_path'], config['ebook_cache_path'])
+        os.rename(ebook_cache_temp_path, config['ebook_cache_path'])
 
     prntr.p("Come on sucker, lick my battery")
 

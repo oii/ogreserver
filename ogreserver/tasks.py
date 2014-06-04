@@ -4,9 +4,8 @@ import os
 import json
 import subprocess
 
-import celery
-
-from flask import current_app as app
+from .extensions.celery import celery
+from .extensions.database import get_db
 
 from .models.user import User
 from .models.datastore import DataStore, S3DatastoreError
@@ -14,43 +13,50 @@ from .models.reputation import Reputation
 from .models.log import Log
 
 
-@celery.task(name="ogreserver.store_ebook")
+@celery.task()
 def store_ebook(user_id, ebook_id, file_md5, fmt):
     """
     Store an ebook in the datastore
     """
-    try:
-        ds = DataStore(app.config)
-        filename = ds.generate_filename(ebook_id, file_md5, fmt)
+    # import the Flask app and spoof a context
+    from .runflask import app
+    with app.test_request_context():
+        filepath = None
 
-        # storage path
-        filepath = os.path.join(app.config['UPLOADED_EBOOKS_DEST'], '{}.{}'.format(file_md5, fmt))
+        # initialise the DB connection in our fake app context
+        get_db(app)
 
-        user = User.query.get(user_id)
+        try:
+            # create the datastore & generate a nice filename
+            ds = DataStore(app.config, app.logger)
+            filename = ds.generate_filename(ebook_id, file_md5, fmt)
 
-        # store the file into S3
-        if ds.store_ebook(ebook_id, file_md5, filename, filepath, fmt):
-            # stats log the upload
-            Log.create(user.id, "STORED", 1)
+            # storage path
+            filepath = os.path.join(app.config['UPLOADED_EBOOKS_DEST'], '{}.{}'.format(file_md5, fmt))
 
-            # handle badge and reputation changes
-            r = Reputation(user)
-            r.earn_badges()
+            user = User.query.get(user_id)
 
-        else:
-            print "File exists on S3"
+            # store the file into S3
+            if ds.store_ebook(ebook_id, file_md5, filename, filepath, fmt):
+                # stats log the upload
+                Log.create(user.id, 'STORED', 1)
 
-    except S3DatastoreError:
-        # TODO log this shit
-        pass
+                # handle badge and reputation changes
+                r = Reputation(user)
+                r.earn_badges()
+            else:
+                app.logger.info('{} exists on S3'.format(filename))
 
-    finally:
-        # always delete local file
-        if os.path.exists(filepath):
-            os.remove(filepath)
+        except S3DatastoreError as e:
+            app.logger.error('Failed uploading {} with {}'.format(filename, e))
+
+        finally:
+            # always delete local file
+            if filepath is not None and os.path.exists(filepath):
+                os.remove(filepath)
 
 
-@celery.task(name="ogreserver.convert_ebook")
+@celery.task()
 def convert_ebook(sdbkey, source_filepath, dest_fmt):
     """
     Convert an ebook to another format, and push to datastore

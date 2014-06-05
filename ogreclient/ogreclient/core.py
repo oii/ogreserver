@@ -60,16 +60,17 @@ def authenticate(host, username, password):
 
 
 def sync(config):
-    # load the user's database of previously scanned ebooks
-    if os.path.exists(config['ebook_cache_path']):
-        with open(config['ebook_cache_path'], "r") as f:
-            data = f.read()
+    if config['config_dir'] is not None:
+        # load the user's database of previously scanned ebooks
+        if os.path.exists(config['ebook_cache_path']):
+            with open(config['ebook_cache_path'], 'r') as f:
+                data = f.read()
 
-    # setup temporary cache path
-    ebook_cache_temp_path = os.path.join(
-        config['config_dir'],
-        '{}.tmp'.format(config['ebook_cache_path'])
-    )
+        # setup temporary cache path
+        ebook_cache_temp_path = os.path.join(
+            config['config_dir'],
+            '{}.tmp'.format(config['ebook_cache_path'])
+        )
 
     # authenticate user and generate session API key
     session_key = authenticate(config['host'], config['username'], config['password'])
@@ -106,11 +107,9 @@ def sync(config):
     #update_progress(0, length=PROGBAR_LEN)
     ebooks_dict = {}
 
-    # write good ebooks into the local ogre cache to skip DRM test next run
-    with open(ebook_cache_temp_path, 'w') as f_ogre_cache:
-
-        # now parse all book meta data; building a complete dataset
-        for item in ebooks:
+    # now parse all book meta data; building a complete dataset
+    for item in ebooks:
+        if config['config_dir'] is not None:
             try:
                 # decrypt into a temp path
                 with make_temp_directory() as ebook_convert_path:
@@ -118,94 +117,87 @@ def sync(config):
 
                 if config['verbose']:
                     if state == DRM.none:
-                        prntr.p("{0}".format(item[0]), CliPrinter.NONE)
+                        prntr.p('{}'.format(item[0]), CliPrinter.NONE)
                     elif state == DRM.decrypted:
-                        prntr.p("{0}".format(item[0]), CliPrinter.DEDRM, success=True)
+                        prntr.p('{}'.format(item[0]), CliPrinter.DEDRM, success=True)
                     elif state == DRM.wrong_key:
-                        prntr.e("{0}".format(item[0]), CliPrinter.WRONG_KEY)
+                        prntr.e('{}'.format(item[0]), CliPrinter.WRONG_KEY)
                     elif state == DRM.failed:
-                        prntr.e("{0}".format(item[0]), CliPrinter.DEDRM,
+                        prntr.e('{}'.format(item[0]), CliPrinter.DEDRM,
                             extra=' '.join([l.strip() for l in out])
                         )
                     elif state == DRM.corrupt:
-                        prntr.e("{0}".format(item[0]), CliPrinter.CORRUPT)
+                        prntr.e('{}'.format(item[0]), CliPrinter.CORRUPT)
                     else:
-                        prntr.p("{0}\t{1}".format(item[0], out), CliPrinter.UNKNOWN)
+                        prntr.p('{}\t{}'.format(item[0], out), CliPrinter.UNKNOWN)
 
             except Exception as e:
-                prntr.e("Fatal Exception on {0}".format(item[0]), excp=e)
+                prntr.e('Fatal Exception on {}'.format(item[0]), excp=e)
                 continue
 
-            try:
-                # extract and parse ebook metadata
-                meta = metadata_extract(config['calibre_ebook_meta_bin'], item[0])
-            except CorruptEbookError as e:
-                # skip books which can't have metadata extracted
-                if config['verbose']:
-                    prntr.e("{}{}".format(item[1], item[2]), CliPrinter.CORRUPT)
-                    continue
+        try:
+            # extract and parse ebook metadata
+            meta = metadata_extract(config['calibre_ebook_meta_bin'], item[0])
+        except CorruptEbookError as e:
+            # skip books which can't have metadata extracted
+            if config['verbose']:
+                prntr.e('{}{}'.format(item[1], item[2]), CliPrinter.CORRUPT)
+                continue
 
-            # books are indexed by "authortitle" to handle multiple copies of the same book
-            authortitle = "{0} - {1}".format(meta['author'], meta['title'])
+        # books are indexed by 'authortitle' to handle multiple copies of the same book
+        authortitle = '{} - {}'.format(meta['author'], meta['title'])
 
-            # check for duplicates
-            if authortitle in ebooks_dict.keys() and item[2] in ebooks_dict[authortitle].keys():
-                # TODO warn user on error stack
-                pass
-            else:
-                # write file path to ogre cache
-                # TODO move this to where the ogre_id gets confirmed
-                f_ogre_cache.write("%s\n" % item[0])
+        # check for duplicates
+        if authortitle in ebooks_dict.keys() and item[2] in ebooks_dict[authortitle].keys():
+            # TODO warn user on error stack
+            pass
+        else:
+            # another format of same book found
+            write = False
 
-                # another format of same book found
-                write = False
+            if authortitle in ebooks_dict.keys():
+                # compare the rank of the format already found against this one
+                existing_rank = EBOOK_FORMATS[ebooks_dict[authortitle]['format']]
+                new_rank = EBOOK_FORMATS[item[2][1:]]
 
-                if authortitle in ebooks_dict.keys():
-                    # compare the rank of the format already found against this one
-                    existing_rank = EBOOK_FORMATS[ebooks_dict[authortitle]['format']]
-                    new_rank = EBOOK_FORMATS[item[2][1:]]
-
-                    # lower is better
-                    if new_rank < existing_rank:
-                        write = True
-
-                    # upload in favoured formats: mobi, azw, pdf, epub
-                    #if ebooks_dict[authortitle]['format'] == "epub" and item[2][1:] in ('mobi', 'azw3', 'azw', 'pdf'):
-                    #    write = True
-                    #elif ebooks_dict[authortitle]['format'] == "pdf" and item[2][1:] in ('mobi', 'azw3', 'azw'):
-                    #    write = True
-                    #elif ebooks_dict[authortitle]['format'] == "pdf" and item[2][1:] in ('mobi', 'azw3'):
-                    #    write = True
-                    #elif ebooks_dict[authortitle]['format'] == "awz" and item[2][1:] in ('mobi'):
-                    #    write = True
-                else:
-                    # new book found
+                # lower is better
+                if new_rank < existing_rank:
                     write = True
+            else:
+                # new book found
+                write = True
 
-                if write:
-                    ebooks_dict[authortitle] = {
-                        'path': item[0],
-                        'filename': item[1],
-                        'format': item[2][1:],
-                        'size': item[3],
-                        'file_md5': item[4],
-                        'owner': config['username'],
-                    }
-                    # merge all the meta data constructed above
-                    ebooks_dict[authortitle].update(meta)
+            if write:
+                ebooks_dict[authortitle] = {
+                    'path': item[0],
+                    'filename': item[1],
+                    'format': item[2][1:],
+                    'size': item[3],
+                    'file_md5': item[4],
+                    'owner': config['username'],
+                }
+                # merge all the meta data constructed above
+                ebooks_dict[authortitle].update(meta)
 
-            i += 1
-            #update_progress(float(i) / float(total), length=PROGBAR_LEN)
+        i += 1
+        #update_progress(float(i) / float(total), length=PROGBAR_LEN)
 
-    prntr.p("\nFound {0} ebooks".format(len(ebooks_dict)))
+    prntr.p('Found {} ebooks'.format(len(ebooks_dict)), success=True)
 
     if len(ebooks_dict) == 0:
         return {}
 
-    # move the temp cache onto the real ogre cache
-    statinfo = os.stat(ebook_cache_temp_path)
-    if statinfo.st_size > 0:
-        os.rename(ebook_cache_temp_path, config['ebook_cache_path'])
+    if config['config_dir'] is not None:
+        # write good ebooks into the local ogre cache to skip DRM test next run
+        with open(ebook_cache_temp_path, 'w') as f_ogre_cache:
+            # TODO move this to where the ogre_id gets confirmed
+            for authortitle, item in ebooks_dict.items():
+                f_ogre_cache.write('{}\n'.format(item['path']))
+
+        # move the temp cache onto the real ogre cache
+        statinfo = os.stat(ebook_cache_temp_path)
+        if statinfo.st_size > 0:
+            os.rename(ebook_cache_temp_path, config['ebook_cache_path'])
 
     prntr.p("Come on sucker, lick my battery")
 

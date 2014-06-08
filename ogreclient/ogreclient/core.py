@@ -314,8 +314,8 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
 
     # initialize all the metadata we attempt to extract
     meta = {}
-    for prop in ('title', 'author', 'firstname', 'lastname', 'publisher',
-                 'published', 'tags', 'isbn', 'asin', 'uri', 'ogre_id', 'dedrm'):
+    for prop in ('title', 'author', 'publisher', 'published', 'tags', 'isbn',
+                 'asin', 'uri', 'ogre_id', 'dedrm'):
         meta[prop] = None
 
     for line in extracted.splitlines():
@@ -342,11 +342,13 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
         if 'Author' in line:
             meta['author'] = line[line.find(':')+1:].strip()
             bracketpos = meta['author'].find('[')
+            # if a square bracket in author, pass the contents of the brackets to ogreserver
             if(bracketpos > -1):
-                commapos = meta['author'].find(',', bracketpos)
-                meta['lastname'] = meta['author'][bracketpos+1:commapos]
-                meta['firstname'] = meta['author'][commapos+1:-1].strip()
-                meta['author'] = meta['author'][0:bracketpos].strip()
+                endbracketpos = meta['author'].find(']', bracketpos)
+                if endbracketpos > -1:
+                    meta['author'] = meta['author'][bracketpos+1:endbracketpos].strip()
+            else:
+                meta['author'] = meta['author'].strip()
             continue
 
         if 'Identifiers' in line:

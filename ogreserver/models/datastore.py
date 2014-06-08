@@ -69,18 +69,20 @@ class DataStore():
                         )
                     )
 
-                # create firstname, lastname (these are often the wrong way around)
-                if 'firstname' in incoming:
-                    firstname = incoming['firstname']
-                    lastname = incoming['lastname']
-                else:
-                    firstname, lastname = incoming['author'].split(',')
-
-                # error handle incoming data
-                if lastname is None:
-                    raise BadMetaDataError()
-                if firstname is None:
-                    firstname = ''
+                try:
+                    # author containing comma is "surname, firstname"
+                    if ',' in incoming['author']:
+                        names = incoming['author'].split(',')
+                        lastname = names[0]
+                        firstname = ''.join(names[1:])
+                    else:
+                        names = incoming['author'].split(' ')
+                        firstname = names[0]
+                        lastname = ''.join(names[1:])
+                except:
+                    raise BadMetaDataError(
+                        "Bad meta data in '{}'; client sent {}".format(authortitle, incoming)
+                    )
 
                 # check for this book by meta data in the library
                 ebook_id = DataStore.build_ebook_key(lastname, firstname, incoming['title'])

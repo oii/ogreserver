@@ -43,7 +43,7 @@ class User(Base, UserMixin):
         user = User.query.filter_by(username=username).first()
         if not user:
             return None
-        elif pwd_context.verify(password, user.password) == False:
+        elif pwd_context.verify(password, user.password) is False:
             return None
         return user
 

@@ -266,6 +266,7 @@ def run_sync(conf, args, prntr, ebook_home, username, password, debug=False):
     return ret
 
 
+# TODO write tests for the prerequistes
 def prerequisites(args, prntr):
     # setup some ebook cache file paths
     config_dir = os.path.join(os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config')), 'ogre')
@@ -283,11 +284,14 @@ def prerequisites(args, prntr):
 
         os.makedirs(config_dir)
 
-        # locate calibre's binaries
         try:
-            calibre_ebook_meta_bin = subprocess.check_output(
-                ['find', '/Applications', '-type', 'f', '-name', 'ebook-meta']
-            ).strip()
+            # locate calibre's binaries
+            calibre_ebook_meta_bin = subprocess.check_output('which ebook-meta', shell=True).strip()
+
+            if len(calibre_ebook_meta_bin) == 0:
+                calibre_ebook_meta_bin = subprocess.check_output(
+                    ['find', '/Applications', '-type', 'f', '-name', 'ebook-meta']
+                ).strip()
 
             if len(calibre_ebook_meta_bin) == 0:
                 raise Exception

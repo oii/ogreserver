@@ -205,7 +205,6 @@ def sync(config):
         # post the json array of ebook data
         params = urllib.urlencode({
             'ebooks': json.dumps(ebooks_dict),
-            'total': total
         })
         req = urllib2.Request(
             url='http://{0}/post/{1}'.format(

@@ -205,7 +205,7 @@ def post(auth_key):
     data = json.loads(request.form.get('ebooks'))
 
     # stats log the upload
-    Log.create(user.id, 'CONNECT', request.form.get('total'), user.session_api_key)
+    Log.create(user.id, 'CONNECT', len(data.keys()), user.session_api_key)
 
     # update the library
     ds = DataStore(app.config, app.logger, app.whoosh)

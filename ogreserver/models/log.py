@@ -28,7 +28,7 @@ class Log(Base):
 
     @staticmethod
     def create(user_id, type, data, api_session_key=None):
-        print "%s %s" % (type, data)
+        app.logger.info('{} {}'.format(type, data))
         db_session = get_db(app)
         db_session.add(Log(user_id, api_session_key, type, data))
         db_session.commit()

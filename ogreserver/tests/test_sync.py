@@ -17,7 +17,7 @@ def test_sync_duplicate(flask_app, datastore, user):
     }
 
     # create the datastore and run a sync
-    ds = DataStore(flask_app.config)
+    ds = DataStore(flask_app.config, flask_app.logger)
     syncd_books = ds.update_library(ebooks_dict, user)
 
     # check book needs updating

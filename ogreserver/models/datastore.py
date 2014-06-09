@@ -15,12 +15,11 @@ from .user import User
 
 from ..exceptions import OgreException, BadMetaDataError, ExactDuplicateError
 
-from ..utils import debug_print as dp
-
 
 class DataStore():
-    def __init__(self, config, whoosh=None):
+    def __init__(self, config, logger, whoosh=None):
         self.config = config
+        self.logger = logger
         self.whoosh = whoosh
 
     def update_library(self, ebooks, user):
@@ -145,7 +144,7 @@ class DataStore():
                         msg = "Rejecting new version of {} from {}".format(
                             authortitle.encode('UTF-8'), user.username
                         )
-                        dp(msg)
+                        self.logger.info(msg)
                         continue
 
                     # TODO favour mobi format in uploads.. epub after that - dont upload multiple formats of same book
@@ -182,10 +181,9 @@ class DataStore():
 
             except OgreException as e:
                 # TODO log this and report back to client
-                dp(e)
-            #except Exception as e:
-            #    print "[EXCP] %s" % authortitle
-            #    print "\t%s: %s" % (type(e), e)
+                self.logger.info(e)
+            except Exception as e:
+                self.logger.error(e, exc_info=True)
 
         return output
 
@@ -203,7 +201,7 @@ class DataStore():
             writer.add_document(ebook_id=unicode(book_data['ebook_id']), author=author, title=title)
             writer.commit()
         except Exception as e:
-            print e
+            self.logger.error(e)
 
 
     def list(self):
@@ -347,9 +345,9 @@ class DataStore():
             data['source_patched'] = True
             r.table('formats').insert(data).run(conn)
             r.table('formats').get(current_file_md5).delete().run(conn)
-            print "Updated {0} to {1}".format(current_file_md5, updated_file_md5)
-        except Exception as e:
-            print "Something bad happened {0}".format(e)
+            self.logger.info('Updated {} to {}'.format(current_file_md5, updated_file_md5))
+        except Exception:
+            self.logger.error('Failed updating ebook {}'.format(current_file_md5), exc_info=True)
             return False
         return True
 
@@ -404,7 +402,7 @@ class DataStore():
                     headers={'x-amz-meta-ogre-key': ebook_id},
                     md5=md5_tup,
                 )
-                print "UPLOADED {1}".format(filename)
+                self.logger.info('UPLOADED {}'.format(filename))
 
                 # mark ebook as stored
                 self.set_uploaded(file_md5)

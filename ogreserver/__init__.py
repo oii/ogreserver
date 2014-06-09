@@ -38,6 +38,10 @@ def create_app(config):
     from .extensions.flask_uploads import init_uploads
     app.uploads = init_uploads(app)
 
+    # setup application logging
+    from .extensions.logging import init_logging
+    init_logging(app)
+
     # import views as a blueprint and register with Flask the app
     from .views import views
     app.register_blueprint(views)

@@ -11,8 +11,6 @@ from flask.ext.login import login_required, login_user, logout_user
 
 from werkzeug.exceptions import Forbidden
 
-from .utils import debug_print as dp
-
 from forms.auth import LoginForm
 
 from models.user import User
@@ -147,7 +145,7 @@ def home():
 @views.route('/list', methods=['GET', 'POST'])
 @login_required
 def list():
-    ds = DataStore(app.config, app.whoosh)
+    ds = DataStore(app.config, app.logger, app.whoosh)
     s = request.args.get('s')
     if s is None:
         rs = ds.list()
@@ -159,7 +157,7 @@ def list():
 @views.route('/ajax/rating/<pk>')
 @login_required
 def get_rating(pk):
-    ds = DataStore(app.config)
+    ds = DataStore(app.config, app.logger)
     rating = ds.get_rating(pk)
     return jsonify({'rating': rating})
 
@@ -167,7 +165,7 @@ def get_rating(pk):
 @views.route('/ajax/comment-count/<pk>')
 @login_required
 def get_comment_count(pk):
-    ds = DataStore(app.config)
+    ds = DataStore(app.config, app.logger)
     comments = ds.get_comments(pk)
     return jsonify({'comments': len(comments)})
 
@@ -184,7 +182,7 @@ def view(sdbkey=None):
 @views.route('/download/<pk>/<fmt>')
 @login_required
 def download(pk, fmt=None):
-    ds = DataStore(app.config)
+    ds = DataStore(app.config, app.logger)
     return redirect(ds.get_ebook_url(pk, fmt))
 
 
@@ -210,7 +208,7 @@ def post(auth_key):
     Log.create(user.id, 'CONNECT', request.form.get('total'), user.session_api_key)
 
     # update the library
-    ds = DataStore(app.config, app.whoosh)
+    ds = DataStore(app.config, app.logger, app.whoosh)
     syncd_books = ds.update_library(data, user)
 
     # extract the subset of newly supplied books
@@ -250,7 +248,7 @@ def confirm(auth_key):
     current_file_md5 = request.form.get('file_md5')
     updated_file_md5 = request.form.get('new_md5')
 
-    ds = DataStore(app.config)
+    ds = DataStore(app.config, app.logger)
     if ds.update_book_md5(current_file_md5, updated_file_md5):
         return 'ok'
     else:
@@ -264,7 +262,11 @@ def upload(auth_key):
     # stats log the upload
     Log.create(user.id, 'UPLOADED', 1, user.session_api_key)
 
-    dp(user.session_api_key, request.form.get('pk'), request.files['ebook'].content_length)
+    app.logger.debug('{} {} {}'.format(
+        user.session_api_key,
+        request.form.get('pk'),
+        request.files['ebook'].content_length
+    ))
 
     # write uploaded ebook to disk, named as the hash and filetype
     app.uploads.save(request.files['ebook'], None, '{0}.{1}'.format(

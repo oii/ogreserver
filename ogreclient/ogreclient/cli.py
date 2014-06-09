@@ -77,6 +77,10 @@ def parse_command_line():
               'You can also set the environment variable $EBOOK_HOME'))
 
     psync.add_argument(
+        '--no-drm', action='store_true',
+        help="Disable DRM removal during sync; don't install DeDRM tools")
+
+    psync.add_argument(
         '--verbose', '-v', action='store_true',
         help='Produce lots of output')
     psync.add_argument(
@@ -245,6 +249,7 @@ def run_sync(conf, args, prntr, ebook_home, username, password, debug=False):
         'host': args.host,
         'verbose': args.verbose,
         'quiet': args.quiet,
+        'no_drm': args.no_drm,
     })
 
     try:
@@ -307,32 +312,36 @@ def prerequisites(args, prntr):
         with open(os.path.join(config_dir, 'app.config'), 'w') as f_config:
             f_config.write(json.dumps(conf))
 
-    # check if we have decrypt capability
-    from .dedrm import CAN_DECRYPT
-
-    if CAN_DECRYPT is False:
-        ebook_home, username, password = validate_input(args)
-
-        # attempt to download and setup dedrm
-        attempted_download = True
-        installed = download_dedrm(args.host, username, password, prntr)
+    if args.mode == 'sync' and args.no_drm is True:
+        # skip drm check
+        pass
     else:
-        attempted_download = False
-        installed = False
+        # check if we have decrypt capability
+        from .dedrm import CAN_DECRYPT
 
-    from .dedrm import init_keys
+        if CAN_DECRYPT is False:
+            ebook_home, username, password = validate_input(args)
 
-    # initialise a working dedrm lib
-    if CAN_DECRYPT is True or installed is True:
-        msgs = init_keys(config_dir, ignore_check=True)
-        for m in msgs:
-            prntr.p(m)
+            # attempt to download and setup dedrm
+            attempted_download = True
+            installed = download_dedrm(args.host, username, password, prntr)
+        else:
+            attempted_download = False
+            installed = False
 
-        from dedrm import PLUGIN_VERSION
-        prntr.p('Initialised DRM tools v{}'.format(PLUGIN_VERSION))
+        from .dedrm import init_keys
 
-    elif attempted_download is True:
-        prntr.e('Failed to download DRM tools. Please report this error.')
+        # initialise a working dedrm lib
+        if CAN_DECRYPT is True or installed is True:
+            msgs = init_keys(config_dir, ignore_check=True)
+            for m in msgs:
+                prntr.p(m)
+
+            from dedrm import PLUGIN_VERSION
+            prntr.p('Initialised DRM tools v{}'.format(PLUGIN_VERSION))
+
+        elif attempted_download is True:
+            prntr.e('Failed to download DRM tools. Please report this error.')
 
     # return config object
     conf['config_dir'] = config_dir

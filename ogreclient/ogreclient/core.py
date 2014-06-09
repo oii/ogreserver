@@ -127,7 +127,7 @@ def search_for_ebooks(config, prntr):
 
     # now parse all book meta data; building a complete dataset
     for item in ebooks:
-        if config['config_dir'] is not None:
+        if config['no_drm'] is False:
             try:
                 # decrypt into a temp path
                 with make_temp_directory() as ebook_convert_path:

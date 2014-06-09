@@ -18,7 +18,7 @@ from .utils import make_temp_directory
 from .printer import CliPrinter, DummyPrinter
 from .dedrm import decrypt, DRM
 
-from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
+from .exceptions import AuthDeniedError, AuthError, NoEbooksError
 from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
 from .exceptions import FailedWritingMetaDataError, FailedConfirmError
 
@@ -60,6 +60,32 @@ def authenticate(host, username, password):
 
 
 def sync(config):
+    # authenticate user and generate session API key
+    session_key = authenticate(config['host'], config['username'], config['password'])
+
+    if config['quiet'] is True:
+        prntr = DummyPrinter()
+    else:
+        prntr = CliPrinter(start=datetime.datetime.now(), debug=config['debug'])
+
+    # 1) find ebooks in config['ebook_home'] on local machine
+    ebooks_dict = search_for_ebooks(config, prntr)
+
+    # 2) send dict of ebooks / md5s to ogreserver
+    response = sync_with_server(config, prntr, session_key, ebooks_dict)
+
+    # 3) set ogre_id in metadata of each sync'd ebook
+    success, failed = update_local_metadata(
+        config, prntr, session_key, ebooks_dict, response['ebooks_to_update']
+    )
+
+    # 4) upload the ebooks requested by ogreserver
+    success, failed = upload_ebooks(
+        config, prntr, session_key, ebooks_dict, response['ebooks_to_upload']
+    )
+
+
+def search_for_ebooks(config, prntr):
     if config['config_dir'] is not None:
         # load the user's database of previously scanned ebooks
         if os.path.exists(config['ebook_cache_path']):
@@ -72,15 +98,7 @@ def sync(config):
             '{}.tmp'.format(config['ebook_cache_path'])
         )
 
-    # authenticate user and generate session API key
-    session_key = authenticate(config['host'], config['username'], config['password'])
-
     ebooks = []
-
-    if config['quiet'] is True:
-        prntr = DummyPrinter()
-    else:
-        prntr = CliPrinter(start=datetime.datetime.now(), debug=config['debug'])
 
     # let the user know something is happening
     prntr.p("Searching for ebooks.. ", nonl=True)
@@ -199,6 +217,10 @@ def sync(config):
         if statinfo.st_size > 0:
             os.rename(ebook_cache_temp_path, config['ebook_cache_path'])
 
+    return ebooks_dict
+
+
+def sync_with_server(config, prntr, session_key, ebooks_dict):
     prntr.p("Come on sucker, lick my battery")
 
     try:
@@ -230,16 +252,14 @@ def sync(config):
         else:
             prntr.p(msg, CliPrinter.RESPONSE)
 
-    if len(response['ebooks_to_upload']) == 0:
-        raise NoUploadsError()
+    return response
 
-    # grammatically correct messages are nice
-    plural = "s" if len(response['ebooks_to_upload']) > 1 else ""
 
-    prntr.p("Uploading {0} file{1}. Go make a brew.".format(len(response['ebooks_to_upload']), plural))
+def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_update):
+    success, failed = 0, 0
 
     # update any books with ogre_id supplied from ogreserver
-    for md5, item in response['ebooks_to_update'].items():
+    for md5, item in ebooks_to_update.items():
         # find this book in the scan data
         for authortitle in ebooks_dict.keys():
             if md5 == ebooks_dict[authortitle]['file_md5']:
@@ -253,14 +273,30 @@ def sync(config):
                         config['host'],
                         session_key,
                     )
+                    success += 1
                     if config['verbose']:
                         prntr.p('Wrote OGRE_ID to {}'.format(ebooks_dict[authortitle]['path']))
 
                 except (FailedWritingMetaDataError, FailedConfirmError) as e:
                     prntr.e('Failed saving OGRE_ID in source ebook', excp=e)
+                    failed += 1
+
+    return success, failed
+
+
+def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):
+    if len(ebooks_to_upload) == 0:
+        return None, None
+
+    # grammatically correct messages are nice
+    plural = 's' if len(ebooks_to_upload) > 1 else ''
+
+    prntr.p('Uploading {} file{}. Go make a brew.'.format(len(ebooks_to_upload), plural))
+
+    success, failed = 0, 0
 
     # upload each requested by the server
-    for upload in response['ebooks_to_upload']:
+    for upload in ebooks_to_upload:
         # iterate all user's found books
         for authortitle in ebooks_dict.keys():
             if upload['file_md5'] == ebooks_dict[authortitle]['file_md5']:
@@ -272,11 +308,13 @@ def sync(config):
                         upload,
                     )
                     prntr.p(data)
+                    success += 1
 
                 except SpinachError as e:
                     prntr.e('Failed uploading {}'.format(ebooks_dict[authortitle]['path']), excp=e)
+                    failed += 1
 
-    return True
+    return success, failed
 
 
 def upload_single_book(host, session_key, filepath, upload_obj):

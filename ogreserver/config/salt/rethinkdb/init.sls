@@ -13,7 +13,11 @@ rethinkdb-pkgrepo:
       - pkg: rethinkdb
 
 rethinkdb:
-  pkg.installed
+  user.present:
+    - createhome: false
+    - gid_from_name: true
+  pkg.installed:
+    - version: "1.12.5-0ubuntu1~lucid"
 
 
 python-pip-rethinkdb:
@@ -44,9 +48,14 @@ rethinkdb-config:
     - group: rethinkdb
     - defaults:
         app_name: {{ pillar['app_name'] }}
+        data_directory: null
         production: true
+        host: null
+        canonical_address: null
+        join: []
     - require:
       - pkg: rethinkdb
+      - user: rethinkdb
   cmd.wait:
     - name: /etc/init.d/rethinkdb restart
     - require:

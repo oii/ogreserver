@@ -351,9 +351,6 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
 
     # initialize all the metadata we attempt to extract
     meta = {}
-    for prop in ('title', 'author', 'publisher', 'published', 'tags', 'isbn',
-                 'asin', 'uri', 'ogre_id', 'dedrm'):
-        meta[prop] = None
 
     for line in extracted.splitlines():
         # extract the simple metadata

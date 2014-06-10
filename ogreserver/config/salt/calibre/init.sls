@@ -10,3 +10,15 @@ calibre-install:
     - name: /opt/calibre_installer.py
     - watch:
       - file: calibre-install
+
+# support packages for ebook-meta
+calibre-pkgs:
+  pkg.installed:
+    - names:
+      - fontconfig
+      - libxt6
+      - libxi6
+      - libxrender1
+      - libxrandr2
+      - libxfixes3
+      - libxcursor1

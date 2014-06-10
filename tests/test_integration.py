@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import pytest
+
 # import ogreclient installed locally
 from ogreclient.core import authenticate, sync_with_server
 from ogreclient.printer import DummyPrinter
@@ -30,3 +32,11 @@ def test_duplicate(ogreserver, client_config, tmpdir):
     # 2) sync the same book and ensure duplicate registered
     response = sync_with_server(client_config, prntr, session_key, data)
     assert response['ebooks_to_update']['42344f0e247923fcb347c0e5de5fc762']['dupe'] is True
+
+
+@pytest.mark.xfail
+def test_update_ogre_id(ogreserver, client_config, tmpdir):
+    '''
+    test client/server interaction in add_ogre_id_to_ebook
+    '''
+    pass

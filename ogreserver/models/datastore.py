@@ -32,10 +32,8 @@ class DataStore():
 
         conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
 
-        for authortitle in ebooks.keys():
+        for authortitle, incoming in ebooks.items():
             try:
-                incoming = ebooks[authortitle]
-
                 # build output to return to client
                 output[incoming['file_md5']] = {'new': False, 'update': False, 'dupe': False}
 
@@ -68,14 +66,17 @@ class DataStore():
                         )
                     )
 
+                # derive author and title from the key
+                author, title = authortitle.split(' - ')
+
                 try:
                     # author containing comma is "surname, firstname"
-                    if ',' in incoming['author']:
-                        names = incoming['author'].split(',')
+                    if ',' in author:
+                        names = author.split(',')
                         lastname = names[0]
                         firstname = ''.join(names[1:])
                     else:
-                        names = incoming['author'].split(' ')
+                        names = author.split(' ')
                         firstname = names[0]
                         lastname = ''.join(names[1:])
                 except:
@@ -84,14 +85,14 @@ class DataStore():
                     )
 
                 # check for this book by meta data in the library
-                ebook_id = DataStore.build_ebook_key(lastname, firstname, incoming['title'])
+                ebook_id = DataStore.build_ebook_key(lastname, firstname, title)
                 existing = r.table('ebooks').get(ebook_id).run(conn)
 
                 if existing is None:
                     # create this as a new book
                     new_book = {
                         'ebook_id': ebook_id,
-                        'title': incoming['title'],
+                        'title': title,
                         'firstname': firstname,
                         'lastname': lastname,
                         'rating': None,

@@ -197,6 +197,10 @@ def search_for_ebooks(config, prntr):
                 # merge all the meta data constructed above
                 ebooks_dict[authortitle].update(meta)
 
+                # don't need to send author/title since they're composed into the key
+                del(ebooks_dict[authortitle]['author'])
+                del(ebooks_dict[authortitle]['title'])
+
         i += 1
         #update_progress(float(i) / float(total), length=PROGBAR_LEN)
 

@@ -79,9 +79,10 @@ class DataStore():
                         names = author.split(' ')
                         firstname = names[0]
                         lastname = ''.join(names[1:])
-                except:
+
+                except Exception as e:
                     raise BadMetaDataError(
-                        "Bad meta data in '{}'; client sent {}".format(authortitle, incoming)
+                        'Bad meta data on {}'.format(incoming['file_md5']), e
                     )
 
                 # check for this book by meta data in the library

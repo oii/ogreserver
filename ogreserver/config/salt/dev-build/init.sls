@@ -96,6 +96,13 @@ ogre-create-user:
       - virtualenv: app-virtualenv
       - cmd: ogre-init
 
+# install pytest
+pytest-install:
+  pip.installed:
+    - requirements: /srv/ogreserver/requirements_test.txt
+    - bin_env: /home/vagrant/.virtualenvs/ogreserver
+    - user: {{ pillar['app_user'] }}
+
 # ruby plumbing for Zurb Sass framework
 zurb-rubygems:
   pkg.installed:

@@ -40,10 +40,9 @@ class CliPrinter:
 
         if mode == self.UNKNOWN:
             colour = self.BLUE
-        elif mode == self.DEDRM:
+        elif mode == self.DEDRM and success is True:
             colour = self.GREEN
-            if success is True:
-                prefix = 'DECRYPTED'
+            prefix = 'DECRYPTED'
 
         if mode == self.ERROR:
             prefix = 'ERROR'

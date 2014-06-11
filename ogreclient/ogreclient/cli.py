@@ -214,6 +214,8 @@ def dedrm_single_ebook(conf, args, prntr, inputfile, output_dir=None):
     from .dedrm import decrypt, DRM, DecryptionError
 
     try:
+        prntr.p('Decrypting ebook {}'.format(os.path.basename(inputfile)), mode=prntr.DEDRM)
+
         with make_temp_directory() as ebook_convert_path:
             state, decrypted_filename = decrypt(
                 inputfile, ext, ebook_convert_path, conf['config_dir'], output_dir
@@ -221,7 +223,7 @@ def dedrm_single_ebook(conf, args, prntr, inputfile, output_dir=None):
             if output_dir:
                 decrypted_filename = os.path.join(output_dir, decrypted_filename)
 
-            prntr.p('Book decrypted at {}'.format(decrypted_filename))
+            prntr.p('Book decrypted at {}'.format(decrypted_filename), success=True)
 
     except DecryptionError as e:
         prntr.p(str(e))

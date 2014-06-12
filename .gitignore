@@ -3,6 +3,7 @@ build/
 dist/
 *.egg-info
 *.pyc
+.coverage
 
 .DS_Store
 OGRE_DRM_Tools*.zip

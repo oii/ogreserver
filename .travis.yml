@@ -1,0 +1,19 @@
+language: python
+install:
+  - pip install -r ogreserver/config/requirements.txt --pre
+  - pip install -r requirements_test.txt
+  - cd ogreclient && python setup.py install && cd ..
+python:
+  - '2.7'
+script:
+  - py.test
+branches:
+  only:
+    - master
+    - develop
+git:
+  submodules: false
+env:
+  - TRAVIS_CI=true
+after_success:
+  - coveralls

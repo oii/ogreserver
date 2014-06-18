@@ -2,6 +2,7 @@ include:
   - compass
   - logs
   - watchdog
+  - s3cmd
 
 extend:
   gunicorn-config:
@@ -55,6 +56,12 @@ extend:
     supervisord.running:
       - require_in:
         - supervisord: watchdog-service
+
+  s3cfg:
+    file.managed:
+      - context:
+          s3_access_key: {{ pillar['aws_access_key'] }}
+          s3_secret_key: {{ pillar['aws_secret_key'] }}
 
 
 # build dedrm and stick it in the pypiserver cache

@@ -110,6 +110,12 @@ pytest-install:
     - bin_env: /home/vagrant/.virtualenvs/ogreserver
     - user: {{ pillar['app_user'] }}
 
+# install ipdb
+ipdb:
+  pip.installed:
+    - bin_env: /home/vagrant/.virtualenvs/ogreserver
+    - user: {{ pillar['app_user'] }}
+
 # ruby plumbing for Zurb Sass framework
 zurb-rubygems:
   pkg.installed:

@@ -42,8 +42,7 @@ def entrypoint():
             ret = main(conf, args, prntr)
 
     except OgreException as e:
-        sys.stderr.write('{}\n'.format(e))
-        sys.stderr.flush()
+        prntr.e('An exception occurred in ogreclient', excp=e)
         sys.exit(1)
 
     # exit with return code
@@ -306,8 +305,8 @@ def prerequisites(args, prntr):
             if len(calibre_ebook_meta_bin) == 0:
                 raise Exception
         except:
-            sys.stderr.write('You must install calibre in order to use ogreclient.\n')
-            sys.stderr.write('Please follow the simple instructions at http://ogre.oii.yt/install\n')
+            prntr.e('You must install Calibre in order to use ogreclient.')
+            prntr.e('Please follow the simple instructions at http://ogre.oii.yt/install')
             sys.exit(1)
 
         conf = {

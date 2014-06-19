@@ -38,7 +38,7 @@ class DataStore():
                 output[incoming['file_md5']] = {'new': False, 'update': False, 'dupe': False}
 
                 skip_existing = False
-                if 'ogre_id' in incoming and incoming['ogre_id'] is not None:
+                if 'ebook_id' in incoming and incoming['ebook_id'] is not None:
                     skip_existing = True
                 else:
                     # tell client to set ogre_id on this ebook

@@ -401,7 +401,7 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
                 if ident.startswith('epubbud'):
                     meta['epubbud'] = ident[7:].strip()
                 if ident.startswith('ogre_id'):
-                    meta['ogre_id'] = ident[7:].strip()
+                    meta['ebook_id'] = ident[8:].strip()
             continue
 
     return meta

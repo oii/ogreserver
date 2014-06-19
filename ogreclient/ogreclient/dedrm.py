@@ -125,7 +125,9 @@ def init_keys(config_dir, ignore_check=False):
             kindlekey.getkey(kindlekeyfile)
 
         for line in out:
-            if 'K4PC' in line:
+            if 'No k4Mac' in line:
+                break
+            elif 'K4PC' in line:
                 msgs.append('Extracted Kindle4PC key')
                 break
             elif 'k4Mac' in line:
@@ -135,14 +137,17 @@ def init_keys(config_dir, ignore_check=False):
     # extract the Adobe key
     adeptkeyfile = os.path.join(config_dir, 'adeptkey.der')
     if not os.path.exists(adeptkeyfile):
-        from dedrm import adobekey
-        with capture() as out:
-            adobekey.getkey(adeptkeyfile)
+        try:
+            from dedrm import adobekey
+            with capture() as out:
+                adobekey.getkey(adeptkeyfile)
 
-        for line in out:
-            if 'Saved a key' in line:
-                msgs.append('Extracted Adobe DE key')
-                break
+            for line in out:
+                if 'Saved a key' in line:
+                    msgs.append('Extracted Adobe DE key')
+                    break
+        except adobekey.ADEPTError:
+            pass
 
     return msgs
 

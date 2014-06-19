@@ -149,10 +149,6 @@ class DataStore():
                         self.logger.info(msg)
                         continue
 
-                    # TODO favour mobi format in uploads.. epub after that - dont upload multiple formats of same book
-                    # test user upload of a mobi, then same user tries to upload epub version
-                    # then user could upload a re-mobi of that book - which becomes a new version
-
                     new_version = {
                         'ebook_id': ebook_id,
                         'user': user.username,

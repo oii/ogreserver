@@ -38,7 +38,8 @@ def entrypoint():
         # run some checks and create some config variables
         conf = prerequisites(args, prntr)
 
-        ret = main(conf, args, prntr)
+        if conf is not None:
+            ret = main(conf, args, prntr)
 
     except OgreException as e:
         sys.stderr.write('{}\n'.format(e))
@@ -329,6 +330,10 @@ def prerequisites(args, prntr):
             # attempt to download and setup dedrm
             attempted_download = True
             installed = download_dedrm(args.host, username, password, prntr)
+
+            if installed is None:
+                # auth failed contacting ogreserver
+                return
         else:
             attempted_download = False
             installed = False
@@ -366,7 +371,7 @@ def download_dedrm(host, username, password, prntr):
 
     except (AuthError, AuthDeniedError) as e:
         prntr.e('Permission denied. This is a private system.')
-        return False
+        return None
     except (AuthError, AuthDeniedError) as e:
         prntr.e("Couldn't get DRM tools", excp=e)
         return False

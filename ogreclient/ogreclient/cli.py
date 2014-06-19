@@ -191,7 +191,7 @@ def validate_input(args):
 def main(conf, args, prntr):
     if args.mode == 'update':
         ebook_home, username, password = validate_input(args)
-        ret = download_dedrm(args.host, username, password, prntr)
+        ret = download_dedrm(args.host, username, password, prntr, debug=args.debug)
 
     elif args.mode == 'info':
         # display metadata from a single book
@@ -330,7 +330,7 @@ def prerequisites(args, prntr):
 
             # attempt to download and setup dedrm
             attempted_download = True
-            installed = download_dedrm(args.host, username, password, prntr)
+            installed = download_dedrm(args.host, username, password, prntr, debug=args.debug)
 
             if installed is None:
                 # auth failed contacting ogreserver
@@ -363,7 +363,7 @@ def prerequisites(args, prntr):
     return conf
 
 
-def download_dedrm(host, username, password, prntr):
+def download_dedrm(host, username, password, prntr, debug=False):
     prntr.p('Downloading latest DRM tools from {}'.format(host))
 
     try:
@@ -371,9 +371,9 @@ def download_dedrm(host, username, password, prntr):
         session_key = authenticate(host, username, password)
 
     except (AuthError, AuthDeniedError) as e:
-        prntr.e('Permission denied. This is a private system.')
+        prntr.e('Permission denied. This is a private system.', excp=e if debug else None)
         return None
-    except (AuthError, AuthDeniedError) as e:
+    except Exception as e:
         prntr.e("Couldn't get DRM tools", excp=e)
         return False
 
@@ -395,7 +395,7 @@ def download_dedrm(host, username, password, prntr):
         mod = importlib.import_module('dedrm')
 
     except subprocess.CalledProcessError as e:
-        prntr.e('Failed installing dedrm tools', excp=e)
+        prntr.e('Failed installing dedrm tools', excp=e if debug else None)
         return False
     except ImportError as e:
         prntr.e('Failed installing dedrm tools', excp=e)

@@ -285,11 +285,12 @@ def prerequisites(args, prntr):
             conf = json.loads(f_config.read())
 
     # create a config directory in $HOME on first run
-    elif not os.path.exists(config_dir):
+    elif not os.path.exists(config_dir) or not os.path.exists(os.path.join(config_dir, 'app.config')):
         prntr.p('Please note that DRM scanning means the first run of ogreclient '
                 'will be much slower than subsequent runs.')
 
-        os.makedirs(config_dir)
+        if not os.path.exists(config_dir):
+            os.makedirs(config_dir)
 
         try:
             # locate calibre's binaries

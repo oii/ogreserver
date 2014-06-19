@@ -275,6 +275,8 @@ def run_sync(conf, args, prntr, ebook_home, username, password, debug=False):
 
 # TODO write tests for the prerequistes
 def prerequisites(args, prntr):
+    first_scan_warning = False
+
     # setup some ebook cache file paths
     config_dir = os.path.join(os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config')), 'ogre')
     ebook_cache_path = os.path.join(config_dir, 'ebook_cache')
@@ -286,8 +288,7 @@ def prerequisites(args, prntr):
 
     # create a config directory in $HOME on first run
     elif not os.path.exists(config_dir) or not os.path.exists(os.path.join(config_dir, 'app.config')):
-        prntr.p('Please note that DRM scanning means the first run of ogreclient '
-                'will be much slower than subsequent runs.')
+        first_scan_warning = True
 
         if not os.path.exists(config_dir):
             os.makedirs(config_dir)
@@ -304,8 +305,8 @@ def prerequisites(args, prntr):
             if len(calibre_ebook_meta_bin) == 0:
                 raise Exception
         except:
-            sys.stderr.write('You must install calibre in order to use ogreclient.')
-            sys.stderr.write('Please follow the simple instructions at http://ogre.oii.yt/install')
+            sys.stderr.write('You must install calibre in order to use ogreclient.\n')
+            sys.stderr.write('Please follow the simple instructions at http://ogre.oii.yt/install\n')
             sys.exit(1)
 
         conf = {
@@ -345,6 +346,10 @@ def prerequisites(args, prntr):
 
         elif attempted_download is True:
             prntr.e('Failed to download DRM tools. Please report this error.')
+
+    if first_scan_warning is True:
+        prntr.p('Please note that DRM scanning means the first run of ogreclient '
+                'will be much slower than subsequent runs.')
 
     # return config object
     conf['config_dir'] = config_dir

@@ -7,13 +7,16 @@ import shutil
 import string
 import threading
 
-import sqlalchemy
+try:
+    import sqlalchemy
 
-from .ogreserver import create_app
-from .ogreserver.models.user import User
-from .ogreserver.extensions.database import get_db, create_tables
+    from .ogreserver import create_app
+    from .ogreserver.models.user import User
+    from .ogreserver.extensions.database import get_db, create_tables
 
-from wsgiref.simple_server import make_server
+    from wsgiref.simple_server import make_server
+except ImportError:
+    pass
 
 
 @pytest.fixture(scope='session')

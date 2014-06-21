@@ -144,3 +144,9 @@ def client_config(user):
         'verbose': False,
         'quiet': True,
     }
+
+
+@pytest.fixture(scope='session')
+def ebook_lib_path():
+    # path where conftest.py resides + '/ebooks'
+    return os.path.join(os.path.dirname(__file__), 'tests', 'ebooks')

@@ -346,12 +346,21 @@ def upload_single_book(host, session_key, filepath, upload_obj):
 
 
 def metadata_extract(calibre_ebook_meta_bin, filepath):
-    extracted = subprocess.check_output(
-        [calibre_ebook_meta_bin, filepath], stderr=subprocess.STDOUT
+    proc = subprocess.Popen(
+        '{} "{}"'.format(calibre_ebook_meta_bin, filepath),
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
     )
 
-    if extracted.find('EPubException') > 0:
-        raise CorruptEbookError(extracted)
+    # get raw bytes from stdout and stderr
+    out_bytes, err_bytes = proc.communicate()
+
+    if err_bytes.find('EPubException') > 0:
+        raise CorruptEbookError(err_bytes)
+
+    # interpret bytes as UTF-8
+    extracted = out_bytes.decode('utf-8')
 
     # initialize all the metadata we attempt to extract
     meta = {}

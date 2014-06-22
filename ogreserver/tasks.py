@@ -29,7 +29,7 @@ def store_ebook(user_id, ebook_id, file_md5, fmt):
         try:
             # create the datastore & generate a nice filename
             ds = DataStore(app.config, app.logger)
-            filename = ds.generate_filename(ebook_id, file_md5, fmt)
+            filename = ds.generate_filename(file_md5)
 
             # storage path
             filepath = os.path.join(app.config['UPLOADED_EBOOKS_DEST'], '{}.{}'.format(file_md5, fmt))

@@ -62,7 +62,7 @@ class DataStore():
                     raise ExactDuplicateError(
                         'Ignoring exact duplicate {} {}'.format(
                             existing[0]['ebook_id'],
-                            authortitle.encode("UTF-8"),
+                            authortitle.encode('UTF-8'),
                         )
                     )
 
@@ -133,7 +133,7 @@ class DataStore():
 
                     if other_versions > 0:
                         msg = "Rejecting new version of {} from {}".format(
-                            authortitle.encode('UTF-8'), user.username
+                            authortitle.decode('UTF-8'), user.username
                         )
                         self.logger.info(msg)
                         continue
@@ -259,7 +259,7 @@ class DataStore():
         This is used as the ebook's key in the DB - referred to as ebook_id in code
         """
         return hashlib.md5(
-            ("~".join((lastname, firstname, title))).encode("UTF-8")
+            ("~".join((lastname, firstname, title))).encode('UTF-8')
         ).hexdigest()
 
     @staticmethod
@@ -329,7 +329,7 @@ class DataStore():
                     file_md5 = version['version_id']
 
         # generate the filename - which is the key on S3
-        filename = self.generate_filename(ebook_id, file_md5, fmt)
+        filename = self.generate_filename(file_md5)
 
         # create an expiring auto-authenticate url for S3
         s3 = boto.connect_s3(self.config['AWS_ACCESS_KEY'], self.config['AWS_SECRET_KEY'])
@@ -418,20 +418,66 @@ class DataStore():
 
         return True
 
-    def generate_filename(self, ebook_id, file_md5, fmt):
+
+    def generate_filename(self, md5_hash, firstname=None, lastname=None, title=None, format=None):
         """
         Generate the filename for a book on its way to S3
+
+        firstname, lastname, title & format are loaded if they are not supplied
         """
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
+        if firstname is not None and type(firstname) is not unicode:
+            raise UnicodeWarning('Firstname must be unicode')
+        if title is not None and type(title) is not unicode:
+            raise UnicodeWarning('Title must be unicode')
+        if lastname is not None and type(lastname) is not unicode:
+            raise UnicodeWarning('Lastname must be unicode')
 
-        # load the author and title of this book
-        ebook = r.table('ebooks').get(ebook_id).run(conn)
-        authortitle = re.sub('[^a-zA-Z0-9]', '_', '{0}_{1}_-_{2}'.format(
-            ebook['firstname'], ebook['lastname'], ebook['title']
-        ))
+        if firstname is None or lastname is None or title is None:
+            conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
 
-        # TODO transpose unicode
-        return '{0}.{1}.{2}'.format(authortitle, file_md5[0:6], fmt)
+            # load the author and title of this book
+            ebook_data = list(
+                r.table('formats').filter({'md5_hash': md5_hash}).eq_join(
+                    'version_id', r.table('versions'), index='version_id'
+                ).zip().eq_join(
+                    'ebook_id', r.table('ebooks'), index='ebook_id'
+                ).zip().pluck(
+                    'firstname', 'lastname', 'title', 'format'
+                ).run(conn)
+            )[0]
+            firstname = ebook_data['firstname']
+            lastname = ebook_data['lastname']
+            title = ebook_data['title']
+            format = ebook_data['format']
+
+        elif format is None:
+            # load the file format for this book's hash
+            conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
+            format = r.table('formats').get(md5_hash).pluck('format').run(conn)['format']
+
+        # transpose unicode for ASCII filenames
+        from unidecode import unidecode
+        firstname = unidecode(firstname)
+        lastname = unidecode(lastname)
+        title = unidecode(title)
+
+        # remove apostrophes
+        if "'" in firstname:
+            firstname = firstname.replace("'", '')
+        if "'" in lastname:
+            lastname = lastname.replace("'", '')
+        if "'" in title:
+            title = title.replace("'", '')
+
+        # only alphabet allowed in filename; replace all else with underscore
+        # replace any double underscores with a single
+        # replace double tilde between author & title with double underscore
+        authortitle = re.sub('[^a-zA-Z0-9~]', '_', '{}_{}~~{}'.format(
+            firstname, lastname, title
+        )).strip().replace('__', '_').replace('~', '_')
+
+        return '{}.{}.{}'.format(authortitle, md5_hash[0:8], format)
+
 
     def get_missing_books(self, username=None, md5_filter=None, verify_s3=False):
         """
@@ -482,7 +528,7 @@ class DataStore():
             # verify books are on S3
             for b in output:
                 # TODO rethink
-                filename = self.generate_filename(b['ebook_id'], b['file_md5'], b['format'])
+                filename = self.generate_filename(b['file_md5'])
                 k = boto.s3.key.Key(bucket, filename)
                 self.set_uploaded(b['file_md5'])
                 # TODO update rs when verify=True

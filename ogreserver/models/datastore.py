@@ -66,20 +66,9 @@ class DataStore():
                         )
                     )
 
-                # derive author and title from the key
-                author, title = authortitle.split(' - ')
-
                 try:
-                    # author containing comma is "surname, firstname"
-                    if ',' in author:
-                        names = author.split(',')
-                        lastname = names[0]
-                        firstname = ''.join(names[1:])
-                    else:
-                        names = author.split(' ')
-                        firstname = names[0]
-                        lastname = ''.join(names[1:])
-
+                    # derive author and title from the key
+                    firstname, lastname, title = self._parse_author_title(authortitle)
                 except Exception as e:
                     raise BadMetaDataError(
                         'Bad meta data on {}'.format(incoming['file_md5']), e
@@ -184,6 +173,24 @@ class DataStore():
                 self.logger.error(e, exc_info=True)
 
         return output
+
+
+    def _parse_author_title(self, authortitle):
+        # derive author and title from the key
+        author, title = authortitle.decode('UTF-8').split(' - ')
+
+        if ',' in author:
+            # author containing comma is "surname, firstname"
+            names = author.split(',')
+            lastname = names[0].strip()
+            firstname = ' '.join(names[1:]).strip()
+        else:
+            names = author.split(' ')
+            # assume final part is surname, all other parts are firstname
+            firstname = ' '.join(names[:-1]).strip()
+            lastname = names[len(names[:-1]):][0].strip()
+
+        return firstname, lastname, title
 
 
     def index_for_search(self, book_data):

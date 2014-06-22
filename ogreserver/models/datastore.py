@@ -343,6 +343,9 @@ class DataStore():
         Update a format's entry with a new PK
         This is called after the OGRE-ID meta data is written into an ebook on the client
         """
+        if current_file_md5 == updated_file_md5:
+            return None
+
         conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
         try:
             data = r.table('formats').get(current_file_md5).run(conn)

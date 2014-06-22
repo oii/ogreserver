@@ -461,20 +461,22 @@ class DataStore():
         lastname = unidecode(lastname)
         title = unidecode(title)
 
-        # remove apostrophes
+        # remove apostrophes & strip whitespace
         if "'" in firstname:
-            firstname = firstname.replace("'", '')
+            firstname = firstname.replace("'", '').strip()
         if "'" in lastname:
-            lastname = lastname.replace("'", '')
+            lastname = lastname.replace("'", '').strip()
         if "'" in title:
-            title = title.replace("'", '')
+            title = title.replace("'", '').strip()
 
         # only alphabet allowed in filename; replace all else with underscore
-        # replace any double underscores with a single
-        # replace double tilde between author & title with double underscore
         authortitle = re.sub('[^a-zA-Z0-9~]', '_', '{}_{}~~{}'.format(
             firstname, lastname, title
-        )).strip().replace('__', '_').replace('~', '_')
+        ))
+
+        # replace multiple underscores with a single
+        # replace double tilde between author & title with double underscore
+        authortitle = re.sub('(~|_+)', '_', authortitle)
 
         return '{}.{}.{}'.format(authortitle, md5_hash[0:8], format)
 

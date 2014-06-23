@@ -404,9 +404,9 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
                 if ident.startswith('isbn'):
                     meta['isbn'] = ident[5:].strip()
                 if ident.startswith('mobi-asin'):
-                    meta['asin'] = ident[8:].strip()
+                    meta['asin'] = ident[10:].strip()
                 if ident.startswith('uri'):
-                    meta['uri'] = ident[3:].strip()
+                    meta['uri'] = ident[4:].strip()
                 if ident.startswith('epubbud'):
                     meta['epubbud'] = ident[7:].strip()
                 if ident.startswith('ogre_id'):

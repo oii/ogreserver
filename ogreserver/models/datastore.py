@@ -385,11 +385,11 @@ class DataStore():
         k.key = filename
 
         # check if our file is already up on S3
-        if k.exists():
+        if k.exists() is True:
             k = bucket.get_key(filename)
-            # TODO look for bug in get_metadata()
             metadata = k._get_remote_metadata()
             if 'x-amz-meta-ogre-key' in metadata and metadata['x-amz-meta-ogre-key'] == ebook_id:
+                # if already exists, abort and flag as uploaded
                 self.set_uploaded(file_md5)
                 return False
 

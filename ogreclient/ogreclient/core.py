@@ -430,6 +430,8 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
                     meta['ebook_id'] = ident[8:].strip()
             continue
 
+    # calculate file MD5
+    meta['file_hash'] = compute_md5(filepath)[0]
     return meta
 
 

@@ -1,7 +1,9 @@
 from __future__ import absolute_import
 
-import pytest
 import subprocess
+
+import mock
+import pytest
 
 
 @pytest.fixture(scope='session')
@@ -23,3 +25,10 @@ def client_config():
         'quiet': True,
         'no_drm': True,
     }
+
+
+@pytest.yield_fixture(scope='function')
+def mock_urlopen(request):
+    m = mock.patch('ogreclient.core.urllib2.urlopen')
+    yield m.start()
+    m.stop()

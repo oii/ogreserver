@@ -155,7 +155,7 @@ def search_for_ebooks(config, prntr):
 
         try:
             # extract and parse ebook metadata
-            meta = metadata_extract(config['calibre_ebook_meta_bin'], item[0])
+            meta = metadata_extract(config['calibre_ebook_meta_bin'], filepath=item[0])
         except CorruptEbookError as e:
             # skip books which can't have metadata extracted
             if config['verbose']:
@@ -272,7 +272,7 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
                         config['calibre_ebook_meta_bin'],
                         md5,
                         ebooks_dict[authortitle]['path'],
-                        ebooks_dict[authortitle]['format'],
+                        ebooks_dict[authortitle]['tags'] if 'tags' in ebooks_dict[authortitle] else None,
                         item['ebook_id'],
                         config['host'],
                         session_key,
@@ -282,7 +282,11 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
                         prntr.p('Wrote OGRE_ID to {}'.format(ebooks_dict[authortitle]['path']))
 
                 except (FailedWritingMetaDataError, FailedConfirmError) as e:
-                    prntr.e('Failed saving OGRE_ID in source ebook', excp=e)
+                    prntr.e(
+                        'Failed saving OGRE_ID in {}'.format(
+                            ebooks_dict[authortitle]['path']
+                        ), excp=e
+                    )
                     failed += 1
 
     return success, failed
@@ -365,6 +369,9 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
     # initialize all the metadata we attempt to extract
     meta = {}
 
+    # modify behaviour for epub/mobi
+    format = os.path.splitext(filepath)[1]
+
     for line in extracted.splitlines():
         # extract the simple metadata
         for prop in ('title', 'publisher', 'published'):
@@ -374,6 +381,16 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
 
         if 'Tags' in line:
             meta['tags'] = line[line.find(':')+1:].strip()
+
+            # extract the ogre_id which may be embedded into the tags field
+            if format == '.mobi':
+                if 'ogre_id' in meta['tags']:
+                    tags = meta['tags'].split(', ')
+                    for j in reversed(xrange(len(tags))):
+                        if 'ogre_id' in tags[j]:
+                            meta['ebook_id'] = tags[j][8:]
+                            del(tags[j])
+                    meta['tags'] = ', '.join(tags)
 
             # extract the DeDRM flag
             #if 'DeDRM' in meta['tags']:
@@ -416,18 +433,33 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
     return meta
 
 
-def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_md5, filepath, format, ogre_id, host, session_key):
+def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_md5, filepath, existing_tags, ogre_id, host, session_key):
+    format = os.path.splitext(filepath)[1]
+
     with make_temp_directory() as temp_dir:
         # copy the ebook to a temp file
-        tmp_name = '{}.{}'.format(os.path.join(temp_dir, id_generator()), format)
+        tmp_name = '{}{}'.format(os.path.join(temp_dir, id_generator()), format)
         shutil.copy(filepath, tmp_name)
 
         try:
-            # write new tags
-            subprocess.check_output(
-                [calibre_ebook_meta_bin, tmp_name, '--identifier', 'ogre_id:{}'.format(ogre_id)],
-                stderr=subprocess.STDOUT
-            )
+            if format == '.mobi':
+                # append ogre's ebook_id to the tags list
+                if existing_tags is not None and len(existing_tags) > 0:
+                    new_tags = u'ogre_id={}, {}'.format(ogre_id, existing_tags)
+                else:
+                    new_tags = u'ogre_id={}'.format(ogre_id)
+
+                # write ogre_id to --tags
+                subprocess.check_output(
+                    [calibre_ebook_meta_bin, tmp_name, '--tags', new_tags],
+                    stderr=subprocess.STDOUT
+                )
+            else:
+                # write ogre_id to --identifier
+                subprocess.check_output(
+                    [calibre_ebook_meta_bin, tmp_name, '--identifier', 'ogre_id:{}'.format(ogre_id)],
+                    stderr=subprocess.STDOUT
+                )
 
             # calculate new MD5 after updating metadata
             new_md5 = compute_md5(tmp_name)[0]

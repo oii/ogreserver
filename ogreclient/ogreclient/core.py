@@ -192,7 +192,7 @@ def search_for_ebooks(config, prntr):
                     'filename': item[1],
                     'format': item[2][1:],
                     'size': item[3],
-                    'file_md5': item[4],
+                    'file_hash': item[4],
                     'owner': config['username'],
                 }
                 # merge all the meta data constructed above
@@ -264,15 +264,15 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
     success, failed = 0, 0
 
     # update any books with ogre_id supplied from ogreserver
-    for md5, item in ebooks_to_update.items():
+    for file_hash, item in ebooks_to_update.items():
         # find this book in the scan data
         for authortitle in ebooks_dict.keys():
-            if md5 == ebooks_dict[authortitle]['file_md5']:
+            if file_hash == ebooks_dict[authortitle]['file_hash']:
                 try:
                     # update the metadata on the ebook, and communicate that to ogreserver
                     new_file_hash = add_ogre_id_to_ebook(
                         config['calibre_ebook_meta_bin'],
-                        md5,
+                        file_hash,
                         ebooks_dict[authortitle]['path'],
                         ebooks_dict[authortitle]['tags'] if 'tags' in ebooks_dict[authortitle] else None,
                         item['ebook_id'],
@@ -280,7 +280,7 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
                         session_key,
                     )
                     # update file hash in ogreclient data
-                    ebooks_dict[authortitle]['file_md5'] = new_file_hash
+                    ebooks_dict[authortitle]['file_hash'] = new_file_hash
                     success += 1
                     if config['verbose']:
                         prntr.p('Wrote OGRE_ID to {}'.format(ebooks_dict[authortitle]['path']))
@@ -314,7 +314,7 @@ def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):
     for upload in ebooks_to_upload:
         # iterate all user's found books
         for authortitle in ebooks_dict.keys():
-            if upload['file_md5'] == ebooks_dict[authortitle]['file_md5']:
+            if upload['file_hash'] == ebooks_dict[authortitle]['file_hash']:
                 try:
                     data = upload_single_book(
                         config['host'],
@@ -344,7 +344,7 @@ def upload_single_book(host, session_key, filepath, upload_obj):
             # build the post params
             params = {
                 'ebook_id': upload_obj['ebook_id'],
-                'file_md5': upload_obj['file_md5'],
+                'file_hash': upload_obj['file_hash'],
                 'format': upload_obj['format'],
                 'ebook': f,
             }
@@ -445,7 +445,7 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
     return meta
 
 
-def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_md5, filepath, existing_tags, ogre_id, host, session_key):
+def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_hash, filepath, existing_tags, ogre_id, host, session_key):
     format = os.path.splitext(filepath)[1]
 
     with make_temp_directory() as temp_dir:
@@ -474,15 +474,15 @@ def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_md5, filepath, existing_ta
                 )
 
             # calculate new MD5 after updating metadata
-            new_md5 = compute_md5(tmp_name)[0]
+            new_hash = compute_md5(tmp_name)[0]
 
             # ping ogreserver with the book's new hash
             req = urllib2.Request(
                 url='http://{}/confirm/{}'.format(host, urllib.quote_plus(session_key))
             )
             req.add_data(urllib.urlencode({
-                'file_md5': file_md5,
-                'new_md5': new_md5
+                'file_hash': file_hash,
+                'new_hash': new_hash
             }))
             resp = urllib2.urlopen(req)
             data = resp.read()
@@ -490,7 +490,7 @@ def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_md5, filepath, existing_ta
             if data == 'ok':
                 # move file back into place
                 shutil.copy(tmp_name, filepath)
-                return new_md5
+                return new_hash
             else:
                 raise FailedConfirmError("Server said 'no'")
 

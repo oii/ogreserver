@@ -229,10 +229,10 @@ def post(auth_key):
     msgs = r.get_new_badges()
 
     # only request books for upload which are in client's current set
-    incoming = [item['file_md5'] for item in data.values()]
+    incoming = [item['file_hash'] for item in data.values()]
 
     # query books missing from S3 and supply back to the client
-    missing_books = ds.get_missing_books(username=user.username, md5_filter=incoming)
+    missing_books = ds.get_missing_books(username=user.username, hash_filter=incoming)
     return json.dumps({
         'ebooks_to_update': update_books,
         'ebooks_to_upload': missing_books,
@@ -245,11 +245,11 @@ def confirm(auth_key):
     check_auth(auth_key)
 
     # update a file's md5 hash
-    current_file_md5 = request.form.get('file_md5')
-    updated_file_md5 = request.form.get('new_md5')
+    current_file_hash = request.form.get('file_hash')
+    updated_file_hash = request.form.get('new_hash')
 
     ds = DataStore(app.config, app.logger)
-    if ds.update_book_md5(current_file_md5, updated_file_md5):
+    if ds.update_book_hash(current_file_hash, updated_file_hash):
         return 'ok'
     else:
         return 'fail'
@@ -270,14 +270,14 @@ def upload(auth_key):
 
     # write uploaded ebook to disk, named as the hash and filetype
     app.uploads.save(request.files['ebook'], None, '{0}.{1}'.format(
-        request.form.get('file_md5'), request.form.get('format')
+        request.form.get('file_hash'), request.form.get('format')
     ))
 
     # let celery process the upload
     res = store_ebook.delay(
         user_id=user.id,
         ebook_id=request.form.get('ebook_id'),
-        file_md5=request.form.get('file_md5'),
+        file_hash=request.form.get('file_hash'),
         fmt=request.form.get('format')
     )
     return res.task_id

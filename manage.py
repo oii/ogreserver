@@ -145,7 +145,7 @@ def init_ogre(test=False):
             r.db_create('ogreserver').run(conn)
             r.db('ogreserver').table_create('ebooks', primary_key='ebook_id').run(conn)
             r.db('ogreserver').table_create('versions', primary_key='version_id').run(conn)
-            r.db('ogreserver').table_create('formats', primary_key='md5_hash').run(conn)
+            r.db('ogreserver').table_create('formats', primary_key='file_hash').run(conn)
             set_indexes()
 
     print "Succesfully initialized OGRE"

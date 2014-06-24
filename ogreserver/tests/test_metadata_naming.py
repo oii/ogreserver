@@ -90,7 +90,7 @@ def test_generate_filename_with_db_load(flask_app, datastore, user):
     ebooks_dict = {
         "H. C. Andersen - Andersen's Fairy Tales": {
             'format': 'epub',
-            'file_md5': '38b3fc3aa7fe67e76f0d8b248e62b940',
+            'file_hash': '38b3fc3aa7fe67e76f0d8b248e62b940',
             'owner': 'mafro',
             'size': 139654
         },

@@ -7,7 +7,7 @@ def test_sync_duplicate(flask_app, datastore, user):
     ebooks_dict = {
         "H. C. Andersen - Andersen's Fairy Tales": {
             'format': 'epub',
-            'file_md5': '38b3fc3aa7fe67e76f0d8b248e62b940',
+            'file_hash': '38b3fc3aa7fe67e76f0d8b248e62b940',
             'owner': 'mafro',
             'size': 139654
         },
@@ -33,7 +33,7 @@ def test_sync_ebook_update(flask_app, datastore, user):
     ebooks_dict = {
         "H. C. Andersen - Andersen's Fairy Tales": {
             'format': 'epub',
-            'file_md5': 'b889dec977aef12c6973acc2cf5b8590',
+            'file_hash': 'b889dec977aef12c6973acc2cf5b8590',
             'owner': 'mafro',
             'size': 139654
         },
@@ -63,7 +63,7 @@ def test_sync_multiple_versions(flask_app, datastore, user):
     ebooks_dict = {
         u"Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland": {
             'format': 'epub',
-            'file_md5': 'd41d8cd98f00b204e9800998ecf8427e',
+            'file_hash': 'd41d8cd98f00b204e9800998ecf8427e',
             'owner': 'mafro',
             'size': 139654
         },
@@ -81,7 +81,7 @@ def test_sync_multiple_versions(flask_app, datastore, user):
     ).count().run() == 1, 'should be 1 version'
 
     # same book author/title, different file hash
-    ebooks_dict[ebooks_dict.keys()[0]]['file_md5'] = '058e92c024a88969b0875d5eaf18a0cd'
+    ebooks_dict[ebooks_dict.keys()[0]]['file_hash'] = '058e92c024a88969b0875d5eaf18a0cd'
 
     # sync again
     ds.update_library(ebooks_dict, user)

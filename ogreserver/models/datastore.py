@@ -35,20 +35,20 @@ class DataStore():
         for authortitle, incoming in ebooks.items():
             try:
                 # build output to return to client
-                output[incoming['file_md5']] = {'new': False, 'update': False, 'dupe': False}
+                output[incoming['file_hash']] = {'new': False, 'update': False, 'dupe': False}
 
                 skip_existing = False
                 if 'ebook_id' in incoming and incoming['ebook_id'] is not None:
                     skip_existing = True
                 else:
                     # tell client to set ogre_id on this ebook
-                    output[incoming['file_md5']]['update'] = True
+                    output[incoming['file_hash']]['update'] = True
 
                 # first check if this exact file has been uploaded before
                 # query formats table by key, joining to versions to get ebook pk
                 existing = list(
                     r.table('formats').filter(
-                        {'md5_hash': incoming['file_md5']}
+                        {'file_hash': incoming['file_hash']}
                     ).eq_join(
                         'version_id', r.table('versions')
                     ).zip().run(conn)
@@ -56,8 +56,8 @@ class DataStore():
 
                 # skip existing books
                 if skip_existing is True or len(existing) > 0:
-                    output[incoming['file_md5']]['ebook_id'] = existing[0]['ebook_id']
-                    output[incoming['file_md5']]['dupe'] = True
+                    output[incoming['file_hash']]['ebook_id'] = existing[0]['ebook_id']
+                    output[incoming['file_hash']]['dupe'] = True
 
                     raise ExactDuplicateError(
                         'Ignoring exact duplicate {} {}'.format(
@@ -71,7 +71,7 @@ class DataStore():
                     firstname, lastname, title = self._parse_author_title(authortitle)
                 except Exception as e:
                     raise BadMetaDataError(
-                        'Bad meta data on {}'.format(incoming['file_md5']), e
+                        'Bad meta data on {}'.format(incoming['file_hash']), e
                     )
 
                 # check for this book by meta data in the library
@@ -110,7 +110,7 @@ class DataStore():
                     ret = r.table('versions').insert(new_version).run(conn)
 
                     new_format = {
-                        'md5_hash': incoming['file_md5'],
+                        'file_hash': incoming['file_hash'],
                         'version_id': ret['generated_keys'][0],
                         'format': incoming['format'],
                         'uploaded': False,
@@ -119,8 +119,8 @@ class DataStore():
                     r.table('formats').insert(new_format).run(conn)
 
                     # mark book as new
-                    output[incoming['file_md5']]['ebook_id'] = ebook_id
-                    output[incoming['file_md5']]['new'] = True
+                    output[incoming['file_hash']]['ebook_id'] = ebook_id
+                    output[incoming['file_hash']]['new'] = True
 
                     # update the whoosh text search interface
                     self.index_for_search(new_book)
@@ -149,7 +149,7 @@ class DataStore():
                     ret = r.table('versions').insert(new_version).run(conn)
 
                     new_format = {
-                        'md5_hash': incoming['file_md5'],
+                        'file_hash': incoming['file_hash'],
                         'ebook_id': ebook_id,
                         'version_id': ret['generated_keys'][0],
                         'format': incoming['format'],
@@ -158,7 +158,7 @@ class DataStore():
                     r.table('formats').insert(new_format).run(conn)
 
                     # mark with ebook_id and return
-                    output[incoming['file_md5']]['ebook_id'] = ebook_id
+                    output[incoming['file_hash']]['ebook_id'] = ebook_id
 
                     # TODO version popularity determines which formats appear on ebook base top-level
                     # popularity += 1 for download
@@ -301,13 +301,13 @@ class DataStore():
                 # serve the OGRE preferred format
                 for fmt in self.config['EBOOK_FORMATS']:
                     if fmt == version['format']:
-                        file_md5 = version['md5_hash']
+                        file_hash = version['file_hash']
                         break
             else:
                 # serve the requested format from best version possible
                 for version in versions:
                     if fmt == version['format']:
-                        file_md5 = version['md5_hash']
+                        file_hash = version['file_hash']
                         break
         else:
             # get the specific requested version
@@ -319,17 +319,17 @@ class DataStore():
                 # serve the OGRE preferred format
                 for fmt in self.config['EBOOK_FORMATS']:
                     if fmt == version['format']:
-                        file_md5 = version['version_id']
+                        file_hash = version['version_id']
                         break
             else:
                 # verify requested format is available on requested version
                 if fmt != version['format']:
                     raise Exception("Requested format not available on requested version.")
                 else:
-                    file_md5 = version['version_id']
+                    file_hash = version['version_id']
 
         # generate the filename - which is the key on S3
-        filename = self.generate_filename(file_md5)
+        filename = self.generate_filename(file_hash)
 
         # create an expiring auto-authenticate url for S3
         s3 = boto.connect_s3(self.config['AWS_ACCESS_KEY'], self.config['AWS_SECRET_KEY'])
@@ -338,42 +338,42 @@ class DataStore():
             key=filename
         )
 
-    def update_book_md5(self, current_file_md5, updated_file_md5):
+    def update_book_hash(self, current_file_hash, updated_file_hash):
         """
         Update a format's entry with a new PK
         This is called after the OGRE-ID meta data is written into an ebook on the client
         """
-        if current_file_md5 == updated_file_md5:
+        if current_file_hash == updated_file_hash:
             return None
 
         conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
         try:
-            data = r.table('formats').get(current_file_md5).run(conn)
-            data['md5_hash'] = updated_file_md5
+            data = r.table('formats').get(current_file_hash).run(conn)
+            data['file_hash'] = updated_file_hash
             data['source_patched'] = True
             r.table('formats').insert(data).run(conn)
-            r.table('formats').get(current_file_md5).delete().run(conn)
-            self.logger.info('Updated {} to {}'.format(current_file_md5, updated_file_md5))
+            r.table('formats').get(current_file_hash).delete().run(conn)
+            self.logger.info('Updated {} to {}'.format(current_file_hash, updated_file_hash))
         except Exception:
-            self.logger.error('Failed updating ebook {}'.format(current_file_md5), exc_info=True)
+            self.logger.error('Failed updating ebook {}'.format(current_file_hash), exc_info=True)
             return False
         return True
 
-    def set_uploaded(self, file_md5, isit=True):
+    def set_uploaded(self, file_hash, isit=True):
         """
         Mark an ebook as having been uploaded to S3
         """
         conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-        r.table('formats').get(file_md5).update({'uploaded': isit}).run(conn)
+        r.table('formats').get(file_hash).update({'uploaded': isit}).run(conn)
 
-    def set_dedrm_flag(self, file_md5):
+    def set_dedrm_flag(self, file_hash):
         """
         Mark a book as having had DRM removed
         """
         conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-        r.table('formats').get(file_md5).update({'dedrm': True}).run(conn)
+        r.table('formats').get(file_hash).update({'dedrm': True}).run(conn)
 
-    def store_ebook(self, ebook_id, file_md5, filename, filepath, fmt):
+    def store_ebook(self, ebook_id, file_hash, filename, filepath, fmt):
         """
         Store an ebook on S3
         """
@@ -390,7 +390,7 @@ class DataStore():
             metadata = k._get_remote_metadata()
             if 'x-amz-meta-ogre-key' in metadata and metadata['x-amz-meta-ogre-key'] == ebook_id:
                 # if already exists, abort and flag as uploaded
-                self.set_uploaded(file_md5)
+                self.set_uploaded(file_hash)
                 return False
 
         # calculate uploaded file md5
@@ -399,7 +399,7 @@ class DataStore():
         f.close()
 
         # error check uploaded file
-        if file_md5 != md5_tup[0]:
+        if file_hash != md5_tup[0]:
             # TODO logging
             raise S3DatastoreError("Upload failed checksum 1")
         else:
@@ -413,7 +413,7 @@ class DataStore():
                 self.logger.info('UPLOADED {}'.format(filename))
 
                 # mark ebook as stored
-                self.set_uploaded(file_md5)
+                self.set_uploaded(file_hash)
 
             except S3ResponseError:
                 # TODO log
@@ -422,7 +422,7 @@ class DataStore():
         return True
 
 
-    def generate_filename(self, md5_hash, firstname=None, lastname=None, title=None, format=None):
+    def generate_filename(self, file_hash, firstname=None, lastname=None, title=None, format=None):
         """
         Generate the filename for a book on its way to S3
 
@@ -440,7 +440,7 @@ class DataStore():
 
             # load the author and title of this book
             ebook_data = list(
-                r.table('formats').filter({'md5_hash': md5_hash}).eq_join(
+                r.table('formats').filter({'file_hash': file_hash}).eq_join(
                     'version_id', r.table('versions'), index='version_id'
                 ).zip().eq_join(
                     'ebook_id', r.table('ebooks'), index='ebook_id'
@@ -456,7 +456,7 @@ class DataStore():
         elif format is None:
             # load the file format for this book's hash
             conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-            format = r.table('formats').get(md5_hash).pluck('format').run(conn)['format']
+            format = r.table('formats').get(file_hash).pluck('format').run(conn)['format']
 
         # transpose unicode for ASCII filenames
         from unidecode import unidecode
@@ -481,17 +481,17 @@ class DataStore():
         # replace double tilde between author & title with double underscore
         authortitle = re.sub('(~|_+)', '_', authortitle)
 
-        return '{}.{}.{}'.format(authortitle, md5_hash[0:8], format)
+        return '{}.{}.{}'.format(authortitle, file_hash[0:8], format)
 
 
-    def get_missing_books(self, username=None, md5_filter=None, verify_s3=False):
+    def get_missing_books(self, username=None, hash_filter=None, verify_s3=False):
         """
         Query the DB for books marked as not uploaded
 
         The verify_s3 flag enables a further check to be run against S3 to ensure 
         the file is actually there
         """
-        if username is None and md5_filter is None and verify_s3 is True:
+        if username is None and hash_filter is None and verify_s3 is True:
             raise Exception("Can't verify entire library in one go.")
 
         conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
@@ -500,10 +500,10 @@ class DataStore():
         query = r.table('formats').filter({'uploaded': False})
 
         # filter by list of md5 file hashes
-        if md5_filter is not None:
-            query = r.expr(md5_filter).do(
-                lambda md5_filter: query.filter(
-                    lambda d: md5_filter.contains(d['md5_hash'])
+        if hash_filter is not None:
+            query = r.expr(hash_filter).do(
+                lambda hash_filter: query.filter(
+                    lambda d: hash_filter.contains(d['file_hash'])
                 )
             )
 
@@ -521,7 +521,7 @@ class DataStore():
         for ebook in cursor:
             output.append({
                 'ebook_id': ebook['ebook_id'],
-                'file_md5': ebook['md5_hash'],
+                'file_hash': ebook['file_hash'],
                 'format': ebook['format'],
             })
 
@@ -533,9 +533,9 @@ class DataStore():
             # verify books are on S3
             for b in output:
                 # TODO rethink
-                filename = self.generate_filename(b['file_md5'])
+                filename = self.generate_filename(b['file_hash'])
                 k = boto.s3.key.Key(bucket, filename)
-                self.set_uploaded(b['file_md5'])
+                self.set_uploaded(b['file_hash'])
                 # TODO update rs when verify=True
 
         return output

@@ -14,7 +14,7 @@ from .models.log import Log
 
 
 @celery.task()
-def store_ebook(user_id, ebook_id, file_md5, fmt):
+def store_ebook(user_id, ebook_id, file_hash, fmt):
     """
     Store an ebook in the datastore
     """
@@ -29,15 +29,15 @@ def store_ebook(user_id, ebook_id, file_md5, fmt):
         try:
             # create the datastore & generate a nice filename
             ds = DataStore(app.config, app.logger)
-            filename = ds.generate_filename(file_md5)
+            filename = ds.generate_filename(file_hash)
 
             # storage path
-            filepath = os.path.join(app.config['UPLOADED_EBOOKS_DEST'], '{}.{}'.format(file_md5, fmt))
+            filepath = os.path.join(app.config['UPLOADED_EBOOKS_DEST'], '{}.{}'.format(file_hash, fmt))
 
             user = User.query.get(user_id)
 
             # store the file into S3
-            if ds.store_ebook(ebook_id, file_md5, filename, filepath, fmt):
+            if ds.store_ebook(ebook_id, file_hash, filename, filepath, fmt):
                 # stats log the upload
                 Log.create(user.id, 'STORED', 1)
 
@@ -62,13 +62,13 @@ def convert_ebook(sdbkey, source_filepath, dest_fmt):
     Convert an ebook to another format, and push to datastore
     """
     pass
-    #source_filepath = "%s/%s.%s" % (app.config['UPLOADED_EBOOKS_DEST'], file_md5, fmt)
+    #source_filepath = "%s/%s.%s" % (app.config['UPLOADED_EBOOKS_DEST'], file_hash, fmt)
 
     #for convert_fmt in app.config['EBOOK_FORMATS']:
     #    if fmt == convert_fmt:
     #        continue
 
-    #    dest_filepath = "%s/%s.%s" % (app.config['UPLOADED_EBOOKS_DEST'], file_md5, fmt)
+    #    dest_filepath = "%s/%s.%s" % (app.config['UPLOADED_EBOOKS_DEST'], file_hash, fmt)
 
     #    meta = subprocess.Popen(['ebook-convert', source_filepath, ], 
     #                            stdout=subprocess.PIPE).communicate()[0]
@@ -77,7 +77,7 @@ def convert_ebook(sdbkey, source_filepath, dest_fmt):
     #    if user_id == None:
     #        raise Exception("user_id must be supplied to convert_ebook when store=True")
 
-    #    store_ebook.delay(user_id, sdbkey, file_md5, fmt)
+    #    store_ebook.delay(user_id, sdbkey, file_hash, fmt)
 
 
 # TODO nightly which recalculates book ratings: 

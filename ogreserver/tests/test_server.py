@@ -10,11 +10,11 @@ def test_confirm_endpoint():
     pass
 
 
-def test_update_book_md5(flask_app, datastore, user):
+def test_update_book_hash(flask_app, datastore, user):
     ebooks_dict = {
         "H. C. Andersen - Andersen's Fairy Tales": {
             'format': 'epub',
-            'file_md5': '38b3fc3a',
+            'file_hash': '38b3fc3a',
             'owner': 'mafro',
             'size': 139654
         },
@@ -29,8 +29,8 @@ def test_update_book_md5(flask_app, datastore, user):
     assert format_obj is not None, 'format should exist with MD5 of 38b3fc3a'
 
     # md5 is different after ogre_id written to metadata on client
-    ret = ds.update_book_md5('38b3fc3a', 'egg')
-    assert ret is True, 'update_book_md5() returned false'
+    ret = ds.update_book_hash('38b3fc3a', 'egg')
+    assert ret is True, 'update_book_hash() returned false'
 
     format_obj = datastore.db('test').table('formats').get('egg').run()
     assert format_obj is not None, 'format should have been updated to MD5 of egg'

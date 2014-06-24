@@ -62,7 +62,7 @@ def test_metadata_ogre_id_epub(mock_urlopen, calibre_ebook_meta_bin, ebook_lib_p
     # add ogre_id to test epub
     add_ogre_id_to_ebook(
         calibre_ebook_meta_bin,
-        file_md5='egg',
+        file_hash='egg',
         filepath=os.path.join(tmpdir.strpath, 'pg11.epub'),
         existing_tags='',
         ogre_id='egg',
@@ -87,7 +87,7 @@ def test_metadata_ogre_id_mobi(mock_urlopen, calibre_ebook_meta_bin, ebook_lib_p
     # add ogre_id to test mobi
     add_ogre_id_to_ebook(
         calibre_ebook_meta_bin,
-        file_md5='egg',
+        file_hash='egg',
         filepath=os.path.join(tmpdir.strpath, 'pg11.mobi'),
         existing_tags='Fantasy',
         ogre_id='egg',
@@ -113,7 +113,7 @@ def test_metadata_ogre_id_mobi_utf8(mock_urlopen, calibre_ebook_meta_bin, ebook_
     # mobi books add ogre_id it --tags
     add_ogre_id_to_ebook(
         calibre_ebook_meta_bin,
-        file_md5='egg',
+        file_hash='egg',
         filepath=os.path.join(tmpdir.strpath, 'pg11.mobi'),
         existing_tags=u'diaëresis',
         ogre_id='egg',

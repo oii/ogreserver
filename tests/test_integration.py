@@ -17,7 +17,7 @@ def test_duplicate(ogreserver, client_config, tmpdir):
     data = {
         "Carroll, Lewis - Alice's Adventures in Wonderland": {
             'format': 'epub',
-            'file_md5': '42344f0e247923fcb347c0e5de5fc762',
+            'file_hash': '42344f0e247923fcb347c0e5de5fc762',
             'owner': 'test',
             'size': 69339,
         }

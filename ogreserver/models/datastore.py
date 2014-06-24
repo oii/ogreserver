@@ -347,15 +347,23 @@ class DataStore():
             return None
 
         conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
+        data = r.table('formats').get(current_file_hash).run(conn)
+        if data is None:
+            self.logger.error('Format {} does not exist'.format(current_file_hash))
+            return False
         try:
-            data = r.table('formats').get(current_file_hash).run(conn)
             data['file_hash'] = updated_file_hash
             data['source_patched'] = True
             r.table('formats').insert(data).run(conn)
             r.table('formats').get(current_file_hash).delete().run(conn)
-            self.logger.info('Updated {} to {}'.format(current_file_hash, updated_file_hash))
+            self.logger.info('Updated {} to {} on {}'.format(
+                current_file_hash, updated_file_hash, data['version_id'])
+            )
         except Exception:
-            self.logger.error('Failed updating ebook {}'.format(current_file_hash), exc_info=True)
+            self.logger.error(
+                'Failed updating format {} on {}'.format(current_file_hash, data['version_id']),
+                exc_info=True
+            )
             return False
         return True
 

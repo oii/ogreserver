@@ -76,12 +76,12 @@ def sync(config):
     response = sync_with_server(config, prntr, session_key, ebooks_dict)
 
     # 3) set ogre_id in metadata of each sync'd ebook
-    success, failed = update_local_metadata(
+    update_local_metadata(
         config, prntr, session_key, ebooks_dict, response['ebooks_to_update']
     )
 
     # 4) upload the ebooks requested by ogreserver
-    success, failed = upload_ebooks(
+    upload_ebooks(
         config, prntr, session_key, ebooks_dict, response['ebooks_to_upload']
     )
 
@@ -293,12 +293,15 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
                     )
                     failed += 1
 
-    return success, failed
+    if success > 0:
+        prntr.p('Updated {} ebooks'.format(success), success=True)
+    if failed > 0:
+        prntr.e('Failed updating {} ebooks'.format(failed))
 
 
 def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):
     if len(ebooks_to_upload) == 0:
-        return None, None
+        return
 
     # grammatically correct messages are nice
     plural = 's' if len(ebooks_to_upload) > 1 else ''
@@ -326,7 +329,10 @@ def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):
                     prntr.e('Failed uploading {}'.format(ebooks_dict[authortitle]['path']), excp=e)
                     failed += 1
 
-    return success, failed
+    if success > 0:
+        prntr.p('Completed {} uploads'.format(success), success=True)
+    if failed > 0:
+        prntr.e('Failed uploading {} ebooks'.format(failed))
 
 
 def upload_single_book(host, session_key, filepath, upload_obj):

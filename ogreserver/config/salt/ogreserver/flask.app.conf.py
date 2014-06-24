@@ -9,6 +9,7 @@ CELERY_DEFAULT_QUEUE = 'ogreserver'
 CELERY_DEFAULT_EXCHANGE = 'ogreserver'
 CELERY_DEFAULT_EXCHANGE_TYPE = 'direct'
 CELERY_DEFAULT_ROUTING_KEY = 'ogreserver'
+CELERY_ACCEPT_CONTENT = ['pickle']
 
 # AWS config
 AWS_ACCESS_KEY = "{{ pillar['aws_access_key'] }}"

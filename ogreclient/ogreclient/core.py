@@ -268,7 +268,8 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
         for authortitle in ebooks_dict.keys():
             if md5 == ebooks_dict[authortitle]['file_md5']:
                 try:
-                    add_ogre_id_to_ebook(
+                    # update the metadata on the ebook, and communicate that to ogreserver
+                    new_file_hash = add_ogre_id_to_ebook(
                         config['calibre_ebook_meta_bin'],
                         md5,
                         ebooks_dict[authortitle]['path'],
@@ -277,6 +278,8 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
                         config['host'],
                         session_key,
                     )
+                    # update file hash in ogreclient data
+                    ebooks_dict[authortitle]['file_md5'] = new_file_hash
                     success += 1
                     if config['verbose']:
                         prntr.p('Wrote OGRE_ID to {}'.format(ebooks_dict[authortitle]['path']))
@@ -480,6 +483,7 @@ def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_md5, filepath, existing_ta
             if data == 'ok':
                 # move file back into place
                 shutil.copy(tmp_name, filepath)
+                return new_md5
             else:
                 raise FailedConfirmError("Server said 'no'")
 

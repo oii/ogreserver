@@ -37,6 +37,8 @@ RANKED_EBOOK_FORMATS = {
     'tpz': 9,
 }
 
+MOBI_FORMATS = ('mobi', 'azw', 'azw3', 'azw4', 'azw1')
+
 
 def authenticate(host, username, password):
     try:
@@ -385,7 +387,7 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
             meta['tags'] = line[line.find(':')+1:].strip()
 
             # extract the ogre_id which may be embedded into the tags field
-            if format == '.mobi':
+            if format[1:] in MOBI_FORMATS:
                 if 'ogre_id' in meta['tags']:
                     tags = meta['tags'].split(', ')
                     for j in reversed(xrange(len(tags))):
@@ -446,7 +448,7 @@ def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_md5, filepath, existing_ta
         shutil.copy(filepath, tmp_name)
 
         try:
-            if format == '.mobi':
+            if format[1:] in MOBI_FORMATS:
                 # append ogre's ebook_id to the tags list
                 if existing_tags is not None and len(existing_tags) > 0:
                     new_tags = u'ogre_id={}, {}'.format(ogre_id, existing_tags)

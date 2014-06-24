@@ -25,8 +25,7 @@ from .exceptions import FailedWritingMetaDataError, FailedConfirmError
 
 OGRESERVER = "ogre.oii.yt"
 
-# ranked ebook formats
-EBOOK_FORMATS = {
+RANKED_EBOOK_FORMATS = {
     'mobi': 1,
     'azw': 2,
     'azw3': 3,
@@ -108,7 +107,7 @@ def search_for_ebooks(config, prntr):
         for filename in files:
             # TODO use timeit; compare to fnmatch.filter
             fn, ext = os.path.splitext(filename)
-            if ext[1:] in EBOOK_FORMATS.keys() and fn[0:2] != '._':
+            if ext[1:] in RANKED_EBOOK_FORMATS.keys() and fn[0:2] != '._':
                 filepath = os.path.join(root, filename)
                 md5_tup = compute_md5(filepath)
                 ebooks.append(
@@ -175,8 +174,8 @@ def search_for_ebooks(config, prntr):
 
             if authortitle in ebooks_dict.keys():
                 # compare the rank of the format already found against this one
-                existing_rank = EBOOK_FORMATS[ebooks_dict[authortitle]['format']]
-                new_rank = EBOOK_FORMATS[item[2][1:]]
+                existing_rank = RANKED_EBOOK_FORMATS[ebooks_dict[authortitle]['format']]
+                new_rank = RANKED_EBOOK_FORMATS[item[2][1:]]
 
                 # lower is better
                 if new_rank < existing_rank:

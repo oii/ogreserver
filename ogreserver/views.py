@@ -204,7 +204,7 @@ def post(auth_key):
     user = check_auth(auth_key)
 
     # get the json payload
-    data = json.loads(request.form.get('ebooks'))
+    data = json.loads(request.data)
 
     # stats log the upload
     Log.create(user.id, 'CONNECT', len(data.keys()), user.session_api_key)

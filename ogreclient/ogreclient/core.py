@@ -241,17 +241,15 @@ def sync_with_server(config, prntr, session_key, ebooks_dict):
     prntr.p("Come on sucker, lick my battery")
 
     try:
-        # post the json array of ebook data
-        params = urllib.urlencode({
-            'ebooks': json.dumps(ebooks_dict),
-        })
+        # post json dict of ebook data
         req = urllib2.Request(
-            url='http://{0}/post/{1}'.format(
+            url='http://{}/post/{}'.format(
                 config['host'],
                 urllib.quote_plus(session_key)
-            )
+            ),
+            headers={'Content-Type': 'application/json'},
         )
-        req.add_data(params)
+        req.add_data(json.dumps(ebooks_dict))
         resp = urllib2.urlopen(req)
         data = resp.read()
 

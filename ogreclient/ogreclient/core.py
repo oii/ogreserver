@@ -20,7 +20,7 @@ from .dedrm import decrypt, DRM
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError
 from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
-from .exceptions import FailedWritingMetaDataError, FailedConfirmError
+from .exceptions import FailedWritingMetaDataError, FailedConfirmError, FailedDebugLogsError
 
 
 OGRESERVER = "ogre.oii.yt"
@@ -69,6 +69,10 @@ def sync(config):
     else:
         prntr = CliPrinter(start=datetime.datetime.now(), debug=config['debug'])
 
+        # set printer to log everything for later dispatch to ogreserver
+        if config['debug'] is True:
+            prntr.log_output(True)
+
     # 1) find ebooks in config['ebook_home'] on local machine
     ebooks_dict = search_for_ebooks(config, prntr)
 
@@ -88,6 +92,10 @@ def sync(config):
     upload_ebooks(
         config, prntr, session_key, ebooks_dict, response['ebooks_to_upload']
     )
+
+    # 5) send a log of all events
+    if config['debug'] is True:
+        send_logs(prntr, config['host'], session_key)
 
 
 def search_for_ebooks(config, prntr):
@@ -503,3 +511,23 @@ def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_hash, filepath, existing_t
 
         except (HTTPError, URLError) as e:
             raise FailedConfirmError(str(e))
+
+
+def send_logs(prntr, host, session_key):
+    try:
+        # post all logs to ogreserver
+        req = urllib2.Request(
+            url='http://{}/post-logs/{}'.format(host, urllib.quote_plus(session_key)),
+            headers={'Content-Type': 'application/json'},
+        )
+        req.add_data(u'\n'.join(prntr.logs).encode('utf-8'))
+        resp = urllib2.urlopen(req)
+        data = resp.read()
+
+        if data != 'ok':
+            raise FailedDebugLogsError('Failed storing the logs, please report this.')
+        else:
+            prntr.p(u'Uploaded logs to OGRE')
+
+    except (HTTPError, URLError) as e:
+        raise FailedDebugLogsError(str(e))

@@ -45,6 +45,7 @@ def app_config():
         'WHOOSH_BASE': 'test.db',
         'SQLALCHEMY_DATABASE_URI': 'mysql://root:eggs@localhost/test',
         'UPLOADED_EBOOKS_DEST': 'uploads',
+        'UPLOADED_LOGS_DEST': 'logs',
 
         'RETHINKDB_DATABASE': 'test',
     }

@@ -36,7 +36,7 @@ def create_app(config):
 
     # setup Flask-Uploads
     from .extensions.flask_uploads import init_uploads
-    app.uploads = init_uploads(app)
+    app.uploaded_ebooks, app.uploaded_logs = init_uploads(app)
 
     # setup application logging
     from .extensions.logging import init_logging

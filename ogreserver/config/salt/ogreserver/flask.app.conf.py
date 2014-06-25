@@ -37,8 +37,9 @@ SQLALCHEMY_DATABASE_URI = "mysql://{{ pillar['mysql_user'] }}:{{ pillar['mysql_p
 # Whoosh full-text search
 WHOOSH_BASE = os.path.join(basedir, 'search.db')
 
-# Upload path
+# Upload paths
 UPLOADED_EBOOKS_DEST = "/srv/{{ pillar['app_name'] }}/uploads"
+UPLOADED_LOGS_DEST = "/srv/{{ pillar['app_name'] }}/logs"
 
 # Ebook conversion formats; all books will be provided in these formats by OGRE
 EBOOK_FORMATS = ['mobi', 'azw', 'pdf', 'epub']

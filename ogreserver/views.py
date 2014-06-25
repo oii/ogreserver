@@ -1,4 +1,6 @@
 import base64
+import codecs
+import datetime
 import fnmatch
 import json
 import os
@@ -240,6 +242,22 @@ def post(auth_key):
     })
 
 
+@views.route('/post-logs/<auth_key>', methods=['POST'])
+def post_logs(auth_key):
+    user = check_auth(auth_key)
+
+    log_file_path = os.path.join(
+        app.uploaded_logs.config.destination,
+        '{}.{}.log'.format(user.username, datetime.datetime.now().strftime("%Y%m%d-%H%M%S")),
+    )
+
+    # write request body to file
+    with codecs.open(log_file_path, 'w', 'utf-8') as f:
+        f.write(u'{}\n'.format(request.data.decode('utf-8')))
+
+    return 'ok'
+
+
 @views.route('/confirm/<auth_key>', methods=['POST'])
 def confirm(auth_key):
     check_auth(auth_key)
@@ -269,7 +287,7 @@ def upload(auth_key):
     ))
 
     # write uploaded ebook to disk, named as the hash and filetype
-    app.uploads.save(request.files['ebook'], None, '{0}.{1}'.format(
+    app.uploaded_ebooks.save(request.files['ebook'], None, '{}.{}'.format(
         request.form.get('file_hash'), request.form.get('format')
     ))
 

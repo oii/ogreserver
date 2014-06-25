@@ -5,8 +5,11 @@ from flask.ext.uploads import UploadSet, ALL, configure_uploads
 
 
 def init_uploads(app):
-    # setup Flask-Upload
-    uploads = UploadSet('ebooks', ALL)
-    configure_uploads(app, (uploads))
+    # setup Flask-Upload for ebook uploads
+    ebooks = UploadSet('ebooks', ALL)
 
-    return uploads
+    # setup log file uploads
+    logs = UploadSet('logs', ALL)
+
+    configure_uploads(app, (ebooks, logs))
+    return ebooks, logs

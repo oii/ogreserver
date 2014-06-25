@@ -30,3 +30,6 @@ class FailedWritingMetaDataError(OgreException):
 
 class FailedConfirmError(OgreException):
     pass
+
+class FailedDebugLogsError(OgreException):
+    pass

@@ -25,6 +25,9 @@ class CliPrinter:
     NONE = 'NONE'
     RESPONSE = 'RESPONSE'
 
+    log_output = False
+    logs = []
+
     def __init__(self, start=None, debug=False, progressbar_len=PROGBAR_LEN, progressbar_char="#"):
         self.start = start
         self.debug = debug
@@ -83,6 +86,10 @@ class CliPrinter:
 
         if success is False:
             out = sys.stderr
+
+        # log all prints to a stack for later use
+        if self.log_output is True:
+            self.logs.append(u'[{: <10}]  {}'.format(prefix, msg))
 
         t = self._get_time_elapsed(notime)
         out.write('{}[{: <10}]{} {: >4} {}{}{}'.format(

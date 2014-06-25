@@ -21,3 +21,6 @@ sesame.ogre.key
 github.*.pky
 prod_vars.sls
 !prod_vars.sls.encrypted
+
+logs
+uploads

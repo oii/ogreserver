@@ -249,6 +249,7 @@ def run_sync(conf, args, prntr, ebook_home, username, password, debug=False):
         'username': username,
         'password': password,
         'host': args.host,
+        'debug': debug,
         'verbose': True if debug is True else args.verbose,
         'quiet': args.quiet,
         'no_drm': args.no_drm,

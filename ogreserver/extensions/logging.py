@@ -8,10 +8,15 @@ def init_logging(app):
     if app.debug is False:
         app.logger.setLevel(app.config['LOGGING_LEVEL'])
 
+    # setup the log format
+    app.debug_log_format = '%(asctime)s [%(levelname)s] in %(module)s %(message)s'
+    log_date_format = '%d/%m/%Y %H:%M:%S'
+    app.logger.handlers[0].formatter.datefmt = log_date_format
+
     if 'TESTING' in app.config and app.config['TESTING'] is True:
         # during integration tests log to a file, since Flask is running on a background thread
         handler = logging.FileHandler(app.config['TESTING_LOG_PATH'])
         handler.setFormatter(
-            logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
+            logging.Formatter(app.debug_log_format, datefmt=log_date_format)
         )
         app.logger.addHandler(handler)

@@ -23,6 +23,9 @@ def store_ebook(user_id, ebook_id, file_hash, fmt):
     with app.test_request_context():
         filepath = None
 
+        # remove the Flask logger; test_request_context provides DebugLogger
+        del(app.logger.handlers[0])
+
         # initialise the DB connection in our fake app context
         get_db(app)
 
@@ -44,6 +47,8 @@ def store_ebook(user_id, ebook_id, file_hash, fmt):
                 # handle badge and reputation changes
                 r = Reputation(user)
                 r.earn_badges()
+
+                app.logger.info('{} was uploaded'.format(filename))
             else:
                 app.logger.info('{} exists on S3'.format(filename))
 

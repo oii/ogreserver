@@ -209,15 +209,9 @@ class DataStore():
             self.logger.error(e)
 
 
-    def list(self):
+    def search(self, searchstr=None, page=1):
         """
-        List all books from whoosh
-        """
-        return self.search(None)
-
-    def search(self, searchstr):
-        """
-        Search for books using whoosh
+        Search for books using whoosh, or return first page from all
         """
         if self.whoosh is None:
             return
@@ -225,13 +219,16 @@ class DataStore():
         output = []
 
         if searchstr is None:
+            # default to list all authors
             query = Every('author')
         else:
+            # create a search by author and then title
             qp = MultifieldParser(['author', 'title'], self.whoosh.schema, group=OrGroup)
             query = qp.parse(searchstr)
 
+        # start a paginated search
         with self.whoosh.searcher() as s:
-            results = s.search(query)
+            results = s.search_page(query, page, pagelen=20)
             for res in results:
                 output.append(res.fields())
 

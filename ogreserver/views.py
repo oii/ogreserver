@@ -149,10 +149,10 @@ def home():
 def list():
     ds = DataStore(app.config, app.logger, app.whoosh)
     s = request.args.get('s')
-    if s is None:
-        rs = ds.list()
-    else:
+    if s:
         rs = ds.search(s)
+    else:
+        rs = ds.search()
     return render_template('list.html', ebooks=rs)
 
 
@@ -170,14 +170,6 @@ def get_comment_count(pk):
     ds = DataStore(app.config, app.logger)
     comments = ds.get_comments(pk)
     return jsonify({'comments': len(comments)})
-
-
-@views.route('/view')
-@login_required
-def view(sdbkey=None):
-    ds = DataStore(app.config, app.whoosh)
-    rs = ds.list()
-    return render_template('view.html', ebooks=rs)
 
 
 @views.route('/download/<pk>/', defaults={'fmt': None})

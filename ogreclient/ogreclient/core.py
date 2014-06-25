@@ -75,6 +75,10 @@ def sync(config):
     # 2) send dict of ebooks / md5s to ogreserver
     response = sync_with_server(config, prntr, session_key, ebooks_dict)
 
+    if not response['ebooks_to_upload'] and not response['ebooks_to_update']:
+        prntr.p('Finished')
+        return
+
     # 3) set ogre_id in metadata of each sync'd ebook
     update_local_metadata(
         config, prntr, session_key, ebooks_dict, response['ebooks_to_update']

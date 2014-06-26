@@ -176,7 +176,8 @@ def search_for_ebooks(config, prntr):
                 continue
 
         # books are indexed by 'authortitle' to handle multiple copies of the same book
-        authortitle = '{} {} - {}'.format(meta['firstname'], meta['lastname'], meta['title'])
+        # delimit fields with non-printable chars
+        authortitle = u'{}\u0006{}\u0007{}'.format(meta['firstname'], meta['lastname'], meta['title'])
 
         # check for duplicates
         if authortitle in ebooks_dict.keys() and item[2] in ebooks_dict[authortitle].keys():

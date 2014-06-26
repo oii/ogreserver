@@ -12,7 +12,7 @@ def test_confirm_endpoint():
 
 def test_update_book_hash(flask_app, datastore, user):
     ebooks_dict = {
-        "H. C. Andersen - Andersen's Fairy Tales": {
+        u"H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
             'format': 'epub',
             'file_hash': '38b3fc3a',
             'owner': 'mafro',

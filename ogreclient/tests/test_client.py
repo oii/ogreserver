@@ -19,5 +19,5 @@ def test_search(client_config, ebook_lib_path, tmpdir):
 
     # verify found book
     assert len(data) == 1
-    assert data.keys()[0] == "Lewis Carroll - Alice's Adventures in Wonderland"
+    assert data.keys()[0] == u"Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland"
     assert data[data.keys()[0]]['file_hash'] == '42344f0e247923fcb347c0e5de5fc762'

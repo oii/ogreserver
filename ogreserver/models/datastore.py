@@ -68,8 +68,8 @@ class DataStore():
 
                 try:
                     # derive author and title from the key
-                    author, title = authortitle.split(' - ')
-                    firstname, lastname = author.split(' ')
+                    author, title = authortitle.split(u'\u0007')
+                    firstname, lastname = author.split(u'\u0006')
                 except Exception as e:
                     raise BadMetaDataError(
                         'Bad meta data on {}'.format(incoming['file_hash']), e

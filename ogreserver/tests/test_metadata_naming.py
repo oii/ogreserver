@@ -52,7 +52,7 @@ def test_generate_filename_transpose(flask_app):
 
 def test_generate_filename_with_db_load(flask_app, datastore, user):
     ebooks_dict = {
-        "H. C. Andersen - Andersen's Fairy Tales": {
+        u"H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
             'format': 'epub',
             'file_hash': '38b3fc3aa7fe67e76f0d8b248e62b940',
             'owner': 'mafro',

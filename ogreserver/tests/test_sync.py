@@ -5,7 +5,7 @@ from ..models.datastore import DataStore
 
 def test_sync_duplicate(flask_app, datastore, user):
     ebooks_dict = {
-        "H. C. Andersen - Andersen's Fairy Tales": {
+        u"H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
             'format': 'epub',
             'file_hash': '38b3fc3aa7fe67e76f0d8b248e62b940',
             'owner': 'mafro',
@@ -19,6 +19,7 @@ def test_sync_duplicate(flask_app, datastore, user):
 
     # assert book is new
     key, data = syncd_books.items()[0]
+    assert data['new'] is True, "wasn't stored on first sync"
     assert data['dupe'] is False, 'book should not be a duplicate'
 
     # sync again
@@ -31,7 +32,7 @@ def test_sync_duplicate(flask_app, datastore, user):
 
 def test_sync_ebook_update(flask_app, datastore, user):
     ebooks_dict = {
-        "H. C. Andersen - Andersen's Fairy Tales": {
+        u"H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
             'format': 'epub',
             'file_hash': 'b889dec977aef12c6973acc2cf5b8590',
             'owner': 'mafro',
@@ -45,6 +46,7 @@ def test_sync_ebook_update(flask_app, datastore, user):
 
     # check book needs updating
     key, data = syncd_books.items()[0]
+    assert data['new'] is True, "wasn't stored on first sync"
     assert data['update'] is True, 'book should need update'
     assert 'ebook_id' in data, 'ebook_id should be present in ogreserver response'
 

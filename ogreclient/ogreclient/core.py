@@ -176,7 +176,7 @@ def search_for_ebooks(config, prntr):
                 continue
 
         # books are indexed by 'authortitle' to handle multiple copies of the same book
-        authortitle = '{} - {}'.format(meta['author'], meta['title'])
+        authortitle = '{} {} - {}'.format(meta['firstname'], meta['lastname'], meta['title'])
 
         # check for duplicates
         if authortitle in ebooks_dict.keys() and item[2] in ebooks_dict[authortitle].keys():
@@ -211,7 +211,8 @@ def search_for_ebooks(config, prntr):
                 ebooks_dict[authortitle].update(meta)
 
                 # don't need to send author/title since they're composed into the key
-                del(ebooks_dict[authortitle]['author'])
+                del(ebooks_dict[authortitle]['firstname'])
+                del(ebooks_dict[authortitle]['lastname'])
                 del(ebooks_dict[authortitle]['title'])
 
         i += 1
@@ -424,15 +425,9 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
             continue
 
         if 'Author' in line:
-            meta['author'] = line[line.find(':')+1:].strip()
-            bracketpos = meta['author'].find('[')
-            # if a square bracket in author, pass the contents of the brackets to ogreserver
-            if(bracketpos > -1):
-                endbracketpos = meta['author'].find(']', bracketpos)
-                if endbracketpos > -1:
-                    meta['author'] = meta['author'][bracketpos+1:endbracketpos].strip()
-            else:
-                meta['author'] = meta['author'].strip()
+            # derive firstname & lastname from author tag
+            author = line[line.find(':')+1:].strip()
+            meta['firstname'], meta['lastname'] = _parse_author(author)
             continue
 
         if 'Identifiers' in line:
@@ -453,6 +448,34 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
     # calculate file MD5
     meta['file_hash'] = compute_md5(filepath)[0]
     return meta
+
+
+def _parse_author(author):
+    if type(author) is not unicode:
+        # convert from UTF-8
+        author = author.decode('UTF-8')
+
+    bracketpos = author.find('[')
+    # if square bracket in author, parse the contents of the brackets
+    if(bracketpos > -1):
+        endbracketpos = author.find(']', bracketpos)
+        if endbracketpos > -1:
+            author = author[bracketpos+1:endbracketpos].strip()
+    else:
+        author = author.strip()
+
+    if ',' in author:
+        # author containing comma is "surname, firstname"
+        names = author.split(',')
+        lastname = names[0].strip()
+        firstname = ' '.join(names[1:]).strip()
+    else:
+        names = author.split(' ')
+        # assume final part is surname, all other parts are firstname
+        firstname = ' '.join(names[:-1]).strip()
+        lastname = names[len(names[:-1]):][0].strip()
+
+    return firstname, lastname
 
 
 def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_hash, filepath, existing_tags, ogre_id, host, session_key):

@@ -7,43 +7,84 @@ import shutil
 import mock
 import pytest
 
-from ogreclient.core import metadata_extract, add_ogre_id_to_ebook
+from ogreclient.core import metadata_extract, _parse_author, add_ogre_id_to_ebook
 
 
 def test_metadata_epub(calibre_ebook_meta_bin, ebook_lib_path):
     # Frankenstein
     meta = metadata_extract(calibre_ebook_meta_bin, os.path.join(ebook_lib_path, 'pg84.epub'))
-    assert meta['author'] == 'Shelley, Mary Wollstonecraft'
-    assert meta['title'] == 'Frankenstein'
-    assert meta['uri'] == 'http://www.gutenberg.org/ebooks/84'
+    assert meta['firstname'] == u'Mary Wollstonecraft'
+    assert meta['lastname'] == u'Shelley'
+    assert meta['title'] == u'Frankenstein'
+    assert meta['uri'] == u'http://www.gutenberg.org/ebooks/84'
 
     # Beowulf
     meta = metadata_extract(calibre_ebook_meta_bin, os.path.join(ebook_lib_path, 'pg16328.epub'))
-    assert meta['author'] == 'Unknown'
-    assert meta['title'] == 'Beowulf / An Anglo-Saxon Epic Poem'
-    assert meta['uri'] == 'http://www.gutenberg.org/ebooks/16328'
+    assert meta['lastname'] == u'Unknown'
+    assert meta['title'] == u'Beowulf / An Anglo-Saxon Epic Poem'
+    assert meta['uri'] == u'http://www.gutenberg.org/ebooks/16328'
 
     # Wizard of Oz
     meta = metadata_extract(calibre_ebook_meta_bin, os.path.join(ebook_lib_path, 'pg55.epub'))
-    assert meta['author'] == 'Baum, L. Frank (Lyman Frank)'
-    assert meta['title'] == 'The Wonderful Wizard of Oz'
-    assert meta['uri'] == 'http://www.gutenberg.org/ebooks/55'
-    assert meta['tags'] == 'Fantasy, Oz (Imaginary place) -- Fiction'
+    assert meta['firstname'] == u'L. Frank (Lyman Frank)'
+    assert meta['lastname'] == u'Baum'
+    assert meta['title'] == u'The Wonderful Wizard of Oz'
+    assert meta['uri'] == u'http://www.gutenberg.org/ebooks/55'
+    assert meta['tags'] == u'Fantasy, Oz (Imaginary place) -- Fiction'
 
 
 def test_metadata_mobi(calibre_ebook_meta_bin, ebook_lib_path):
     # Wonderland, converted to mobi
     meta = metadata_extract(calibre_ebook_meta_bin, os.path.join(ebook_lib_path, 'pg11.mobi'))
-    assert meta['author'] == 'Lewis Carroll'
-    assert meta['title'] == "Alice's Adventures in Wonderland"
-    assert meta['tags'] == 'Fantasy'
-    assert meta['asin'] == '4373df90-da57-42de-9327-90f0e73e8e45'
+    assert meta['firstname'] == u'Lewis'
+    assert meta['lastname'] == u'Carroll'
+    assert meta['title'] == u"Alice's Adventures in Wonderland"
+    assert meta['tags'] == u'Fantasy'
+    assert meta['asin'] == u'4373df90-da57-42de-9327-90f0e73e8e45'
 
 
 def test_metadata_utf8(calibre_ebook_meta_bin, ebook_lib_path):
     # Wuthering Heights
     meta = metadata_extract(calibre_ebook_meta_bin, os.path.join(ebook_lib_path, 'pg768.epub'))
-    assert meta['author'] == u'Brontë, Emily'
+    assert meta['firstname'] == u'Emily'
+    assert meta['lastname'] == u'Brontë'
+
+
+def test_parse_authortitle():
+    # double-barrelled firstname
+    firstname, lastname = _parse_author("H. C. Andersen")
+    for var in (firstname, lastname):
+        assert type(var) is unicode
+    assert firstname == u'H. C.'
+    assert lastname == u'Andersen'
+
+    # UTF-8 encoded lastname
+    firstname, lastname = _parse_author('Emily Bront\xc3\xab')
+    for var in (firstname, lastname):
+        assert type(var) is unicode
+    assert firstname == u'Emily'
+    assert lastname == u'Brontë'
+
+    # comma-separated lastname, firstname
+    firstname, lastname = _parse_author("Carroll, Lewis")
+    for var in (firstname, lastname):
+        assert type(var) is unicode
+    assert firstname == u'Lewis'
+    assert lastname == u'Carroll'
+
+    # comma-separated lastname, firstname in appended brackets
+    firstname, lastname = _parse_author("Lewis Carroll [Carroll, Lewis]")
+    for var in (firstname, lastname):
+        assert type(var) is unicode
+    assert firstname == u'Lewis'
+    assert lastname == u'Carroll'
+
+    # comma-separated lastname, firstname & double-barrelled firstname
+    firstname, lastname = _parse_author("Andersen, H. C.")
+    for var in (firstname, lastname):
+        assert type(var) is unicode
+    assert firstname == u'H. C.'
+    assert lastname == u'Andersen'
 
 
 @pytest.mark.xfail

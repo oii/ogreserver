@@ -16,7 +16,7 @@ from .utils import compute_md5
 from .utils import id_generator
 from .utils import make_temp_directory
 from .printer import CliPrinter, DummyPrinter
-from .dedrm import decrypt, DRM
+from .dedrm import decrypt, DRM, DeDrmMissingError
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError
 from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
@@ -162,6 +162,8 @@ def search_for_ebooks(config, prntr):
                     else:
                         prntr.p('{}\t{}'.format(item[0], out), CliPrinter.UNKNOWN)
 
+            except DeDrmMissingError:
+                continue
             except Exception as e:
                 prntr.e('Fatal Exception on {}'.format(item[0]), excp=e)
                 continue

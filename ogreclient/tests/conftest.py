@@ -4,7 +4,6 @@ import subprocess
 
 import mock
 import pytest
-import virtualenvapi
 
 
 @pytest.fixture(scope='session')
@@ -33,9 +32,3 @@ def mock_urlopen(request):
     m = mock.patch('ogreclient.core.urllib2.urlopen')
     yield m.start()
     m.stop()
-
-
-@pytest.yield_fixture(scope='function')
-def virtualenv(tmpdir):
-    # create a virtualenv in a tmpdir; pytest will clean up for us
-    yield virtualenvapi.manage.VirtualEnvironment(tmpdir)

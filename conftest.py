@@ -1,11 +1,13 @@
 from __future__ import absolute_import
 
 import os
-import pytest
 import random
 import shutil
 import string
 import threading
+
+import pytest
+import virtualenvapi.manage
 
 try:
     import sqlalchemy
@@ -154,3 +156,11 @@ def client_config(user):
 def ebook_lib_path():
     # path where conftest.py resides + '/ebooks'
     return os.path.join(os.path.dirname(__file__), 'tests', 'ebooks')
+
+
+@pytest.fixture(scope='function')
+def virtualenv(tmpdir):
+    # create a virtualenv in a tmpdir; pytest will clean up for us
+    return virtualenvapi.manage.VirtualEnvironment(
+        os.path.join(tmpdir.strpath, 'ogreclient')
+    )

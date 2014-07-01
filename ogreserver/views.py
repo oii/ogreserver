@@ -300,12 +300,17 @@ def show_result(task_id):
 
 
 def check_auth(auth_key):
-    # authenticate user
-    key_parts = base64.b64decode(str(auth_key), '_-').split('+')
-    user = User.validate_auth_key(
-        username=key_parts[0],
-        api_key=key_parts[1]
-    )
+    user = None
+    try:
+        # authenticate user
+        key_parts = base64.b64decode(str(auth_key), '_-').split('+')
+        user = User.validate_auth_key(
+            username=key_parts[0],
+            api_key=key_parts[1]
+        )
+    except:
+        app.logger.error('Bad authentiation key: {}'.format(auth_key), exc_info=True)
+
     if user is None:
         raise Forbidden
     return user

@@ -2,12 +2,34 @@ from __future__ import absolute_import
 
 import pytest
 
+from werkzeug.exceptions import Forbidden
+
 from ..models.datastore import DataStore
+from ..views import check_auth
 
 
 @pytest.mark.xfail
 def test_confirm_endpoint():
     pass
+
+
+def test_authenticate(flask_app, client_config, tmpdir):
+    flask_app.testing = True
+    test_app = flask_app.test_client()
+
+    # authenticate with the server, receiving a session key
+    response = test_app.post('/auth', data={
+        'username': client_config['username'],
+        'password': client_config['password'],
+    })
+    session_key = response.data
+
+    # verify the session key works
+    user = check_auth(session_key)
+    assert user.username == client_config['username']
+
+    with pytest.raises(Forbidden):
+        check_auth('bad_session_key')
 
 
 def test_update_book_hash(flask_app, datastore, user):

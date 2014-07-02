@@ -120,7 +120,10 @@ class CliPrinter:
         ))
         sys.stdout.flush()
 
-    def progressf(self, num_blocks, block_size, total_size):
+    def progressf(self, num_blocks=None, block_size=1, total_size=None):
+        if num_blocks is None or total_size is None:
+            raise ProgressfArgumentError
+
         self.progress_running = True
 
         colour, prefix = self._get_colour_and_prefix(None)
@@ -175,5 +178,12 @@ class DummyPrinter:
     def progressi(self, amount, mode=None):
         pass
 
-    def progressf(self, num_blocks, block_size, total_size):
+    def progressf(self, num_blocks=None, block_size=None, total_size=None):
         pass
+
+
+class ProgressfArgumentError(Exception):
+    def __init__(self):
+        super(ProgressfArgumentError, self).__init__(
+            'You must supply num_blocks and total_size'
+        )

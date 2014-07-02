@@ -135,7 +135,6 @@ def search_for_ebooks(config, prntr):
         raise NoEbooksError()
 
     prntr.p("Scanning ebook meta data and checking DRM..")
-    #update_progress(0, length=PROGBAR_LEN)
     ebooks_dict = {}
 
     # now parse all book meta data; building a complete dataset
@@ -218,8 +217,9 @@ def search_for_ebooks(config, prntr):
                 del(ebooks_dict[authortitle]['lastname'])
                 del(ebooks_dict[authortitle]['title'])
 
-        i += 1
-        #update_progress(float(i) / float(total), length=PROGBAR_LEN)
+        if config['verbose'] is False:
+            i += 1
+            prntr.progressf(num_blocks=i, total_size=total)
 
     prntr.p('Found {} ebooks'.format(len(ebooks_dict)), success=True)
 
@@ -322,7 +322,7 @@ def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):
 
     prntr.p('Uploading {} file{}. Go make a brew.'.format(len(ebooks_to_upload), plural))
 
-    success, failed = 0, 0
+    success, failed, i = 0, 0, 0
 
     # upload each requested by the server
     for upload in ebooks_to_upload:
@@ -330,18 +330,20 @@ def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):
         for authortitle in ebooks_dict.keys():
             if upload['file_hash'] == ebooks_dict[authortitle]['file_hash']:
                 try:
-                    data = upload_single_book(
+                    upload_single_book(
                         config['host'],
                         session_key,
                         ebooks_dict[authortitle]['path'],
                         upload,
                     )
-                    prntr.p(data)
                     success += 1
 
                 except SpinachError as e:
                     prntr.e('Failed uploading {}'.format(ebooks_dict[authortitle]['path']), excp=e)
                     failed += 1
+
+        i += 1
+        prntr.progressf(num_blocks=i, total_size=len(ebooks_to_upload))
 
     if success > 0:
         prntr.p('Completed {} uploads'.format(success), success=True)

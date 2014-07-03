@@ -22,6 +22,22 @@ manager = Manager(app)
 
 
 @manager.command
+def cleardb():
+    if app.debug is False:
+        print 'You cannot run cleardb when not in DEBUG!!'
+        return
+    conn = r.connect("localhost", 28015, db='ogreserver').repl()
+    r.table('ebooks').delete().run()
+    r.table('versions').delete().run()
+    r.table('formats').delete().run()
+    if os.path.exists('search.db'):
+        import shutil, subprocess
+        shutil.rmtree('search.db')
+        subprocess.call('kill -HUP $(cat /tmp/gunicorn-ogreserver.pid)', shell=True)
+    conn.close()
+
+
+@manager.command
 def verify_s3():
     import logging
     logging.basicConfig(filename="boto.log", level=logging.DEBUG)

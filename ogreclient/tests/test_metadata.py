@@ -10,6 +10,7 @@ import pytest
 from ogreclient.core import metadata_extract, _parse_author, add_ogre_id_to_ebook
 
 
+@pytest.mark.requires_calibre
 def test_metadata_epub(calibre_ebook_meta_bin, ebook_lib_path):
     # Frankenstein
     meta = metadata_extract(calibre_ebook_meta_bin, os.path.join(ebook_lib_path, 'pg84.epub'))
@@ -33,6 +34,7 @@ def test_metadata_epub(calibre_ebook_meta_bin, ebook_lib_path):
     assert meta['tags'] == u'Fantasy, Oz (Imaginary place) -- Fiction'
 
 
+@pytest.mark.requires_calibre
 def test_metadata_mobi(calibre_ebook_meta_bin, ebook_lib_path):
     # Wonderland, converted to mobi
     meta = metadata_extract(calibre_ebook_meta_bin, os.path.join(ebook_lib_path, 'pg11.mobi'))
@@ -43,6 +45,7 @@ def test_metadata_mobi(calibre_ebook_meta_bin, ebook_lib_path):
     assert meta['asin'] == u'4373df90-da57-42de-9327-90f0e73e8e45'
 
 
+@pytest.mark.requires_calibre
 def test_metadata_utf8(calibre_ebook_meta_bin, ebook_lib_path):
     # Wuthering Heights
     meta = metadata_extract(calibre_ebook_meta_bin, os.path.join(ebook_lib_path, 'pg768.epub'))
@@ -92,6 +95,7 @@ def test_metadata_drm(calibre_ebook_meta_bin, ebook_lib_path):
     pass
 
 
+@pytest.mark.requires_calibre
 def test_metadata_ogre_id_epub(mock_urlopen, calibre_ebook_meta_bin, ebook_lib_path, tmpdir):
     # mock return from urlopen().read()
     mock_urlopen.return_value = mock.Mock()
@@ -117,6 +121,7 @@ def test_metadata_ogre_id_epub(mock_urlopen, calibre_ebook_meta_bin, ebook_lib_p
     assert meta['ebook_id'] == 'egg'
 
 
+@pytest.mark.requires_calibre
 def test_metadata_ogre_id_mobi(mock_urlopen, calibre_ebook_meta_bin, ebook_lib_path, tmpdir):
     # mock return from urlopen().read()
     mock_urlopen.return_value = mock.Mock()
@@ -143,6 +148,7 @@ def test_metadata_ogre_id_mobi(mock_urlopen, calibre_ebook_meta_bin, ebook_lib_p
     assert meta['tags'] == 'Fantasy'
 
 
+@pytest.mark.requires_calibre
 def test_metadata_ogre_id_mobi_utf8(mock_urlopen, calibre_ebook_meta_bin, ebook_lib_path, tmpdir):
     # mock return from urlopen().read()
     mock_urlopen.return_value = mock.Mock()

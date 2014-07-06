@@ -167,14 +167,16 @@ def search_for_ebooks(config, prntr):
                 prntr.e('Fatal Exception on {}'.format(item[0]), excp=e)
                 continue
 
+        meta = {}
+
         try:
             # extract and parse ebook metadata
             meta = metadata_extract(config['calibre_ebook_meta_bin'], filepath=item[0])
         except CorruptEbookError as e:
             # skip books which can't have metadata extracted
             if config['verbose']:
-                prntr.e('{}{}'.format(item[1], item[2]), CliPrinter.CORRUPT)
-                continue
+                prntr.e('{}{}'.format(item[1], item[2]), CliPrinter.CORRUPT, excp=e)
+            continue
 
         # books are indexed by 'authortitle' to handle multiple copies of the same book
         # delimit fields with non-printable chars
@@ -449,6 +451,9 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
                 if ident.startswith('ogre_id'):
                     meta['ebook_id'] = ident[8:].strip()
             continue
+
+    if not meta:
+        raise CorruptEbookError('Failed extracting from {}'.format(filepath))
 
     # calculate file MD5
     meta['file_hash'] = compute_md5(filepath)[0]

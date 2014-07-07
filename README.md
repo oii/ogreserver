@@ -1,8 +1,8 @@
 O.G.R.E.
 ========
 
-[![Build Status](https://travis-ci.org/oii/ogre.svg?branch=develop)](https://travis-ci.org/oii/ogre)
-[![Coverage Status](https://coveralls.io/repos/oii/ogre/badge.png)](https://coveralls.io/r/oii/ogre)
+[![Build Status](https://travis-ci.org/mafrosis/ogre.svg?branch=develop)](https://travis-ci.org/mafrosis/ogre)
+[![Coverage Status](https://coveralls.io/repos/mafrosis/ogre/badge.png)](https://coveralls.io/r/mafrosis/ogre)
 [![Maintainer Status](http://stillmaintained.com/oii/ogre.png)](http://stillmaintained.com/oii/ogre)
 [![Made By Oii](http://img.shields.io/badge/made%20by-oii-blue.svg)](http://github.com/oii/ogre)
 [![BSD License](http://img.shields.io/badge/license-BSD-red.svg)](http://github.com/oii/ogre/blob/master/LICENSE)

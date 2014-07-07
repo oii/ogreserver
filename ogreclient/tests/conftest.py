@@ -32,3 +32,10 @@ def mock_urlopen(request):
     m = mock.patch('ogreclient.core.urllib2.urlopen')
     yield m.start()
     m.stop()
+
+
+@pytest.yield_fixture(scope='function')
+def mock_subprocess_popen(request):
+    m = mock.patch('ogreclient.core.subprocess.Popen')
+    yield m.start()
+    m.stop()

@@ -269,7 +269,7 @@ def run_sync(conf, args, prntr, ebook_home, username, password, debug=False):
     except NoUploadsError:
         prntr.e('Nothing to upload..')
     except Exception as e:
-        prntr.e('Something very went wrong.', excp=e)
+        prntr.e('Something went very wrong.', excp=e)
 
     return ret
 

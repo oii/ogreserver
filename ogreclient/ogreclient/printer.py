@@ -73,12 +73,12 @@ class CliPrinter:
     def p(self, msg, mode=None, notime=False, success=None, extra=None, nonl=False):
         if self.line_needs_finishing is True:
             self.line_needs_finishing = False
-            sys.stdout.write('{}\n'.format(msg))
+            sys.stdout.write(u'{}\n'.format(msg))
             return
 
         if self.progress_running is True:
             self.progress_running = False
-            sys.stdout.write('\n')
+            sys.stdout.write(u'\n')
 
         colour, prefix = self._get_colour_and_prefix(mode, success=success)
 
@@ -92,19 +92,19 @@ class CliPrinter:
             self.logs.append(u'[{: <10}]  {}'.format(prefix, msg))
 
         t = self._get_time_elapsed(notime)
-        out.write('{}[{: <10}]{} {: >4} {}{}{}'.format(
+        out.write(u'{}[{: <10}]{} {: >4} {}{}{}'.format(
             CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour, msg, CliPrinter.END
         ))
 
         if extra is not None:
-            out.write('\n{}[{: <10}]          {}> {}{}'.format(
+            out.write(u'\n{}[{: <10}]          {}> {}{}'.format(
                 CliPrinter.YELLOW, prefix, CliPrinter.WHITE, CliPrinter.END, extra
             ))
 
         if nonl is True:
             self.line_needs_finishing = True
         else:
-            out.write('\n')
+            out.write(u'\n')
 
     def progressi(self, amount, mode=None):
         self.progress_running = True
@@ -113,7 +113,7 @@ class CliPrinter:
         self.progress_running = True
 
         t = self._get_time_elapsed()
-        sys.stdout.write('\r{}[{: <10}]{} {: >4} {}{}{}'.format(
+        sys.stdout.write(u'\r{}[{: <10}]{} {: >4} {}{}{}'.format(
             CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour,
             (amount * self.progressbar_char),
             CliPrinter.END
@@ -133,7 +133,7 @@ class CliPrinter:
         progress = progress if progress < 1 else 1
 
         t = self._get_time_elapsed()
-        sys.stdout.write('\r{}[{: <10}]{} {: >4} {}[{}{}] {}%{}'.format(
+        sys.stdout.write(u'\r{}[{: <10}]{} {: >4} {}[{}{}] {}%{}'.format(
             CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour,
             self.progressbar_char * int(progress * self.progressbar_len),
             ' ' * (self.progressbar_len - int(progress * self.progressbar_len)),

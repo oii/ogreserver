@@ -114,7 +114,7 @@ def search_for_ebooks(config, prntr):
     ebooks = []
 
     # let the user know something is happening
-    prntr.p("Searching for ebooks.. ", nonl=True)
+    prntr.p(u'Searching for ebooks.. ', nonl=True)
 
     # a relatively quick search for all ebooks
     for root, dirs, files in os.walk(config['ebook_home']):
@@ -130,11 +130,11 @@ def search_for_ebooks(config, prntr):
 
     i = 0
     total = len(ebooks)
-    prntr.p("Discovered {0} files".format(total))
+    prntr.p(u'Discovered {} files'.format(total))
     if total == 0:
         raise NoEbooksError()
 
-    prntr.p("Scanning ebook meta data and checking DRM..")
+    prntr.p(u'Scanning ebook meta data and checking DRM..')
     ebooks_dict = {}
 
     # now parse all book meta data; building a complete dataset
@@ -147,24 +147,24 @@ def search_for_ebooks(config, prntr):
 
                 if config['verbose']:
                     if state == DRM.none:
-                        prntr.p('{}'.format(item[0]), CliPrinter.NONE)
+                        prntr.p(u'{}'.format(item[0]), CliPrinter.NONE)
                     elif state == DRM.decrypted:
-                        prntr.p('{}'.format(item[0]), CliPrinter.DEDRM, success=True)
+                        prntr.p(u'{}'.format(item[0]), CliPrinter.DEDRM, success=True)
                     elif state == DRM.wrong_key:
-                        prntr.e('{}'.format(item[0]), CliPrinter.WRONG_KEY)
+                        prntr.e(u'{}'.format(item[0]), CliPrinter.WRONG_KEY)
                     elif state == DRM.failed:
-                        prntr.e('{}'.format(item[0]), CliPrinter.DEDRM,
+                        prntr.e(u'{}'.format(item[0]), CliPrinter.DEDRM,
                             extra=' '.join([l.strip() for l in out])
                         )
                     elif state == DRM.corrupt:
-                        prntr.e('{}'.format(item[0]), CliPrinter.CORRUPT)
+                        prntr.e(u'{}'.format(item[0]), CliPrinter.CORRUPT)
                     else:
-                        prntr.p('{}\t{}'.format(item[0], out), CliPrinter.UNKNOWN)
+                        prntr.p(u'{}\t{}'.format(item[0], out), CliPrinter.UNKNOWN)
 
             except DeDrmMissingError:
                 continue
             except Exception as e:
-                prntr.e('Fatal Exception on {}'.format(item[0]), excp=e)
+                prntr.e(u'Fatal Exception on {}'.format(item[0]), excp=e)
                 continue
 
         meta = {}
@@ -175,7 +175,7 @@ def search_for_ebooks(config, prntr):
         except CorruptEbookError as e:
             # skip books which can't have metadata extracted
             if config['verbose']:
-                prntr.e('{}{}'.format(item[1], item[2]), CliPrinter.CORRUPT, excp=e)
+                prntr.e(u'{}{}'.format(item[1], item[2]), CliPrinter.CORRUPT, excp=e)
             continue
 
         # books are indexed by 'authortitle' to handle multiple copies of the same book
@@ -223,7 +223,7 @@ def search_for_ebooks(config, prntr):
             i += 1
             prntr.progressf(num_blocks=i, total_size=total)
 
-    prntr.p('Found {} ebooks'.format(len(ebooks_dict)), success=True)
+    prntr.p(u'Found {} ebooks'.format(len(ebooks_dict)), success=True)
 
     if len(ebooks_dict) == 0:
         return {}
@@ -244,7 +244,7 @@ def search_for_ebooks(config, prntr):
 
 
 def sync_with_server(config, prntr, session_key, ebooks_dict):
-    prntr.p("Come on sucker, lick my battery")
+    prntr.p(u'Come on sucker, lick my battery')
 
     try:
         # post json dict of ebook data
@@ -299,20 +299,20 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
                     ebooks_dict[authortitle]['file_hash'] = new_file_hash
                     success += 1
                     if config['verbose']:
-                        prntr.p('Wrote OGRE_ID to {}'.format(ebooks_dict[authortitle]['path']))
+                        prntr.p(u'Wrote OGRE_ID to {}'.format(ebooks_dict[authortitle]['path']))
 
                 except (FailedWritingMetaDataError, FailedConfirmError) as e:
                     prntr.e(
-                        'Failed saving OGRE_ID in {}'.format(
+                        u'Failed saving OGRE_ID in {}'.format(
                             ebooks_dict[authortitle]['path']
                         ), excp=e
                     )
                     failed += 1
 
     if success > 0:
-        prntr.p('Updated {} ebooks'.format(success), success=True)
+        prntr.p(u'Updated {} ebooks'.format(success), success=True)
     if failed > 0:
-        prntr.e('Failed updating {} ebooks'.format(failed))
+        prntr.e(u'Failed updating {} ebooks'.format(failed))
 
 
 def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):
@@ -322,7 +322,7 @@ def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):
     # grammatically correct messages are nice
     plural = 's' if len(ebooks_to_upload) > 1 else ''
 
-    prntr.p('Uploading {} file{}. Go make a brew.'.format(len(ebooks_to_upload), plural))
+    prntr.p(u'Uploading {} file{}. Go make a brew.'.format(len(ebooks_to_upload), plural))
 
     success, failed, i = 0, 0, 0
 
@@ -341,16 +341,16 @@ def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):
                     success += 1
 
                 except SpinachError as e:
-                    prntr.e('Failed uploading {}'.format(ebooks_dict[authortitle]['path']), excp=e)
+                    prntr.e(u'Failed uploading {}'.format(ebooks_dict[authortitle]['path']), excp=e)
                     failed += 1
 
         i += 1
         prntr.progressf(num_blocks=i, total_size=len(ebooks_to_upload))
 
     if success > 0:
-        prntr.p('Completed {} uploads'.format(success), success=True)
+        prntr.p(u'Completed {} uploads'.format(success), success=True)
     if failed > 0:
-        prntr.e('Failed uploading {} ebooks'.format(failed))
+        prntr.e(u'Failed uploading {} ebooks'.format(failed))
 
 
 def upload_single_book(host, session_key, filepath, upload_obj):

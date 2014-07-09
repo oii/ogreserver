@@ -250,6 +250,20 @@ def post_logs(auth_key):
     return 'ok'
 
 
+@views.route('/upload-errord/<auth_key>/<filename>', methods=['POST'])
+def upload_errord(auth_key, filename):
+    user = check_auth(auth_key)
+
+    filename = u'{}.{}.{}'.format(
+        user.username,
+        datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
+        filename,
+    )
+
+    app.uploaded_logs.save(request.files['ebook'], name=filename)
+    return 'ok'
+
+
 @views.route('/confirm/<auth_key>', methods=['POST'])
 def confirm(auth_key):
     check_auth(auth_key)

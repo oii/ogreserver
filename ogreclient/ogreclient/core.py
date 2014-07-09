@@ -76,7 +76,7 @@ def sync(config):
             prntr.log_output(True)
 
     # 1) find ebooks in config['ebook_home'] on local machine
-    ebooks_dict = search_for_ebooks(config, prntr)
+    ebooks_dict, errord_list = search_for_ebooks(config, prntr)
 
     # 2) send dict of ebooks / md5s to ogreserver
     response = sync_with_server(config, prntr, session_key, ebooks_dict)
@@ -95,9 +95,9 @@ def sync(config):
         config, prntr, session_key, ebooks_dict, response['ebooks_to_upload']
     )
 
-    # 5) send a log of all events
+    # 5) send a log of all events, and upload bad books
     if config['debug'] is True:
-        send_logs(prntr, config['host'], session_key)
+        send_logs(prntr, config['host'], session_key, errord_list)
 
 
 def search_for_ebooks(config, prntr):
@@ -143,6 +143,7 @@ def search_for_ebooks(config, prntr):
 
     prntr.p(u'Scanning ebook meta data and checking DRM..')
     ebooks_dict = {}
+    errord_list = []
 
     # now parse all book meta data; building a complete dataset
     for item in ebooks:
@@ -177,6 +178,11 @@ def search_for_ebooks(config, prntr):
 
             except DeDrmMissingError:
                 continue
+            except UnicodeDecodeError as e:
+                # record books which failed during search
+                errord_list.append(filepath)
+                prntr.e(u"Couldn't decode {}. This will be reported.".format(os.path.basename(filepath)), excp=e)
+                continue
             except Exception as e:
                 prntr.e(u'Fatal Exception on {}'.format(filepath), excp=e)
                 continue
@@ -187,6 +193,9 @@ def search_for_ebooks(config, prntr):
             # extract and parse ebook metadata
             meta = metadata_extract(config['calibre_ebook_meta_bin'], filepath=filepath)
         except CorruptEbookError as e:
+            # record books which failed during search
+            errord_list.append(filepath)
+
             # skip books which can't have metadata extracted
             if config['verbose']:
                 prntr.e(u'{}{}'.format(filename, suffix), CliPrinter.CORRUPT, excp=e)
@@ -240,7 +249,7 @@ def search_for_ebooks(config, prntr):
     prntr.p(u'Found {} ebooks'.format(len(ebooks_dict)), success=True)
 
     if len(ebooks_dict) == 0:
-        return {}
+        return {}, errord_list
 
     if config['config_dir'] is not None:
         # write good ebooks into the local ogre cache to skip DRM test next run
@@ -254,7 +263,7 @@ def search_for_ebooks(config, prntr):
         if statinfo.st_size > 0:
             os.rename(ebook_cache_temp_path, config['ebook_cache_path'])
 
-    return ebooks_dict
+    return ebooks_dict, errord_list
 
 
 def sync_with_server(config, prntr, session_key, ebooks_dict):
@@ -562,7 +571,7 @@ def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_hash, filepath, existing_t
             raise FailedConfirmError(str(e))
 
 
-def send_logs(prntr, host, session_key):
+def send_logs(prntr, host, session_key, errord_list):
     try:
         # post all logs to ogreserver
         req = urllib2.Request(
@@ -577,6 +586,33 @@ def send_logs(prntr, host, session_key):
             raise FailedDebugLogsError('Failed storing the logs, please report this.')
         else:
             prntr.p(u'Uploaded logs to OGRE')
+
+        # upload all books which failed
+        if errord_list:
+            prntr.p(u'Uploaded failed books to OGRE for debug..')
+
+            opener = urllib2.build_opener(newHTTPHandler())
+
+            i = 0
+
+            for filepath in errord_list:
+                filename = os.path.basename(filepath.encode('utf-8'))
+
+                with open(filepath, "rb") as f:
+                    # post the file contents
+                    req = opener.open(
+                        'http://{}/upload-errord/{}/{}'.format(
+                            host,
+                            urllib.quote_plus(session_key),
+                            urllib.quote_plus(filename),
+                        ),
+                        {'ebook': f},
+                    )
+                    # ignore failures here
+                    req.read()
+
+                i += 1
+                prntr.progressf(num_blocks=i, total_size=len(errord_list))
 
     except (HTTPError, URLError) as e:
         raise FailedDebugLogsError(str(e))

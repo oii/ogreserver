@@ -1,11 +1,13 @@
 from __future__ import absolute_import
 from __future__ import division
 
+import codecs
 import datetime
 import json
 import os
 import shutil
 import subprocess
+import sys
 
 import urllib
 import urllib2
@@ -102,7 +104,7 @@ def search_for_ebooks(config, prntr):
     if config['config_dir'] is not None:
         # load the user's database of previously scanned ebooks
         if os.path.exists(config['ebook_cache_path']):
-            with open(config['ebook_cache_path'], 'r') as f:
+            with codecs.open(config['ebook_cache_path'], 'r', 'utf-8') as f:
                 data = f.read()
 
         # setup temporary cache path
@@ -116,10 +118,15 @@ def search_for_ebooks(config, prntr):
     # let the user know something is happening
     prntr.p(u'Searching for ebooks.. ', nonl=True)
 
+    # get the current filesystem encoding
+    fs_encoding = sys.getfilesystemencoding()
+
     # a relatively quick search for all ebooks
     for root, dirs, files in os.walk(config['ebook_home']):
         for filename in files:
-            # TODO use timeit; compare to fnmatch.filter
+            # decode filename according to local fs encoding
+            filename = codecs.decode(filename, fs_encoding)
+
             fn, ext = os.path.splitext(filename)
             if ext[1:] in RANKED_EBOOK_FORMATS.keys() and fn[0:2] != '._':
                 filepath = os.path.join(root, filename)
@@ -230,10 +237,10 @@ def search_for_ebooks(config, prntr):
 
     if config['config_dir'] is not None:
         # write good ebooks into the local ogre cache to skip DRM test next run
-        with open(ebook_cache_temp_path, 'w') as f_ogre_cache:
+        with codecs.open(ebook_cache_temp_path, 'w', 'utf-8') as f_ogre_cache:
             # TODO move this to where the ogre_id gets confirmed
             for authortitle, item in ebooks_dict.items():
-                f_ogre_cache.write('{}\n'.format(item['path']))
+                f_ogre_cache.write(u'{}\n'.format(item['path']))
 
         # move the temp cache onto the real ogre cache
         statinfo = os.stat(ebook_cache_temp_path)
@@ -378,8 +385,12 @@ def upload_single_book(host, session_key, filepath, upload_obj):
 
 
 def metadata_extract(calibre_ebook_meta_bin, filepath):
+    # get the current filesystem encoding
+    fs_encoding = sys.getfilesystemencoding()
+
+    # call ebook-metadata
     proc = subprocess.Popen(
-        '{} "{}"'.format(calibre_ebook_meta_bin, filepath),
+        '{} "{}"'.format(calibre_ebook_meta_bin, filepath.encode(fs_encoding)),
         shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE

@@ -146,43 +146,50 @@ def search_for_ebooks(config, prntr):
 
     # now parse all book meta data; building a complete dataset
     for item in ebooks:
+        # create readable variable names
+        filepath = item[0]
+        filename = item[1]
+        suffix = item[2]
+        filesize = item[3]
+        file_hash = item[4]
+
         if config['no_drm'] is False:
             try:
                 # decrypt into a temp path
                 with make_temp_directory() as ebook_convert_path:
-                    state, out = decrypt(item[0], item[2], ebook_convert_path, config['config_dir'])
+                    state, out = decrypt(filepath, suffix, ebook_convert_path, config['config_dir'])
 
                 if config['verbose']:
                     if state == DRM.none:
-                        prntr.p(u'{}'.format(item[0]), CliPrinter.NONE)
+                        prntr.p(u'{}'.format(filepath), CliPrinter.NONE)
                     elif state == DRM.decrypted:
-                        prntr.p(u'{}'.format(item[0]), CliPrinter.DEDRM, success=True)
+                        prntr.p(u'{}'.format(filepath), CliPrinter.DEDRM, success=True)
                     elif state == DRM.wrong_key:
-                        prntr.e(u'{}'.format(item[0]), CliPrinter.WRONG_KEY)
+                        prntr.e(u'{}'.format(filepath), CliPrinter.WRONG_KEY)
                     elif state == DRM.failed:
-                        prntr.e(u'{}'.format(item[0]), CliPrinter.DEDRM,
+                        prntr.e(u'{}'.format(filepath), CliPrinter.DEDRM,
                             extra=' '.join([l.strip() for l in out])
                         )
                     elif state == DRM.corrupt:
-                        prntr.e(u'{}'.format(item[0]), CliPrinter.CORRUPT)
+                        prntr.e(u'{}'.format(filepath), CliPrinter.CORRUPT)
                     else:
-                        prntr.p(u'{}\t{}'.format(item[0], out), CliPrinter.UNKNOWN)
+                        prntr.p(u'{}\t{}'.format(filepath, out), CliPrinter.UNKNOWN)
 
             except DeDrmMissingError:
                 continue
             except Exception as e:
-                prntr.e(u'Fatal Exception on {}'.format(item[0]), excp=e)
+                prntr.e(u'Fatal Exception on {}'.format(filepath), excp=e)
                 continue
 
         meta = {}
 
         try:
             # extract and parse ebook metadata
-            meta = metadata_extract(config['calibre_ebook_meta_bin'], filepath=item[0])
+            meta = metadata_extract(config['calibre_ebook_meta_bin'], filepath=filepath)
         except CorruptEbookError as e:
             # skip books which can't have metadata extracted
             if config['verbose']:
-                prntr.e(u'{}{}'.format(item[1], item[2]), CliPrinter.CORRUPT, excp=e)
+                prntr.e(u'{}{}'.format(filename, suffix), CliPrinter.CORRUPT, excp=e)
             continue
 
         # books are indexed by 'authortitle' to handle multiple copies of the same book
@@ -190,7 +197,7 @@ def search_for_ebooks(config, prntr):
         authortitle = u'{}\u0006{}\u0007{}'.format(meta['firstname'], meta['lastname'], meta['title'])
 
         # check for duplicates
-        if authortitle in ebooks_dict.keys() and item[2] in ebooks_dict[authortitle].keys():
+        if authortitle in ebooks_dict.keys() and suffix in ebooks_dict[authortitle].keys():
             # TODO warn user on error stack
             pass
         else:
@@ -200,7 +207,7 @@ def search_for_ebooks(config, prntr):
             if authortitle in ebooks_dict.keys():
                 # compare the rank of the format already found against this one
                 existing_rank = RANKED_EBOOK_FORMATS[ebooks_dict[authortitle]['format']]
-                new_rank = RANKED_EBOOK_FORMATS[item[2][1:]]
+                new_rank = RANKED_EBOOK_FORMATS[suffix[1:]]
 
                 # lower is better
                 if new_rank < existing_rank:
@@ -211,11 +218,11 @@ def search_for_ebooks(config, prntr):
 
             if write:
                 ebooks_dict[authortitle] = {
-                    'path': item[0],
-                    'filename': item[1],
-                    'format': item[2][1:],
-                    'size': item[3],
-                    'file_hash': item[4],
+                    'path': filepath,
+                    'filename': filename,
+                    'format': suffix[1:],
+                    'size': filesize,
+                    'file_hash': file_hash,
                     'owner': config['username'],
                 }
                 # merge all the meta data constructed above

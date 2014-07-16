@@ -156,35 +156,12 @@ def search_for_ebooks(config, prntr):
 
         if config['no_drm'] is False:
             try:
-                # decrypt into a temp path
-                with make_temp_directory() as ebook_convert_path:
-                    state, out = decrypt(filepath, suffix, ebook_convert_path, config['config_dir'])
+                # remove DRM from ebook
+                remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix)
 
-                if config['verbose']:
-                    if state == DRM.none:
-                        prntr.p(u'{}'.format(filepath), CliPrinter.NONE)
-                    elif state == DRM.decrypted:
-                        prntr.p(u'{}'.format(filepath), CliPrinter.DEDRM, success=True)
-                    elif state == DRM.wrong_key:
-                        prntr.e(u'{}'.format(filepath), CliPrinter.WRONG_KEY)
-                    elif state == DRM.failed:
-                        prntr.e(u'{}'.format(filepath), CliPrinter.DEDRM,
-                            extra=' '.join([l.strip() for l in out])
-                        )
-                    elif state == DRM.corrupt:
-                        prntr.e(u'{}'.format(filepath), CliPrinter.CORRUPT)
-                    else:
-                        prntr.p(u'{}\t{}'.format(filepath, out), CliPrinter.UNKNOWN)
-
-            except DeDrmMissingError:
-                continue
-            except UnicodeDecodeError as e:
-                # record books which failed during search
+            except CorruptEbookError:
+                # record books which failed due to unicode filename issues
                 errord_list.append(filepath)
-                prntr.e(u"Couldn't decode {}. This will be reported.".format(os.path.basename(filepath)), excp=e)
-                continue
-            except Exception as e:
-                prntr.e(u'Fatal Exception on {}'.format(filepath), excp=e)
                 continue
 
         meta = {}
@@ -192,6 +169,7 @@ def search_for_ebooks(config, prntr):
         try:
             # extract and parse ebook metadata
             meta = metadata_extract(config['calibre_ebook_meta_bin'], filepath=filepath)
+
         except CorruptEbookError as e:
             # record books which failed during search
             errord_list.append(filepath)
@@ -264,6 +242,37 @@ def search_for_ebooks(config, prntr):
             os.rename(ebook_cache_temp_path, config['ebook_cache_path'])
 
     return ebooks_dict, errord_list
+
+
+def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
+    try:
+        # decrypt into a temp path
+        with make_temp_directory() as ebook_convert_path:
+            state, out = decrypt(filepath, suffix, ebook_convert_path, config['config_dir'])
+
+        if config['verbose']:
+            if state == DRM.none:
+                prntr.p(u'{}'.format(filepath), CliPrinter.NONE)
+            elif state == DRM.decrypted:
+                prntr.p(u'DRM removed from {}'.format(filepath), CliPrinter.DEDRM, success=True)
+            elif state == DRM.wrong_key:
+                prntr.e(u'{}'.format(filepath), CliPrinter.WRONG_KEY)
+            elif state == DRM.failed:
+                prntr.e(u'{}'.format(filepath), CliPrinter.DEDRM,
+                    extra=' '.join([l.strip() for l in out])
+                )
+            elif state == DRM.corrupt:
+                prntr.e(u'{}'.format(filepath), CliPrinter.CORRUPT)
+            else:
+                prntr.p(u'{}\t{}'.format(filepath, out), CliPrinter.UNKNOWN, extra=state)
+
+    except DeDrmMissingError:
+        config['no_drm'] = True
+    except UnicodeDecodeError as e:
+        prntr.e(u"Couldn't decode {}. This will be reported.".format(os.path.basename(filepath)), excp=e)
+        raise CorruptEbookError
+    except Exception as e:
+        prntr.e(u'Fatal Exception on {}'.format(filepath), excp=e)
 
 
 def sync_with_server(config, prntr, session_key, ebooks_dict):

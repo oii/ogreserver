@@ -15,7 +15,7 @@ def calibre_ebook_meta_bin():
 def client_config():
     return {
         'config_dir': None,
-        'ebook_cache_path': None,
+        'ebook_cache': None,
         'calibre_ebook_meta_bin': '/usr/bin/ebook-meta',
         'ebook_home': None,
         'username': 'test',

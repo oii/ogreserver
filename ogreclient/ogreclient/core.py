@@ -101,18 +101,6 @@ def sync(config):
 
 
 def search_for_ebooks(config, prntr):
-    if config['config_dir'] is not None:
-        # load the user's database of previously scanned ebooks
-        if os.path.exists(config['ebook_cache_path']):
-            with codecs.open(config['ebook_cache_path'], 'r', 'utf-8') as f:
-                data = f.read()
-
-        # setup temporary cache path
-        ebook_cache_temp_path = os.path.join(
-            config['config_dir'],
-            '{}.tmp'.format(config['ebook_cache_path'])
-        )
-
     ebooks = []
 
     # let the user know something is happening
@@ -145,6 +133,9 @@ def search_for_ebooks(config, prntr):
     ebooks_dict = {}
     errord_list = []
 
+    # pull the cache object out of config
+    ebook_cache = config['ebook_cache']
+
     # now parse all book meta data; building a complete dataset
     for item in ebooks:
         # create readable variable names
@@ -157,7 +148,7 @@ def search_for_ebooks(config, prntr):
         if config['no_drm'] is False:
             try:
                 # remove DRM from ebook
-                remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix)
+                remove_drm_from_ebook(config, prntr, ebook_cache, filepath, file_hash, suffix)
 
             except CorruptEbookError:
                 # record books which failed due to unicode filename issues
@@ -229,32 +220,36 @@ def search_for_ebooks(config, prntr):
     if len(ebooks_dict) == 0:
         return {}, errord_list
 
-    if config['config_dir'] is not None:
-        # write good ebooks into the local ogre cache to skip DRM test next run
-        with codecs.open(ebook_cache_temp_path, 'w', 'utf-8') as f_ogre_cache:
-            # TODO move this to where the ogre_id gets confirmed
-            for authortitle, item in ebooks_dict.items():
-                f_ogre_cache.write(u'{}\n'.format(item['path']))
-
-        # move the temp cache onto the real ogre cache
-        statinfo = os.stat(ebook_cache_temp_path)
-        if statinfo.st_size > 0:
-            os.rename(ebook_cache_temp_path, config['ebook_cache_path'])
-
     return ebooks_dict, errord_list
 
 
-def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
+def remove_drm_from_ebook(config, prntr, ebook_cache, filepath, file_hash, suffix):
+    if config['debug'] is False:
+        # attempt load ebook from local cache
+        drmfree = ebook_cache.get_ebook(filepath, file_hash)
+
+        # return if book marked DRM free in the cache
+        if bool(drmfree) is True:
+            return
+
     try:
         # decrypt into a temp path
         with make_temp_directory() as ebook_convert_path:
             state, out = decrypt(filepath, suffix, ebook_convert_path, config['config_dir'])
 
-        if config['verbose']:
-            if state == DRM.none:
-                prntr.p(u'{}'.format(filepath), CliPrinter.NONE)
-            elif state == DRM.decrypted:
+        if state in (DRM.none, DRM.decrypted):
+            # update cache to mark book as drmfree
+            ebook_cache.set_ebook(filepath, file_hash)
+            if state == DRM.decrypted:
                 prntr.p(u'DRM removed from {}'.format(filepath), CliPrinter.DEDRM, success=True)
+        else:
+            ebook_cache.set_ebook(filepath, file_hash, drmfree=False)
+
+        if config['verbose']:
+            if state == DRM.decrypted:
+                pass
+            elif state == DRM.none:
+                prntr.p(u'{}'.format(filepath), CliPrinter.NONE)
             elif state == DRM.wrong_key:
                 prntr.e(u'{}'.format(filepath), CliPrinter.WRONG_KEY)
             elif state == DRM.failed:
@@ -332,6 +327,9 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
                     success += 1
                     if config['verbose']:
                         prntr.p(u'Wrote OGRE_ID to {}'.format(ebooks_dict[authortitle]['path']))
+
+                    # write to ogreclient cache
+                    config['ebook_cache'].set_ebook(ebooks_dict[authortitle]['path'], new_file_hash)
 
                 except (FailedWritingMetaDataError, FailedConfirmError) as e:
                     prntr.e(

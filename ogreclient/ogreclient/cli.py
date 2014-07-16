@@ -11,6 +11,7 @@ import urllib
 
 from . import __version__
 
+from .cache import Cache
 from .core import authenticate, sync, OGRESERVER, metadata_extract
 from .utils import make_temp_directory
 
@@ -85,7 +86,7 @@ def parse_command_line():
         help='Produce lots of output')
     psync.add_argument(
         '--debug', action='store_true',
-        help='Print debug information on error')
+        help='Print debug information on error & pass to ogreserver, also ignore local cache')
     psync.add_argument(
         '--quiet', '-q', action='store_true',
         help="Don't produce any output")
@@ -280,7 +281,7 @@ def prerequisites(args, prntr):
 
     # setup some ebook cache file paths
     config_dir = os.path.join(os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config')), 'ogre')
-    ebook_cache_path = os.path.join(config_dir, 'ebook_cache')
+    ebook_cache = Cache(os.path.join(config_dir, 'ebook_cache.db'))
 
     # use existing config if available
     if os.path.exists(config_dir) and os.path.exists(os.path.join(config_dir, 'app.config')):
@@ -307,6 +308,7 @@ def prerequisites(args, prntr):
             except subprocess.CalledProcessError:
                 pass
 
+        # ogreclient requires calibre (unfortunately)
         if len(calibre_ebook_meta_bin) == 0:
             prntr.e('You must install Calibre in order to use ogreclient.')
             prntr.e('Please follow the simple instructions at http://ogre.oii.yt/install')
@@ -316,8 +318,15 @@ def prerequisites(args, prntr):
             'calibre_ebook_meta_bin': calibre_ebook_meta_bin
         }
 
+        # write the config file for first time
         with open(os.path.join(config_dir, 'app.config'), 'w') as f_config:
             f_config.write(json.dumps(conf))
+
+
+    # verify the ogreclient cache; true means it was initialised
+    if ebook_cache.verify_cache(prntr):
+        first_scan_warning = True
+
 
     if args.mode == 'sync' and args.no_drm is True:
         # skip drm check
@@ -360,7 +369,7 @@ def prerequisites(args, prntr):
 
     # return config object
     conf['config_dir'] = config_dir
-    conf['ebook_cache_path'] = ebook_cache_path
+    conf['ebook_cache'] = ebook_cache
     return conf
 
 

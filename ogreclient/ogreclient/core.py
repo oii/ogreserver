@@ -82,6 +82,8 @@ def sync(config, prntr):
                 send_logs(prntr, config['host'], session_key, errord_list)
         return
 
+    prntr.p(u'Come on sucker, lick my battery')
+
     # 3) set ogre_id in metadata of each sync'd ebook
     update_local_metadata(
         config, prntr, session_key, ebooks_dict, response['ebooks_to_update']
@@ -267,8 +269,6 @@ def remove_drm_from_ebook(config, prntr, ebook_cache, filepath, file_hash, suffi
 
 
 def sync_with_server(config, prntr, session_key, ebooks_dict):
-    prntr.p(u'Come on sucker, lick my battery')
-
     try:
         # post json dict of ebook data
         req = urllib2.Request(

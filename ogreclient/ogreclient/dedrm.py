@@ -80,8 +80,7 @@ def decrypt(filepath, suffix, ebook_convert_path, config_dir, output_dir=None):
         state = DRM.none
         for line in out:
             if 'Error serializing pdf' in line:
-                state = DRM.failed
-                break
+                raise DecryptionFailed(out)
 
     if state == DRM.decrypted:
         try:
@@ -101,7 +100,6 @@ def decrypt(filepath, suffix, ebook_convert_path, config_dir, output_dir=None):
                 )
 
         except Exception as e:
-            # TODO debug mode includes stacktraces
             raise DecryptionError(
                 'Decrypt successful, but failed to locate decrypted file: {}\n{}'.format(e, out)
             )
@@ -153,6 +151,9 @@ def init_keys(config_dir, ignore_check=False):
 
 
 class DeDrmMissingError(OgreException):
+    pass
+
+class DecryptionFailed(OgreException):
     pass
 
 class DecryptionError(OgreException):

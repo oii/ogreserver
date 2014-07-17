@@ -18,7 +18,7 @@ from .utils import compute_md5
 from .utils import id_generator
 from .utils import make_temp_directory
 from .printer import CliPrinter, DummyPrinter
-from .dedrm import decrypt, DRM, DeDrmMissingError
+from .dedrm import decrypt, DRM, DeDrmMissingError, DecryptionFailed
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError
 from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
@@ -252,17 +252,16 @@ def remove_drm_from_ebook(config, prntr, ebook_cache, filepath, file_hash, suffi
                 prntr.p(u'{}'.format(filepath), CliPrinter.NONE)
             elif state == DRM.wrong_key:
                 prntr.e(u'{}'.format(filepath), CliPrinter.WRONG_KEY)
-            elif state == DRM.failed:
-                prntr.e(u'{}'.format(filepath), CliPrinter.DEDRM,
-                    extra=' '.join([l.strip() for l in out])
-                )
             elif state == DRM.corrupt:
                 prntr.e(u'{}'.format(filepath), CliPrinter.CORRUPT)
             else:
-                prntr.p(u'{}\t{}'.format(filepath, out), CliPrinter.UNKNOWN, extra=state)
+                raise DecryptionFailed('Unknown error in decryption')
 
     except DeDrmMissingError:
         config['no_drm'] = True
+    except DecryptionFailed as e:
+        prntr.e(u'{}'.format(filepath), CliPrinter.DEDRM, excp=e)
+        raise CorruptEbookError
     except UnicodeDecodeError as e:
         prntr.e(u"Couldn't decode {}. This will be reported.".format(os.path.basename(filepath)), excp=e)
         raise CorruptEbookError

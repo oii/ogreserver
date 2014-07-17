@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 
 import codecs
-import datetime
 import json
 import os
 import shutil
@@ -17,7 +16,7 @@ from .urllib2_file import newHTTPHandler
 from .utils import compute_md5
 from .utils import id_generator
 from .utils import make_temp_directory
-from .printer import CliPrinter, DummyPrinter
+from .printer import CliPrinter
 from .dedrm import decrypt, DRM, DeDrmMissingError, DecryptionFailed
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError
@@ -62,18 +61,9 @@ def authenticate(host, username, password):
         raise AuthError(str(e))
 
 
-def sync(config):
+def sync(config, prntr):
     # authenticate user and generate session API key
     session_key = authenticate(config['host'], config['username'], config['password'])
-
-    if config['quiet'] is True:
-        prntr = DummyPrinter()
-    else:
-        prntr = CliPrinter(start=datetime.datetime.now(), debug=config['debug'])
-
-        # set printer to log everything for later dispatch to ogreserver
-        if config['debug'] is True:
-            prntr.log_output(True)
 
     # 1) find ebooks in config['ebook_home'] on local machine
     ebooks_dict, errord_list = search_for_ebooks(config, prntr)

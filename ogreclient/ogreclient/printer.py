@@ -167,6 +167,13 @@ class CliPrinter:
 
         return msg
 
+    def close(self):
+        if self.line_needs_finishing is True or self.progress_running is True:
+            self.progress_running = False
+            self.line_needs_finishing = False
+            sys.stdout.write(u'\n')
+            sys.stdout.flush()
+
 
 class DummyPrinter:
     def e(self, msg, mode=None, excp=None, notime=False):

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import argparse
+import datetime
 import getpass
 import importlib
 import json
@@ -13,17 +14,17 @@ from . import __version__
 
 from .cache import Cache
 from .core import authenticate, sync, OGRESERVER, metadata_extract
+from .printer import CliPrinter, DummyPrinter
 from .utils import make_temp_directory
 
 from .exceptions import OgreException
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
 from .exceptions import BaconError, MushroomError, SpinachError
 
-from .printer import CliPrinter
-
 
 def entrypoint():
     ret = False
+    prntr = None
 
     try:
         # setup and run argparse
@@ -34,7 +35,14 @@ def entrypoint():
             args.host = OGRESERVER
 
         # global CLI printer
-        prntr = CliPrinter(debug=args.debug if 'args' in args else False)
+        if args.quiet is True:
+            prntr = DummyPrinter()
+        else:
+            prntr = CliPrinter(start=datetime.datetime.now(), debug=args.debug)
+
+            # set printer to log everything for later dispatch to ogreserver
+            if args.debug is True:
+                prntr.log_output = True
 
         # run some checks and create some config variables
         conf = prerequisites(args, prntr)
@@ -44,7 +52,11 @@ def entrypoint():
 
     except OgreException as e:
         prntr.e('An exception occurred in ogreclient', excp=e)
-        sys.exit(1)
+        ret = 1
+    finally:
+        if prntr is not None:
+            # allow the printer to cleanup
+            prntr.close()
 
     # exit with return code
     if type(ret) is bool:
@@ -258,7 +270,7 @@ def run_sync(conf, args, prntr, ebook_home, username, password, debug=False):
 
     try:
         # doit
-        ret = sync(conf)
+        ret = sync(conf, prntr)
 
     # print messages on error
     except (AuthError, BaconError, MushroomError, SpinachError) as e:

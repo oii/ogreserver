@@ -72,7 +72,14 @@ def sync(config, prntr):
     response = sync_with_server(config, prntr, session_key, ebooks_dict)
 
     if not response['ebooks_to_upload'] and not response['ebooks_to_update']:
-        prntr.p('Finished')
+        if not errord_list:
+            prntr.p('Finished, nothing to do.')
+        else:
+            if config['debug'] is False:
+                prntr.p('Finished with errors. Re-run with --debug to send logs to OGRE')
+            else:
+                prntr.p('Finished with errors.')
+                send_logs(prntr, config['host'], session_key, errord_list)
         return
 
     # 3) set ogre_id in metadata of each sync'd ebook

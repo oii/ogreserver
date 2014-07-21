@@ -15,7 +15,6 @@ from . import __version__
 from .cache import Cache
 from .core import authenticate, sync, OGRESERVER, metadata_extract
 from .printer import CliPrinter, DummyPrinter
-from .utils import make_temp_directory
 
 from .exceptions import OgreException
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
@@ -222,21 +221,17 @@ def main(conf, args, prntr):
     return ret
 
 
-def dedrm_single_ebook(conf, args, prntr, inputfile, output_dir=None):
+def dedrm_single_ebook(conf, args, prntr, inputfile, output_dir):
     filename, ext = os.path.splitext(inputfile)
     from .dedrm import decrypt, DRM, DecryptionError
 
     try:
         prntr.p('Decrypting ebook {}'.format(os.path.basename(inputfile)), mode=prntr.DEDRM)
 
-        with make_temp_directory() as ebook_convert_path:
-            state, decrypted_filename = decrypt(
-                inputfile, ext, ebook_convert_path, conf['config_dir'], output_dir
-            )
-            if output_dir:
-                decrypted_filename = os.path.join(output_dir, decrypted_filename)
-
-            prntr.p('Book decrypted at {}'.format(decrypted_filename), success=True)
+        state, decrypted_filepath = decrypt(
+            inputfile, ext, conf['config_dir'], output_dir=output_dir
+        )
+        prntr.p('Book decrypted at:', extra=decrypted_filepath, success=True)
 
     except DecryptionError as e:
         prntr.p(str(e))

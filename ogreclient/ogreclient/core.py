@@ -233,8 +233,10 @@ def remove_drm_from_ebook(config, prntr, ebook_cache, filepath, file_hash, suffi
 
     try:
         # decrypt into a temp path
-        with make_temp_directory() as ebook_convert_path:
-            state, out = decrypt(filepath, suffix, ebook_convert_path, config['config_dir'])
+        with make_temp_directory() as ebook_output_path:
+            state, output_filepath = decrypt(
+                filepath, suffix, config['config_dir'], output_dir=ebook_output_path
+            )
 
         if state in (DRM.none, DRM.decrypted):
             # update cache to mark book as drmfree

@@ -16,3 +16,18 @@ tmux-{{ app }}-segment:
       - cmd: dotfiles-install-tmux
       - git: tmux-powerline-install
 {% endfor %}
+
+# add tmux init commands to setup environment
+tmux-ogre-init-conf:
+  file.managed:
+    - name: /home/vagrant/.tmux-ogre-init.conf
+    - source: salt://dev-build/tmux-ogre-init.conf
+    - user: vagrant
+    - group: vagrant
+
+tmux-ogre-init-conf-patch:
+  file.append:
+    - name: /home/vagrant/.tmux.conf
+    - text: "\n# AUTOMATICALLY ADDED TMUX SALT CONFIG\nsource-file ~/.tmux-ogre-init.conf"
+    - require:
+      - cmd: dotfiles-install-tmux

@@ -305,15 +305,17 @@ def prerequisites(args, prntr):
         calibre_ebook_meta_bin = ''
 
         try:
-            # locate calibre's binaries
+            # locate calibre's binaries with shell
             calibre_ebook_meta_bin = subprocess.check_output('which ebook-meta', shell=True).strip()
         except subprocess.CalledProcessError:
-            try:
-                calibre_ebook_meta_bin = subprocess.check_output(
-                    'find /Applications/Calibre.app -type f -name ebook-meta', shell=True
-                ).strip()
-            except subprocess.CalledProcessError:
-                pass
+            # filesystem search
+            if os.path.exists('/Applications/Calibre.app'):
+                try:
+                    calibre_ebook_meta_bin = subprocess.check_output(
+                        'find /Applications/Calibre.app -type f -name ebook-meta', shell=True
+                    ).strip()
+                except subprocess.CalledProcessError:
+                    pass
 
         # ogreclient requires calibre (unfortunately)
         if len(calibre_ebook_meta_bin) == 0:

@@ -243,6 +243,10 @@ def post_logs(auth_key):
         '{}.{}.log'.format(user.username, datetime.datetime.now().strftime("%Y%m%d-%H%M%S")),
     )
 
+    # ensure target upload directory exists
+    if not os.path.exists(os.path.dirname(log_file_path)):
+        os.mkdir(os.path.dirname(log_file_path))
+
     # write request body to file
     with codecs.open(log_file_path, 'w', 'utf-8') as f:
         f.write(u'{}\n'.format(request.data.decode('utf-8')))
@@ -293,7 +297,7 @@ def upload(auth_key):
     ))
 
     # write uploaded ebook to disk, named as the hash and filetype
-    app.uploaded_ebooks.save(request.files['ebook'], None, '{}.{}'.format(
+    app.uploaded_ebooks.save(request.files['ebook'], name='{}.{}'.format(
         request.form.get('file_hash'), request.form.get('format')
     ))
 

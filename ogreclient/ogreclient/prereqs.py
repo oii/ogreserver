@@ -63,41 +63,11 @@ def setup(args, prntr):
     if ebook_cache.verify_cache(prntr):
         first_scan_warning = True
 
-
     if args.mode == 'sync' and args.no_drm is True:
         # skip drm check
         pass
     else:
-        # check if we have decrypt capability
-        from .dedrm import CAN_DECRYPT
-
-        if CAN_DECRYPT is False:
-            ebook_home, username, password = validate_input(args)
-
-            # attempt to download and setup dedrm
-            attempted_download = True
-            installed = download_dedrm(args.host, username, password, prntr, debug=args.debug)
-
-            if installed is None:
-                # auth failed contacting ogreserver
-                return
-        else:
-            attempted_download = False
-            installed = False
-
-        from .dedrm import init_keys
-
-        # initialise a working dedrm lib
-        if CAN_DECRYPT is True or installed is True:
-            msgs = init_keys(config_dir, ignore_check=True)
-            for m in msgs:
-                prntr.p(m)
-
-            from dedrm import PLUGIN_VERSION
-            prntr.p('Initialised DRM tools v{}'.format(PLUGIN_VERSION))
-
-        elif attempted_download is True:
-            prntr.e('Failed to download DRM tools. Please report this error.')
+        dedrm_check(prntr, args, config_dir)
 
     if first_scan_warning is True:
         prntr.p('Please note that DRM scanning means the first run of ogreclient '
@@ -107,6 +77,39 @@ def setup(args, prntr):
     conf['config_dir'] = config_dir
     conf['ebook_cache'] = ebook_cache
     return conf
+
+
+def dedrm_check(prntr, args, config_dir):
+    # check if we have decrypt capability
+    from .dedrm import CAN_DECRYPT
+
+    if CAN_DECRYPT is False:
+        ebook_home, username, password = validate_input(args)
+
+        # attempt to download and setup dedrm
+        attempted_download = True
+        installed = download_dedrm(args.host, username, password, prntr, debug=args.debug)
+
+        if installed is None:
+            # auth failed contacting ogreserver
+            return
+    else:
+        attempted_download = False
+        installed = False
+
+    from .dedrm import init_keys
+
+    # initialise a working dedrm lib
+    if CAN_DECRYPT is True or installed is True:
+        msgs = init_keys(config_dir, ignore_check=True)
+        for m in msgs:
+            prntr.p(m)
+
+        from dedrm import PLUGIN_VERSION
+        prntr.p('Initialised DeDRM tools v{}'.format(PLUGIN_VERSION))
+
+    elif attempted_download is True:
+        prntr.e('Failed to download DRM tools. Please report this error.')
 
 
 def validate_input(args):

@@ -42,6 +42,10 @@ def create_app(config):
     from .extensions.logging import init_logging
     init_logging(app)
 
+    # setup Flask-Markdown
+    from flaskext.markdown import Markdown
+    Markdown(app, extensions=['footnotes'])
+
     # import views as a blueprint and register with Flask the app
     from .views import views
     app.register_blueprint(views)

@@ -2,8 +2,10 @@ from __future__ import absolute_import
 
 import importlib
 import os
+import subprocess
+import urllib
 
-from .exceptions import OgreException
+from .exceptions import AuthDeniedError, AuthError, OgreException
 from .utils import capture, enum, make_temp_directory
 
 try:
@@ -148,6 +150,49 @@ def init_keys(config_dir, ignore_check=False):
             pass
 
     return msgs
+
+
+def download_dedrm(host, username, password, prntr, debug=False):
+    prntr.p('Downloading latest DRM tools from {}'.format(host))
+
+    try:
+        from .core import authenticate
+        # authenticate with ogreserver to get DRM tools
+        session_key = authenticate(host, username, password)
+
+    except (AuthError, AuthDeniedError) as e:
+        prntr.e('Permission denied. This is a private system.', excp=e if debug else None)
+        return None
+    except Exception as e:
+        prntr.e("Couldn't get DRM tools", excp=e)
+        return False
+
+    prntr.p('Authenticated with Ogreserver')
+    prntr.p('Downloading..')
+
+    # download the tarball
+    urllib.urlretrieve(
+        'http://{}/download-dedrm/{}'.format(host, session_key),
+        '/tmp/dedrm.tar.gz',
+        prntr.progressf
+    )
+
+    try:
+        # install DRM tools
+        subprocess.check_output('pip install /tmp/dedrm.tar.gz', shell=True)
+
+        # attempt a dynamic load of the newly imported tools
+        mod = importlib.import_module('dedrm')
+
+    except subprocess.CalledProcessError as e:
+        prntr.e('Failed installing dedrm tools', excp=e if debug else None)
+        return False
+    except ImportError as e:
+        prntr.e('Failed installing dedrm tools', excp=e)
+        return False
+
+    prntr.p('Installed dedrm {}'.format(mod.PLUGIN_VERSION))
+    return True
 
 
 class DeDrmMissingError(OgreException):

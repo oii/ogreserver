@@ -3,17 +3,16 @@ from __future__ import absolute_import
 import argparse
 import datetime
 import getpass
-import importlib
 import json
 import os
 import subprocess
 import sys
-import urllib
 
 from . import __version__
 
 from .cache import Cache
-from .core import authenticate, sync, OGRESERVER, metadata_extract
+from .core import sync, OGRESERVER, metadata_extract
+from .dedrm import download_dedrm
 from .printer import CliPrinter, DummyPrinter
 
 from .exceptions import OgreException
@@ -380,45 +379,3 @@ def prerequisites(args, prntr):
     conf['config_dir'] = config_dir
     conf['ebook_cache'] = ebook_cache
     return conf
-
-
-def download_dedrm(host, username, password, prntr, debug=False):
-    prntr.p('Downloading latest DRM tools from {}'.format(host))
-
-    try:
-        # authenticate with ogreserver to get DRM tools
-        session_key = authenticate(host, username, password)
-
-    except (AuthError, AuthDeniedError) as e:
-        prntr.e('Permission denied. This is a private system.', excp=e if debug else None)
-        return None
-    except Exception as e:
-        prntr.e("Couldn't get DRM tools", excp=e)
-        return False
-
-    prntr.p('Authenticated with Ogreserver')
-    prntr.p('Downloading..')
-
-    # download the tarball
-    urllib.urlretrieve(
-        'http://{}/download-dedrm/{}'.format(host, session_key),
-        '/tmp/dedrm.tar.gz',
-        prntr.progressf
-    )
-
-    try:
-        # install DRM tools
-        subprocess.check_output('pip install /tmp/dedrm.tar.gz', shell=True)
-
-        # attempt a dynamic load of the newly imported tools
-        mod = importlib.import_module('dedrm')
-
-    except subprocess.CalledProcessError as e:
-        prntr.e('Failed installing dedrm tools', excp=e if debug else None)
-        return False
-    except ImportError as e:
-        prntr.e('Failed installing dedrm tools', excp=e)
-        return False
-
-    prntr.p('Installed dedrm {}'.format(mod.PLUGIN_VERSION))
-    return True

@@ -9,10 +9,10 @@ from . import __version__
 
 from .core import sync, OGRESERVER, metadata_extract
 from .dedrm import download_dedrm
-from .prereqs import setup, validate_input
+from .prereqs import setup_ogreclient
 from .printer import CliPrinter, DummyPrinter
 
-from .exceptions import OgreException
+from .exceptions import OgreException, ConfigSetupError
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
 from .exceptions import BaconError, MushroomError, SpinachError
 
@@ -40,11 +40,13 @@ def entrypoint():
                 prntr.log_output = True
 
         # run some checks and create some config variables
-        conf = setup(args, prntr)
+        conf = setup_ogreclient(args, prntr)
 
         if conf is not None:
             ret = main(conf, args, prntr)
 
+    except ConfigSetupError as e:
+        prntr.e('Failed setting up ogreclient', excp=e)
     except OgreException as e:
         prntr.e('An exception occurred in ogreclient', excp=e)
         ret = 1
@@ -155,8 +157,7 @@ def parse_command_line():
 
 def main(conf, args, prntr):
     if args.mode == 'update':
-        ebook_home, username, password = validate_input(args)
-        ret = download_dedrm(args.host, username, password, prntr, debug=args.debug)
+        ret = download_dedrm(args.host, conf['username'], conf['password'], prntr, debug=args.debug)
 
     elif args.mode == 'info':
         # display metadata from a single book
@@ -168,8 +169,11 @@ def main(conf, args, prntr):
 
     elif args.mode == 'sync':
         # run ogreclient
-        ebook_home, username, password = validate_input(args)
-        ret = run_sync(conf, args, prntr, ebook_home, username, password, debug=args.debug)
+        ret = run_sync(
+            conf, args, prntr,
+            conf['ebook_home'], conf['username'], conf['password'],
+            debug=args.debug
+        )
 
     return ret
 

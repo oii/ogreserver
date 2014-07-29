@@ -3,14 +3,16 @@ from __future__ import absolute_import
 import getpass
 import json
 import os
+import platform
 import subprocess
 import sys
 
 from .cache import Cache
 from .dedrm import download_dedrm
+from .exceptions import ConfigSetupError
 
 
-def setup(args, prntr):
+def setup_ogreclient(args, prntr):
     first_scan_warning = False
 
     # setup some ebook cache file paths
@@ -50,14 +52,28 @@ def setup(args, prntr):
             prntr.e('Please follow the simple instructions at http://ogre.oii.yt/install')
             sys.exit(1)
 
+        # init the config dict
         conf = {
             'calibre_ebook_meta_bin': calibre_ebook_meta_bin
         }
 
-        # write the config file for first time
-        with open(os.path.join(config_dir, 'app.config'), 'w') as f_config:
-            f_config.write(json.dumps(conf))
+    # setup user auth perms, with this order of precedence:
+    #  - CLI params
+    #  - ENV vars
+    #  - saved values in ogre config
+    #  - CLI readline interface
+    # output is written directly into conf var
+    setup_user_auth(prntr, args, conf)
 
+    # write the config file
+    with open(os.path.join(config_dir, 'app.config'), 'w') as f_config:
+        f_config.write(json.dumps(conf))
+
+    # return the config directory
+    conf['config_dir'] = config_dir
+
+    # return the user's OS
+    conf['platform'] = platform.system()
 
     # verify the ogreclient cache; true means it was initialised
     if ebook_cache.verify_cache(prntr):
@@ -67,28 +83,27 @@ def setup(args, prntr):
         # skip drm check
         pass
     else:
-        dedrm_check(prntr, args, config_dir)
+        dedrm_check(prntr, args, conf)
 
     if first_scan_warning is True:
         prntr.p('Please note that DRM scanning means the first run of ogreclient '
                 'will be much slower than subsequent runs.')
 
     # return config object
-    conf['config_dir'] = config_dir
     conf['ebook_cache'] = ebook_cache
     return conf
 
 
-def dedrm_check(prntr, args, config_dir):
+def dedrm_check(prntr, args, conf):
     # check if we have decrypt capability
     from .dedrm import CAN_DECRYPT
 
     if CAN_DECRYPT is False:
-        ebook_home, username, password = validate_input(args)
-
         # attempt to download and setup dedrm
         attempted_download = True
-        installed = download_dedrm(args.host, username, password, prntr, debug=args.debug)
+        installed = download_dedrm(
+            args.host, conf['username'], conf['password'], prntr, debug=args.debug
+        )
 
         if installed is None:
             # auth failed contacting ogreserver
@@ -101,7 +116,7 @@ def dedrm_check(prntr, args, config_dir):
 
     # initialise a working dedrm lib
     if CAN_DECRYPT is True or installed is True:
-        msgs = init_keys(config_dir, ignore_check=True)
+        msgs = init_keys(conf['config_dir'], ignore_check=True)
         for m in msgs:
             prntr.p(m)
 
@@ -112,44 +127,49 @@ def dedrm_check(prntr, args, config_dir):
         prntr.e('Failed to download DRM tools. Please report this error.')
 
 
-def validate_input(args):
-    if 'ebook_home' in args:
-        ebook_home = args.ebook_home
-    else:
-        ebook_home = None
-
+def setup_user_auth(prntr, args, conf):
+    # 1) load CLI parameters
+    ebook_home = args.ebook_home
     username = args.username
     password = args.password
 
-    # setup the environment
+    # 2) load ENV vars
     if ebook_home is None:
-        ebook_home = os.getenv('EBOOK_HOME')
-        if ebook_home is None or len(ebook_home) == 0:
-            print 'You must supply --ebook-home or set the $EBOOK_HOME environment variable'
-            sys.exit(1)
-
+        ebook_home = os.environ.get('EBOOK_HOME')
     if username is None:
-        username = os.getenv('EBOOK_USER')
-        if username is None or len(username) == 0:
-            username = getpass.getuser()
-            if username is not None:
-                print "$EBOOK_USER is not set. Please enter your username, or press enter to use '{}':".format(username)
-                ri = raw_input()
-                if len(ri) > 0:
-                    username = ri
-
-        if username is None:
-            print '$EBOOK_USER is not set. Please enter your username, or press enter to exit:'
-            username = raw_input()
-            if len(username) == 0:
-                sys.exit(1)
-
+        username = os.environ.get('EBOOK_USER')
     if password is None:
-        password = os.getenv('EBOOK_PASS')
-        if password is None or len(password) == 0:
-            print '$EBOOK_PASS is not set. Please enter your password, or press enter to exit:'
-            password = getpass.getpass()
-            if len(password) == 0:
-                sys.exit(1)
+        password = os.environ.get('EBOOK_PASS')
 
-    return ebook_home, username, password
+    # 3) load settings from saved config
+    if ebook_home is None or len(ebook_home) == 0:
+        ebook_home = conf['ebook_home']
+    if username is None or len(username) == 0:
+        username = conf['username']
+    if password is None or len(password) == 0:
+        password = conf['password']
+
+    # 4.1) load username via readline
+    if username is None or len(username) == 0:
+        prntr.p("Please enter your O.G.R.E. username, or press enter to use '{}':".format(getpass.getuser()))
+        ri = raw_input()
+        if len(ri) > 0:
+            username = ri
+        else:
+            username = getpass.getuser()
+
+        # final username verification
+        if username is None or len(username) == 0:
+            raise ConfigSetupError('O.G.R.E. username not supplied')
+
+    # 4.2) load password via readline
+    if password is None or len(password) == 0:
+        prntr.p('Please enter your password, or press enter to exit:')
+        password = getpass.getpass()
+        if len(password) == 0:
+            raise ConfigSetupError('O.G.R.E. password not supplied')
+
+    # return values via conf var
+    conf['ebook_home'] = ebook_home
+    conf['username'] = username
+    conf['password'] = password

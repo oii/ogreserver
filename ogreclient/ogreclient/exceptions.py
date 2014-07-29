@@ -1,6 +1,9 @@
 class OgreException(Exception):
     pass
 
+class ConfigSetupError(OgreException):
+    pass
+
 class AuthDeniedError(OgreException):
     pass
 

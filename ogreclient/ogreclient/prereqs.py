@@ -65,6 +65,24 @@ def setup_ogreclient(args, prntr):
     # output is written directly into conf var
     setup_user_auth(prntr, args, conf)
 
+    # handle no ebook home :(
+    if conf['ebook_home'] is None:
+        # get the user's HOME directory
+        home_dir = os.path.expanduser('~')
+
+        # setup ebook home cross-platform
+        if conf['platform'] == 'Darwin':
+            ebook_home = os.path.join(home_dir, 'Documents/ogre-ebooks')
+        else:
+            ebook_home = os.path.join(home_dir, 'ogre-ebooks')
+
+        # create OGRE ebook_home for the user :)
+        if not os.path.exists(ebook_home):
+            os.path.mkdir(ebook_home)
+            prntr.p('Decrypted ebooks will be put into {}'.format(ebook_home))
+
+        conf['ebook_home'] = ebook_home
+
     # write the config file
     with open(os.path.join(config_dir, 'app.config'), 'w') as f_config:
         f_config.write(json.dumps(conf))

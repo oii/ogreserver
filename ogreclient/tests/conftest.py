@@ -39,3 +39,31 @@ def mock_subprocess_popen(request):
     m = mock.patch('ogreclient.core.subprocess.Popen')
     yield m.start()
     m.stop()
+
+
+@pytest.yield_fixture(scope='function')
+def mock_os_environ_get(request):
+    m = mock.patch('ogreclient.prereqs.os.environ.get')
+    yield m.start()
+    m.stop()
+
+
+@pytest.yield_fixture(scope='function')
+def mock_subprocess_check_output(request):
+    m = mock.patch('ogreclient.prereqs.subprocess.check_output')
+    yield m.start()
+    m.stop()
+
+
+@pytest.yield_fixture(scope='function')
+def mock_raw_input(request):
+    m = mock.patch('__builtin__.raw_input')
+    yield m.start()
+    m.stop()
+
+
+@pytest.yield_fixture(scope='function')
+def mock_getpass_getpass(request):
+    m = mock.patch('ogreclient.prereqs.getpass.getpass')
+    yield m.start()
+    m.stop()

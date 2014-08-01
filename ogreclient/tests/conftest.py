@@ -17,6 +17,7 @@ def client_config():
         'config_dir': None,
         'ebook_cache': None,
         'calibre_ebook_meta_bin': '/usr/bin/ebook-meta',
+        'providers': {},
         'ebook_home': None,
         'username': 'test',
         'password': 'test',

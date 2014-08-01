@@ -144,6 +144,7 @@ def client_config(user):
         'ebook_cache_path': None,
         'calibre_ebook_meta_bin': '/usr/bin/ebook-meta',
         'ebook_home': None,
+        'providers': {},
         'username': user.username,
         'password': user.username,  # password=username during tests
         'host': 'localhost:6543',

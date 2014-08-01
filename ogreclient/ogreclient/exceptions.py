@@ -36,3 +36,9 @@ class FailedConfirmError(OgreException):
 
 class FailedDebugLogsError(OgreException):
     pass
+
+class KindlePrereqsError(OgreException):
+    pass
+
+class NoEbookSourcesFoundError(OgreException):
+    pass

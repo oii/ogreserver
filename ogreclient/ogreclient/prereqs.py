@@ -9,7 +9,8 @@ import sys
 
 from .cache import Cache
 from .dedrm import download_dedrm
-from .exceptions import ConfigSetupError
+from .exceptions import ConfigSetupError, NoEbookSourcesFoundError
+from .providers import find_ebook_providers
 
 
 def setup_ogreclient(args, prntr):
@@ -67,6 +68,8 @@ def setup_ogreclient(args, prntr):
 
     # handle no ebook home :(
     if conf['ebook_home'] is None:
+        ebook_home_found = False
+
         # get the user's HOME directory
         home_dir = os.path.expanduser('~')
 
@@ -82,6 +85,18 @@ def setup_ogreclient(args, prntr):
             prntr.p('Decrypted ebooks will be put into {}'.format(ebook_home))
 
         conf['ebook_home'] = ebook_home
+    else:
+        ebook_home_found = True
+
+    # return the user's OS
+    conf['platform'] = platform.system()
+
+    # search for ebook-provider directories; modifies config in-place
+    find_ebook_providers(prntr, conf)
+
+    # hard error if no ebook provider dirs found
+    if ebook_home_found is False and not conf['providers']:
+        raise NoEbookSourcesFoundError
 
     # write the config file
     with open(os.path.join(config_dir, 'app.config'), 'w') as f_config:
@@ -89,9 +104,6 @@ def setup_ogreclient(args, prntr):
 
     # return the config directory
     conf['config_dir'] = config_dir
-
-    # return the user's OS
-    conf['platform'] = platform.system()
 
     # verify the ogreclient cache; true means it was initialised
     if ebook_cache.verify_cache(prntr):

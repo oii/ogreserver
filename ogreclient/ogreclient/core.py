@@ -108,8 +108,8 @@ def search_for_ebooks(config, prntr):
     # get the current filesystem encoding
     fs_encoding = sys.getfilesystemencoding()
 
-    # a relatively quick search for all ebooks
-    for root, dirs, files in os.walk(config['ebook_home']):
+    # process ebooks in a directory
+    def _process_ebook_dir(root, files):
         for filename in files:
             # decode filename according to local fs encoding
             filename = codecs.decode(filename, fs_encoding)
@@ -121,6 +121,15 @@ def search_for_ebooks(config, prntr):
                 ebooks.append(
                     (filepath, fn, ext, md5_tup[2], md5_tup[0])
                 )
+
+    # search for ebooks in all providers dirs
+    for _, provider_dir in config['providers'].items():
+        for root, _, files in os.walk(provider_dir):
+            _process_ebook_dir(root, files)
+
+    # search for ebooks in ebook home
+    for root, _, files in os.walk(config['ebook_home']):
+        _process_ebook_dir(root, files)
 
     i = 0
     total = len(ebooks)

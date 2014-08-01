@@ -10,7 +10,8 @@
 {% for p in pages %}
 
 <li class="ebook">
-<p><a href="docs/{{p.filename}}">{{p.summary}}</a></p>
+<h2><a href="docs/{{p.filename}}">{{ p.title }}</a></h2>
+<p>{{p.summary}}</p>
 </li>
 
 {% endfor %}

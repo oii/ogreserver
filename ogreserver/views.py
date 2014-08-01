@@ -1,6 +1,7 @@
 import base64
 import codecs
 import datetime
+import fileinput
 import fnmatch
 import json
 import os
@@ -88,50 +89,64 @@ TEMPLATE_MD_END = (
 @login_required
 def docs(doco=None):
     if doco is None:
+        # display docs listing
         pages = []
 
         # TODO some kind of caching
 
         # iterate all the docs
-        for root, dirs, files in os.walk('ogreserver/docs'):
-            for filename in fnmatch.filter(files, '*.md'):
-                # extract the summary from the markdown header
-                summary = None
-                with open(os.path.join(root, filename), 'r') as f:
-                    for line in f:
-                        if line == '\n':
-                            break
-                        elif line.startswith('Summary'):
-                            summary = line[9:]
+        files = sorted(os.listdir('ogreserver/docs'))
+        for filename in fnmatch.filter(files, '*.md'):
+            summary = None
+            title = None
 
-                pages.append({
-                    'summary': summary,
-                    'filename': os.path.splitext(filename)[0],
-                })
+            # extract the title/summary from the markdown header
+            finput = fileinput.input(os.path.join('ogreserver/docs', filename))
+            for line in finput:
+                if line == '\n':
+                    # end of markdown header
+                    break
+                elif line.startswith('Title'):
+                    title = line[7:]
+                elif line.startswith('Summary'):
+                    summary = line[9:]
+            finput.close()
+
+            pages.append({
+                'title': title,
+                'summary': summary,
+                'filename': os.path.splitext(filename)[0],
+            })
 
         return render_template('docs.html', pages=pages)
 
     else:
+        # render a single doc page
         if not os.path.exists('ogreserver/docs/{}.md'.format(doco)):
             abort(404)
 
+        content = []
+        in_header = True
+        title = None
+
         # read in a markdown file from the docs
-        with open('ogreserver/docs/{}.md'.format(doco), 'r') as f:
-            # remove the markdown header
-            content = []
-            found_content = False
-            for line in f:
-                if found_content:
-                    content += line
+        for line in fileinput.input('ogreserver/docs/{}.md'.format(doco)):
+            if in_header:
+                # extract title from header
+                if line.startswith('Title'):
+                    title = line[7:]
                 elif line == '\n':
-                    found_content = True
+                    in_header = False
+            elif in_header is False:
+                content.append(line)
 
         # add a link to edit/improve this page
         improve_url = IMPROVE_URL.format(doco)
 
         # render a string for the Flask jinja template engine
-        return render_template_string('{}{}{}{}'.format(
+        return render_template_string('{}{}=\n\n{}{}{}'.format(
             TEMPLATE_MD_START,
+            title,
             ''.join(content),
             improve_url,
             TEMPLATE_MD_END,

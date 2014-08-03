@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
 
-import codecs
 import json
 import os
 import shutil
@@ -105,15 +104,9 @@ def search_for_ebooks(config, prntr):
     # let the user know something is happening
     prntr.p(u'Searching for ebooks.. ', nonl=True)
 
-    # get the current filesystem encoding
-    fs_encoding = sys.getfilesystemencoding()
-
     # process ebooks in a directory
     def _process_ebook_dir(root, files):
         for filename in files:
-            # decode filename according to local fs encoding
-            filename = codecs.decode(filename, fs_encoding)
-
             fn, ext = os.path.splitext(filename)
             if ext[1:] in RANKED_EBOOK_FORMATS.keys() and fn[0:2] != '._':
                 filepath = os.path.join(root, filename)

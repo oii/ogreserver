@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import codecs
 import getpass
 import json
 import os
@@ -128,6 +129,11 @@ def setup_ogreclient(args, prntr):
     if first_scan_warning is True:
         prntr.p('Please note that DRM scanning means the first run of ogreclient '
                 'will be much slower than subsequent runs.')
+
+    if type(conf['ebook_home']) is str:
+        # decode ebook_home to unicode according to local fs encoding,
+        # os.walk/os.listdir then does all further charset conversion for us
+        conf['ebook_home'] = codecs.decode(conf['ebook_home'], sys.getfilesystemencoding())
 
     # return config object
     conf['ebook_cache'] = ebook_cache

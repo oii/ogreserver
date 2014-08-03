@@ -10,7 +10,7 @@ import sys
 from .cache import Cache
 from .dedrm import download_dedrm
 from .exceptions import ConfigSetupError, NoEbookSourcesFoundError
-from .providers import find_ebook_providers
+from .providers import PROVIDERS, find_ebook_providers
 
 
 def setup_ogreclient(args, prntr):
@@ -91,8 +91,15 @@ def setup_ogreclient(args, prntr):
     # return the user's OS
     conf['platform'] = platform.system()
 
+    providers_to_ignore = []
+
+    # ignore certain providers as determined by --ignore-* params
+    for provider in PROVIDERS:
+        if vars(args)['ignore_{}'.format(provider)] is True:
+            providers_to_ignore.append(provider)
+
     # search for ebook-provider directories; modifies config in-place
-    find_ebook_providers(prntr, conf)
+    find_ebook_providers(prntr, conf, ignore=providers_to_ignore)
 
     # hard error if no ebook provider dirs found
     if ebook_home_found is False and not conf['providers']:
@@ -101,6 +108,9 @@ def setup_ogreclient(args, prntr):
     # write the config file
     with open(os.path.join(config_dir, 'app.config'), 'w') as f_config:
         f_config.write(json.dumps(conf))
+
+    # ignore certain providers as determined by --ignore-* params
+    conf['providers'] = {n:p for n,p in conf['providers'].items() if n not in providers_to_ignore}
 
     # return the config directory
     conf['config_dir'] = config_dir

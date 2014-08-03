@@ -103,6 +103,10 @@ def parse_command_line():
         '--dry-run', '-d', action='store_true',
         help="Dry run the sync; don't actually upload anything to the server")
 
+    psync.add_argument(
+        '--ignore-kindle', action='store_true',
+        help='Ignore ebooks in a local Amazon Kindle install')
+
     # setup parser for update command
     pupdate = subparsers.add_parser('update',
         parents=[parent_parser],

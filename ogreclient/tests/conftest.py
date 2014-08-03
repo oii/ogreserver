@@ -25,6 +25,7 @@ def client_config():
         'verbose': False,
         'quiet': True,
         'no_drm': True,
+        'debug': False,
     }
 
 

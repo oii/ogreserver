@@ -124,8 +124,14 @@ def search_for_ebooks(config, prntr):
 
     # search for ebooks in all providers dirs
     for _, provider_dir in config['providers'].items():
+        if config['debug']:
+            prntr.p(u'Searching {}'.format(provider_dir))
+
         for root, _, files in os.walk(provider_dir):
             _process_ebook_dir(root, files)
+
+    if config['debug']:
+        prntr.p(u'Searching {}'.format(config['ebook_home']))
 
     # search for ebooks in ebook home
     for root, _, files in os.walk(config['ebook_home']):

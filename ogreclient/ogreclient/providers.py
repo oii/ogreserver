@@ -12,11 +12,15 @@ from .utils import make_temp_directory
 PROVIDERS = ('kindle',)
 
 
-def find_ebook_providers(prntr, conf):
+def find_ebook_providers(prntr, conf, ignore=None):
     if 'providers' not in conf:
         conf['providers'] = {}
 
     for provider in PROVIDERS:
+        # ignore certain providers as determined by --ignore-* params
+        if ignore and provider in ignore:
+            continue
+
         # verify previously saved provider paths
         if provider in conf['providers']:
             if os.path.exists(conf['providers'][provider]) is False:

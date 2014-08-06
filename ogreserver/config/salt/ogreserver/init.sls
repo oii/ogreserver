@@ -48,7 +48,7 @@ extend:
     service.running:
       - watch:
         - file: /etc/nginx/conf.d/http.conf
-        - file: /etc/nginx/conf.d/proxy.conf
+        - file: /etc/nginx/proxy_params
         - file: /etc/nginx/sites-enabled/ogreserver.conf
 
   /etc/nginx/sites-available/ogreserver.conf:

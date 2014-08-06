@@ -59,6 +59,15 @@ extend:
   {% endif %}
 
 
+{% if grains.get('env', '') == 'prod' %}
+gevent:
+  pip.installed:
+    - bin_env: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}
+    - user: {{ pillar['app_user'] }}
+    - require_in:
+      - service: supervisor
+{% endif %}
+
 pip-dependencies-extra:
   pkg.latest:
     - names:

@@ -73,8 +73,7 @@ class CliPrinter:
     def p(self, msg, mode=None, notime=False, success=None, extra=None, nonl=False):
         if self.line_needs_finishing is True:
             self.line_needs_finishing = False
-            sys.stdout.write(u'{}\n'.format(msg))
-            return
+            sys.stdout.write(u'\n')
 
         if self.progress_running is True:
             self.progress_running = False

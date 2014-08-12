@@ -122,9 +122,9 @@ def init_ogre(test=False):
         db_setup = False
 
     # check rethinkdb initialized
-    conn = r.connect("localhost", 28015)
+    conn = r.connect('localhost', 28015)
     try:
-        r.db("ogreserver").table("ebooks").run(conn)
+        r.db('ogreserver').table('ebooks').run(conn)
         rdb_setup = True
     except RqlRuntimeError:
         rdb_setup = False
@@ -132,14 +132,14 @@ def init_ogre(test=False):
     if test is True:
         # only report state in test mode
         if aws_setup is True and db_setup is True and rdb_setup is True:
-            print "Already setup"
+            print 'Already setup'
             sys.exit(0)
         else:
-            print "Not setup"
+            print 'Not setup'
             sys.exit(1)
     else:
         if aws_setup is True and db_setup is True and rdb_setup is True:
-            sys.stderr.write("You have already initialized OGRE!\n")
+            print 'You have already initialized OGRE :D'
             sys.exit(1)
 
         # create the local mysql database from our models
@@ -148,13 +148,18 @@ def init_ogre(test=False):
 
         if aws_setup is False:
             try:
-                s3.create_bucket(app.config['S3_BUCKET'], location=boto.s3.connection.Location.EU)
-            except boto.exception.S3CreateError as e:
-                if e.error_code == "BucketAlreadyExists":
-                    sys.stderr.write("Bucket name already in use!\n  {0}\n".format(e.error_message))
-                else:
-                    sys.stderr.write("{0}\n".format(e.error_message))
+                s3.create_bucket(app.config['S3_BUCKET'], location=app.config['AWS_REGION'])
+                print 'Created S3 bucket in {}'.format(app.config['AWS_REGION'])
+
+            except boto.exception.S3ResponseError as e:
+                sys.stderr.write('Failed verifying or creating S3 bucket.. ({})\n'.format(e.error_message))
                 sys.exit(1)
+            except boto.exception.S3CreateError as e:
+                if e.error_code == 'BucketAlreadyExists':
+                    sys.stderr.write('Bucket name already in use! ({})\n'.format(e.error_message))
+                    sys.exit(1)
+                else:
+                    raise e
 
         if rdb_setup is False:
             # create a database and a couple of tables
@@ -164,7 +169,7 @@ def init_ogre(test=False):
             r.db('ogreserver').table_create('formats', primary_key='file_hash').run(conn)
             set_indexes()
 
-    print "Succesfully initialized OGRE"
+    print 'Succesfully initialized OGRE'
 
 
 @manager.command

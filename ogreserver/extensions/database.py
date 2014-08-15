@@ -27,7 +27,6 @@ def shutdown_db_session(exception=None):
 
 def create_tables(app):
     # import all modules here that might define models
-    from ..models.log import Log
     from ..models.reputation import UserBadge
     from ..models.user import User
 

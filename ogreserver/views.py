@@ -19,7 +19,6 @@ from forms.auth import LoginForm
 from models.user import User
 from models.datastore import DataStore
 from models.reputation import Reputation
-from models.log import Log
 
 from tasks import store_ebook
 
@@ -214,7 +213,7 @@ def post(auth_key):
     data = json.loads(request.data)
 
     # stats log the upload
-    Log.create(user.id, 'CONNECT', len(data.keys()), user.session_api_key)
+    app.logger.info('CONNECT {}'.format(len(data)))
 
     # update the library
     ds = DataStore(app.config, app.logger, app.whoosh)
@@ -229,7 +228,7 @@ def post(auth_key):
         if item['update'] is True
     }
 
-    Log.create(user.id, 'NEW', len(new_books), user.session_api_key)
+    app.logger.info('NEW {}'.format(len(new_books)))
 
     # handle badge and reputation changes
     r = Reputation(user)
@@ -303,7 +302,7 @@ def upload(auth_key):
     user = check_auth(auth_key)
 
     # stats log the upload
-    Log.create(user.id, 'UPLOADED', 1, user.session_api_key)
+    app.logger.info('UPLOADED 1')
 
     app.logger.debug('{} {} {}'.format(
         user.session_api_key,

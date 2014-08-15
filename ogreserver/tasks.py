@@ -7,10 +7,7 @@ import subprocess
 from .extensions.celery import celery
 from .extensions.database import get_db
 
-from .models.user import User
 from .models.datastore import DataStore, S3DatastoreError
-from .models.reputation import Reputation
-from .models.log import Log
 
 
 @celery.task()
@@ -37,17 +34,8 @@ def store_ebook(user_id, ebook_id, file_hash, fmt):
             # storage path
             filepath = os.path.join(app.config['UPLOADED_EBOOKS_DEST'], '{}.{}'.format(file_hash, fmt))
 
-            user = User.query.get(user_id)
-
             # store the file into S3
             if ds.store_ebook(ebook_id, file_hash, filename, filepath, fmt):
-                # stats log the upload
-                Log.create(user.id, 'STORED', 1)
-
-                # handle badge and reputation changes
-                r = Reputation(user)
-                r.earn_badges()
-
                 app.logger.info('{} was uploaded'.format(filename))
             else:
                 app.logger.info('{} exists on S3'.format(filename))

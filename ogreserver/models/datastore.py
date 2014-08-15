@@ -12,6 +12,7 @@ from whoosh.query import Every
 from whoosh.qparser import MultifieldParser, OrGroup
 
 from .user import User
+from .utils import connect_s3
 
 from ..exceptions import OgreException, BadMetaDataError, ExactDuplicateError
 
@@ -312,7 +313,7 @@ class DataStore():
         filename = self.generate_filename(file_hash)
 
         # create an expiring auto-authenticate url for S3
-        s3 = boto.connect_s3(self.config['AWS_ACCESS_KEY'], self.config['AWS_SECRET_KEY'])
+        s3 = connect_s3(self.config)
         return s3.generate_url(self.config['DOWNLOAD_LINK_EXPIRY'], 'GET',
             bucket=self.config['S3_BUCKET'],
             key=filename
@@ -365,7 +366,7 @@ class DataStore():
         """
         Store an ebook on S3
         """
-        s3 = boto.connect_s3(self.config['AWS_ACCESS_KEY'], self.config['AWS_SECRET_KEY'])
+        s3 = connect_s3(self.config)
         bucket = s3.get_bucket(self.config['S3_BUCKET'])
 
         # create a new storage key
@@ -515,7 +516,7 @@ class DataStore():
 
         if verify_s3 == True:
             # connect to S3
-            s3 = boto.connect_s3(self.config['AWS_ACCESS_KEY'], self.config['AWS_SECRET_KEY'])
+            s3 = connect_s3(self.config)
             bucket = s3.get_bucket(self.config['S3_BUCKET'])
 
             # verify books are on S3

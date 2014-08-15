@@ -6,6 +6,8 @@ import datetime
 import os
 import sys
 
+import boto
+
 from flask.ext.script import Manager
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 
@@ -14,6 +16,7 @@ from rethinkdb.errors import RqlRuntimeError
 
 from ogreserver import create_app
 from ogreserver.extensions.database import get_db, create_tables
+from ogreserver.models.utils import connect_s3
 
 app = create_app(
     os.path.join(os.getcwd(), 'ogreserver/config/flask.app.conf.py')
@@ -100,11 +103,7 @@ def init_ogre(test=False):
     """
 
     # init S3
-    import boto
-    s3 = boto.connect_s3(
-        app.config['AWS_ACCESS_KEY'],
-        app.config['AWS_SECRET_KEY']
-    )
+    s3 = connect_s3(app.config)
 
     # check bucket already exists
     aws_setup = False
@@ -148,8 +147,12 @@ def init_ogre(test=False):
 
         if aws_setup is False:
             try:
-                s3.create_bucket(app.config['S3_BUCKET'], location=app.config['AWS_REGION'])
-                print 'Created S3 bucket in {}'.format(app.config['AWS_REGION'])
+                if not app.config['DEBUG']:
+                    s3.create_bucket(app.config['S3_BUCKET'], location=app.config['AWS_REGION'])
+                    print 'Created S3 bucket in {}'.format(app.config['AWS_REGION'])
+                else:
+                    s3.create_bucket(app.config['S3_BUCKET'])
+                    print 'Created S3 bucket'
 
             except boto.exception.S3ResponseError as e:
                 sys.stderr.write('Failed verifying or creating S3 bucket.. ({})\n'.format(e.error_message))

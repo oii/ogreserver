@@ -3,6 +3,7 @@ include:
   - dev-build.tmux
   - logs
   - s3cmd
+  - s3proxy
   - watchdog
 
 extend:
@@ -63,6 +64,11 @@ extend:
       - context:
           s3_access_key: {{ pillar['aws_access_key'] }}
           s3_secret_key: {{ pillar['aws_secret_key'] }}
+
+  ogre-init:
+    cmd.run:
+      - require:
+        - supervisord: s3proxy-supervisor-service
 
 
 # build dedrm and stick it in the pypiserver cache

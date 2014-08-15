@@ -61,9 +61,8 @@ class DataStore():
                     output[incoming['file_hash']]['dupe'] = True
 
                     raise ExactDuplicateError(
-                        'Ignoring exact duplicate {} {}'.format(
-                            existing[0]['ebook_id'],
-                            authortitle.encode('UTF-8'),
+                        u'Ignoring exact duplicate {} {}'.format(
+                            existing[0]['ebook_id'], authortitle,
                         )
                     )
 
@@ -134,8 +133,8 @@ class DataStore():
                     ).count().run(conn)
 
                     if other_versions > 0:
-                        msg = "Rejecting new version of {} from {}".format(
-                            authortitle.decode('UTF-8'), user.username
+                        msg = u'Rejecting new version of {} from {}'.format(
+                            authortitle, user.username
                         )
                         self.logger.info(msg)
                         continue
@@ -170,9 +169,9 @@ class DataStore():
 
             except OgreException as e:
                 # TODO log this and report back to client
-                self.logger.info(e)
+                self.logger.info(unicode(e).encode('utf8'))
             except Exception as e:
-                self.logger.error(e, exc_info=True)
+                self.logger.error(unicode(e).encode('utf8'), exc_info=True)
 
         return output
 

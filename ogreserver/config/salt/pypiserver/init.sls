@@ -63,7 +63,7 @@ pypiserver-supervisor-config:
 pypiserver-supervisor-service:
   supervisord.running:
     - name: pypiserver
-    - update: True
+    - update: true
     - require:
       - service: supervisor
       - cmd: pypiserver-htpasswd

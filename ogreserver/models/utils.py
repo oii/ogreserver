@@ -1,5 +1,8 @@
-from hashlib import md5
+from __future__ import absolute_import
+
 import base64
+import hashlib
+
 
 def compute_md5(filepath, buf_size=8192):
     """
@@ -23,7 +26,7 @@ def compute_md5(filepath, buf_size=8192):
     """
     fp = open(filepath, "rb")
     try:
-        m = md5()
+        m = hashlib.md5()
         fp.seek(0)
         s = fp.read(buf_size)
         while s:

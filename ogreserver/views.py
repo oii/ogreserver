@@ -231,7 +231,7 @@ def post(auth_key):
     app.logger.info('NEW {}'.format(len(new_books)))
 
     # store sync events
-    ds.log_event(len(data), len(new_books))
+    ds.log_event(user, len(data), len(new_books))
 
     # handle badge and reputation changes
     r = Reputation(user)

@@ -114,6 +114,7 @@ class DataStore():
                         'file_hash': incoming['file_hash'],
                         'version_id': ret['generated_keys'][0],
                         'format': incoming['format'],
+                        'user': user.username,
                         'uploaded': False,
                         'source_patched': False,
                     }
@@ -154,6 +155,7 @@ class DataStore():
                         'ebook_id': ebook_id,
                         'version_id': ret['generated_keys'][0],
                         'format': incoming['format'],
+                        'user': user.username,
                         'uploaded': False,
                     }
                     r.table('formats').insert(new_format).run(conn)
@@ -529,13 +531,13 @@ class DataStore():
         return output
 
 
-    def log_event(self, syncd_books_count, new_books_count):
+    def log_event(self, user, syncd_books_count, new_books_count):
         """
         Add entries to a log every time a user syncs from ogreclient
         """
         conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
         return r.table('sync_events').insert({
-            'username': self.user.username,
+            'username': user.username,
             'syncd_books_count': syncd_books_count,
             'new_books_count': new_books_count,
             'timestamp': r.now(),

@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 
+import rethinkdb as r
+
 from sqlalchemy import Column, Integer, Boolean, ForeignKey
-from sqlalchemy.sql import func
 
 from flask import current_app as app
 
@@ -9,7 +10,7 @@ from ..extensions.database import Base, get_db
 
 
 class Badges:
-    Beta_Tester, Fastidious, Contributor, Scholar, Librarian, Pirate = range(1,7)
+    Beta_Tester, Fastidious, Contributor, Scholar, Librarian, Pirate, Keener = range(1,8)
 
 
 class Reputation():
@@ -43,33 +44,46 @@ class Reputation():
         """
         Check if a user has earned any badges on this synchronisation
         """
-        if self.user.has_badge(Badges.Beta_Tester) == False:
-            if app.config['BETA'] == True:
+        conn = r.connect("localhost", 28015, db=app.config['RETHINKDB_DATABASE'])
+
+        if not self.user.has_badge(Badges.Beta_Tester):
+            # everyone who uses the app during beta phase gets this badge
+            if app.config['BETA'] is True:
                 self.award(Badges.Beta_Tester)
 
-        if self.user.has_badge(Badges.Fastidious) == False:
-            # TODO test this theory
-            logs = Log.query.filter_by(user_id=self.user.id, type="NEW", data=0).all()
+        if not self.user.has_badge(Badges.Fastidious):
+            # not sure what this badge means yet
+            pass
 
-        if self.user.has_badge(Badges.Librarian) == False:
-            db_session = get_db(app)
-            count = db_session.query(func.count(Log.id)).filter_by(user_id=self.user.id, type="STORED").scalar()
+        if not self.user.has_badge(Badges.Keener):
+            # user ran a sync 10 times with nothing new to report
+            count = r.table('sync_events').get_all(
+                [self.user.username, 0], index='user_new_books_count'
+            ).count().run(conn)
 
-            if count > 200:
+            if count >= 10:
+                self.award(Badges.Keener)
+
+        if not self.user.has_badge(Badges.Librarian):
+            # award badges based on how many books a user has uploaded
+            count = r.table('formats').get_all(
+                [self.user.username, True], index='user_uploads'
+            ).count().run(conn)
+
+            if count >= 200:
                 self.award(Badges.Librarian)
-            elif Reputation.has_badge(self.user, Badges.Scholar) == False and count > 100:
+            elif count >= 100:
                 self.award(Badges.Scholar)
-            elif Reputation.has_badge(self.user, Badges.Contributor) == False and count > 20:
+            elif count >= 20:
                 self.award(Badges.Contributor)
 
-        if Reputation.has_badge(self.user, Badges.Pirate) == False:
-            if Log.query.filter_by(user_id=self.user.id, type="DEDRM", data=1).first() is not None:
-                self.award(Badges.Pirate)
 
     def award(self, badge):
         """
         Award a badge to a user in the DB
         """
+        if Reputation.has_badge(self.user, badge):
+            return
         ub = UserBadge(user_id=self.user.id, badge=badge)
         db_session = get_db(app)
         db_session.add(ub)
@@ -83,29 +97,30 @@ class Reputation():
         for b in user.badges:
             if b.badge == badge:
                 return True
-        return False
+            return False
 
 
 class UserBadge(Base):
     __tablename__ = 'user_badge'
-    id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey('user.id'))
-    badge = Column(Integer)
+    user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
+    badge = Column(Integer, primary_key=True, autoincrement=False)
     been_alerted = Column(Boolean, default=False)
 
     def __str__(self):
         if self.badge == Badges.Beta_Tester:
-            return "You earned the 'Beta Tester' badge. Thanks for the help spod."
+            return "You earned the Beta Tester badge. Thanks for the help spod."
         elif self.badge == Badges.Fastidious:
-            return "You earned the 'Fastidious' badge. Nothing to upload th== time!"
+            return "You earned the Fastidious badge."
         elif self.badge == Badges.Contributor:
-            return "You earned the 'Contributor' badge. Over 20 books uploaded."
+            return "You earned the Contributor badge. Over 20 books uploaded."
         elif self.badge == Badges.Scholar:
-            return "You earned the 'Scholar' badge. Over 100 books uploaded."
+            return "You earned the Scholar badge. Over 100 books uploaded."
         elif self.badge == Badges.Librarian:
-            return "You earned the 'Librarian' badge. Over 200 books uploaded."
+            return "You earned the Librarian badge. Over 200 books uploaded."
         elif self.badge == Badges.Pirate:
-            return "You earned the 'Pirate' badge. First DRM cleansed upload."
+            return "You earned the Pirate badge. First DRM cleansed upload."
+        elif self.badge == Badges.Keener:
+            return "You earned the Keener badge. Ten syncs with nothing to show!"
 
     def set_alerted(self):
         """

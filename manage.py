@@ -33,6 +33,7 @@ def cleardb():
     r.table('ebooks').delete().run()
     r.table('versions').delete().run()
     r.table('formats').delete().run()
+    r.table('sync_events').delete().run()
     if os.path.exists('search.db'):
         import shutil, subprocess
         shutil.rmtree('search.db')
@@ -170,6 +171,7 @@ def init_ogre(test=False):
             r.db('ogreserver').table_create('ebooks', primary_key='ebook_id').run(conn)
             r.db('ogreserver').table_create('versions', primary_key='version_id').run(conn)
             r.db('ogreserver').table_create('formats', primary_key='file_hash').run(conn)
+            r.db('ogreserver').table_create('sync_events').run(conn)
             set_indexes()
 
     print 'Succesfully initialized OGRE'
@@ -177,17 +179,24 @@ def init_ogre(test=False):
 
 @manager.command
 def set_indexes():
-    def create_index(table, name):
+    def create_index(table, name, index=None):
         conn = r.connect("localhost", 28015, db='ogreserver')
         if name not in r.table(table).index_list().run(conn):
             start = datetime.datetime.now()
-            r.table(table).index_create(name).run(conn)
+            if index is None:
+                r.table(table).index_create(name).run(conn)
+            else:
+                r.table(table).index_create(name, index).run(conn)
             r.table(table).index_wait(name).run(conn)
             print "index '{}' created in {}".format(name, datetime.datetime.now()-start)
 
     # create the rethinkdb indexes used by ogreserver
     create_index('versions', 'ebook_id')
     create_index('formats', 'version_id')
+    create_index('formats', 'user_uploads', index=[r.row['user'], r.row['uploaded']])
+    create_index('sync_events', 'username')
+    create_index('sync_events', 'timestamp')
+    create_index('sync_events', 'user_new_books_count', index=[r.row['username'], r.row['new_books_count']])
 
 
 @manager.command

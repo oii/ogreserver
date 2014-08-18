@@ -529,5 +529,18 @@ class DataStore():
         return output
 
 
+    def log_event(self, syncd_books_count, new_books_count):
+        """
+        Add entries to a log every time a user syncs from ogreclient
+        """
+        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
+        return r.table('sync_events').insert({
+            'username': self.user.username,
+            'syncd_books_count': syncd_books_count,
+            'new_books_count': new_books_count,
+            'timestamp': r.now(),
+        }).run(conn)
+
+
 class S3DatastoreError(Exception):
     pass

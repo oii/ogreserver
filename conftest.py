@@ -122,6 +122,7 @@ def datastore(request):
     r.db('test').table_create('ebooks', primary_key='ebook_id').run()
     r.db('test').table_create('versions', primary_key='version_id').run()
     r.db('test').table_create('formats', primary_key='file_hash').run()
+    r.db('test').table_create('sync_events').run()
     r.db('test').table('versions').index_create('ebook_id').run()
     r.db('test').table('versions').index_wait('ebook_id').run()
     r.db('test').table('formats').index_create('version_id').run()

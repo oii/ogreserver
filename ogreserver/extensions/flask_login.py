@@ -11,7 +11,7 @@ def init_login(app):
     @login_manager.user_loader
     def load_user(userid):
         from ogreserver.models.user import User
-        user = User.query.filter_by(id=int(userid)).first()
+        user = User.query.get(userid)
         return user
 
     return login_manager

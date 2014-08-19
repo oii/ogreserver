@@ -8,13 +8,14 @@ import os
 
 from flask import g, current_app as app
 
-from flask import request, redirect, session, abort, Blueprint
+from flask import request, redirect, abort, Blueprint
 from flask import url_for, render_template, render_template_string, jsonify, make_response
-from flask.ext.login import login_required, login_user, logout_user
+from flask.ext.login import login_required, login_user, logout_user, current_user
 
 from werkzeug.exceptions import Forbidden
 
 from forms.auth import LoginForm
+from forms.profile_edit import ProfileEditForm
 
 from models.user import User
 from models.datastore import DataStore
@@ -42,13 +43,16 @@ def internal_error(error):
 def index():
     return redirect(url_for('views.home'))
 
+@views.before_request
+def before_request():
+    g.user = current_user
+
 
 @views.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
     if form.validate_on_submit():
         login_user(form.user)
-        session['user_id'] = form.user.id
         return redirect(request.args.get('next') or url_for('views.index'))
     return render_template('login.html', form=form)
 
@@ -63,6 +67,33 @@ def auth():
         raise Forbidden
     else:
         return base64.b64encode(user.assign_auth_key())
+
+
+@views.route('/profile')
+@views.route('/profile/<int:user_id>')
+@login_required
+def profile(user_id=None):
+    # display the current user, or load another user
+    if user_id is None:
+        user = g.user
+    else:
+        user = User.query.get(user_id)
+    return render_template('profile.html', user=user)
+
+
+@views.route('/profile/<int:user_id>/edit', methods=['GET', 'POST'])
+@login_required
+def profile_edit(user_id=0):
+    # users can only edit their own profiles (except superuser)
+    if g.user.id > 1 and g.user.id != user_id:
+        raise Forbidden
+
+    form = ProfileEditForm(request.form, g.user)
+    if form.validate_on_submit():
+        form.populate_obj(g.user)
+        g.user.save()
+        redirect('profile')
+    return render_template('profile_edit.html', user=g.user, form=form)
 
 
 @views.route('/logout')

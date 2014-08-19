@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+{% block body %}
+
+<h2>Edit {{ user.username }}</h2>
+
+{% for error in form.errors %}<p class="error">{{ form.errors[error][0] }}</p>{% endfor %}
+
+<form action="{{ url_for('views.profile') }}" method="post">
+	{{ form.csrf_token }}
+	<dl>
+		{% for field in form %}
+		{% if field.name != 'csrf_token' %}
+		<dt>{{ field.label }}</dt>
+		<dd>{{ field() }}</dd>
+		{% endif %}
+		{% endfor %}
+		<dd><input type="submit" value="Save" /></dd>
+	</dl>
+</form>
+
+{% endblock %}

@@ -5,8 +5,8 @@ from ..models.user import User
 
 
 class LoginForm(Form):
-    username = TextField('username', [validators.Required()])
-    password = PasswordField('password', [validators.Required()])
+    username = TextField('Username', [validators.Required()])
+    password = PasswordField('Password', [validators.Required()])
 
     def validate(self):
         if not super(LoginForm, self).validate():

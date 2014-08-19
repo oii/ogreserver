@@ -1,15 +1,19 @@
 {% extends "layout.html" %}
 {% block body %}
+
 <h2>Login</h2>
+
 {% for error in form.errors %}<p class="error">{{ form.errors[error][0] }}</p>{% endfor %}
+
 <form action="{{ url_for('views.login') }}" method="post">
 	{{ form.csrf_token }}
 	<dl>
-		<dt>Username:</dt>
-		<dd><input type="text" name="username" /></dd>
-		<dt>Password:</dt>
-		<dd><input type="password" name="password" /></dd>
+		<dt>{{ form.username.label }}</dt>
+		<dd>{{ form.username() }}</dd>
+		<dt>{{ form.password.label }}</dt>
+		<dd>{{ form.password() }}</dd>
 		<dd><input type="submit" value="Login" /></dd>
 	</dl>
 </form>
+
 {% endblock %}

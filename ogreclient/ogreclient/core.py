@@ -289,17 +289,12 @@ def remove_drm_from_ebook(config, prntr, ebook_cache, filepath, file_hash, suffi
                 # mark book as having DRM
                 ebook_cache.set_ebook(filepath, file_hash, drmfree=False)
 
-            if config['verbose']:
-                if state == DRM.decrypted:
-                    pass
-                elif state == DRM.none:
-                    prntr.p(u'{}'.format(filepath), CliPrinter.NONE)
-                elif state == DRM.wrong_key:
-                    prntr.e(u'{}'.format(filepath), CliPrinter.WRONG_KEY)
+                if state == DRM.wrong_key:
+                    raise DecryptionFailed('Incorrect key found for ebook')
                 elif state == DRM.corrupt:
-                    prntr.e(u'{}'.format(filepath), CliPrinter.CORRUPT)
+                    raise DecryptionFailed('Corrupt ebook found')
                 else:
-                    raise DecryptionFailed('Unknown error in decryption')
+                    raise DecryptionFailed('Unknown error in decryption ({})'.format(state))
 
     except DeDrmMissingError:
         config['no_drm'] = True

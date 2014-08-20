@@ -100,7 +100,10 @@ ul.formats { float: left; margin-bottom: 0px; }
 }
 
 footer.row.full-width {
+	background-color: #eee;
 	padding-top: 30px;
+	padding-bottom: 20px;
+	margin-top: 30px;
 	border-top: solid 1px #dddddd;
 	font-size: 14px;
 }
@@ -109,13 +112,6 @@ footer.row.full-width {
 	background: #3f3f3f;
 	color: #fff;
 	padding: 11px 0;
-	margin-top: 30px;
-}
-#copyright {
-	background: #3f3f3f;
-	color: #fff;
-	padding: 11px 0;
-	margin-top: 30px;
 }
 #copyright a {
     color: #fff;

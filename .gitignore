@@ -11,6 +11,7 @@ search.db
 ogreserver/static/stylesheets
 .cache
 static/docs
+bower_components
 
 .vagrant
 

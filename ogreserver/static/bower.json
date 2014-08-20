@@ -1,0 +1,6 @@
+{
+	"name": "ogreserver",
+	"dependencies": {
+		"foundation": "zurb/bower-foundation#~5.3.3"
+	}
+}

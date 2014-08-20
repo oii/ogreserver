@@ -5,6 +5,7 @@ include:
   - github
   - gunicorn
   - mysql
+  - nodejs
   - pypiserver
   - rabbitmq
   - rethinkdb

@@ -60,6 +60,22 @@ extend:
   {% endif %}
 
 
+# install bower.io for Foundation 5
+bower:
+  npm.installed:
+    - require:
+      - cmd: npm-install
+
+bower-ogreserver-install:
+  cmd.run:
+    - name: bower install --config.interactive=false
+    - cwd: /srv/ogreserver/ogreserver/static
+    - user: {{ pillar['app_user'] }}
+    - unless: test -d /srv/ogre/ogreserver/static/bower_components
+    - require:
+      - git: git-clone-app
+
+
 {% if grains.get('env', '') == 'prod' %}
 gevent:
   pip.installed:

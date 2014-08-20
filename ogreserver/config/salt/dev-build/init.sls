@@ -1,8 +1,8 @@
 include:
+  - awscli
   - compass
   - dev-build.tmux
   - logs
-  - s3cmd
   - s3proxy
   - watchdog
 
@@ -59,7 +59,7 @@ extend:
       - require_in:
         - supervisord: watchdog-service
 
-  s3cfg:
+  awscli-config:
     file.managed:
       - context:
           s3_access_key: {{ pillar['aws_access_key'] }}

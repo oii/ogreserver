@@ -4,6 +4,8 @@ import datetime
 
 from flask.ext.login import UserMixin
 
+import rethinkdb as r
+
 from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -105,6 +107,24 @@ class User(Base, UserMixin):
         Check if this user has earnt a specific badge
         """
         return Reputation.has_badge(self, badge)
+
+    def get_stats(self):
+        conn = r.connect("localhost", 28015, db=app.config['RETHINKDB_DATABASE'])
+
+        # get the number of times user has sync'd
+        total_syncs = r.table('sync_events').get_all(
+            self.username, index='username'
+        ).count().run(conn)
+
+        # total uploads
+        total_uploads = r.table('formats').get_all(
+            [self.username, True], index='user_uploads'
+        ).count().run(conn)
+
+        return {
+            'total_syncs': total_syncs,
+            'total_uploads': total_uploads,
+        }
 
     @staticmethod
     def get_total_users():

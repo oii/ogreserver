@@ -5,6 +5,25 @@
 
 <div id="content">
 
+<fieldset>
+<legend>Stats</legend>
+
+<table>
+<tr>
+	<th>Number of syncs from ogreclient</th>
+	<td>{{ stats.total_syncs }}</td>
+<tr>
+</tr>
+	<th>Number of ebook uploads</th>
+	<td>{{ stats.total_uploads }}</td>
+<tr>
+</tr>
+	<th>Number of DRM cleaned ebooks</th>
+	<td></td>
+</tr>
+</table>
+</fieldset>
+
 {% if g.user.id == user.id %}
 <a href="{{ url_for('views.profile_edit', user_id=user.id) }}">edit profile</a>
 {% endif %}

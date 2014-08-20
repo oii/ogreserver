@@ -78,7 +78,7 @@ def profile(user_id=None):
         user = g.user
     else:
         user = User.query.get(user_id)
-    return render_template('profile.html', user=user)
+    return render_template('profile.html', user=user, stats=user.get_stats())
 
 
 @views.route('/profile/<int:user_id>/edit', methods=['GET', 'POST'])

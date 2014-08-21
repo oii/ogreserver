@@ -1,19 +1,59 @@
-{% extends "layout.html" %}
-{% block body %}
+<!doctype html>
+<!--[if IE 9]><html class="lt-ie10" lang="en" > <![endif]-->
+<html class="no-js" lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<h2>Login</h2>
+		<title>O.G.R.E.</title>
 
-{% for error in form.errors %}<p class="error">{{ form.errors[error][0] }}</p>{% endfor %}
+		<link rel="stylesheet" href="{{ url_for('views.static', filename='stylesheets/normalize.css') }}">
+		<link rel="stylesheet" href="{{ url_for('views.static', filename='stylesheets/app.css') }}">
 
-<form action="{{ url_for('views.login') }}" method="post">
-	{{ form.csrf_token }}
-	<dl>
-		<dt>{{ form.username.label }}</dt>
-		<dd>{{ form.username() }}</dd>
-		<dt>{{ form.password.label }}</dt>
-		<dd>{{ form.password() }}</dd>
-		<dd><input type="submit" value="Login" class="button radius primary-dark" /></dd>
-	</dl>
-</form>
+		<script src="{{ url_for('views.static', filename='bower_components/foundation/js/vendor/modernizr.js') }}"></script>
+	</head>
 
-{% endblock %}
+	<body>
+		<nav class="top-bar">
+			<ul class="title-area">
+				<li class="name">
+					<h1><a href="/">O.G.R.E.</a></h1>
+				</li>
+			</ul>
+		</nav>
+
+		<div class="row">
+			<div class="large-4 columns">
+
+				{% for error in form.errors %}<p class="error">{{ form.errors[error][0] }}</p>{% endfor %}
+
+				<form action="{{ url_for('views.login') }}" method="post">
+					{{ form.csrf_token }}
+					<dl>
+						<dt>{{ form.username.label }}</dt>
+						<dd>{{ form.username() }}</dd>
+						<dt>{{ form.password.label }}</dt>
+						<dd>{{ form.password() }}</dd>
+						<dd><input type="submit" value="Login" class="button small radius primary-dark" /></dd>
+					</dl>
+				</form>
+			</div>
+		</div>
+
+		<footer id="copyright">
+			<div class="row full-width">
+				<div class="large-4 columns">
+					<p>Site content &copy; 2014 Oii, inc.</p>
+				</div>
+			</div>
+		</footer>
+
+		<script src="{{ url_for('views.static', filename='bower_components/jquery/dist/jquery.min.js') }}"></script>
+		<script src="{{ url_for('views.static', filename='bower_components/foundation/js/foundation.min.js') }}"></script>
+		<script src="{{ url_for('views.static', filename='bower_components/foundation/js/foundation/foundation.topbar.js') }}"></script>
+		<script>
+		  $(document).foundation();
+		</script>
+		<script src="{{ url_for('views.static', filename='js/app.js') }}"></script>
+	</body>
+</html>

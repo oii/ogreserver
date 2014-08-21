@@ -123,15 +123,11 @@ ipdb:
     - bin_env: /home/vagrant/.virtualenvs/ogreserver
     - user: {{ pillar['app_user'] }}
 
-# ruby plumbing for Zurb Sass framework
-zurb-rubygems:
-  pkg.installed:
-    - name: rubygems
-
+# Foundation 5 compass plugin
 zurb-foundation-gem:
   gem.installed:
-    - name: zurb-foundation
+    - name: foundation
     - require:
-      - pkg: zurb-rubygems
+      - pkg: ruby
     - require_in:
       - supervisord: compass-supervisor-service

@@ -1,15 +1,12 @@
-compass-dependencies:
-  pkg.installed:
-    - names:
-      - rubygems
-      - ruby-dev
-      - ruby1.8-dev
+include:
+  - ruby
+
 
 compass-gem:
   gem.installed:
     - name: compass
     - require:
-      - pkg: compass-dependencies
+      - cmd: ruby-dev
 
 compass-supervisor-config:
   file.managed:

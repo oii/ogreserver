@@ -1,6 +1,6 @@
 .top-bar .name h1{
   a:hover{
-    color:$success-color;
+    color:$hover-color;
     @include transition(.25s);
   }
 }
@@ -12,7 +12,7 @@
   }
   li a:not(.button):hover {
     background: $midnight-blue !important;
-    color:$success-color !important;
+    color:$hover-color !important;
     @include transition(.25s);
   }
   .divider {
@@ -22,7 +22,7 @@
   }
   .dropdown li.title h5 a:hover,
   a:hover{
-    color:$success-color !important;
+    color:$hover-color !important;
     @include transition(.25s);
   }
   .dropdown li label{

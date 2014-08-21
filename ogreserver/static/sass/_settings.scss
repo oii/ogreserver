@@ -49,6 +49,9 @@ $pumpkin:     #D35400;
 $alizarin:    #E74C3C;
 $pomegranate: #C0392B;
 
+// Rollover colour
+$hover-color: $orange;
+
 // We use these to control various global styles
 $body-font-color: $wet-asphalt;
 
@@ -84,7 +87,7 @@ $microformat-border-color: $clouds;
 // We use these to style the labels in different ways
 $input-focus-bg-color: darken(#fff, 1%);
 $input-border-color: $clouds;
-$input-focus-border-color: $turquoise;
+$input-focus-border-color: $orange;
 $input-border-width: 2px;
 $input-box-shadow: inset 0 1px 2px rgba(0,0,0,0.0);
 
@@ -108,10 +111,10 @@ $alert-border-width: 2px;
 //
 
 // We use this to set the background color for the breadcrumb container.
-$crumb-bg: $turquoise;
+$crumb-bg: $orange;
 
 // We use these to control border styles.
-$crumb-border-color: $turquoise;
+$crumb-border-color: $orange;
 
 // We use these to set various text styles for breadcrumbs.
 $crumb-font-color: white;

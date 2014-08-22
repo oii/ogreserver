@@ -34,6 +34,20 @@ body {
 	font-weight: normal;
 	line-height: 1.231;
 }
+
+header {
+	background: url(../images/marquee-stars.svg) #074e68;
+	background-size: cover;
+	padding: 22px 0;
+	h5 {
+		font-weight: 300;
+		color: white;
+	}
+	dl, dd, input.button {
+		margin: 0;
+	}
+}
+
 table { border: 0; }
 
 .top-bar-section ul li > a.ogre {
@@ -51,6 +65,9 @@ h2#username {
 	margin-top: 20px;
 }
 
+.body {
+	padding-top: 20px;
+}
 
 /* -----------------------------------------
    Listing

@@ -38,6 +38,7 @@ $concrete:      #95A5A6;
 $asbestos:      #7F8C8D;
 $wet-asphalt:   #34495E;
 $midnight-blue: #2C3E50;
+$grey333:		#333333;
 
 // Shades of Yellow/Orange
 $sun-flower:  #F1C40F;
@@ -217,11 +218,11 @@ $thumb-box-shadow-hover: 0 0 6px 1px rgba($primary-color,0.8);
 $tooltip-bg: $midnight-blue;
 
 //
-// Top Bar Variables
+// TOP BAR
 //
 
 // Background color for the top bar
-$topbar-bg: $wet-asphalt;
+$topbar-bg: $grey333;
 
 // Top menu icon styles
 $topbar-menu-link-color-toggled: $success-color;

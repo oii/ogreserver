@@ -41,21 +41,30 @@
 			</section>
 		</nav>
 
-		<div class="row">
+		<header>
+			<div class="row">
+				<div class="large-12 columns">
+					<h5>Search for a book</h5>
+				</div>
+			</div>
+			<div class="row">
+				<form action="{{ url_for('views.list') }}" method="get">
+					<div class="large-10 columns">
+						<input type="text" name="s" value="{{ s }}" />
+					</div>
+					<div class="large-2 columns">
+						<input type="submit" value="Search" class="search button radius small" />
+					</div>
+				</form>
+			</div>
+		</header>
+
+		<div class="row body">
 			<div class="large-12 columns">
 				<div id="messages">
 					{% for message in get_flashed_messages() %}
 					<div class="flash">{{ message }}</div>
 					{% endfor %}
-				</div>
-
-				<h5>Search for a book</h5>
-
-				<div class="search">
-					{% if session.user_id %}
-						{% import "macros.html" as macros %}
-						{{ macros.search() }}
-					{% endif %}
 				</div>
 
 				{% block body %}{% endblock %}

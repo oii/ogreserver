@@ -81,6 +81,16 @@ $microformat-border-width: 2px;
 $microformat-border-color: $clouds;
 
 //
+// BUTTONS
+//
+
+// We use these to build padding for buttons.
+$button-tny: rem-calc(8);
+$button-sml: rem-calc(10);
+$button-med: rem-calc(14);
+$button-lrg: rem-calc(16);
+
+//
 // Form Variables
 //
 

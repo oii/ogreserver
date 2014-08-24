@@ -7,7 +7,7 @@
 
 	<div class="row">
 		{% if g.user.id == user.id %}
-		<a href="{{ url_for('views.profile_edit', user_id=user.id) }}">edit profile</a>
+		<a href="{{ url_for('user.profile_edit', user_id=user.id) }}">edit profile</a>
 		{% endif %}
 	</div>
 

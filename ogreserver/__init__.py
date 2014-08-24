@@ -47,12 +47,22 @@ def create_app(config):
     from flaskext.markdown import Markdown
     Markdown(app, extensions=['footnotes'])
 
-    # import views as a blueprint and register with Flask the app
-    from .views import views
-    app.register_blueprint(views)
+    # import view blueprints and register with the Flask app
+    from .views import bp_core
+    from .views.api import bp_api
+    from .views.auth import bp_auth
+    from .views.docs import bp_docs
+    from .views.ebooks import bp_ebooks
+    from .views.user import bp_user
+    app.register_blueprint(bp_core)
+    app.register_blueprint(bp_api)
+    app.register_blueprint(bp_auth)
+    app.register_blueprint(bp_docs)
+    app.register_blueprint(bp_ebooks)
+    app.register_blueprint(bp_user)
 
     # map the blueprint's login() func to Flask-Login
-    app.login_manager.login_view = 'views.login'
+    app.login_manager.login_view = 'auth.login'
 
     return app
 

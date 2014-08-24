@@ -5,7 +5,7 @@ import pytest
 from werkzeug.exceptions import Forbidden
 
 from ..models.datastore import DataStore
-from ..views import check_auth
+from ..views.api import check_auth
 
 
 @pytest.mark.xfail

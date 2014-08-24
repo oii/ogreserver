@@ -1,0 +1,47 @@
+from __future__ import absolute_import
+
+from flask import current_app as app
+
+from flask import Blueprint, request, redirect, render_template
+from flask.ext.login import login_required
+
+from ..models.datastore import DataStore
+
+bp_ebooks = Blueprint('ebooks', __name__)
+
+
+@bp_ebooks.route('/list', methods=['GET', 'POST'])
+@login_required
+def listing():
+    ds = DataStore(app.config, app.logger, app.whoosh)
+    s = request.args.get('s')
+    if s:
+        rs = ds.search(s)
+    else:
+        rs = ds.search()
+
+    return render_template('list.html', ebooks=rs)
+
+
+@bp_ebooks.route('/download/<ebook_id>', defaults={'fmt': None})
+@bp_ebooks.route('/download/<ebook_id>/<fmt>')
+@login_required
+def download(ebook_id, fmt=None):
+    ds = DataStore(app.config, app.logger)
+    return redirect(ds.get_ebook_url(ebook_id, fmt))
+
+
+@bp_ebooks.route('/ajax/rating/<ebook_id>')
+@login_required
+def get_rating(ebook_id):
+    ds = DataStore(app.config, app.logger)
+    rating = ds.get_rating(ebook_id)
+    return jsonify({'rating': rating})
+
+
+@bp_ebooks.route('/ajax/comment-count/<ebook_id>')
+@login_required
+def get_comment_count(ebook_id):
+    ds = DataStore(app.config, app.logger)
+    comments = ds.get_comments(ebook_id)
+    return jsonify({'comments': len(comments)})

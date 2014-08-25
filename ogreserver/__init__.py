@@ -31,8 +31,9 @@ def create_app(config):
     app.whoosh = init_whoosh(app)
 
     # setup Flask-Login
-    from .extensions.flask_login import init_login
+    from .extensions.flask_login import init_login, add_user_to_globals
     app.login_manager = init_login(app)
+    app.before_request(add_user_to_globals)
 
     # setup Flask-Uploads
     from .extensions.flask_uploads import init_uploads

@@ -28,6 +28,8 @@ class User(Base, UserMixin):
     api_key_expires = Column(DateTime)
     points = Column(Integer, default=0)
     needs_password_reset = Column(Boolean, default=1)
+    preferred_ebook_format = Column(String(4))
+    dont_email_me = Column(Boolean, default=False)
     badges = relationship(UserBadge, backref='user', lazy='dynamic')
     total_users = None
     session_api_key = None

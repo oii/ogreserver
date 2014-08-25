@@ -3,30 +3,43 @@
 
 <h2 id='username'>{{ user.username }}</h2>
 
-<div id="content">
+<div class="large-9 columns">
 
-<fieldset>
-<legend>Stats</legend>
+	<div class="row">
+		{% if g.user.id == user.id %}
+		<a href="{{ url_for('views.profile_edit', user_id=user.id) }}">edit profile</a>
+		{% endif %}
+	</div>
 
-<table>
-<tr>
-	<th>Number of syncs from ogreclient</th>
-	<td>{{ stats.total_syncs }}</td>
-<tr>
-</tr>
-	<th>Number of ebook uploads</th>
-	<td>{{ stats.total_uploads }}</td>
-<tr>
-</tr>
-	<th>Number of DRM cleaned ebooks</th>
-	<td></td>
-</tr>
-</table>
-</fieldset>
+	<div class="row user-info">
+		<p>
+		<strong>Email Address</strong>: {{ user.email }}
+		</p>
+		<p>
+		<strong>Preferred ebook format</strong>: {{ user.preferred_ebook_format }}
+		</p>
+	</div>
 
-{% if g.user.id == user.id %}
-<a href="{{ url_for('views.profile_edit', user_id=user.id) }}">edit profile</a>
-{% endif %}
+	<div class="row">
+		<fieldset>
+		<legend>Stats</legend>
+
+		<table>
+		<tr>
+			<th>Number of syncs from ogreclient</th>
+			<td>{{ stats.total_syncs }}</td>
+		<tr>
+		</tr>
+			<th>Number of ebook uploads</th>
+			<td>{{ stats.total_uploads }}</td>
+		<tr>
+		</tr>
+			<th>Number of DRM cleaned ebooks</th>
+			<td></td>
+		</tr>
+		</table>
+		</fieldset>
+	</div>
 
 </div>
 

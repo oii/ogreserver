@@ -1,21 +1,35 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<h2>Edit {{ user.username }}</h2>
+<h2 id='username'>{{ user.username }}</h2>
 
 {% for error in form.errors %}<p class="error">{{ form.errors[error][0] }}</p>{% endfor %}
 
-<form action="{{ url_for('views.profile') }}" method="post">
-	{{ form.csrf_token }}
-	<dl>
-		{% for field in form %}
-		{% if field.name != 'csrf_token' %}
-		<dt>{{ field.label }}</dt>
-		<dd>{{ field() }}</dd>
-		{% endif %}
-		{% endfor %}
-		<dd><input type="submit" value="Save" class="button radius primary-dark" /></dd>
-	</dl>
-</form>
+<div class="large-9 columns">
+
+	<div class="row">
+		<fieldset>
+		<legend>Edit</legend>
+
+		<form action="{{ url_for('user.profile_edit', user_id=user.id) }}" method="post">
+			{{ form.csrf_token }}
+
+			<dl>
+				{% for field in form %}
+				{% if field.name != 'csrf_token' %}
+				<dt>{{ field.label }}</dt>
+				<dd>{{ field() }}</dd>
+				{% endif %}
+				{% endfor %}
+
+				<dd>
+					<input type="submit" value="Save" class="button radius primary-dark" />
+					<a href="/profile" class="button radius secondary">Cancel</a>
+				</dd>
+			</dl>
+		</form>
+	</div>
+
+</div>
 
 {% endblock %}

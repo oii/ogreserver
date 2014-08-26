@@ -23,6 +23,14 @@ def listing():
     return render_template('list.html', ebooks=rs)
 
 
+@bp_ebooks.route('/view/<ebook_id>')
+@login_required
+def view(ebook_id):
+    ds = DataStore(app.config, app.logger)
+    ebook = ds.load_ebook(ebook_id)
+    return render_template('view.html', ebook=ebook)
+
+
 @bp_ebooks.route('/download/<ebook_id>', defaults={'fmt': None})
 @bp_ebooks.route('/download/<ebook_id>/<fmt>')
 @login_required

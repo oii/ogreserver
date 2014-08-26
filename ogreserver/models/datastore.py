@@ -179,6 +179,30 @@ class DataStore():
         return output
 
 
+    def load_ebook(self, ebook_id):
+        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
+
+        # query returns dict with ebook->versions->formats nested document
+        # versions are ordered by popularity
+        ebook = r.table('ebooks').get(ebook_id).merge(
+            lambda ebook: {
+                'versions': r.table('versions').get_all(
+                    ebook['ebook_id'], index='ebook_id'
+                ).order_by(
+                    r.desc('popularity')
+                ).coerce_to('array').merge(
+                    lambda version: {
+                        'formats': r.table('formats').get_all(
+                            version['version_id'], index='version_id'
+                        ).coerce_to('array')
+                    }
+                )
+            }
+        ).run(conn)
+
+        return ebook
+
+
     def index_for_search(self, book_data):
         if self.whoosh is None:
             return

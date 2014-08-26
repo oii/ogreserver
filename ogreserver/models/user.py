@@ -39,6 +39,11 @@ class User(Base, UserMixin):
         self.password = pwd_context.encrypt(password)
         self.email = email
 
+    def save(self):
+        db_session = get_db(app)
+        db_session.add(self)
+        db_session.commit()
+
     @staticmethod
     def authenticate(username, password):
         """

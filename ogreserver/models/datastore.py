@@ -23,6 +23,7 @@ class DataStore():
         self.logger = logger
         self.whoosh = whoosh
 
+
     def update_library(self, ebooks, user):
         """
         The core library synchronisation method.
@@ -193,7 +194,6 @@ class DataStore():
         except Exception as e:
             self.logger.error(e)
 
-
     def search(self, searchstr=None, page=1):
         """
         Search for books using whoosh, or return first page from all
@@ -234,6 +234,7 @@ class DataStore():
         conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
         return r.table('ebooks').get(ebook_id)['comments'].run(conn)
 
+
     @staticmethod
     def build_ebook_key(lastname, firstname, title):
         """
@@ -255,6 +256,7 @@ class DataStore():
         """
         total_users = User.get_total_users()
         return (version['quality'] * 0.7) + ((float(version['popularity']) / total_users) * 100 * 0.3)
+
 
     def get_ebook_url(self, ebook_id, fmt=None, version_id=None):
         """
@@ -320,6 +322,7 @@ class DataStore():
             key=filename
         )
 
+
     def update_book_hash(self, current_file_hash, updated_file_hash):
         """
         Update a format's entry with a new PK
@@ -362,6 +365,7 @@ class DataStore():
         """
         conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
         r.table('formats').get(file_hash).update({'dedrm': True}).run(conn)
+
 
     def store_ebook(self, ebook_id, file_hash, filename, filepath, fmt):
         """

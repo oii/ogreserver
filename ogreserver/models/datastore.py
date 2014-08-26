@@ -108,6 +108,7 @@ class DataStore():
                         'popularity': 1,
                         'quality': 0,
                         'original_format': incoming['format'],
+                        'date_added': r.now(),
                     }
                     ret = r.table('versions').insert(new_version).run(conn)
 

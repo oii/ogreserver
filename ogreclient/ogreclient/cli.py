@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 
 import argparse
-import datetime
 import os
 import sys
 
@@ -33,7 +32,7 @@ def entrypoint():
         if args.quiet is True:
             prntr = DummyPrinter()
         else:
-            prntr = CliPrinter(start=datetime.datetime.now(), debug=args.debug)
+            prntr = CliPrinter(debug=args.debug)
 
             # set printer to log everything for later dispatch to ogreserver
             if args.debug is True:

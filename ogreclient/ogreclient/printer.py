@@ -1,5 +1,8 @@
+from __future__ import absolute_import
+
 import datetime
 import sys
+import threading
 import traceback
 
 PROGBAR_LEN = 40
@@ -16,9 +19,11 @@ class CliPrinter:
     GREY = '\033[90m'
     END = '\033[0m'
 
+    DEFAULT = 'OGRECLIENT'
     ERROR = 'ERROR'
     DEBUG = 'DEBUG'
     UNKNOWN = 'UNKNOWN'
+
     DEDRM = 'DEDRM'
     WRONG_KEY = 'WRONG KEY'
     CORRUPT = 'CORRUPT'
@@ -28,30 +33,37 @@ class CliPrinter:
     log_output = False
     logs = []
 
-    def __init__(self, start=None, debug=False, progressbar_len=PROGBAR_LEN, progressbar_char="#"):
-        self.start = start
+    def __init__(self, notimer=False, debug=False, progressbar_len=PROGBAR_LEN, progressbar_char="#"):
+        self.notimer = notimer
         self.debug = debug
         self.progressbar_len = progressbar_len
         self.progressbar_char = progressbar_char
 
+        # start the timer if it's in use
+        if notimer is False:
+            self.start = datetime.datetime.now()
+
         # used internally for tracking state
         self.progress_running = False
         self.line_needs_finishing = False
+
+        # create a mutex for thread-safe printing
+        self.lock = threading.Lock()
+
 
     def _get_colour_and_prefix(self, mode=None, success=None):
         colour = self.WHITE
 
         if mode == self.UNKNOWN:
             colour = self.BLUE
-        elif mode == self.DEDRM and success is True:
+        elif success is True:
             colour = self.GREEN
-            prefix = 'DECRYPTED'
 
         if mode == self.ERROR:
             prefix = 'ERROR'
             colour = self.RED
         elif mode is None:
-            prefix = 'OGRECLIENT'
+            prefix = self.DEFAULT
         else:
             prefix = mode
 
@@ -71,16 +83,13 @@ class CliPrinter:
             self.p(msg, mode, success=False, notime=notime)
 
     def p(self, msg, mode=None, notime=False, success=None, extra=None, nonl=False):
-        if self.line_needs_finishing is True:
-            self.line_needs_finishing = False
-            sys.stdout.write(u'\n')
+        # print a newline if required (this also ends any active progress bars)
+        self.print_newline()
 
-        if self.progress_running is True:
-            self.progress_running = False
-            sys.stdout.write(u'\n')
-
+        # setup for print
         colour, prefix = self._get_colour_and_prefix(mode, success=success)
 
+        # default stdout
         out = sys.stdout
 
         if success is False:
@@ -90,36 +99,42 @@ class CliPrinter:
         if self.log_output is True:
             self.logs.append(u'[{: <10}]  {}'.format(prefix, msg))
 
+        # calculate and format elapsed time
         t = self._get_time_elapsed(notime)
-        out.write(u'{}[{: <10}]{} {: >4} {}{}{}'.format(
-            CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour, msg, CliPrinter.END
-        ))
 
-        if extra is not None:
-            out.write(u'\n{}[{: <10}]          {}> {}{}'.format(
-                CliPrinter.YELLOW, prefix, CliPrinter.WHITE, CliPrinter.END, extra
+        # thread-safe printing to stdout
+        with self.lock:
+            out.write(u'{}[{: <10}]{} {}{}{}{}'.format(
+                CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour, msg, CliPrinter.END
             ))
 
-        if nonl is True:
-            self.line_needs_finishing = True
-        else:
-            out.write(u'\n')
+            if extra is not None:
+                t = self._get_time_prefix(notime=True)
+                out.write(u'\n{}[{: <10}]  {}{}> {}{}'.format(
+                    CliPrinter.YELLOW, prefix, CliPrinter.WHITE, t, CliPrinter.END, extra
+                ))
 
-    def progressi(self, amount, mode=None):
-        self.progress_running = True
+            if nonl is True:
+                self.line_needs_finishing = True
+            else:
+                out.write(u'\n')
+
+            out.flush()
+
+    def progressi(self, amount, mode=None, notime=False):
         colour, prefix = self._get_colour_and_prefix(mode)
 
         self.progress_running = True
 
-        t = self._get_time_elapsed()
-        sys.stdout.write(u'\r{}[{: <10}]{} {: >4} {}{}{}'.format(
+        t = self._get_time_elapsed(notime)
+        sys.stdout.write(u'\r{}[{: <10}]{} {}{}{}{}'.format(
             CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour,
             (amount * self.progressbar_char),
             CliPrinter.END
         ))
         sys.stdout.flush()
 
-    def progressf(self, num_blocks=None, block_size=1, total_size=None):
+    def progressf(self, num_blocks=None, block_size=1, total_size=None, notime=False):
         if num_blocks is None or total_size is None:
             raise ProgressfArgumentError
 
@@ -131,8 +146,8 @@ class CliPrinter:
         progress = float(num_blocks * block_size) / float(total_size)
         progress = progress if progress < 1 else 1
 
-        t = self._get_time_elapsed()
-        sys.stdout.write(u'\r{}[{: <10}]{} {: >4} {}[{}{}] {}%{}'.format(
+        t = self._get_time_elapsed(notime)
+        sys.stdout.write(u'\r{}[{: <10}]{} {}{}[ {}{} ] {}%{}'.format(
             CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour,
             self.progressbar_char * int(progress * self.progressbar_len),
             ' ' * (self.progressbar_len - int(progress * self.progressbar_len)),
@@ -141,9 +156,19 @@ class CliPrinter:
         ))
         sys.stdout.flush()
 
+    def _get_time_prefix(self, notime=False):
+        if self.notimer is True:
+            # no timer at global printer level
+            return ' '
+        elif notime is True:
+            # no timer displayed on this particular print
+            return ' ' * 9
+        else:
+            return ''
+
     def _get_time_elapsed(self, notime=False, formatted=True):
-        if notime is True or self.start is None:
-            return ' ' * 8
+        if self.notimer is True or notime is True:
+            return self._get_time_prefix(notime)
 
         ts = datetime.datetime.now() - self.start
         if formatted is True:
@@ -152,7 +177,8 @@ class CliPrinter:
                 ts.seconds % 3600 // 60,
                 ts.seconds % 60
             )
-            return formatted_ts
+            # return formatted time with space padding
+            return '{: <4} '.format(formatted_ts)
         else:
             return ts
 
@@ -167,11 +193,15 @@ class CliPrinter:
         return msg
 
     def close(self):
-        if self.line_needs_finishing is True or self.progress_running is True:
-            self.progress_running = False
-            self.line_needs_finishing = False
-            sys.stdout.write(u'\n')
-            sys.stdout.flush()
+        self.print_newline()
+
+    def print_newline(self):
+        with self.lock:
+            if self.line_needs_finishing is True or self.progress_running is True:
+                self.progress_running = False
+                self.line_needs_finishing = False
+                sys.stdout.write(u'\n')
+                sys.stdout.flush()
 
 
 class DummyPrinter:

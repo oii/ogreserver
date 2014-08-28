@@ -474,10 +474,15 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
 
     for line in extracted.splitlines():
         # extract the simple metadata
-        for prop in ('title', 'publisher', 'published'):
+        for prop in ('title', 'publisher'):
             if line.lower().startswith(prop):
                 meta[prop] = line[line.find(':')+1:].strip()
                 continue
+
+        # rename published to publish_date
+        if line.lower().startswith('published'):
+            meta['publish_date'] = line[line.find(':')+1:].strip()
+            continue
 
         if 'Tags' in line:
             meta['tags'] = line[line.find(':')+1:].strip()

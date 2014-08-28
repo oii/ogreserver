@@ -90,7 +90,7 @@ class DataStore():
                         'rating': None,
                         'comments': [],
                         'publisher': incoming['publisher'] if 'publisher' in incoming else None,
-                        'publish_date': incoming['published'] if 'published' in incoming else None,
+                        'publish_date': incoming['publish_date'] if 'publish_date' in incoming else None,
                         'meta': {
                             'isbn': incoming['isbn'] if 'isbn' in incoming else None,
                             'asin': incoming['asin'] if 'asin' in incoming else None,

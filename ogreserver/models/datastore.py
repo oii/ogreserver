@@ -100,28 +100,8 @@ class DataStore():
                     }
                     r.table('ebooks').insert(new_book).run(conn)
 
-                    # add the first version
-                    new_version = {
-                        'ebook_id': ebook_id,
-                        'user': user.username,
-                        'size': incoming['size'],
-                        'popularity': 1,
-                        'quality': 0,
-                        'original_format': incoming['format'],
-                        'date_added': r.now(),
-                    }
-                    ret = r.table('versions').insert(new_version).run(conn)
-
-                    new_format = {
-                        'file_hash': incoming['file_hash'],
-                        'version_id': ret['generated_keys'][0],
-                        'format': incoming['format'],
-                        'user': user.username,
-                        'uploaded': False,
-                        'source_patched': False,
-                        'dedrm': incoming['dedrm'],
-                    }
-                    r.table('formats').insert(new_format).run(conn)
+                    # create version and initial format
+                    self._create_new_version(ebook_id, user.username, incoming)
 
                     # mark book as new
                     output[incoming['file_hash']]['ebook_id'] = ebook_id
@@ -143,26 +123,8 @@ class DataStore():
                         self.logger.info(msg)
                         continue
 
-                    new_version = {
-                        'ebook_id': ebook_id,
-                        'user': user.username,
-                        'size': incoming['size'],
-                        'popularity': 1,
-                        'quality': 0,
-                        'original_format': incoming['format'],
-                    }
-                    ret = r.table('versions').insert(new_version).run(conn)
-
-                    new_format = {
-                        'file_hash': incoming['file_hash'],
-                        'ebook_id': ebook_id,
-                        'version_id': ret['generated_keys'][0],
-                        'format': incoming['format'],
-                        'user': user.username,
-                        'uploaded': False,
-                        'dedrm': incoming['dedrm'],
-                    }
-                    r.table('formats').insert(new_format).run(conn)
+                    # create new version, with its initial format
+                    self._create_new_version(ebook_id, user.username, incoming)
 
                     # mark with ebook_id and return
                     output[incoming['file_hash']]['ebook_id'] = ebook_id
@@ -180,6 +142,33 @@ class DataStore():
                 self.logger.error(unicode(e).encode('utf8'), exc_info=True)
 
         return output
+
+
+    def _create_new_version(self, ebook_id, username, incoming):
+        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
+
+        # add the first version
+        new_version = {
+            'ebook_id': ebook_id,
+            'user': username,
+            'size': incoming['size'],
+            'popularity': 1,
+            'quality': 0,
+            'original_format': incoming['format'],
+            'date_added': r.now(),
+        }
+        ret = r.table('versions').insert(new_version).run(conn)
+
+        new_format = {
+            'file_hash': incoming['file_hash'],
+            'version_id': ret['generated_keys'][0],
+            'format': incoming['format'],
+            'user': username,
+            'uploaded': False,
+            'source_patched': False,
+            'dedrm': incoming['dedrm'],
+        }
+        r.table('formats').insert(new_format).run(conn)
 
 
     def load_ebook(self, ebook_id):

@@ -3,6 +3,7 @@
 from __future__ import absolute_import
 
 import datetime
+import json
 import os
 import sys
 
@@ -39,6 +40,20 @@ def cleardb():
         shutil.rmtree('search.db')
         subprocess.call('kill -HUP $(cat /tmp/gunicorn-ogreserver.pid)', shell=True)
     conn.close()
+
+
+@manager.command
+def lb(ebook_id):
+    from ogreserver.models.datastore import DataStore
+    ds = DataStore(app.config, logger=None)
+    ebook = ds.load_ebook(ebook_id)
+    for v in ebook['versions']:
+        v['date_added'] = v['date_added'].isoformat()
+        del(v['ebook_id'])
+        for f in v['formats']:
+            del(f['version_id'])
+
+    print json.dumps(ebook, indent=2)
 
 
 @manager.command

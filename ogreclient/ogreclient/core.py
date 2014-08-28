@@ -561,15 +561,16 @@ def _parse_author(author):
 
 
 def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_hash, filepath, existing_tags, ogre_id, host, session_key):
-    format = os.path.splitext(filepath)[1]
+    # ebook file format
+    fmt = os.path.splitext(filepath)[1]
 
     with make_temp_directory() as temp_dir:
         # copy the ebook to a temp file
-        tmp_name = '{}{}'.format(os.path.join(temp_dir, id_generator()), format)
+        tmp_name = '{}{}'.format(os.path.join(temp_dir, id_generator()), fmt)
         shutil.copy(filepath, tmp_name)
 
         try:
-            if format[1:] in MOBI_FORMATS:
+            if fmt[1:] in MOBI_FORMATS:
                 # append ogre's ebook_id to the tags list
                 if existing_tags is not None and len(existing_tags) > 0:
                     new_tags = u'ogre_id={}, {}'.format(ogre_id, existing_tags)

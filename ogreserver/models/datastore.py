@@ -165,7 +165,7 @@ class DataStore():
             'format': incoming['format'],
             'user': username,
             'uploaded': False,
-            'source_patched': False,
+            'ogreid_tagged': False,
             'dedrm': incoming['dedrm'],
         }
         r.table('formats').insert(new_format).run(conn)
@@ -354,7 +354,7 @@ class DataStore():
             return False
         try:
             data['file_hash'] = updated_file_hash
-            data['source_patched'] = True
+            data['ogreid_tagged'] = True
             r.table('formats').insert(data).run(conn)
             r.table('formats').get(current_file_hash).delete().run(conn)
             self.logger.info('Updated {} to {} on {}'.format(

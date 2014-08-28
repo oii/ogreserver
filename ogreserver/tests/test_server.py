@@ -38,7 +38,8 @@ def test_update_book_hash(flask_app, datastore, user):
             'format': 'epub',
             'file_hash': '38b3fc3a',
             'owner': 'mafro',
-            'size': 139654
+            'size': 139654,
+            'dedrm': False,
         },
     }
 

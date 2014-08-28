@@ -119,6 +119,7 @@ class DataStore():
                         'user': user.username,
                         'uploaded': False,
                         'source_patched': False,
+                        'dedrm': incoming['dedrm'],
                     }
                     r.table('formats').insert(new_format).run(conn)
 
@@ -159,6 +160,7 @@ class DataStore():
                         'format': incoming['format'],
                         'user': user.username,
                         'uploaded': False,
+                        'dedrm': incoming['dedrm'],
                     }
                     r.table('formats').insert(new_format).run(conn)
 

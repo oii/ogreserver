@@ -151,6 +151,7 @@ def search_for_ebooks(config, prntr):
         suffix = item[2]
         filesize = item[3]
         file_hash = item[4]
+        dedrm = False
 
         if config['no_drm'] is False:
             try:
@@ -165,6 +166,7 @@ def search_for_ebooks(config, prntr):
                     file_hash = new_filehash
                     filesize = new_filesize
                     filename, suffix = os.path.splitext(os.path.basename(filepath))
+                    dedrm = True
 
             except CorruptEbookError:
                 # record books which failed due to unicode filename issues
@@ -218,6 +220,7 @@ def search_for_ebooks(config, prntr):
                     'size': filesize,
                     'file_hash': file_hash,
                     'owner': config['username'],
+                    'dedrm': dedrm,
                 }
                 # merge all the meta data constructed above
                 ebooks_dict[authortitle].update(meta)
@@ -262,12 +265,16 @@ def remove_drm_from_ebook(config, prntr, ebook_cache, filepath, file_hash, suffi
                 ebook_cache.set_ebook(filepath, file_hash, drmfree=True)
 
             elif state == DRM.decrypted:
-                prntr.p(u'DRM removed from {}'.format(filepath), CliPrinter.DEDRM, success=True)
+                if config['verbose']:
+                    prntr.p(u'DRM removed from {}'.format(filepath), CliPrinter.DEDRM, success=True)
 
                 # get hash of decrypted ebook
                 md5_tup = compute_md5(decrypted_filepath)
                 new_filehash = md5_tup[0]
                 new_filesize = md5_tup[2]
+
+                # add the OGRE DeDRM tag to the decrypted ebook
+                add_dedrm_tag(config['calibre_ebook_meta_bin'], decrypted_filepath)
 
                 # init OGRE directory in user's ebook dir
                 if not os.path.exists(os.path.join(config['ebook_home'], 'ogre')):
@@ -278,6 +285,9 @@ def remove_drm_from_ebook(config, prntr, ebook_cache, filepath, file_hash, suffi
                     config['ebook_home'], 'ogre', os.path.basename(decrypted_filepath)
                 )
                 os.rename(decrypted_filepath, new_filepath)
+
+                if config['verbose']:
+                    prntr.p(u'Decrypted book moved to {}'.format(new_filepath), CliPrinter.DEDRM, success=True)
 
                 # mark decrypted book as drmfree=True in cache
                 ebook_cache.set_ebook(filepath, new_filehash, drmfree=True)
@@ -496,16 +506,6 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
                             meta['ebook_id'] = tags[j][8:]
                             del(tags[j])
                     meta['tags'] = ', '.join(tags)
-
-            # extract the DeDRM flag
-            #if 'DeDRM' in meta['tags']:
-            #    import pdb;pdb.set_trace()
-            #    tags = meta['tags'].split(', ')
-            #    for j in reversed(xrange(len(tags))):
-            #        if 'DeDRM' in tags[j]:
-            #            meta['dedrm'] = tags[j][6:]
-            #            del(tags[j])
-            #    meta['tags'] = ', '.join(tags)
             continue
 
         if 'Author' in line:
@@ -620,6 +620,42 @@ def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_hash, filepath, existing_t
 
         except (HTTPError, URLError) as e:
             raise FailedConfirmError(str(e))
+
+
+def add_dedrm_tag(calibre_ebook_meta_bin, filepath):
+    # get the existing tags from the meta data on the ebook
+    meta = metadata_extract(calibre_ebook_meta_bin, filepath)
+    existing_tags = meta['tags'] if 'tags' in meta else None
+
+    if existing_tags is not None and 'OGRE-DeDRM' in existing_tags:
+        return
+
+    with make_temp_directory() as temp_dir:
+        # ebook file format
+        fmt = os.path.splitext(filepath)[1]
+
+        # copy the ebook to a temp file
+        tmp_name = '{}{}'.format(os.path.join(temp_dir, id_generator()), fmt)
+        shutil.copy(filepath, tmp_name)
+
+        try:
+            # append DeDRM to the tags list
+            if existing_tags is not None and len(existing_tags) > 0:
+                new_tags = u'OGRE-DeDRM, {}'.format(existing_tags)
+            else:
+                new_tags = u'OGRE-DeDRM'
+
+            # write DeDRM to --tags
+            subprocess.check_output(
+                [calibre_ebook_meta_bin, tmp_name, '--tags', new_tags],
+                stderr=subprocess.STDOUT
+            )
+
+            # move file back into place
+            shutil.copy(tmp_name, filepath)
+
+        except subprocess.CalledProcessError as e:
+            raise FailedWritingMetaDataError(str(e))
 
 
 def send_logs(prntr, host, session_key, errord_list):

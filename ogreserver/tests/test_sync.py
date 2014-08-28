@@ -9,7 +9,8 @@ def test_sync_duplicate(flask_app, datastore, user):
             'format': 'epub',
             'file_hash': '38b3fc3aa7fe67e76f0d8b248e62b940',
             'owner': 'mafro',
-            'size': 139654
+            'size': 139654,
+            'dedrm': False,
         },
     }
 
@@ -36,7 +37,8 @@ def test_sync_ebook_update(flask_app, datastore, user):
             'format': 'epub',
             'file_hash': 'b889dec977aef12c6973acc2cf5b8590',
             'owner': 'mafro',
-            'size': 139654
+            'size': 139654,
+            'dedrm': False,
         },
     }
 
@@ -67,7 +69,8 @@ def test_sync_multiple_versions(flask_app, datastore, user):
             'format': 'epub',
             'file_hash': 'd41d8cd98f00b204e9800998ecf8427e',
             'owner': 'mafro',
-            'size': 139654
+            'size': 139654,
+            'dedrm': False,
         },
     }
 

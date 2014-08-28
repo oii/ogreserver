@@ -56,7 +56,8 @@ def test_generate_filename_with_db_load(flask_app, datastore, user):
             'format': 'epub',
             'file_hash': '38b3fc3aa7fe67e76f0d8b248e62b940',
             'owner': 'mafro',
-            'size': 139654
+            'size': 139654,
+            'dedrm': False,
         },
     }
 

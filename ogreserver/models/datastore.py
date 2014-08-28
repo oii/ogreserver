@@ -15,6 +15,7 @@ from .user import User
 from .utils import connect_s3
 
 from ..exceptions import OgreException, BadMetaDataError, ExactDuplicateError
+from ..exceptions import NoFormatAvailableError
 
 
 class DataStore():
@@ -274,59 +275,76 @@ class DataStore():
         return (version['quality'] * 0.7) + ((float(version['popularity']) / total_users) * 100 * 0.3)
 
 
-    def get_ebook_url(self, ebook_id, fmt=None, version_id=None):
+    def _get_ebook_filehash(self, ebook_id, version_id=None, fmt=None, user=None):
         """
-        Generate a download URL for the requested ebook
+        Get the file_hash for most appropriate format based on supplied params
 
-        If a version isn't requested the top-ranked one will be supplied.
-        If a format isn't requested one will be served in the order defined in EBOOK_FORMATS
+        If version=None, the top-ranked one is returned
+        If format=None, the user-preferred format or first from EBOOK_FORMATS is returned
         """
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
+        ebook = self.load_ebook(ebook_id)
+
+        file_hash = None
+        serve_preferred_format = False
 
         if version_id is None:
-            versions = list(r.table('versions').filter({'ebook_id': ebook_id}).eq_join(
-                'version_id', r.table('formats'), index='version_id'
-            ).zip().run(conn))
-
-            if len(versions) > 1:
-                # sort this book's versions by quality & popularity
-                versions = sorted(versions,
-                    key=lambda v: DataStore.versions_rank_algorithm(v),
-                    reverse=True
-                )
-
             if fmt is None:
                 # select top-ranked version
-                version = versions[0]
-                # serve the OGRE preferred format
-                for fmt in self.config['EBOOK_FORMATS']:
-                    if fmt == version['format']:
-                        file_hash = version['file_hash']
-                        break
+                version = ebook['versions'][0]
+                serve_preferred_format = True
             else:
-                # serve the requested format from best version possible
-                for version in versions:
-                    if fmt == version['format']:
-                        file_hash = version['file_hash']
+                # iterate versions, break on first format match
+                for version in ebook['versions']:
+                    file_hash = next((
+                        f['file_hash'] for f in version['formats'] if f['format'] == fmt and f['uploaded'] is True
+                    ), None)
+                    if file_hash is not None:
                         break
         else:
-            # get the specific requested version
-            version = r.table('versions').filter({'version_id': version_id}).eq_join(
-                'version_id', r.table('formats'), index='version_id'
-            ).zip().run(conn)
+            version = next((v for v in ebook['versions'] if v['version_id'] == version_id), None)
+            if version is None:
+                raise NoFormatAvailableError('No version with id {}'.format(version_id))
 
             if fmt is None:
-                # serve the OGRE preferred format
-                for fmt in self.config['EBOOK_FORMATS']:
-                    if fmt == version['format']:
-                        file_hash = version['version_id']
-                        break
-            else:
-                # verify requested format is available on requested version
-                if fmt != version['format']:
-                    raise Exception("Requested format not available on requested version.")
+                if user is not None and user.preferred_ebook_format is not None:
+                    # extract relevant format from version['formats'], or fallback to:
+                    pass
                 else:
-                    file_hash = version['version_id']
+                    serve_preferred_format = True
+            else:
+                # both version_id and format were supplied
+                pass
+
+        if serve_preferred_format is True:
+            # serve the OGRE preferred format
+            for fmt in self.config['EBOOK_FORMATS']:
+                file_hash = next((
+                    f['file_hash'] for f in version['formats'] if f['format'] == fmt and f['uploaded'] is True
+                ), None)
+
+        elif file_hash is None:
+            # serve the named format from specified version
+            file_hash = next((
+                f['file_hash'] for f in version['formats'] if f['format'] == fmt and f['uploaded'] is True
+            ), None)
+
+        # if no file_hash, we have a problem
+        if file_hash is None:
+            raise NoFormatAvailableError('Not found: {} {} {} {}'.format(ebook_id, version_id, fmt, user))
+
+        return file_hash
+
+
+    def get_ebook_url(self, ebook_id, version_id=None, fmt=None, user=None):
+        """
+        Generate a download URL for the requested ebook
+        """
+        file_hash = self._get_ebook_filehash(
+            ebook_id,
+            version_id=version_id,
+            fmt=fmt,
+            user=user
+        )
 
         # generate the filename - which is the key on S3
         filename = self.generate_filename(file_hash)

@@ -48,8 +48,12 @@
 		{% for version in ebook.versions %}
 		<tr>
 			<td>
-				<img src="{{ url_for('core.static', filename='images/epub-icon.png') }}" width="24" height="24" />
-				<img src="{{ url_for('core.static', filename='images/mobi-icon.png') }}" width="24" height="24" />
+				<a href='/download/{{ ebook.ebook_id }}/{{ version.version_id }}/epub'>
+					<img src="{{ url_for('core.static', filename='images/epub-icon.png') }}" width="24" height="24" />
+				</a>
+				<a href='/download/{{ ebook.ebook_id }}/{{ version.version_id }}/mobi'>
+					<img src="{{ url_for('core.static', filename='images/mobi-icon.png') }}" width="24" height="24" />
+				</a>
 			</td>
 			<td>Uploaded by {{ version.user }} on TODO</td>
 			<td>{{ version.original_format }}</td>

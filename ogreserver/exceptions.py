@@ -8,3 +8,6 @@ class ExactDuplicateError(OgreException):
 
 class BadMetaDataError(OgreException):
     pass
+
+class NoFormatAvailableError(OgreException):
+    pass

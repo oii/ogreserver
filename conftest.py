@@ -62,7 +62,7 @@ def flask_app(app_config):
 
 
 @pytest.fixture(scope='module')
-def ogreserver(request, flask_app, datastore):
+def ogreserver(request, flask_app, rethinkdb):
     server = make_server('', 6543, flask_app)
     app_thread = threading.Thread(target=server.serve_forever)
     app_thread.start()
@@ -110,7 +110,7 @@ def user(request, mysqldb):
 
 
 @pytest.fixture(scope='module')
-def datastore(request):
+def rethinkdb(request):
     import rethinkdb as r
     conn = r.connect('localhost', 28015).repl()
 

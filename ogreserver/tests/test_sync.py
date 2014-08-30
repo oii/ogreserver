@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from ..models.datastore import DataStore
 
 
-def test_sync_duplicate(flask_app, datastore, user):
+def test_sync_duplicate(flask_app, rethinkdb, user):
     ebooks_dict = {
         u"H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
             'format': 'epub',
@@ -31,7 +31,7 @@ def test_sync_duplicate(flask_app, datastore, user):
     assert data['dupe'] is True, 'book should be a duplicate'
 
 
-def test_sync_ebook_update(flask_app, datastore, user):
+def test_sync_ebook_update(flask_app, rethinkdb, user):
     ebooks_dict = {
         u"H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
             'format': 'epub',
@@ -63,7 +63,7 @@ def test_sync_ebook_update(flask_app, datastore, user):
     assert data['update'] is False, 'book should not need update'
 
 
-def test_sync_multiple_versions(flask_app, datastore, user):
+def test_sync_multiple_versions(flask_app, rethinkdb, user):
     ebooks_dict = {
         u"Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland": {
             'format': 'epub',
@@ -81,7 +81,7 @@ def test_sync_multiple_versions(flask_app, datastore, user):
     # extract ebook_id of syncd book
     ebook_id = syncd_books.itervalues().next()['ebook_id']
 
-    assert datastore.db('test').table('versions').filter(
+    assert rethinkdb.db('test').table('versions').filter(
         {'ebook_id': ebook_id}
     ).count().run() == 1, 'should be 1 version'
 
@@ -92,9 +92,9 @@ def test_sync_multiple_versions(flask_app, datastore, user):
     ds.update_library(ebooks_dict, user)
 
     # assert only one ebook in DB
-    assert datastore.db('test').table('ebooks').count().run() == 1, 'should only be 1 ebook'
+    assert rethinkdb.db('test').table('ebooks').count().run() == 1, 'should only be 1 ebook'
 
     # assert ebook has two versions attached
-    assert datastore.db('test').table('versions').filter(
+    assert rethinkdb.db('test').table('versions').filter(
         {'ebook_id': ebook_id}
     ).count().run() == 2, 'should be 2 versions'

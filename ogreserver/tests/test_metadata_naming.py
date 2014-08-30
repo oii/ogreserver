@@ -50,7 +50,7 @@ def test_generate_filename_transpose(flask_app):
     assert 'Bronte' in filename, u'transcode of ë failed'
 
 
-def test_generate_filename_with_db_load(flask_app, datastore, user):
+def test_generate_filename_with_db_load(flask_app, rethinkdb, user):
     ebooks_dict = {
         u"H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
             'format': 'epub',

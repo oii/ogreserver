@@ -41,7 +41,7 @@ def app_config():
         'AWS_SECRET_KEY': '',
         'S3_BUCKET': 'oii-ogre-dev',
 
-        'EBOOK_FORMATS': ['mobi','azw','pdf','epub'],
+        'EBOOK_FORMATS': ['egg', 'mobi','azw','pdf','epub'],
         'DOWNLOAD_LINK_EXPIRY': 10,
 
         'WHOOSH_BASE': 'test.db',
@@ -104,6 +104,7 @@ def user(request, mysqldb):
     username = ''.join(random.choice(string.ascii_lowercase) for n in range(6))
     # create user in auth DB
     user = User(username, password=username, email='{}@example.com'.format(username))
+    user.preferred_ebook_format = 'mobi'
     mysqldb.add(user)
     mysqldb.commit()
     return user

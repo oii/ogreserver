@@ -171,6 +171,8 @@ class DataStore():
         }
         r.table('formats').insert(new_format).run(conn)
 
+        return ret['generated_keys'][0]
+
 
     def load_ebook(self, ebook_id):
         conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
@@ -285,48 +287,45 @@ class DataStore():
         ebook = self.load_ebook(ebook_id)
 
         file_hash = None
-        serve_preferred_format = False
 
+        # setup the list of formats in preferred order
+        preferred_formats = self.config['EBOOK_FORMATS']
+
+        # if no specific format requested, supply user's preferred
+        if fmt is None and user is not None and user.preferred_ebook_format is not None:
+            # add user's preferred format as top option in formats list
+            preferred_formats = [] + self.config['EBOOK_FORMATS']
+            preferred_formats.remove(user.preferred_ebook_format)
+            preferred_formats.insert(0, user.preferred_ebook_format)
+
+        elif fmt is not None:
+            # search only for a specific format
+            preferred_formats = [fmt]
+
+        # find the appropriate version
         if version_id is None:
             if fmt is None:
                 # select top-ranked version
                 version = ebook['versions'][0]
-                serve_preferred_format = True
             else:
-                # iterate versions, break on first format match
-                for version in ebook['versions']:
-                    file_hash = next((
-                        f['file_hash'] for f in version['formats'] if f['format'] == fmt and f['uploaded'] is True
-                    ), None)
-                    if file_hash is not None:
-                        break
+                # iterate versions, break on first version which has the format we want
+                for v in ebook['versions']:
+                    for f in v['formats']:
+                        if f['format'] == fmt and f['uploaded'] is True:
+                            version = v
+                            break
         else:
             version = next((v for v in ebook['versions'] if v['version_id'] == version_id), None)
             if version is None:
                 raise NoFormatAvailableError('No version with id {}'.format(version_id))
 
-            if fmt is None:
-                if user is not None and user.preferred_ebook_format is not None:
-                    # extract relevant format from version['formats'], or fallback to:
-                    pass
-                else:
-                    serve_preferred_format = True
-            else:
-                # both version_id and format were supplied
-                pass
-
-        if serve_preferred_format is True:
-            # serve the OGRE preferred format
-            for fmt in self.config['EBOOK_FORMATS']:
-                file_hash = next((
-                    f['file_hash'] for f in version['formats'] if f['format'] == fmt and f['uploaded'] is True
-                ), None)
-
-        elif file_hash is None:
-            # serve the named format from specified version
+        # iterate preferred_formats, break on first match on this version
+        for fmt in preferred_formats:
             file_hash = next((
                 f['file_hash'] for f in version['formats'] if f['format'] == fmt and f['uploaded'] is True
             ), None)
+            if file_hash is not None:
+                break
 
         # if no file_hash, we have a problem
         if file_hash is None:

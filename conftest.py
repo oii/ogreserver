@@ -110,8 +110,8 @@ def user(request, mysqldb):
     return user
 
 
-@pytest.fixture(scope='module')
-def rethinkdb(request):
+@pytest.yield_fixture(scope='session')
+def rethinkdb_init(request):
     import rethinkdb as r
     conn = r.connect('localhost', 28015).repl()
 
@@ -129,14 +129,20 @@ def rethinkdb(request):
     r.db('test').table('formats').index_create('version_id').run()
     r.db('test').table('formats').index_wait('version_id').run()
 
+    yield r
+
     # remove test database
-    def fin():
-        conn = r.connect('localhost', 28015)
-        if 'test' in r.db_list().run(conn):
-            r.db_drop('test').run(conn)
-        conn.close()
-    request.addfinalizer(fin)
-    return r
+    if 'test' in r.db_list().run(conn):
+        r.db_drop('test').run(conn)
+    conn.close()
+
+
+@pytest.fixture(scope='function')
+def rethinkdb(request, rethinkdb_init):
+    rethinkdb_init.db('test').table('ebooks').delete().run()
+    rethinkdb_init.db('test').table('versions').delete().run()
+    rethinkdb_init.db('test').table('formats').delete().run()
+    return rethinkdb_init
 
 
 @pytest.fixture(scope='session')

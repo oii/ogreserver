@@ -149,7 +149,7 @@ class DataStore():
         conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
 
         # add the first version
-        new_version = {
+        ret = r.table('versions').insert({
             'ebook_id': ebook_id,
             'user': username,
             'size': incoming['size'],
@@ -157,21 +157,31 @@ class DataStore():
             'quality': 0,
             'original_format': incoming['format'],
             'date_added': r.now(),
-        }
-        ret = r.table('versions').insert(new_version).run(conn)
+        }).run(conn)
 
-        new_format = {
-            'file_hash': incoming['file_hash'],
-            'version_id': ret['generated_keys'][0],
-            'format': incoming['format'],
-            'user': username,
-            'uploaded': False,
-            'ogreid_tagged': False,
-            'dedrm': incoming['dedrm'],
-        }
-        r.table('formats').insert(new_format).run(conn)
-
+        # create a new format
+        self._create_new_format(
+            ret['generated_keys'][0],
+            incoming['file_hash'],
+            incoming['format'],
+            username=username,
+            dedrm=incoming['dedrm']
+        )
         return ret['generated_keys'][0]
+
+
+    def _create_new_format(self, version_id, file_hash, fmt, username=None, dedrm=None, ogreid_tagged=False):
+        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
+
+        r.table('formats').insert({
+            'file_hash': file_hash,
+            'version_id': version_id,
+            'format': fmt,
+            'user': username if username is not None else 'ogrebot',
+            'uploaded': False,
+            'ogreid_tagged': ogreid_tagged,
+            'dedrm': dedrm,
+        }).run(conn)
 
 
     def load_ebook(self, ebook_id):

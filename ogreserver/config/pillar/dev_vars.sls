@@ -23,6 +23,10 @@ aws_secret_key: ""
 aws_region: ap-southeast-2
 s3_bucket: oii-ogre-dev
 
+aws_advertising_api_access_key: ""
+aws_advertising_api_secret_key: ""
+aws_advertising_api_associate_tag: ""
+
 ogre_user_name: test
 ogre_user_pass: test
 ogre_user_email: test@example.come

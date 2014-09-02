@@ -17,6 +17,11 @@ AWS_SECRET_KEY = "{{ pillar['aws_secret_key'] }}"
 AWS_REGION = "{{ pillar['aws_region'] }}"
 S3_BUCKET = "{{ pillar['s3_bucket'] }}"
 
+# AWS Advertising API config
+AWS_ADVERTISING_API_ACCESS_KEY = "{{ pillar.get('aws_advertising_api_access_key', '') }}"
+AWS_ADVERTISING_API_SECRET_KEY = "{{ pillar.get('aws_advertising_api_secret_key', '') }}"
+AWS_ADVERTISING_API_ASSOCIATE_TAG = "{{ pillar.get('aws_advertising_api_associate_tag', '') }}"
+
 # Flask app
 {% if grains['env'] == 'dev' %}
 DEBUG = True

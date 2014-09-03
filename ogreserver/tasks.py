@@ -10,7 +10,7 @@ from .extensions.database import get_db
 from .models.datastore import DataStore, S3DatastoreError
 
 
-@celery.task()
+@celery.task
 def store_ebook(user_id, ebook_id, file_hash, fmt):
     """
     Store an ebook in the datastore
@@ -49,7 +49,7 @@ def store_ebook(user_id, ebook_id, file_hash, fmt):
                 os.remove(filepath)
 
 
-@celery.task()
+@celery.task(queue="conversion")
 def convert_ebook(sdbkey, source_filepath, dest_fmt):
     """
     Convert an ebook to another format, and push to datastore

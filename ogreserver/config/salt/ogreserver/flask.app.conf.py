@@ -2,14 +2,26 @@
 import os
 basedir = os.path.abspath(os.path.dirname('..'))
 
+
 # Celery config
 BROKER_URL = "amqp://{{ pillar['rabbitmq_user'] }}:{{ pillar['rabbitmq_pass'] }}@{{ pillar['rabbitmq_host'] }}:5672/{{ pillar['rabbitmq_vhost'] }}"
+CELERY_ACCEPT_CONTENT = ['pickle']
 
+# Explicit celery exchange/queue setup
+CELERY_CREATE_MISSING_QUEUES = False
+
+# Setup two different queues
+from kombu import Exchange, Queue
+CELERY_QUEUES = (
+    Queue('ogreserver', Exchange('ogreserver', type='direct'), routing_key='ogreserver'),
+    Queue('conversion', Exchange('conversion', type='direct'), routing_key='convert'),
+)
+
+# Configure default queue
 CELERY_DEFAULT_QUEUE = 'ogreserver'
 CELERY_DEFAULT_EXCHANGE = 'ogreserver'
-CELERY_DEFAULT_EXCHANGE_TYPE = 'direct'
 CELERY_DEFAULT_ROUTING_KEY = 'ogreserver'
-CELERY_ACCEPT_CONTENT = ['pickle']
+
 
 # AWS config
 AWS_ACCESS_KEY = "{{ pillar['aws_access_key'] }}"
@@ -21,6 +33,7 @@ S3_BUCKET = "{{ pillar['s3_bucket'] }}"
 AWS_ADVERTISING_API_ACCESS_KEY = "{{ pillar.get('aws_advertising_api_access_key', '') }}"
 AWS_ADVERTISING_API_SECRET_KEY = "{{ pillar.get('aws_advertising_api_secret_key', '') }}"
 AWS_ADVERTISING_API_ASSOCIATE_TAG = "{{ pillar.get('aws_advertising_api_associate_tag', '') }}"
+
 
 # Flask app
 {% if grains['env'] == 'dev' %}

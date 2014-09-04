@@ -6,6 +6,7 @@ basedir = os.path.abspath(os.path.dirname('..'))
 # Celery config
 BROKER_URL = "amqp://{{ pillar['rabbitmq_user'] }}:{{ pillar['rabbitmq_pass'] }}@{{ pillar['rabbitmq_host'] }}:5672/{{ pillar['rabbitmq_vhost'] }}"
 CELERY_ACCEPT_CONTENT = ['pickle']
+CELERY_TIMEZONE = '{{ pillar['timezone'] }}'
 
 # Explicit celery exchange/queue setup
 CELERY_CREATE_MISSING_QUEUES = False

@@ -249,6 +249,38 @@ class DataStore():
         return output
 
 
+    def find_missing_formats(self, fmt):
+        """
+        Search for missing formats by version.
+
+        Each ebook should have several formats available for download (defined
+        in config['EBOOK_FORMATS']). This method is called by nightly celery
+        task to ensure all relevant formats are available. Objects are returned
+        where $fmt is missing.
+
+        Returns
+            version_id: [
+                {format, original_format, file_hash, ebook_id},
+                ...
+            ]
+        """
+        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
+
+        return r.table('formats').group(
+            index='version_id'
+        ).filter(
+            lambda row: r.table('formats').filter(
+                {'format': fmt}
+            )['version_id'].contains(
+                row['version_id']
+            ).not_()
+        ).eq_join(
+            'version_id', r.table('versions'), index='version_id'
+        ).zip().pluck(
+            'format', 'original_format', 'file_hash', 'ebook_id'
+        ).run(conn)
+
+
     def get_rating(self, ebook_id):
         """
         Get the user rating for this book

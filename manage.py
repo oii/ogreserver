@@ -17,7 +17,7 @@ from rethinkdb.errors import RqlRuntimeError
 
 from ogreserver import create_app
 from ogreserver.extensions.database import get_db, create_tables
-from ogreserver.models.utils import connect_s3
+from ogreserver.utils import connect_s3
 
 app = create_app(
     os.path.join(os.getcwd(), 'ogreserver/config/flask.app.conf.py')

@@ -12,7 +12,7 @@ from whoosh.query import Every
 from whoosh.qparser import MultifieldParser, OrGroup
 
 from .user import User
-from .utils import connect_s3
+from ..utils import connect_s3
 
 from ..exceptions import OgreException, BadMetaDataError, ExactDuplicateError
 from ..exceptions import NoFormatAvailableError

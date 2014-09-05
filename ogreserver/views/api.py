@@ -162,7 +162,6 @@ def upload(auth_key):
 
     # let celery process the upload
     res = store_ebook.delay(
-        user_id=user.id,
         ebook_id=request.form.get('ebook_id'),
         file_hash=request.form.get('file_hash'),
         fmt=request.form.get('format')

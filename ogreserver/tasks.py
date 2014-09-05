@@ -11,7 +11,7 @@ from .models.datastore import DataStore, S3DatastoreError
 
 
 @celery.task
-def store_ebook(user_id, ebook_id, file_hash, fmt):
+def store_ebook(ebook_id, file_hash, fmt):
     """
     Store an ebook in the datastore
     """

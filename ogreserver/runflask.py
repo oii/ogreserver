@@ -1,7 +1,7 @@
-import os
+from __future__ import absolute_import
 
-from . import create_app
+from .factory import create_app, configure_extensions, register_blueprints
 
-app = create_app(
-    os.path.join(os.getcwd(), 'ogreserver/config/flask.app.conf.py')
-)
+app = create_app()
+configure_extensions(app)
+register_blueprints(app)

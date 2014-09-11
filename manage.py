@@ -15,13 +15,11 @@ from sqlalchemy.exc import IntegrityError, ProgrammingError
 import rethinkdb as r
 from rethinkdb.errors import RqlRuntimeError
 
-from ogreserver import create_app
+from ogreserver.factory import create_app
 from ogreserver.extensions.database import get_db, create_tables
 from ogreserver.utils import connect_s3
 
-app = create_app(
-    os.path.join(os.getcwd(), 'ogreserver/config/flask.app.conf.py')
-)
+app = create_app()
 manager = Manager(app)
 
 

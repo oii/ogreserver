@@ -93,7 +93,7 @@ pip-dependencies-extra:
 
 flask-config:
   file.managed:
-    - name: /srv/ogreserver/ogreserver/config/flask.app.conf.py
+    - name: /srv/ogreserver/flask.app.conf.py
     - source: salt://ogreserver/flask.app.conf.py
     - template: jinja
     - user: {{ pillar['app_user'] }}

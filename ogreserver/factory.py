@@ -3,6 +3,9 @@ from __future__ import absolute_import
 import os
 
 from flask import Flask
+from celery import Celery
+
+from .extensions.celery import queue_configuration, schedule_tasks
 
 flask_conf = os.path.join(os.getcwd(), 'flask.app.conf.py')
 
@@ -19,15 +22,36 @@ def create_app(config=None):
         except IOError:
             raise Exception('Missing application config! No file at {}'.format(flask_conf))
 
-    # create Celery
-    from .extensions.celery import init_celery
-    app.celery = init_celery(app)
-
     # import SQLAlchemy disconnect and map to Flask request shutdown
     from .extensions.database import shutdown_db_session
     app.before_request(setup_db_session)
     app.teardown_appcontext(shutdown_db_session)
     return app
+
+
+def make_celery(app):
+    # http://flask.pocoo.org/docs/0.10/patterns/celery
+
+    # create Celery app object
+    celery = Celery(app.import_name, broker=app.config['BROKER_URL'])
+
+    # load config defined in flask.app.py, queue config & celerybeat schedule
+    celery.conf.update(app.config)
+    celery.conf.update(queue_configuration())
+    celery.conf.update(schedule_tasks())
+
+    TaskBase = celery.Task
+
+    class ContextTask(TaskBase):
+        abstract = True
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self, *args, **kwargs)
+
+    celery.Task = ContextTask
+
+    # register tasks with celery; see extensions/celery.py
+    return celery
 
 
 def configure_extensions(app):

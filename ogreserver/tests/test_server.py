@@ -13,7 +13,6 @@ def test_confirm_endpoint():
 
 
 def test_authenticate(flask_app, client_config, tmpdir):
-    flask_app.testing = True
     test_app = flask_app.test_client()
 
     # authenticate with the server, receiving a session key

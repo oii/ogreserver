@@ -8,21 +8,6 @@ BROKER_URL = "amqp://{{ pillar['rabbitmq_user'] }}:{{ pillar['rabbitmq_pass'] }}
 CELERY_ACCEPT_CONTENT = ['pickle']
 CELERY_TIMEZONE = '{{ pillar['timezone'] }}'
 
-# Explicit celery exchange/queue setup
-CELERY_CREATE_MISSING_QUEUES = False
-
-# Setup two different queues
-from kombu import Exchange, Queue
-CELERY_QUEUES = (
-    Queue('ogreserver', Exchange('ogreserver', type='direct'), routing_key='ogreserver'),
-    Queue('conversion', Exchange('conversion', type='direct'), routing_key='convert'),
-)
-
-# Configure default queue
-CELERY_DEFAULT_QUEUE = 'ogreserver'
-CELERY_DEFAULT_EXCHANGE = 'ogreserver'
-CELERY_DEFAULT_ROUTING_KEY = 'ogreserver'
-
 
 # AWS config
 AWS_ACCESS_KEY = "{{ pillar['aws_access_key'] }}"

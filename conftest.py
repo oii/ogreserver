@@ -12,9 +12,11 @@ import virtualenvapi.manage
 try:
     import sqlalchemy
 
-    from .ogreserver.factory import create_app
+    from .ogreserver.factory import create_app, make_celery, configure_extensions, register_blueprints
     from .ogreserver.models.user import User
     from .ogreserver.extensions.database import get_db, create_tables
+
+    from .ogreserver.extensions.celery import register_tasks
 
     from wsgiref.simple_server import make_server
 except (ImportError, ValueError):
@@ -56,6 +58,11 @@ def app_config():
 @pytest.yield_fixture(scope='session')
 def flask_app(app_config):
     app = create_app(app_config)
+    app.testing = True
+    app.celery = make_celery(app)
+    register_tasks(app, pytest=True)
+    configure_extensions(app)
+    register_blueprints(app)
     yield app
     if os.path.exists(app_config['WHOOSH_BASE']):
         shutil.rmtree(app_config['WHOOSH_BASE'])

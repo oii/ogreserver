@@ -1,23 +1,20 @@
 from __future__ import absolute_import
 
 import os
-import json
-import subprocess
 
-from .extensions.celery import celery
+from flask import current_app as app
+
 from .extensions.database import get_db
 
 from .models.datastore import DataStore, S3DatastoreError
 
 
-@celery.task
+@app.celery.task
 def store_ebook(ebook_id, file_hash, fmt):
     """
     Store an ebook in the datastore
     """
-    # import the Flask app and spoof a context
-    from .runflask import app
-    with app.test_request_context():
+    with app.app_context():
         filepath = None
 
         # remove the Flask logger; test_request_context provides DebugLogger
@@ -49,8 +46,8 @@ def store_ebook(ebook_id, file_hash, fmt):
                 os.remove(filepath)
 
 
-@celery.task(queue="conversion")
-def convert_ebook(sdbkey, source_filepath, dest_fmt):
+@app.celery.task
+def conversion_search():
     """
     Convert an ebook to another format, and push to datastore
     """

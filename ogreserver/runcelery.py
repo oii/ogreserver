@@ -1,7 +1,11 @@
 from __future__ import absolute_import
 
-from .extensions.celery import celery
+from .factory import create_app, make_celery
+from .extensions.celery import register_tasks
 
-# setup celery with Flask config
-from .runflask import app
-celery.config_from_object(app.config)
+app = create_app()
+app.celery = make_celery(app)
+register_tasks(app)
+
+# simple reference for starting celery worker -app=runcelery:celery
+celery = app.celery

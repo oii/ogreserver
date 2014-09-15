@@ -30,7 +30,7 @@ def check_auth(auth_key):
             api_key=key_parts[1]
         )
     except:
-        app.logger.error('Bad authentiation key: {}'.format(auth_key), exc_info=True)
+        app.logger.error('Bad authentication key: {}'.format(auth_key), exc_info=True)
 
     if user is None:
         raise Forbidden

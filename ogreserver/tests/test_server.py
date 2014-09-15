@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import base64
 import pytest
 
 from werkzeug.exceptions import Forbidden
@@ -27,4 +28,4 @@ def test_authenticate(flask_app, client_config, tmpdir):
     assert user.username == client_config['username']
 
     with pytest.raises(Forbidden):
-        check_auth('bad_session_key')
+        check_auth(base64.b64encode('bad_session+key'))

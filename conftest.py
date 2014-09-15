@@ -33,7 +33,7 @@ def app_config():
 
         'SECRET_KEY': 'its_a_secret',
 
-        'AMQP_BROKER': 'amqp://dev:dev@localhost:5672/dev',
+        'BROKER_URL': 'amqp://dev:dev@localhost:5672/dev',
         'CELERY_DEFAULT_QUEUE': 'testing',
         'CELERY_DEFAULT_EXCHANGE_TYPE': 'direct',
         'CELERY_DEFAULT_ROUTING_KEY': 'testing',

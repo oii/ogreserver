@@ -1,4 +1,10 @@
 language: python
+install:
+  - pip install -r ogreserver/config/requirements.txt --pre
+  - pip install -r requirements_test.txt
+  - cd ogreclient && python setup.py install && cd ..
+python:
+  - '2.7'
 before_script:
   - curl http://download.rethinkdb.com/apt/pubkey.gpg | sudo apt-key add -
   - echo "deb http://download.rethinkdb.com/apt precise main" | sudo tee -a /etc/apt/sources.list
@@ -7,12 +13,6 @@ before_script:
   - sudo touch /etc/rethinkdb/instances.d/default.conf
   - sudo service rethinkdb restart
   - mysqladmin -u root password 'eggs'
-install:
-  - pip install -r ogreserver/config/requirements.txt --pre
-  - pip install -r requirements_test.txt
-  - cd ogreclient && python setup.py install && cd ..
-python:
-  - '2.7'
 script:
   - py.test -m 'not requires_calibre'
 branches:

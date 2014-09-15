@@ -4,8 +4,6 @@ import pytest
 
 from werkzeug.exceptions import Forbidden
 
-from ..views.api import check_auth
-
 
 @pytest.mark.xfail
 def test_confirm_endpoint():
@@ -21,6 +19,8 @@ def test_authenticate(flask_app, client_config, tmpdir):
         'password': client_config['password'],
     })
     session_key = response.data
+
+    from ..views.api import check_auth
 
     # verify the session key works
     user = check_auth(session_key)

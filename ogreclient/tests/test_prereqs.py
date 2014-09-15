@@ -21,11 +21,11 @@ def test_setup_ogreclient(tmpdir, mock_os_environ_get, mock_subprocess_check_out
     # setup fake argparse object
     fakeargs = namedtuple(
         'fakeargs',
-        ('mode', 'no_drm', 'ebook_home', 'username', 'password', 'ignore_kindle'),
+        ('mode', 'no_drm', 'host', 'ebook_home', 'username', 'password', 'ignore_kindle'),
     )
 
     config = setup_ogreclient(
-        fakeargs('sync', True, 'param_home', 'param_user', 'param_pass', True),
+        fakeargs('sync', True, 'test', 'param_home', 'param_user', 'param_pass', True),
         DummyPrinter()
     )
 

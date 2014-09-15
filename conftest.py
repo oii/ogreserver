@@ -152,6 +152,12 @@ def rethinkdb(request, rethinkdb_init):
     return rethinkdb_init
 
 
+@pytest.fixture(scope='function')
+def datastore(request, flask_app):
+    from .ogreserver.models.datastore import DataStore
+    return DataStore(flask_app.config, flask_app.logger)
+
+
 @pytest.fixture(scope='session')
 def client_config(user):
     return {

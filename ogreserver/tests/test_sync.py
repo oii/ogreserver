@@ -1,9 +1,7 @@
 from __future__ import absolute_import
 
-from ..models.datastore import DataStore
 
-
-def test_sync_duplicate(flask_app, rethinkdb, user):
+def test_sync_duplicate(datastore, rethinkdb, user):
     ebooks_dict = {
         u"H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
             'format': 'epub',
@@ -15,8 +13,7 @@ def test_sync_duplicate(flask_app, rethinkdb, user):
     }
 
     # create the datastore and run a sync
-    ds = DataStore(flask_app.config, flask_app.logger)
-    syncd_books = ds.update_library(ebooks_dict, user)
+    syncd_books = datastore.update_library(ebooks_dict, user)
 
     # assert book is new
     key, data = syncd_books.items()[0]
@@ -24,14 +21,14 @@ def test_sync_duplicate(flask_app, rethinkdb, user):
     assert data['dupe'] is False, 'book should not be a duplicate'
 
     # sync again
-    syncd_books = ds.update_library(ebooks_dict, user)
+    syncd_books = datastore.update_library(ebooks_dict, user)
 
     # assert book is duplicate
     key, data = syncd_books.items()[0]
     assert data['dupe'] is True, 'book should be a duplicate'
 
 
-def test_sync_ebook_update(flask_app, rethinkdb, user):
+def test_sync_ebook_update(datastore, rethinkdb, user):
     ebooks_dict = {
         u"H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
             'format': 'epub',
@@ -43,8 +40,7 @@ def test_sync_ebook_update(flask_app, rethinkdb, user):
     }
 
     # create the datastore and run a sync
-    ds = DataStore(flask_app.config, flask_app.logger)
-    syncd_books = ds.update_library(ebooks_dict, user)
+    syncd_books = datastore.update_library(ebooks_dict, user)
 
     # check book needs updating
     key, data = syncd_books.items()[0]
@@ -56,14 +52,14 @@ def test_sync_ebook_update(flask_app, rethinkdb, user):
     ebooks_dict[ebooks_dict.keys()[0]]['ebook_id'] = data['ebook_id']
 
     # sync again
-    syncd_books = ds.update_library(ebooks_dict, user)
+    syncd_books = datastore.update_library(ebooks_dict, user)
 
     # assert book does not need update
     key, data = syncd_books.items()[0]
     assert data['update'] is False, 'book should not need update'
 
 
-def test_sync_multiple_versions(flask_app, rethinkdb, user):
+def test_sync_multiple_versions(datastore, rethinkdb, user):
     ebooks_dict = {
         u"Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland": {
             'format': 'epub',
@@ -75,8 +71,7 @@ def test_sync_multiple_versions(flask_app, rethinkdb, user):
     }
 
     # create the datastore and run a sync
-    ds = DataStore(flask_app.config, flask_app.logger)
-    syncd_books = ds.update_library(ebooks_dict, user)
+    syncd_books = datastore.update_library(ebooks_dict, user)
 
     # extract ebook_id of syncd book
     ebook_id = syncd_books.itervalues().next()['ebook_id']
@@ -89,7 +84,7 @@ def test_sync_multiple_versions(flask_app, rethinkdb, user):
     ebooks_dict[ebooks_dict.keys()[0]]['file_hash'] = '058e92c024a88969b0875d5eaf18a0cd'
 
     # sync again
-    ds.update_library(ebooks_dict, user)
+    datastore.update_library(ebooks_dict, user)
 
     # assert only one ebook in DB
     assert rethinkdb.db('test').table('ebooks').count().run() == 1, 'should only be 1 ebook'

@@ -13,6 +13,10 @@ before_script:
   - sudo touch /etc/rethinkdb/instances.d/default.conf
   - sudo service rethinkdb restart
   - mysqladmin -u root password 'eggs'
+  - wget https://github.com/andrewgaul/s3proxy/releases/download/s3proxy-1.1.0/s3proxy
+  - printf "s3proxy.authorization=none\ns3proxy.endpoint=http://127.0.0.1:8880\njclouds.provider=filesystem\njclouds.identity=identity\njclouds.credential=credential\njclouds.filesystem.basedir=/tmp" > s3proxy.conf
+  - chmod u+x s3proxy
+  - ./s3proxy --properties s3proxy.conf &
 script:
   - py.test -m 'not requires_calibre'
 branches:

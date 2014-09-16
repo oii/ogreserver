@@ -20,6 +20,7 @@ extend:
     file.managed:
       - context:
           purge: true
+          loglevel: info
 
   tmux-powerline-theme:
     file.managed:

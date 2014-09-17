@@ -15,7 +15,7 @@ from ..models.datastore import DataStore
 from ..models.reputation import Reputation
 from ..models.user import User
 
-from ..tasks import store_ebook
+from ..tasks import store_ebook as task_store_ebook
 
 bp_api = Blueprint('api', __name__)
 
@@ -161,7 +161,7 @@ def upload(auth_key):
     ))
 
     # let celery process the upload
-    res = store_ebook.delay(
+    res = task_store_ebook.delay(
         ebook_id=request.form.get('ebook_id'),
         file_hash=request.form.get('file_hash'),
         fmt=request.form.get('format')

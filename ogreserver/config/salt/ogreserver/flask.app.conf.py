@@ -46,7 +46,10 @@ UPLOADED_EBOOKS_DEST = "/srv/{{ pillar['app_directory_name'] }}/uploads"
 UPLOADED_LOGS_DEST = "/srv/{{ pillar['app_directory_name'] }}/logs"
 
 # Ebook conversion formats; all books will be provided in these formats by OGRE
-EBOOK_FORMATS = ['mobi', 'azw', 'epub', 'pdf']
+EBOOK_FORMATS = ['mobi', 'epub']
+
+# Mobi formats for ebook-metadata in Conversion model
+MOBI_FORMATS = ('mobi', 'azw', 'azw3', 'azw4', 'azw1')
 
 # OGRE download links expire in 10 seconds
 DOWNLOAD_LINK_EXPIRY = 10

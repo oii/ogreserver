@@ -1,7 +1,12 @@
 from __future__ import absolute_import
 
 import base64
+import contextlib
 import hashlib
+import random
+import shutil
+import string
+import tempfile
 
 import boto
 import boto.s3
@@ -73,3 +78,18 @@ def connect_s3(config):
             aws_access_key_id=config['AWS_ACCESS_KEY'],
             aws_secret_access_key=config['AWS_SECRET_KEY']
         )
+
+
+def id_generator(size=6, chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for x in range(size))
+
+
+@contextlib.contextmanager
+def make_temp_directory():
+    temp_dir = tempfile.mkdtemp()
+    try:
+        yield temp_dir
+    except Exception as e:
+        raise e
+    finally:
+        shutil.rmtree(temp_dir)

@@ -11,3 +11,9 @@ class BadMetaDataError(OgreException):
 
 class NoFormatAvailableError(OgreException):
     pass
+
+class ConversionFailedError(OgreException):
+    pass
+
+class EbookNotFoundOnS3Error(OgreException):
+    pass

@@ -6,6 +6,7 @@ from flask import current_app as app
 
 from .extensions.database import get_db
 
+from .exceptions import ConversionFailedError, EbookNotFoundOnS3Error
 from .models.datastore import DataStore, S3DatastoreError
 
 
@@ -34,8 +35,10 @@ def store_ebook(ebook_id, file_hash, fmt):
             # store the file into S3
             if ds.store_ebook(ebook_id, file_hash, filename, filepath, fmt):
                 app.logger.info('{} was uploaded'.format(filename))
+                return True
             else:
                 app.logger.info('{} exists on S3'.format(filename))
+                return False
 
         except S3DatastoreError as e:
             app.logger.error('Failed uploading {} with {}'.format(filename, e))
@@ -49,25 +52,36 @@ def store_ebook(ebook_id, file_hash, fmt):
 @app.celery.task
 def conversion_search():
     """
-    Convert an ebook to another format, and push to datastore
+    Search for ebooks which are missing key formats epub & mobi
     """
-    pass
-    #source_filepath = "%s/%s.%s" % (app.config['UPLOADED_EBOOKS_DEST'], file_hash, fmt)
+    with app.app_context():
+        # late import to prevent circular import
+        from .models.conversion import Conversion
+        conversion = Conversion(app.config, DataStore(app.config, app.logger))
+        conversion.search()
 
-    #for convert_fmt in app.config['EBOOK_FORMATS']:
-    #    if fmt == convert_fmt:
-    #        continue
 
-    #    dest_filepath = "%s/%s.%s" % (app.config['UPLOADED_EBOOKS_DEST'], file_hash, fmt)
+@app.celery.task(queue="conversion")
+def convert(ebook_id, version_id, original_filename, dest_fmt):
+    """
+    Convert an ebook to other formats, currently mobi & epub
+    """
+    with app.app_context():
+        # late import to prevent circular import
+        from .models.conversion import Conversion
+        conversion = Conversion(app.config, DataStore(app.config, app.logger))
 
-    #    meta = subprocess.Popen(['ebook-convert', source_filepath, ], 
-    #                            stdout=subprocess.PIPE).communicate()[0]
+        try:
+            conversion.convert(ebook_id, version_id, original_filename, dest_fmt)
 
-    #if store == True:
-    #    if user_id == None:
-    #        raise Exception("user_id must be supplied to convert_ebook when store=True")
-
-    #    store_ebook.delay(user_id, sdbkey, file_hash, fmt)
+        except EbookNotFoundOnS3Error:
+            app.logger.warning('Book missing from S3 ({}, {}, {}, {})'.format(
+                ebook_id, version_id, original_filename, dest_fmt
+            ))
+        except ConversionFailedError:
+            app.logger.error('Conversion failed ({}, {}, {}, {})'.format(
+                ebook_id, version_id, original_filename, dest_fmt
+            ))
 
 
 # TODO nightly which recalculates book ratings: 
@@ -75,3 +89,5 @@ def conversion_search():
 
 # TODO nightly which check books are stored on S3 and updates SDB 
 
+# TODO nightly data corruption checks:
+#   - never have multiple of same format attached to single version

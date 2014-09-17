@@ -39,11 +39,13 @@ def app_config():
         'CELERY_DEFAULT_ROUTING_KEY': 'testing',
         'CELERY_DEFAULT_EXCHANGE': 'testing',
 
+        'CELERY_ALWAYS_EAGER': True,
+
         'AWS_ACCESS_KEY': '',
         'AWS_SECRET_KEY': '',
-        'S3_BUCKET': 'oii-ogre-dev',
+        'S3_BUCKET': 'ogre-testing',
 
-        'EBOOK_FORMATS': ['egg', 'mobi','azw','pdf','epub'],
+        'EBOOK_FORMATS': ['egg', 'mobi', 'epub'],
         'DOWNLOAD_LINK_EXPIRY': 10,
 
         'WHOOSH_BASE': 'test.db',
@@ -157,6 +159,12 @@ def rethinkdb(request, rethinkdb_init):
 def datastore(request, flask_app):
     from .ogreserver.models.datastore import DataStore
     return DataStore(flask_app.config, flask_app.logger)
+
+
+@pytest.fixture(scope='function')
+def conversion(request, app_config, datastore):
+    from .ogreserver.models.conversion import Conversion
+    return Conversion(app_config, datastore)
 
 
 @pytest.fixture(scope='session')

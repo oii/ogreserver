@@ -31,7 +31,7 @@ extend:
   compass-supervisor-config:
     file.managed:
       - context:
-          watch_directory: /srv/ogreserver/ogreserver/static
+          watch_directory: /srv/ogre/ogreserver/static
 
   rethinkdb-config:
     file.managed:
@@ -76,12 +76,12 @@ extend:
 build-dedrm:
   cmd.run:
     - name: python setup.py sdist
-    - cwd: /srv/ogreserver/dedrm
+    - cwd: /srv/ogre/dedrm
     - require:
       - git: git-clone-app
   file.rename:
     - name: /var/pypiserver-cache/dedrm-6.0.7.tar.gz
-    - source: /srv/ogreserver/dedrm/dist/dedrm-6.0.7.tar.gz
+    - source: /srv/ogre/dedrm/dist/dedrm-6.0.7.tar.gz
     - force: true
     - require:
       - file: pypiserver-package-dir
@@ -105,7 +105,7 @@ ogre-create-user:
   cmd.run:
     - name: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}/bin/python manage.py create_user {{ pillar['ogre_user_name'] }} {{ pillar['ogre_user_pass'] }} {{ pillar['ogre_user_email'] }}
     - unless: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}/bin/python manage.py create_user {{ pillar['ogre_user_name'] }} null null --test
-    - cwd: /srv/ogreserver
+    - cwd: /srv/ogre
     - user: {{ pillar['app_user'] }}
     - require:
       - virtualenv: app-virtualenv
@@ -114,14 +114,14 @@ ogre-create-user:
 # install pytest
 pytest-install:
   pip.installed:
-    - requirements: /srv/ogreserver/requirements_test.txt
-    - bin_env: /home/vagrant/.virtualenvs/ogreserver
+    - requirements: /srv/ogre/requirements_test.txt
+    - bin_env: /home/vagrant/.virtualenvs/{{ pillar['app_name'] }}
     - user: {{ pillar['app_user'] }}
 
 # install ipdb
 ipdb:
   pip.installed:
-    - bin_env: /home/vagrant/.virtualenvs/ogreserver
+    - bin_env: /home/vagrant/.virtualenvs/{{ pillar['app_name'] }}
     - user: {{ pillar['app_user'] }}
 
 # Foundation 5 compass plugin

@@ -20,7 +20,7 @@ extend:
 
   app-virtualenv:
     virtualenv.managed:
-      - requirements: /srv/ogreserver/ogreserver/config/requirements.txt
+      - requirements: /srv/{{ pillar['app_directory_name'] }}/ogreserver/config/requirements.txt
       - pre_releases: true
       - require:
         - pkg: pip-dependencies-extra
@@ -30,8 +30,8 @@ extend:
       - require:
         - cmd: rabbitmq-server-running
       - watch:
-        - file: /etc/supervisor/conf.d/ogreserver.conf
-        - file: /etc/gunicorn.d/ogreserver.conf.py
+        - file: /etc/supervisor/conf.d/{{ pillar['app_name'] }}.conf
+        - file: /etc/gunicorn.d/{{ pillar['app_name'] }}.conf.py
 
   pypiserver-log-dir:
     file.directory:
@@ -50,13 +50,13 @@ extend:
       - watch:
         - file: /etc/nginx/conf.d/http.conf
         - file: /etc/nginx/proxy_params
-        - file: /etc/nginx/sites-enabled/ogreserver.conf
+        - file: /etc/nginx/sites-enabled/{{ pillar['app_name'] }}.conf
 
-  /etc/nginx/sites-available/ogreserver.conf:
+  /etc/nginx/sites-available/{{ pillar['app_name'] }}.conf:
     file.managed:
       - context:
           server_name: ogre.oii.yt
-          root: /srv/ogreserver
+          root: /srv/{{ pillar['app_directory_name'] }}
   {% endif %}
 
 
@@ -69,9 +69,9 @@ bower:
 bower-ogreserver-install:
   cmd.run:
     - name: bower install --config.interactive=false
-    - cwd: /srv/ogreserver/ogreserver/static
+    - cwd: /srv/{{ pillar['app_directory_name'] }}/ogreserver/static
     - user: {{ pillar['app_user'] }}
-    - unless: test -d /srv/ogre/ogreserver/static/bower_components
+    - unless: test -d /srv/{{ pillar['app_directory_name'] }}/ogreserver/static/bower_components
     - require:
       - git: git-clone-app
 
@@ -93,7 +93,7 @@ pip-dependencies-extra:
 
 flask-config:
   file.managed:
-    - name: /srv/ogreserver/flask.app.conf.py
+    - name: /srv/{{ pillar['app_directory_name'] }}/flask.app.conf.py
     - source: salt://ogreserver/flask.app.conf.py
     - template: jinja
     - user: {{ pillar['app_user'] }}
@@ -106,7 +106,7 @@ flask-config:
 ogre-init:
   cmd.run:
     - name: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}/bin/python manage.py init_ogre
-    - cwd: /srv/ogreserver
+    - cwd: /srv/ogre
     - unless: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}/bin/python manage.py init_ogre --test
     - user: {{ pillar['app_user'] }}
     - require:

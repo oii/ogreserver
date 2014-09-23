@@ -136,6 +136,7 @@ def rethinkdb_init(request):
     r.db('test').table('formats').index_create('version_id').run()
     r.db('test').table('formats').index_wait('version_id').run()
 
+    r.connect(db='test').repl()
     yield r
 
     # remove test database

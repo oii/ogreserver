@@ -76,7 +76,7 @@ def test_sync_multiple_versions(datastore, rethinkdb, user):
     # extract ebook_id of syncd book
     ebook_id = syncd_books.itervalues().next()['ebook_id']
 
-    assert rethinkdb.db('test').table('versions').filter(
+    assert rethinkdb.table('versions').filter(
         {'ebook_id': ebook_id}
     ).count().run() == 1, 'should be 1 version'
 
@@ -87,9 +87,9 @@ def test_sync_multiple_versions(datastore, rethinkdb, user):
     datastore.update_library(ebooks_dict, user)
 
     # assert only one ebook in DB
-    assert rethinkdb.db('test').table('ebooks').count().run() == 1, 'should only be 1 ebook'
+    assert rethinkdb.table('ebooks').count().run() == 1, 'should only be 1 ebook'
 
     # assert ebook has two versions attached
-    assert rethinkdb.db('test').table('versions').filter(
+    assert rethinkdb.table('versions').filter(
         {'ebook_id': ebook_id}
     ).count().run() == 2, 'should be 2 versions'

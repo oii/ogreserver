@@ -130,12 +130,6 @@ class DataStore():
                     # mark with ebook_id and return
                     output[incoming['file_hash']]['ebook_id'] = ebook_id
 
-                    # TODO version popularity determines which formats appear on ebook base top-level
-                    # popularity += 1 for download
-                    # popularity += 1 for new owner
-                    # use quality as co-efficient when calculating most popular
-                    # see: versions_rank_algorithm()
-
             except OgreException as e:
                 # TODO log this and report back to client
                 self.logger.info(unicode(e).encode('utf8'))
@@ -148,13 +142,21 @@ class DataStore():
     def _create_new_version(self, ebook_id, username, incoming):
         conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
 
+        # default higher popularity if book has been decrypted by ogreclient;
+        # due to better guarantee of provenance
+        if incoming['dedrm']:
+            popularity = 10
+        else:
+            popularity = 1
+
         # add the first version
         ret = r.table('versions').insert({
             'ebook_id': ebook_id,
             'user': username,
             'size': incoming['size'],
-            'popularity': 1,
-            'quality': 0,
+            'popularity': popularity,
+            'quality': 1,
+            'ranking': DataStore.versions_rank_algorithm(1, popularity),
             'original_format': incoming['format'],
             'date_added': r.now(),
         }).run(conn)
@@ -194,7 +196,7 @@ class DataStore():
                 'versions': r.table('versions').get_all(
                     ebook['ebook_id'], index='ebook_id'
                 ).order_by(
-                    r.desc('popularity')
+                    r.desc('ranking')
                 ).coerce_to('array').merge(
                     lambda version: {
                         'formats': r.table('formats').get_all(
@@ -307,16 +309,18 @@ class DataStore():
         ).hexdigest()
 
     @staticmethod
-    def versions_rank_algorithm(version):
+    def versions_rank_algorithm(quality, popularity):
         """
         Generate a score for this version of an ebook
 
         The quality % score and the popularity score are ratioed together 70:30
-        Since popularity is a scalar and can grow indefinitely it's divided
-        by our num of total system users
+        Since popularity is a scalar and can grow indefinitely, it's divided by
+         the number of total system users
+
+        Popularity is set to 10 when a newly decrypted ebook is added to OGRE
+        Every download increases a version's popularity
         """
-        total_users = User.get_total_users()
-        return (version['quality'] * 0.7) + ((float(version['popularity']) / total_users) * 100 * 0.3)
+        return (quality * 0.7) + (float(popularity) / User.get_total_users() * 100 * 0.3)
 
 
     def _get_ebook_filehash(self, ebook_id, version_id=None, fmt=None, user=None):

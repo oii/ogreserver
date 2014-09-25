@@ -26,6 +26,11 @@ def create_app(config=None):
     from .extensions.database import shutdown_db_session
     app.before_request(setup_db_session)
     app.teardown_appcontext(shutdown_db_session)
+
+    # setup application logging
+    from .extensions.logging import init_logging
+    init_logging(app)
+
     return app
 
 
@@ -67,10 +72,6 @@ def configure_extensions(app):
     # setup Flask-Uploads
     from .extensions.flask_uploads import init_uploads
     app.uploaded_ebooks, app.uploaded_logs = init_uploads(app)
-
-    # setup application logging
-    from .extensions.logging import init_logging
-    init_logging(app)
 
     # setup Flask-Markdown
     from flaskext.markdown import Markdown

@@ -18,9 +18,6 @@ def store_ebook(ebook_id, file_hash, fmt):
     with app.app_context():
         filepath = None
 
-        # remove the Flask logger; test_request_context provides DebugLogger
-        del(app.logger.handlers[0])
-
         # initialise the DB connection in our fake app context
         get_db(app)
 

@@ -218,6 +218,28 @@ class DataStore():
         return ebook
 
 
+    def load_ebook_by_file_hash(self, file_hash, match=False):
+        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
+
+        # enable substring filehash searching; like git commit ids
+        if match:
+            filter_func = lambda d: d['file_hash'].match('^{}'.format(file_hash))
+        else:
+            filter_func = {'file_hash': file_hash}
+
+        try:
+            ebook_id = list(
+                r.table('formats').filter(filter_func).eq_join(
+                    'version_id', r.table('versions'), index='version_id'
+                ).zip().pluck('ebook_id')['ebook_id'].run(conn)
+            )[0]
+        except IndexError:
+            return None
+
+        # now return the full ebook object
+        return self.load_ebook(ebook_id)
+
+
     def index_for_search(self, book_data):
         if self.whoosh is None:
             return

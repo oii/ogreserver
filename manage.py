@@ -45,13 +45,24 @@ def lb(ebook_id):
     from ogreserver.models.datastore import DataStore
     ds = DataStore(app.config, logger=None)
     ebook = ds.load_ebook(ebook_id)
+
+    # if no ebook_id supplied, check if supplied param is file_hash
+    if ebook is None:
+        ebook = ds.load_ebook_by_file_hash(ebook_id, match=True)
+        if ebook is None:
+            print 'Not found'
+            return
+
     for v in ebook['versions']:
         v['date_added'] = v['date_added'].isoformat()
         del(v['ebook_id'])
         for f in v['formats']:
             del(f['version_id'])
 
-    print json.dumps(ebook, indent=2)
+    # pretty print json with colorized ebook_id/file_hash
+    print json.dumps(ebook, indent=2).replace(
+        ebook_id, '\033[92m{}\033[0m'.format(ebook_id)
+    )
 
 
 @manager.command

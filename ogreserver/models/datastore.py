@@ -4,6 +4,7 @@ import hashlib
 import re
 
 import rethinkdb as r
+from rethinkdb.errors import RqlRuntimeError
 
 import boto
 from boto.exception import S3ResponseError
@@ -191,21 +192,28 @@ class DataStore():
 
         # query returns dict with ebook->versions->formats nested document
         # versions are ordered by popularity
-        ebook = r.table('ebooks').get(ebook_id).merge(
-            lambda ebook: {
-                'versions': r.table('versions').get_all(
-                    ebook['ebook_id'], index='ebook_id'
-                ).order_by(
-                    r.desc('ranking')
-                ).coerce_to('array').merge(
-                    lambda version: {
-                        'formats': r.table('formats').get_all(
-                            version['version_id'], index='version_id'
-                        ).coerce_to('array')
-                    }
-                )
-            }
-        ).run(conn)
+        try:
+            ebook = r.table('ebooks').get(ebook_id).merge(
+                lambda ebook: {
+                    'versions': r.table('versions').get_all(
+                        ebook['ebook_id'], index='ebook_id'
+                    ).order_by(
+                        r.desc('ranking')
+                    ).coerce_to('array').merge(
+                        lambda version: {
+                            'formats': r.table('formats').get_all(
+                                version['version_id'], index='version_id'
+                            ).coerce_to('array')
+                        }
+                    )
+                }
+            ).run(conn)
+
+        except RqlRuntimeError as e:
+            if 'Cannot perform merge on a non-object non-sequence `null`' in str(e):
+                return None
+            else:
+                raise e
 
         return ebook
 

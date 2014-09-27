@@ -519,14 +519,24 @@ def metadata_extract(calibre_ebook_meta_bin, filepath):
             for ident in identifiers.split(','):
                 if ident.startswith('isbn'):
                     meta['isbn'] = ident[5:].strip()
+                if ident.startswith('asin'):
+                    meta['asin'] = ident[5:].strip()
                 if ident.startswith('mobi-asin'):
-                    meta['asin'] = ident[10:].strip()
+                    meta['mobi-asin'] = ident[10:].strip()
                 if ident.startswith('uri'):
                     meta['uri'] = ident[4:].strip()
                 if ident.startswith('epubbud'):
                     meta['epubbud'] = ident[7:].strip()
                 if ident.startswith('ogre_id'):
                     meta['ebook_id'] = ident[8:].strip()
+
+            # clean up mixed ASIN tags
+            if 'mobi-asin' in meta.keys() and 'asin' not in meta.keys():
+                meta['asin'] = meta['mobi-asin']
+                del(meta['mobi-asin'])
+            elif 'mobi-asin' in meta.keys() and 'asin' in meta.keys() and meta['asin'] == meta['mobi-asin']:
+                del(meta['mobi-asin'])
+
             continue
 
     if not meta:
@@ -576,7 +586,7 @@ def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_hash, filepath, existing_t
 
         try:
             if fmt[1:] in MOBI_FORMATS:
-                # append ogre's ebook_id to the tags list
+                # append ogre's ebook_id to the ebook's comma-separated tags field
                 if existing_tags is not None and len(existing_tags) > 0:
                     new_tags = u'ogre_id={}, {}'.format(ogre_id, existing_tags)
                 else:

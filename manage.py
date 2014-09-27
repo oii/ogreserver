@@ -224,6 +224,22 @@ def set_indexes():
 
 
 @manager.command
+def show_s3(test=False):
+    if test:
+        # import the configuration for pytest runs
+        from conftest import app_config
+        config = app_config()
+    else:
+        config = app.config
+
+    # connect to S3
+    s3 = connect_s3(config)
+    bucket = s3.get_bucket(config['S3_BUCKET'])
+    for item in bucket.list():
+        print item
+
+
+@manager.command
 def check_pip():
     import xmlrpclib
     import pip

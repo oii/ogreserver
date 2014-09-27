@@ -32,16 +32,18 @@ class Conversion:
                 # get the filehash of the original uploaded ebook
                 original_filehash = next((f['file_hash'] for f in formats if original_format == f['format']), None)
 
-                # generate the filename of the original uploaded ebook (the file's name on S3)
-                original_filename = self.datastore.generate_filename(original_filehash)
+                # ensure source ebook has been uploaded
+                if self.datastore.get_uploaded(original_filehash):
+                    # generate the filename of the original uploaded ebook (the file's name on S3)
+                    original_filename = self.datastore.generate_filename(original_filehash)
 
-                # convert source format to required formats
-                task_convert.delay(
-                    ebook_id,
-                    version_id,
-                    original_filename,
-                    dest_fmt
-                )
+                    # convert source format to required formats
+                    task_convert.delay(
+                        ebook_id,
+                        version_id,
+                        original_filename,
+                        dest_fmt
+                    )
 
 
     def convert(self, ebook_id, version_id, original_filename, dest_fmt):

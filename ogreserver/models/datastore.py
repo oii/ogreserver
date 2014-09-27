@@ -461,6 +461,13 @@ class DataStore():
             return False
         return True
 
+    def get_uploaded(self, file_hash):
+        """
+        Mark an ebook as having been uploaded to S3
+        """
+        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
+        return r.table('formats').get(file_hash)['uploaded'].run(conn)
+
     def set_uploaded(self, file_hash, isit=True):
         """
         Mark an ebook as having been uploaded to S3

@@ -20,6 +20,7 @@ def test_search(datastore, user, rethinkdb, s3bucket, conversion, mock_task_conv
         'size': 1234,
         'dedrm': False,
     })
+    datastore.set_uploaded(file_hash)
 
     # search for books which need converting; this starts convert() tasks
     conversion.search()

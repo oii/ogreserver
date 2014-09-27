@@ -128,9 +128,15 @@ class User(Base, UserMixin):
             [self.username, True], index='user_uploads'
         ).count().run(conn)
 
+        # number of DRM cleaned books
+        total_dedrm = r.table('formats').get_all(
+            [self.username, True], index='user_dedrm'
+        ).count().run(conn)
+
         return {
             'total_syncs': total_syncs,
             'total_uploads': total_uploads,
+            'total_dedrm': total_dedrm,
         }
 
     @staticmethod

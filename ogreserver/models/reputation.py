@@ -77,6 +77,15 @@ class Reputation():
             elif count >= 20:
                 self.award(Badges.Contributor)
 
+        if not self.user.has_badge(Badges.Pirate):
+            # award badge for decrypted ebooks
+            count = r.table('formats').get_all(
+                [self.user.username, True], index='user_dedrm'
+            ).count().run(conn)
+
+            if count > 0:
+                self.award(Badges.Pirate)
+
 
     def award(self, badge):
         """

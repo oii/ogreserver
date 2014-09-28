@@ -96,6 +96,9 @@ def parse_command_line():
         '--debug', action='store_true',
         help='Print debug information on error & pass to ogreserver, also ignore local cache')
     psync.add_argument(
+        '--use-cache', action='store_true',
+        help='Used in conjunction with --debug to allow debugging of caching code paths')
+    psync.add_argument(
         '--quiet', '-q', action='store_true',
         help="Don't produce any output")
     psync.add_argument(
@@ -218,6 +221,7 @@ def run_sync(conf, args, prntr, ebook_home, username, password, debug=False):
         'password': password,
         'host': args.host,
         'debug': debug,
+        'use_cache': args.use_cache,
         'verbose': True if debug is True else args.verbose,
         'quiet': args.quiet,
         'no_drm': args.no_drm,

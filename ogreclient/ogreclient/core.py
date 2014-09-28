@@ -243,7 +243,7 @@ def search_for_ebooks(config, prntr):
 
 
 def remove_drm_from_ebook(config, prntr, ebook_cache, filepath, file_hash, suffix):
-    if config['debug'] is False:
+    if config['debug'] is False or config['use_cache'] is True:
         # attempt load ebook from local cache
         drmfree, skip = ebook_cache.get_ebook(filepath, file_hash)
 

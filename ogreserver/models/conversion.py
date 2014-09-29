@@ -77,14 +77,18 @@ class Conversion:
         )
         k.get_contents_to_filename(original_filename)
 
-        try:
-            # call ebook-convert
-            subprocess.check_call(
-                '/usr/bin/ebook-convert {} {}'.format(original_filename, output_filename),
-                shell=True
-            )
-        except subprocess.CalledProcessError:
-            raise ConversionFailedError
+        # call ebook-convert, ENV is inherited from celery worker process (see supervisord conf)
+        proc = subprocess.Popen(
+            ['/usr/bin/env', '/usr/bin/ebook-convert', original_filename, output_filename],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        out, err = proc.communicate()
+
+        if len(err) > 0:
+            raise ConversionFailedError(err)
+        elif '{} output written to'.format(dest_fmt.upper()) not in out:
+            raise ConversionFailedError(out)
 
         # calculate file hash of newly created book
         md5_tup = compute_md5(output_filename)
@@ -102,8 +106,8 @@ class Conversion:
                 ),
                 shell=True
             ))
-        except subprocess.CalledProcessError:
-            raise ConversionFailedError
+        except subprocess.CalledProcessError as e:
+            raise ConversionFailedError(inner_excp=e)
 
         # add newly created format to datastore
         self.datastore._create_new_format(version_id, md5_tup[0], dest_fmt)

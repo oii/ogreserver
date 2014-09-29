@@ -37,7 +37,8 @@ def test_search(datastore, user, rethinkdb, s3bucket, conversion, mock_task_conv
 
 
 def test_convert(datastore, user, rethinkdb, s3bucket, conversion,
-                 mock_connect_s3, mock_compute_md5, mock_task_store_ebook, mock_subprocess_check_call):
+                 mock_connect_s3, mock_compute_md5, mock_task_store_ebook,
+                 mock_subprocess_popen, mock_subprocess_check_call):
     ebook_id = 'bcddb798'
     converted_file_hash = 'new-file-hash'
 
@@ -55,6 +56,9 @@ def test_convert(datastore, user, rethinkdb, s3bucket, conversion,
         'dedrm': False,
     })
 
+    # mock return from Popen().communicate()
+    mock_subprocess_popen.return_value = mock.Mock()
+    mock_subprocess_popen.return_value.communicate.return_value = 'MOBI output written to', ''
     # mock subprocess.check_call
     mock_subprocess_check_call.return_value = None
     # mock compute_md5 to return preset file hash

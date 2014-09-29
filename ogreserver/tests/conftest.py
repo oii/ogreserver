@@ -21,6 +21,13 @@ def s3bucket(app_config):
 
 
 @pytest.yield_fixture(scope='function')
+def mock_subprocess_popen(request):
+    m = mock.patch('ogre.ogreserver.models.conversion.subprocess.Popen')
+    yield m.start()
+    m.stop()
+
+
+@pytest.yield_fixture(scope='function')
 def mock_subprocess_check_call(request):
     m = mock.patch('ogre.ogreserver.models.conversion.subprocess.check_call')
     yield m.start()

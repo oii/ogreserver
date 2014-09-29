@@ -75,10 +75,11 @@ def convert(ebook_id, version_id, original_filename, dest_fmt):
             app.logger.warning('Book missing from S3 ({}, {}, {}, {})'.format(
                 ebook_id, version_id, original_filename, dest_fmt
             ))
-        except ConversionFailedError:
+        except ConversionFailedError as e:
             app.logger.error('Conversion failed ({}, {}, {}, {})'.format(
                 ebook_id, version_id, original_filename, dest_fmt
             ))
+            app.logger.debug(e)
 
 
 # TODO nightly which recalculates book ratings: 

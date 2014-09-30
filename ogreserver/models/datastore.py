@@ -25,6 +25,9 @@ class DataStore():
         self.logger = logger
         self.whoosh = whoosh
 
+        # connect rethinkdb and make default connection
+        r.connect(db=self.config['RETHINKDB_DATABASE']).repl()
+
 
     def update_library(self, ebooks, user):
         """
@@ -33,8 +36,6 @@ class DataStore():
         and synchronised against the contents of the OGRE database.
         """
         output = {}
-
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
 
         for authortitle, incoming in ebooks.items():
             try:
@@ -48,14 +49,13 @@ class DataStore():
                     # tell client to set ogre_id on this ebook
                     output[incoming['file_hash']]['update'] = True
 
-                # first check if this exact file has been uploaded before
                 # query formats table by key, joining to versions to get ebook pk
                 existing = list(
                     r.table('formats').filter(
                         {'file_hash': incoming['file_hash']}
                     ).eq_join(
                         'version_id', r.table('versions')
-                    ).zip().run(conn)
+                    ).zip().run()
                 )
 
                 # skip existing books
@@ -80,7 +80,7 @@ class DataStore():
 
                 # check for this book by meta data in the library
                 ebook_id = DataStore.build_ebook_key(lastname, firstname, title)
-                existing = r.table('ebooks').get(ebook_id).run(conn)
+                existing = r.table('ebooks').get(ebook_id).run()
 
                 if existing is None:
                     # create this as a new book
@@ -100,7 +100,7 @@ class DataStore():
                             'raw_tags': incoming['tags'] if 'tags' in incoming else None,
                         },
                     }
-                    r.table('ebooks').insert(new_book).run(conn)
+                    r.table('ebooks').insert(new_book).run()
 
                     # create version and initial format
                     self._create_new_version(ebook_id, user.username, incoming)
@@ -116,7 +116,7 @@ class DataStore():
                     # parse the ebook data
                     other_versions = r.table('versions').filter(
                         {'ebook_id': ebook_id, 'user': user.username}
-                    ).count().run(conn)
+                    ).count().run()
 
                     if other_versions > 0:
                         msg = u'Rejecting new version of {} from {}'.format(
@@ -141,8 +141,6 @@ class DataStore():
 
 
     def _create_new_version(self, ebook_id, username, incoming):
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-
         # default higher popularity if book has been decrypted by ogreclient;
         # due to better guarantee of provenance
         if incoming['dedrm']:
@@ -160,7 +158,7 @@ class DataStore():
             'ranking': DataStore.versions_rank_algorithm(1, popularity),
             'original_format': incoming['format'],
             'date_added': r.now(),
-        }).run(conn)
+        }).run()
 
         # create a new format
         self._create_new_format(
@@ -174,8 +172,6 @@ class DataStore():
 
 
     def _create_new_format(self, version_id, file_hash, fmt, username=None, dedrm=None, ogreid_tagged=False):
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-
         r.table('formats').insert({
             'file_hash': file_hash,
             'version_id': version_id,
@@ -184,12 +180,10 @@ class DataStore():
             'uploaded': False,
             'ogreid_tagged': ogreid_tagged,
             'dedrm': dedrm,
-        }).run(conn)
+        }).run()
 
 
     def load_ebook(self, ebook_id):
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-
         # query returns dict with ebook->versions->formats nested document
         # versions are ordered by popularity
         try:
@@ -207,7 +201,7 @@ class DataStore():
                         }
                     )
                 }
-            ).run(conn)
+            ).run()
 
         except RqlRuntimeError as e:
             if 'Cannot perform merge on a non-object non-sequence `null`' in str(e):
@@ -219,8 +213,6 @@ class DataStore():
 
 
     def load_ebook_by_file_hash(self, file_hash, match=False):
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-
         # enable substring filehash searching; like git commit ids
         if match:
             filter_func = lambda d: d['file_hash'].match('^{}'.format(file_hash))
@@ -231,7 +223,7 @@ class DataStore():
             ebook_id = list(
                 r.table('formats').filter(filter_func).eq_join(
                     'version_id', r.table('versions'), index='version_id'
-                ).zip().pluck('ebook_id')['ebook_id'].run(conn)
+                ).zip().pluck('ebook_id')['ebook_id'].run()
             )[0]
         except IndexError:
             return None
@@ -296,8 +288,6 @@ class DataStore():
                 ...
             ]
         """
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-
         return r.table('formats').group(
             index='version_id'
         ).filter(
@@ -310,22 +300,20 @@ class DataStore():
             'version_id', r.table('versions'), index='version_id'
         ).zip().pluck(
             'format', 'original_format', 'file_hash', 'ebook_id'
-        ).run(conn)
+        ).run()
 
 
     def get_rating(self, ebook_id):
         """
         Get the user rating for this book
         """
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-        return r.table('ebooks').get(ebook_id)['rating'].run(conn)
+        return r.table('ebooks').get(ebook_id)['rating'].run()
 
     def get_comments(self, ebook_id):
         """
         Get the list of comments on this book
         """
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-        return r.table('ebooks').get(ebook_id)['comments'].run(conn)
+        return r.table('ebooks').get(ebook_id)['comments'].run()
 
 
     @staticmethod
@@ -440,16 +428,15 @@ class DataStore():
         if current_file_hash == updated_file_hash:
             return None
 
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-        data = r.table('formats').get(current_file_hash).run(conn)
+        data = r.table('formats').get(current_file_hash).run()
         if data is None:
             self.logger.error('Format {} does not exist'.format(current_file_hash))
             return False
         try:
             data['file_hash'] = updated_file_hash
             data['ogreid_tagged'] = True
-            r.table('formats').insert(data).run(conn)
-            r.table('formats').get(current_file_hash).delete().run(conn)
+            r.table('formats').insert(data).run()
+            r.table('formats').get(current_file_hash).delete().run()
             self.logger.info('Updated {} to {} on {}'.format(
                 current_file_hash, updated_file_hash, data['version_id'])
             )
@@ -465,22 +452,19 @@ class DataStore():
         """
         Mark an ebook as having been uploaded to S3
         """
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-        return r.table('formats').get(file_hash)['uploaded'].run(conn)
+        return r.table('formats').get(file_hash)['uploaded'].run()
 
     def set_uploaded(self, file_hash, isit=True):
         """
         Mark an ebook as having been uploaded to S3
         """
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-        r.table('formats').get(file_hash).update({'uploaded': isit}).run(conn)
+        r.table('formats').get(file_hash).update({'uploaded': isit}).run()
 
     def set_dedrm_flag(self, file_hash):
         """
         Mark a book as having had DRM removed
         """
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-        r.table('formats').get(file_hash).update({'dedrm': True}).run(conn)
+        r.table('formats').get(file_hash).update({'dedrm': True}).run()
 
 
     def store_ebook(self, ebook_id, file_hash, filename, filepath, fmt):
@@ -546,8 +530,6 @@ class DataStore():
             raise UnicodeWarning('Lastname must be unicode')
 
         if firstname is None or lastname is None or title is None:
-            conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-
             # load the author and title of this book
             ebook_data = list(
                 r.table('formats').filter({'file_hash': file_hash}).eq_join(
@@ -556,7 +538,7 @@ class DataStore():
                     'ebook_id', r.table('ebooks'), index='ebook_id'
                 ).zip().pluck(
                     'firstname', 'lastname', 'title', 'format'
-                ).run(conn)
+                ).run()
             )[0]
             firstname = ebook_data['firstname']
             lastname = ebook_data['lastname']
@@ -565,8 +547,7 @@ class DataStore():
 
         elif format is None:
             # load the file format for this book's hash
-            conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-            format = r.table('formats').get(file_hash).pluck('format').run(conn)['format']
+            format = r.table('formats').get(file_hash).pluck('format').run()['format']
 
         # transpose unicode for ASCII filenames
         from unidecode import unidecode
@@ -604,8 +585,6 @@ class DataStore():
         if username is None and hash_filter is None and verify_s3 is True:
             raise Exception("Can't verify entire library in one go.")
 
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
-
         # query the formats table for missing ebooks
         query = r.table('formats').filter({'uploaded': False})
 
@@ -624,7 +603,7 @@ class DataStore():
         if username is not None:
             query = query.filter({'user': username})
 
-        cursor = query.run(conn)
+        cursor = query.run()
 
         # flatten for output
         output = []
@@ -655,13 +634,12 @@ class DataStore():
         """
         Add entries to a log every time a user syncs from ogreclient
         """
-        conn = r.connect("localhost", 28015, db=self.config['RETHINKDB_DATABASE'])
         return r.table('sync_events').insert({
             'username': user.username,
             'syncd_books_count': syncd_books_count,
             'new_books_count': new_books_count,
             'timestamp': r.now(),
-        }).run(conn)
+        }).run()
 
 
 class S3DatastoreError(Exception):

@@ -103,10 +103,7 @@ class Reputation():
         """
         Check if a user has a certain badge
         """
-        for b in user.badges:
-            if b.badge == badge:
-                return True
-            return False
+        return next((True for b in user.badges if b.badge == badge), False)
 
 
 class UserBadge(Base):

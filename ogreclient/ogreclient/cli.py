@@ -7,7 +7,6 @@ import sys
 from . import __version__
 
 from .core import sync, metadata_extract
-from .definitions import OGRESERVER
 from .dedrm import download_dedrm
 from .prereqs import setup_ogreclient
 from .printer import CliPrinter, DummyPrinter
@@ -24,10 +23,6 @@ def entrypoint():
     try:
         # setup and run argparse
         args = parse_command_line()
-
-        # set default hostname
-        if 'host' not in args or args.host is None:
-            args.host = OGRESERVER
 
         # global CLI printer
         if args.quiet is True:

@@ -1,4 +1,4 @@
-OGRESERVER = 'ogre.oii.yt'
+OGRESERVER_HOST = 'ogre.oii.yt'
 
 RANKED_EBOOK_FORMATS = {
     'mobi': 1,

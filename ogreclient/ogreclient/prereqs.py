@@ -10,6 +10,7 @@ import sys
 
 from .cache import Cache
 from .dedrm import download_dedrm
+from .definitions import OGRESERVER_HOST
 from .exceptions import ConfigSetupError, NoEbookSourcesFoundError
 from .providers import PROVIDERS, find_ebook_providers
 
@@ -51,7 +52,7 @@ def setup_ogreclient(args, prntr):
         # ogreclient requires calibre (unfortunately)
         if len(calibre_ebook_meta_bin) == 0:
             prntr.e('You must install Calibre in order to use ogreclient.')
-            prntr.e('Please follow the simple instructions at http://ogre.oii.yt/install')
+            prntr.e('Please follow the simple instructions at http://{}/install'.format(OGRESERVER_HOST))
             sys.exit(1)
 
         # init the config dict
@@ -66,6 +67,10 @@ def setup_ogreclient(args, prntr):
     #  - CLI readline interface
     # output is written directly into conf var
     setup_user_auth(prntr, args, conf)
+
+    # set default hostname
+    if args.host is None:
+        args.host = OGRESERVER_HOST
 
     # handle no ebook home :(
     if conf['ebook_home'] is None:

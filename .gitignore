@@ -12,6 +12,7 @@ ogreserver/static/stylesheets
 .cache
 static/docs
 bower_components
+ogreserver.log
 
 .vagrant
 

@@ -6,7 +6,8 @@ import sys
 
 from . import __version__
 
-from .core import sync, OGRESERVER, metadata_extract
+from .core import sync, metadata_extract
+from .definitions import OGRESERVER
 from .dedrm import download_dedrm
 from .prereqs import setup_ogreclient
 from .printer import CliPrinter, DummyPrinter

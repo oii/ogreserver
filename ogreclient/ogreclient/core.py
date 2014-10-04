@@ -18,26 +18,11 @@ from .utils import make_temp_directory
 from .printer import CliPrinter
 from .dedrm import decrypt, DRM, DeDrmMissingError, DecryptionFailed
 
+from .definitions import RANKED_EBOOK_FORMATS, MOBI_FORMATS
+
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError
 from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
 from .exceptions import FailedWritingMetaDataError, FailedConfirmError, FailedDebugLogsError
-
-
-OGRESERVER = "ogre.oii.yt"
-
-RANKED_EBOOK_FORMATS = {
-    'mobi': 1,
-    'azw': 2,
-    'azw3': 3,
-    'azw4': 4,
-    'pdf': 5,
-    'epub': 6,
-    'pdb': 7,
-    'azw1': 8,
-    'tpz': 9,
-}
-
-MOBI_FORMATS = ('mobi', 'azw', 'azw3', 'azw4', 'azw1')
 
 
 def authenticate(host, username, password):

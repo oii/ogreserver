@@ -52,7 +52,11 @@ def sync(config, prntr):
     # 1) find ebooks in config['ebook_home'] on local machine
     ebooks_dict, errord_list = search_for_ebooks(config, prntr)
 
-    # 2) send dict of ebooks / md5s to ogreserver
+    # 2) remove DRM
+    if config['no_drm'] is False:
+        clean_all_drm(config, prntr, ebooks_dict)
+
+    # 3) send dict of ebooks / md5s to ogreserver
     response = sync_with_server(config, prntr, session_key, ebooks_dict)
 
     if not response['ebooks_to_upload'] and not response['ebooks_to_update']:
@@ -68,17 +72,17 @@ def sync(config, prntr):
 
     prntr.p(u'Come on sucker, lick my battery')
 
-    # 3) set ogre_id in metadata of each sync'd ebook
+    # 4) set ogre_id in metadata of each sync'd ebook
     update_local_metadata(
         config, prntr, session_key, ebooks_dict, response['ebooks_to_update']
     )
 
-    # 4) upload the ebooks requested by ogreserver
+    # 5) upload the ebooks requested by ogreserver
     upload_ebooks(
         config, prntr, session_key, ebooks_dict, response['ebooks_to_upload']
     )
 
-    # 5) send a log of all events, and upload bad books
+    # 6) send a log of all events, and upload bad books
     if config['debug'] is True:
         send_logs(prntr, config['host'], session_key, errord_list)
 
@@ -116,17 +120,13 @@ def search_for_ebooks(config, prntr):
         _process_ebook_dir(root, files)
 
     i = 0
-    total = len(ebooks)
-    prntr.p(u'Discovered {} files'.format(total))
-    if total == 0:
-        raise NoEbooksError()
+    prntr.p(u'Discovered {} files'.format(len(ebooks)))
+    if len(ebooks) == 0:
+        raise NoEbooksError
 
     prntr.p(u'Scanning ebook meta data and checking DRM..')
     ebooks_dict = {}
     errord_list = []
-
-    # pull the cache object out of config
-    ebook_cache = config['ebook_cache']
 
     # now parse all book meta data; building a complete dataset
     for item in ebooks:
@@ -136,27 +136,6 @@ def search_for_ebooks(config, prntr):
         suffix = item[2]
         filesize = item[3]
         file_hash = item[4]
-        dedrm = False
-
-        if config['no_drm'] is False:
-            try:
-                # remove DRM from ebook
-                new_filepath, new_filehash, new_filesize = remove_drm_from_ebook(
-                    config, prntr, ebook_cache, filepath, file_hash, suffix
-                )
-
-                if new_filepath is not None:
-                    # update the sync data with the decrypted ebook
-                    filepath = new_filepath
-                    file_hash = new_filehash
-                    filesize = new_filesize
-                    filename, suffix = os.path.splitext(os.path.basename(filepath))
-                    dedrm = True
-
-            except CorruptEbookError:
-                # record books which failed due to unicode filename issues
-                errord_list.append(filepath)
-                continue
 
         meta = {}
 
@@ -205,7 +184,6 @@ def search_for_ebooks(config, prntr):
                     'size': filesize,
                     'file_hash': file_hash,
                     'owner': config['username'],
-                    'dedrm': dedrm,
                 }
                 # merge all the meta data constructed above
                 ebooks_dict[authortitle].update(meta)
@@ -217,7 +195,7 @@ def search_for_ebooks(config, prntr):
 
         if config['verbose'] is False:
             i += 1
-            prntr.progressf(num_blocks=i, total_size=total)
+            prntr.progressf(num_blocks=i, total_size=len(ebooks))
 
     prntr.p(u'Found {} ebooks'.format(len(ebooks_dict)), success=True)
 
@@ -227,7 +205,53 @@ def search_for_ebooks(config, prntr):
     return ebooks_dict, errord_list
 
 
-def remove_drm_from_ebook(config, prntr, ebook_cache, filepath, file_hash, suffix):
+def clean_all_drm(config, prntr, ebooks_dict):
+    errord_list = []
+
+    i = 0
+    cleaned = 0
+
+    for authortitle, ebook_data in ebooks_dict.items():
+        ebook_data['dedrm'] = False
+
+        try:
+            filename, suffix = os.path.splitext(os.path.basename(ebook_data['path']))
+
+            # remove DRM from ebook
+            new_filepath, new_filehash, new_filesize = remove_drm_from_ebook(
+                config, prntr, ebook_data['path'], ebook_data['file_hash'], suffix
+            )
+
+            if new_filepath is not None:
+                # update the sync data with the decrypted ebook
+                ebook_data['path'] = new_filepath
+                ebook_data['file_hash'] = new_filehash
+                ebook_data['size'] = new_filesize
+                filename, suffix = os.path.splitext(os.path.basename(new_filepath))
+                ebook_data['filename'] = filename
+                ebook_data['format'] = suffix[1:]
+                ebook_data['dedrm'] = True
+                cleaned += 1
+
+        except CorruptEbookError:
+            # record books which failed due to unicode filename issues
+            errord_list.append(ebook_data['path'])
+            continue
+
+        if config['verbose'] is False:
+            i += 1
+            prntr.progressf(num_blocks=i, total_size=len(ebooks_dict))
+
+    if config['verbose'] is False:
+        prntr.p(u'Cleaned DRM from {} ebooks'.format(cleaned), success=True)
+
+    return errord_list
+
+
+def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
+    # pull the cache object out of config
+    ebook_cache = config['ebook_cache']
+
     if config['debug'] is False or config['use_cache'] is True:
         # attempt load ebook from local cache
         drmfree, skip = ebook_cache.get_ebook(filepath, file_hash)

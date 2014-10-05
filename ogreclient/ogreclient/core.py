@@ -342,32 +342,32 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
     # update any books with ogre_id supplied from ogreserver
     for file_hash, item in ebooks_to_update.items():
         # find this book in the scan data
-        for authortitle in ebooks_dict.keys():
-            if file_hash == ebooks_dict[authortitle]['file_hash']:
+        for authortitle, ebook_data in ebooks_dict.items():
+            if file_hash == ebook_data['file_hash']:
                 try:
                     # update the metadata on the ebook, and communicate that to ogreserver
                     new_file_hash = add_ogre_id_to_ebook(
                         config['calibre_ebook_meta_bin'],
                         file_hash,
-                        ebooks_dict[authortitle]['path'],
-                        ebooks_dict[authortitle]['tags'] if 'tags' in ebooks_dict[authortitle] else None,
+                        ebook_data['path'],
+                        ebook_data['tags'] if 'tags' in ebook_data else None,
                         item['ebook_id'],
                         config['host'],
                         session_key,
                     )
                     # update file hash in ogreclient data
-                    ebooks_dict[authortitle]['file_hash'] = new_file_hash
+                    ebook_data['file_hash'] = new_file_hash
                     success += 1
                     if config['verbose']:
-                        prntr.p(u'Wrote OGRE_ID to {}'.format(ebooks_dict[authortitle]['path']))
+                        prntr.p(u'Wrote OGRE_ID to {}'.format(ebook_data['path']))
 
                     # write to ogreclient cache
-                    config['ebook_cache'].set_ebook(ebooks_dict[authortitle]['path'], new_file_hash)
+                    config['ebook_cache'].set_ebook(ebook_data['path'], new_file_hash)
 
                 except (FailedWritingMetaDataError, FailedConfirmError) as e:
                     prntr.e(
                         u'Failed saving OGRE_ID in {}'.format(
-                            ebooks_dict[authortitle]['path']
+                            ebook_data['path']
                         ), excp=e
                     )
                     failed += 1
@@ -392,19 +392,19 @@ def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):
     # upload each requested by the server
     for upload in ebooks_to_upload:
         # iterate all user's found books
-        for authortitle in ebooks_dict.keys():
-            if upload['file_hash'] == ebooks_dict[authortitle]['file_hash']:
+        for authortitle, ebook_data in ebooks_dict.items():
+            if upload['file_hash'] == ebook_data['file_hash']:
                 try:
                     upload_single_book(
                         config['host'],
                         session_key,
-                        ebooks_dict[authortitle]['path'],
+                        ebook_data['path'],
                         upload,
                     )
                     success += 1
 
                 except SpinachError as e:
-                    prntr.e(u'Failed uploading {}'.format(ebooks_dict[authortitle]['path']), excp=e)
+                    prntr.e(u'Failed uploading {}'.format(ebook_data['path']), excp=e)
                     failed += 1
 
         i += 1

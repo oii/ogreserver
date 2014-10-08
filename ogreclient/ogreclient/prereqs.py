@@ -60,19 +60,21 @@ def setup_ogreclient(args, prntr):
             'calibre_ebook_meta_bin': calibre_ebook_meta_bin
         }
 
-    # setup user auth perms, with this order of precedence:
-    #  - CLI params
-    #  - ENV vars
-    #  - saved values in ogre config
-    #  - CLI readline interface
-    # output is written directly into conf var
-    setup_user_auth(prntr, args, conf)
+    # not all ogreclient commands need auth
+    if hasattr(args, 'host'):
+        # setup user auth perms, with this order of precedence:
+        #  - CLI params
+        #  - ENV vars
+        #  - saved values in ogre config
+        #  - CLI readline interface
+        # output is written directly into conf var
+        setup_user_auth(prntr, args, conf)
 
-    # set default hostname
-    if args.host is None:
-        conf['host'] = args.host
-    else:
-        conf['host'] = OGRESERVER_HOST
+        # set default hostname
+        if args.host is not None:
+            conf['host'] = args.host
+        else:
+            conf['host'] = OGRESERVER_HOST
 
     # handle no ebook home :(
     if conf['ebook_home'] is None:

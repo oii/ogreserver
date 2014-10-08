@@ -70,7 +70,9 @@ def setup_ogreclient(args, prntr):
 
     # set default hostname
     if args.host is None:
-        args.host = OGRESERVER_HOST
+        conf['host'] = args.host
+    else:
+        conf['host'] = OGRESERVER_HOST
 
     # handle no ebook home :(
     if conf['ebook_home'] is None:

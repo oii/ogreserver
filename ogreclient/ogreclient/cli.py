@@ -158,29 +158,34 @@ def parse_command_line():
 
 
 def main(conf, args, prntr):
+    # setup config for sync
+    conf.update({
+        'debug': args.debug,
+        'use_cache': args.use_cache,
+        'verbose': True if args.debug is True else args.verbose,
+        'quiet': args.quiet,
+    })
+
     if args.mode == 'update':
         ret = download_dedrm(args.host, conf['username'], conf['password'], prntr, debug=args.debug)
 
     elif args.mode == 'info':
         # display metadata from a single book
-        ret = display_info(conf, args, prntr, args.inputfile)
+        ret = display_info(conf, prntr, args.inputfile)
 
     elif args.mode == 'dedrm':
         # decrypt a single book
-        ret = dedrm_single_ebook(conf, args, prntr, args.inputfile, args.output_dir)
+        ret = dedrm_single_ebook(conf, prntr, args.inputfile, args.output_dir)
 
     elif args.mode == 'sync':
         # run ogreclient
-        ret = run_sync(
-            conf, args, prntr,
-            conf['ebook_home'], conf['username'], conf['password'],
-            debug=args.debug
-        )
+        conf['no_drm'] = args.no_drm
+        ret = run_sync(conf, prntr)
 
     return ret
 
 
-def dedrm_single_ebook(conf, args, prntr, inputfile, output_dir):
+def dedrm_single_ebook(conf, prntr, inputfile, output_dir):
     filename, ext = os.path.splitext(inputfile)
     from .dedrm import decrypt, DRM, DecryptionError
 
@@ -202,29 +207,15 @@ def dedrm_single_ebook(conf, args, prntr, inputfile, output_dir):
         return 1
 
 
-def display_info(conf, args, prntr, filepath):
+def display_info(conf, prntr, filepath):
     meta = metadata_extract(conf['calibre_ebook_meta_bin'], filepath)
     prntr.p('Book meta', extra=meta)
 
 
-def run_sync(conf, args, prntr, ebook_home, username, password, debug=False):
+def run_sync(conf, prntr):
     ret = False
 
-    # setup config for sync
-    conf.update({
-        'ebook_home': ebook_home,
-        'username': username,
-        'password': password,
-        'host': args.host,
-        'debug': debug,
-        'use_cache': args.use_cache,
-        'verbose': True if debug is True else args.verbose,
-        'quiet': args.quiet,
-        'no_drm': args.no_drm,
-    })
-
     try:
-        # doit
         ret = sync(conf, prntr)
 
     # print messages on error

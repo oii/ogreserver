@@ -104,20 +104,13 @@ def search_for_ebooks(config, prntr):
                     (filepath, fn, ext, md5_tup[2], md5_tup[0])
                 )
 
-    # search for ebooks in all providers dirs
-    for _, provider_dir in config['providers'].items():
+    # search for ebooks in all provider dirs & ebook_home
+    for provider_dir in config['providers'].values() + [config['ebook_home']]:
         if config['debug']:
             prntr.p(u'Searching {}'.format(provider_dir))
 
         for root, _, files in os.walk(provider_dir):
             _process_ebook_dir(root, files)
-
-    if config['debug']:
-        prntr.p(u'Searching {}'.format(config['ebook_home']))
-
-    # search for ebooks in ebook home
-    for root, _, files in os.walk(config['ebook_home']):
-        _process_ebook_dir(root, files)
 
     i = 0
     prntr.p(u'Discovered {} files'.format(len(ebooks)))

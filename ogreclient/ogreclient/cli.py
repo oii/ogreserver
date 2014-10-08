@@ -69,6 +69,18 @@ def parse_command_line():
         help='Print the current Sesame version')
 
     parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument(
+        '--verbose', '-v', action='store_true',
+        help='Produce lots of output')
+    parent_parser.add_argument(
+        '--debug', action='store_true',
+        help='Print debug information on error')
+    parent_parser.add_argument(
+        '--quiet', '-q', action='store_true',
+        help="Don't produce any output")
+    parent_parser.add_argument(
+        '--use-cache', action='store_true',
+        help='Used in conjunction with --debug to force using the cache in debug mode')
 
     # setup parser for sync command
     psync = subparsers.add_parser('sync',
@@ -84,19 +96,6 @@ def parse_command_line():
     psync.add_argument(
         '--no-drm', action='store_true',
         help="Disable DRM removal during sync; don't install DeDRM tools")
-
-    psync.add_argument(
-        '--verbose', '-v', action='store_true',
-        help='Produce lots of output')
-    psync.add_argument(
-        '--debug', action='store_true',
-        help='Print debug information on error & pass to ogreserver, also ignore local cache')
-    psync.add_argument(
-        '--use-cache', action='store_true',
-        help='Used in conjunction with --debug to allow debugging of caching code paths')
-    psync.add_argument(
-        '--quiet', '-q', action='store_true',
-        help="Don't produce any output")
     psync.add_argument(
         '--dry-run', '-d', action='store_true',
         help="Dry run the sync; don't actually upload anything to the server")

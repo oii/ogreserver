@@ -1,5 +1,7 @@
 class OgreException(Exception):
-    pass
+    def __init__(self, message=None, inner_excp=None):
+        super(OgreException, self).__init__(message)
+        self.inner_excp = inner_excp
 
 class ConfigSetupError(OgreException):
     pass

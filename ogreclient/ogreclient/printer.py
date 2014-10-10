@@ -190,6 +190,11 @@ class CliPrinter:
             if tb is not None:
                 msg += '\n{}'.format(traceback.extract_tb(tb))
 
+            if hasattr(ex, 'inner_excp') and ex.inner_excp is not None:
+                msg += '\nInner Exception:\n > {}: {}'.format(
+                    ex.inner_excp.__class__.__name__, ex.inner_excp
+                )
+
         return msg
 
     def close(self):

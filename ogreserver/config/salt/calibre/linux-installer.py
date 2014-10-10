@@ -18,7 +18,8 @@ py3 = sys.version_info[0] > 2
 enc = getattr(sys.stdout, 'encoding', 'utf-8') or 'utf-8'
 if enc.lower() == 'ascii':
     enc = 'utf-8'
-calibre_version = signature = None
+calibre_version = '{{ version }}'
+upstream_version = signature = None
 urllib = __import__('urllib.request' if py3 else 'urllib', fromlist=1)
 has_ssl_verify = hasattr(ssl, 'PROTOCOL_TLSv1_2') and sys.version_info[:3] > (2, 7, 8)
 
@@ -37,7 +38,7 @@ else:
             x = x.encode(enc)
         return x
 
-class TerminalController:  # {{{
+class TerminalController:  # {
     BOL = ''             #: Move the cursor to the beginning of the line
     UP = ''              #: Move the cursor up one line
     DOWN = ''            #: Move the cursor down one line
@@ -201,9 +202,9 @@ class ProgressBar:
             self.term.UP + self.term.CLEAR_EOL).encode(enc))
             self.cleared = 1
             out.flush()
-# }}}
+# }
 
-def prints(*args, **kwargs):  # {{{
+def prints(*args, **kwargs):  # {
     f = kwargs.get('file', sys.stdout.buffer if py3 else sys.stdout)
     end = kwargs.get('end', b'\n')
     enc = getattr(f, 'encoding', 'utf-8') or 'utf-8'
@@ -218,9 +219,9 @@ def prints(*args, **kwargs):  # {{{
     f.write(end)
     if py3 and f is sys.stdout.buffer:
         f.flush()
-# }}}
+# }
 
-class Reporter:  # {{{
+class Reporter:  # {
 
     def __init__(self, fname):
         try:
@@ -239,9 +240,9 @@ class Reporter:  # {{{
             except:
                 import traceback
                 traceback.print_exc()
-# }}}
+# }
 
-# Downloading {{{
+# Downloading {
 
 def clean_cache(cache, fname):
     for x in os.listdir(cache):
@@ -336,9 +337,9 @@ def download_tarball():
                 'Try the download again later.')
         raise SystemExit(1)
     return raw
-# }}}
+# }
 
-# Get tarball signature securely {{{
+# Get tarball signature securely {
 
 def get_proxies(debug=True):
     proxies = urllib.getproxies()
@@ -597,7 +598,7 @@ def get_https_resource_securely(url, timeout=60, max_redirects=5, ssl_version=No
             if response.status != httplib.OK:
                 raise HTTPError(url, response.status)
             return response.read()
-# }}}
+# }
 
 def extract_tarball(raw, destdir):
     prints('Extracting application files...')
@@ -613,14 +614,15 @@ def extract_tarball(raw, destdir):
             raise SystemExit(1)
 
 def get_tarball_info():
-    global signature, calibre_version
+    global signature, upstream_version
     print ('Downloading tarball signature securely...')
     raw = get_https_resource_securely('https://code.calibre-ebook.com/tarball-info/' +
                                       ('x86_64' if is64bit else 'i686'))
-    signature, calibre_version = raw.rpartition(b'@')[::2]
+    signature, upstream_version = raw.rpartition(b'@')[::2]
     if not signature or not calibre_version:
         raise ValueError('Failed to get install file signature, invalid signature returned')
-    calibre_version = calibre_version.decode('utf-8')
+    upstream_version = upstream_version.decode('utf-8')
+    print ('Latest upstream version is {}'.format(upstream_version))
 
 
 def download_and_extract(destdir):

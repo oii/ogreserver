@@ -76,27 +76,7 @@ def setup_ogreclient(args, prntr):
         else:
             conf['host'] = OGRESERVER_HOST
 
-    # handle no ebook home :(
-    if conf['ebook_home'] is None:
-        ebook_home_found = False
-
-        # get the user's HOME directory
-        home_dir = os.path.expanduser('~')
-
-        # setup ebook home cross-platform
-        if conf['platform'] == 'Darwin':
-            ebook_home = os.path.join(home_dir, 'Documents/ogre-ebooks')
-        else:
-            ebook_home = os.path.join(home_dir, 'ogre-ebooks')
-
-        # create OGRE ebook_home for the user :)
-        if not os.path.exists(ebook_home):
-            os.path.mkdir(ebook_home)
-            prntr.p('Decrypted ebooks will be put into {}'.format(ebook_home))
-
-        conf['ebook_home'] = ebook_home
-    else:
-        ebook_home_found = True
+    ebook_home_found, conf['ebook_home'] = setup_ebook_home(prntr, args, conf)
 
     # return the user's OS
     conf['platform'] = platform.system()
@@ -139,11 +119,6 @@ def setup_ogreclient(args, prntr):
         prntr.p('Please note that DRM scanning means the first run of ogreclient '
                 'will be much slower than subsequent runs.')
 
-    if type(conf['ebook_home']) is str:
-        # decode ebook_home to unicode according to local fs encoding,
-        # os.walk/os.listdir then does all further charset conversion for us
-        conf['ebook_home'] = codecs.decode(conf['ebook_home'], sys.getfilesystemencoding())
-
     # return config object
     conf['ebook_cache'] = ebook_cache
     return conf
@@ -184,21 +159,16 @@ def dedrm_check(prntr, args, conf):
 
 def setup_user_auth(prntr, args, conf):
     # 1) load CLI parameters
-    ebook_home = args.ebook_home
     username = args.username
     password = args.password
 
     # 2) load ENV vars
-    if ebook_home is None:
-        ebook_home = os.environ.get('EBOOK_HOME')
     if username is None:
         username = os.environ.get('EBOOK_USER')
     if password is None:
         password = os.environ.get('EBOOK_PASS')
 
     # 3) load settings from saved config
-    if ebook_home is None or len(ebook_home) == 0:
-        ebook_home = conf['ebook_home']
     if username is None or len(username) == 0:
         username = conf['username']
     if password is None or len(password) == 0:
@@ -225,6 +195,45 @@ def setup_user_auth(prntr, args, conf):
             raise ConfigSetupError('O.G.R.E. password not supplied')
 
     # return values via conf var
-    conf['ebook_home'] = ebook_home
     conf['username'] = username
     conf['password'] = password
+
+
+def setup_ebook_home(prntr, args, conf):
+    # 1) load CLI parameters
+    ebook_home = args.ebook_home
+
+    # 2) load ENV vars
+    if ebook_home is None:
+        ebook_home = os.environ.get('EBOOK_HOME')
+
+    # 3) load settings from saved config
+    if ebook_home is None or len(ebook_home) == 0:
+        ebook_home = conf['ebook_home']
+
+    if type(ebook_home) is str:
+        # decode ebook_home to unicode according to local fs encoding,
+        # os.walk/os.listdir then does all further charset conversion for us
+        ebook_home = codecs.decode(ebook_home, sys.getfilesystemencoding())
+
+    # handle no ebook home :(
+    if ebook_home is None:
+        ebook_home_found = False
+
+        # get the user's HOME directory
+        home_dir = os.path.expanduser('~')
+
+        # setup ebook home cross-platform
+        if conf['platform'] == 'Darwin':
+            ebook_home = os.path.join(home_dir, 'Documents/ogre-ebooks')
+        else:
+            ebook_home = os.path.join(home_dir, 'ogre-ebooks')
+
+        # create OGRE ebook_home for the user :)
+        if not os.path.exists(ebook_home):
+            os.mkdir(ebook_home)
+            prntr.p('Decrypted ebooks will be put into {}'.format(ebook_home))
+    else:
+        ebook_home_found = True
+
+    return ebook_home_found, ebook_home

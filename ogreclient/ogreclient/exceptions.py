@@ -44,3 +44,6 @@ class KindlePrereqsError(OgreException):
 
 class NoEbookSourcesFoundError(OgreException):
     pass
+
+class DuplicateEbookFoundError(OgreException):
+    pass

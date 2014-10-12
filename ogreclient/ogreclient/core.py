@@ -20,7 +20,7 @@ from .dedrm import decrypt, DRM, DeDrmMissingError, DecryptionFailed
 
 from .definitions import RANKED_EBOOK_FORMATS, MOBI_FORMATS
 
-from .exceptions import AuthDeniedError, AuthError, NoEbooksError
+from .exceptions import AuthDeniedError, AuthError, NoEbooksError, DuplicateEbookFoundError
 from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
 from .exceptions import FailedWritingMetaDataError, FailedConfirmError, FailedDebugLogsError
 
@@ -52,9 +52,19 @@ def sync(config, prntr):
     # 1) find ebooks in config['ebook_home'] on local machine
     ebooks_dict, errord_list = search_for_ebooks(config, prntr)
 
+    if len(errord_list) > 0:
+        prntr.p(u'Errors occurred during scan:')
+        for message, e in errord_list.values():
+            prntr.e(u'{}'.format(unicode(message)), excp=e)
+
     # 2) remove DRM
     if config['no_drm'] is False:
-        clean_all_drm(config, prntr, ebooks_dict)
+        errord_list = clean_all_drm(config, prntr, ebooks_dict)
+
+        if len(errord_list) > 0:
+            prntr.e(u'Errors occurred during decryption:')
+            for message, e in errord_list.values():
+                prntr.e(u'{}'.format(unicode(message)), excp=e)
 
     # 3) send dict of ebooks / md5s to ogreserver
     response = sync_with_server(config, prntr, session_key, ebooks_dict)
@@ -64,9 +74,9 @@ def sync(config, prntr):
             prntr.p('Finished, nothing to do.')
         else:
             if config['debug'] is False:
-                prntr.p('Finished with errors. Re-run with --debug to send logs to OGRE')
+                prntr.e('Finished with errors. Re-run with --debug to send logs to OGRE')
             else:
-                prntr.p('Finished with errors.')
+                prntr.e('Finished with errors.')
                 send_logs(prntr, config['host'], session_key, errord_list)
         return
 
@@ -119,7 +129,7 @@ def search_for_ebooks(config, prntr):
 
     prntr.p(u'Scanning ebook meta data and checking DRM..')
     ebooks_dict = {}
-    errord_list = []
+    errord_list = {}
 
     # now parse all book meta data; building a complete dataset
     for item in ebooks:
@@ -138,7 +148,7 @@ def search_for_ebooks(config, prntr):
 
         except CorruptEbookError as e:
             # record books which failed during search
-            errord_list.append(filepath)
+            errord_list[filepath] = e
 
             # skip books which can't have metadata extracted
             if config['verbose']:
@@ -149,12 +159,12 @@ def search_for_ebooks(config, prntr):
         # delimit fields with non-printable chars
         authortitle = u'{}\u0006{}\u0007{}'.format(meta['firstname'], meta['lastname'], meta['title'])
 
-        # check for duplicates
-        if authortitle in ebooks_dict.keys() and suffix in ebooks_dict[authortitle].keys():
-            # TODO warn user on error stack
-            pass
+        # check for duplicated authortitle/format
+        if authortitle in ebooks_dict.keys() and ebooks_dict[authortitle]['format'] == suffix[1:]:
+            # warn user on error stack
+            errord_list[filepath] = DuplicateEbookFoundError(ebooks_dict[authortitle])
         else:
-            # another format of same book found
+            # different format of duplicate book found
             write = False
 
             if authortitle in ebooks_dict.keys():
@@ -199,7 +209,7 @@ def search_for_ebooks(config, prntr):
 
 
 def clean_all_drm(config, prntr, ebooks_dict):
-    errord_list = []
+    errord_list = {}
 
     i = 0
     cleaned = 0
@@ -226,9 +236,9 @@ def clean_all_drm(config, prntr, ebooks_dict):
                 ebook_data['dedrm'] = True
                 cleaned += 1
 
-        except CorruptEbookError:
+        except CorruptEbookError as e:
             # record books which failed due to unicode filename issues
-            errord_list.append(ebook_data['path'])
+            errord_list[ebook_data['path']] = e
             continue
 
         if config['verbose'] is False:
@@ -310,14 +320,8 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
 
     except DeDrmMissingError:
         config['no_drm'] = True
-    except DecryptionFailed as e:
-        prntr.e(u'{}'.format(filepath), CliPrinter.DEDRM, excp=e)
-        raise CorruptEbookError
-    except UnicodeDecodeError as e:
-        prntr.e(u"Couldn't decode {}. This will be reported.".format(os.path.basename(filepath)), excp=e)
-        raise CorruptEbookError
-    except Exception as e:
-        prntr.e(u'Fatal Exception on {}'.format(filepath), excp=e)
+    except (DecryptionFailed, UnicodeDecodeError) as e:
+        raise CorruptEbookError(filepath, inner_excp=e)
 
     return new_filepath, new_filehash, new_filesize
 
@@ -694,7 +698,7 @@ def send_logs(prntr, host, session_key, errord_list):
 
             i = 0
 
-            for filepath in errord_list:
+            for filepath in errord_list.keys():
                 filename = os.path.basename(filepath.encode('utf-8'))
 
                 with open(filepath, "rb") as f:

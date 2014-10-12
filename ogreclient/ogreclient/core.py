@@ -247,7 +247,7 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
 
     if config['debug'] is False or config['use_cache'] is True:
         # attempt load ebook from local cache
-        drmfree, skip = ebook_cache.get_ebook(filepath, file_hash)
+        _, drmfree, skip = ebook_cache.get_ebook(filepath, file_hash)
 
         # return if book marked DRM free in the cache
         if bool(drmfree) is True or bool(skip) is True:

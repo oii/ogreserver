@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import json
 import os
 import sqlite3
 
@@ -58,7 +59,8 @@ class Cache:
             c.execute('''
                 CREATE TABLE ebooks (
                       path TEXT PRIMARY KEY,
-                      file_hash TEXT NOT NULL,
+                      file_hash TEXT NULL,
+                      data TEXT NULL,
                       drmfree INT DEFAULT 0,
                       skip INT DEFAULT 0
                 )'''
@@ -73,28 +75,28 @@ class Cache:
             conn.close()
 
 
-    def get_ebook(self, path, file_hash):
+    def get_ebook(self, path, file_hash=None):
         conn = sqlite3.connect(self.ebook_cache_path)
         try:
             c = conn.cursor()
-            c.execute('SELECT file_hash, drmfree, skip FROM ebooks WHERE path = ?', (path,))
+            c.execute('SELECT file_hash, data, drmfree, skip FROM ebooks WHERE path = ?', (path,))
             obj = c.fetchone()
             if obj is not None:
                 # verify file_hash matches between cache and filesystem
-                if obj[0] != file_hash:
+                if file_hash is not None and obj[0] != file_hash:
                     c.execute('DELETE FROM ebooks WHERE path = ?', (path,))
                     conn.commit()
                 else:
-                    return obj[1], obj[2]
+                    return obj[1], obj[2], obj[3]
         except Exception as e:
             raise CacheReadError(e)
         finally:
             conn.close()
 
-        return None, None
+        return None, None, None
 
 
-    def set_ebook(self, path, file_hash, drmfree=False, skip=False):
+    def set_ebook(self, path, file_hash=None, data=None, drmfree=False, skip=False):
         conn = sqlite3.connect(self.ebook_cache_path)
         try:
             c = conn.cursor()
@@ -102,14 +104,35 @@ class Cache:
             obj = c.fetchone()
             # update if exists, otherwise insert
             if obj is not None:
+                values = ''
+                params = []
+
+                # build update parameter list
+                if file_hash is not None:
+                    values += 'file_hash = ?, '
+                    params.append(file_hash)
+                if data is not None:
+                    values += 'data = ?, '
+                    params.append(json.dumps(data))
+
+                if drmfree is not None:
+                    values += 'drmfree = ?, '
+                    params.append(int(drmfree))
+
+                if skip is not None:
+                    values += 'skip = ?'
+                    params.append(int(skip))
+
+                # where path
+                params.append(path)
+
                 c.execute(
-                    'UPDATE ebooks SET file_hash = ?, drmfree = ?, skip = ? WHERE path = ?',
-                    (file_hash, int(drmfree), int(skip), path)
+                    'UPDATE ebooks SET {} WHERE path = ?'.format(values), params
                 )
             else:
                 c.execute(
-                    'INSERT INTO ebooks VALUES (?,?,?,?)',
-                    (path, file_hash, int(drmfree), int(skip))
+                    'INSERT INTO ebooks VALUES (?,?,?,?,?)',
+                    (path, file_hash, json.dumps(data), int(drmfree), int(skip))
                 )
             conn.commit()
         except Exception as e:

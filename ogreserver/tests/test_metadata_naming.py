@@ -45,18 +45,19 @@ def test_generate_filename_transpose(datastore):
 
 
 def test_generate_filename_with_db_load(datastore, rethinkdb, user):
-    ebooks_dict = {
-        u"H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
-            'format': 'epub',
-            'file_hash': '38b3fc3aa7fe67e76f0d8b248e62b940',
-            'owner': 'mafro',
-            'size': 139654,
-            'dedrm': False,
-        },
-    }
-
-    # create the datastore and run a sync
-    datastore.update_library(ebooks_dict, user)
+    # create test ebook data directly in rethinkdb
+    rethinkdb.table('ebooks').insert({
+        'firstname': 'H. C.',
+        'lastname': 'Andersen',
+        'title': "Andersen's Fairy Tales",
+        'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
+    }).run()
+    datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user.username, {
+        'format': 'epub',
+        'file_hash': '38b3fc3aa7fe67e76f0d8b248e62b940',
+        'size': 1234,
+        'dedrm': False,
+    })
 
     # test filename generate when supplying only an MD5
     filename = datastore.generate_filename('38b3fc3aa7fe67e76f0d8b248e62b940')

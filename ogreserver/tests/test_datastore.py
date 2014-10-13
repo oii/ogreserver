@@ -2,22 +2,19 @@ from __future__ import absolute_import
 
 
 def test_update_book_hash(datastore, rethinkdb, user):
-    ebooks_dict = {
-        u"H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
-            'format': 'epub',
-            'file_hash': '38b3fc3a',
-            'owner': 'mafro',
-            'size': 139654,
-            'dedrm': False,
-        },
-    }
-
-    # create the datastore and run a sync
-    datastore.update_library(ebooks_dict, user)
-
-    # check the object in formats table
-    format_obj = rethinkdb.table('formats').get('38b3fc3a').run()
-    assert format_obj is not None, 'format should exist with MD5 of 38b3fc3a'
+    # create test ebook data directly in rethinkdb
+    rethinkdb.table('ebooks').insert({
+        'firstname': 'H. C.',
+        'lastname': 'Andersen',
+        'title': "Andersen's Fairy Tales",
+        'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
+    }).run()
+    datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user.username, {
+        'format': 'epub',
+        'file_hash': '38b3fc3a',
+        'size': 1234,
+        'dedrm': False,
+    })
 
     # md5 is different after ogre_id written to metadata on client
     ret = datastore.update_book_hash('38b3fc3a', 'egg')

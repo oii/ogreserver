@@ -108,10 +108,8 @@ def search_for_ebooks(config, prntr):
         for filename in files:
             fn, ext = os.path.splitext(filename)
             if ext[1:] in RANKED_EBOOK_FORMATS.keys() and fn[0:2] != '._':
-                filepath = os.path.join(root, filename)
-                md5_tup = compute_md5(filepath)
                 ebooks.append(
-                    (filepath, fn, ext, md5_tup[2], md5_tup[0])
+                    (os.path.join(root, filename), fn, ext)
                 )
 
     # search for ebooks in all provider dirs & ebook_home
@@ -137,8 +135,10 @@ def search_for_ebooks(config, prntr):
         filepath = item[0]
         filename = item[1]
         suffix = item[2]
-        filesize = item[3]
-        file_hash = item[4]
+
+        # calculate MD5 of ebook
+        md5_tup = compute_md5(filepath, buf_size=524288)
+        filesize, file_hash = md5_tup[2], md5_tup[0]
 
         meta = {}
 

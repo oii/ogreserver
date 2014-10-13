@@ -7,7 +7,6 @@ import sys
 from . import __version__
 
 from .core import sync, metadata_extract
-from .dedrm import download_dedrm
 from .prereqs import setup_ogreclient
 from .printer import CliPrinter, DummyPrinter
 
@@ -94,6 +93,18 @@ def parse_command_line():
               'You can also set the environment variable $EBOOK_HOME'))
 
     psync.add_argument(
+        '--host',
+        help='Override the default server host of oii.ogre.yt')
+    psync.add_argument(
+        '--username', '-u',
+        help=('Your O.G.R.E. username. '
+              'You can also set the environment variable $EBOOK_USER'))
+    psync.add_argument(
+        '--password', '-p',
+        help=('Your O.G.R.E. password. '
+              'You can also set the environment variable $EBOOK_PASS'))
+
+    psync.add_argument(
         '--no-drm', action='store_true',
         help="Disable DRM removal during sync; don't install DeDRM tools")
     psync.add_argument(
@@ -104,26 +115,6 @@ def parse_command_line():
         '--ignore-kindle', action='store_true',
         help='Ignore ebooks in a local Amazon Kindle install')
 
-    # setup parser for update command
-    pupdate = subparsers.add_parser('update',
-        parents=[parent_parser],
-        help='Install the latest DeDRM tools',
-    )
-    pupdate.set_defaults(mode='update')
-
-    # set ogreserver params which apply to sync & update
-    for p in (psync, pupdate):
-        p.add_argument(
-            '--host',
-            help='Override the default server host of oii.ogre.yt')
-        p.add_argument(
-            '--username', '-u',
-            help=('Your O.G.R.E. username. '
-                  'You can also set the environment variable $EBOOK_USER'))
-        p.add_argument(
-            '--password', '-p',
-            help=('Your O.G.R.E. password. '
-                  'You can also set the environment variable $EBOOK_PASS'))
 
     # setup parser for dedrm command
     pdedrm = subparsers.add_parser('dedrm',
@@ -137,6 +128,7 @@ def parse_command_line():
     pdedrm.add_argument(
         '-O', '--output-dir', default=os.getcwd(),
         help='Extract files into a specific directory')
+
 
     # setup parser for info command
     pinfo = subparsers.add_parser('info',
@@ -165,10 +157,7 @@ def main(conf, args, prntr):
         'quiet': args.quiet,
     })
 
-    if args.mode == 'update':
-        ret = download_dedrm(args.host, conf['username'], conf['password'], prntr, debug=args.debug)
-
-    elif args.mode == 'info':
+    if args.mode == 'info':
         # display metadata from a single book
         ret = display_info(conf, prntr, args.inputfile)
 

@@ -151,8 +151,6 @@ def search_for_ebooks(config, prntr):
             errord_list[filepath] = e
 
             # skip books which can't have metadata extracted
-            if config['verbose']:
-                prntr.e(u'{}{}'.format(filename, suffix), CliPrinter.CORRUPT, excp=e)
             continue
 
         # books are indexed by 'authortitle' to handle multiple copies of the same book
@@ -196,9 +194,8 @@ def search_for_ebooks(config, prntr):
                 del(ebooks_dict[authortitle]['lastname'])
                 del(ebooks_dict[authortitle]['title'])
 
-        if config['verbose'] is False:
-            i += 1
-            prntr.progressf(num_blocks=i, total_size=len(ebooks))
+        i += 1
+        prntr.progressf(num_blocks=i, total_size=len(ebooks))
 
     prntr.p(u'Found {} ebooks'.format(len(ebooks_dict)), success=True)
 

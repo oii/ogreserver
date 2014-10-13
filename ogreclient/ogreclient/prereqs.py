@@ -109,10 +109,15 @@ def setup_ogreclient(args, prntr):
     if ebook_cache.verify_cache(prntr):
         first_scan_warning = True
 
-    if args.mode == 'sync' and args.no_drm is True:
-        # skip drm check
-        pass
-    else:
+    # ensure the DRM tools are installed and up-to-date
+    if args.mode == 'sync':
+        if args.no_drm is True:
+            # skip drm check
+            pass
+        else:
+            dedrm_check(prntr, args, conf)
+
+    elif args.mode == 'dedrm':
         dedrm_check(prntr, args, conf)
 
     if first_scan_warning is True:

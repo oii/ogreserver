@@ -4,9 +4,9 @@ import os
 import pytest
 
 # import ogreclient installed locally
-from ogreclient.cli import download_dedrm
+#from ogreclient.cli import download_dedrm
 #from ogreclient.core import authenticate, sync_with_server
-from ogreclient.printer import DummyPrinter
+#from ogreclient.printer import DummyPrinter
 
 
 @pytest.mark.xfail

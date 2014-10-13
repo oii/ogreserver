@@ -129,7 +129,6 @@ def search_for_ebooks(config, prntr):
     ebooks_dict = {}
     errord_list = {}
 
-    # now parse all book meta data; building a complete dataset
     for item in ebooks:
         # create readable variable names
         filepath = item[0]
@@ -149,6 +148,9 @@ def search_for_ebooks(config, prntr):
         except CorruptEbookError as e:
             # record books which failed during search
             errord_list[filepath] = e
+
+            # add book to the cache as a skip
+            config['ebook_cache'].set_ebook(filepath, skip=True)
 
             # skip books which can't have metadata extracted
             continue
@@ -189,10 +191,16 @@ def search_for_ebooks(config, prntr):
                 # merge all the meta data constructed above
                 ebooks_dict[authortitle].update(meta)
 
+                # add book to the cache
+                config['ebook_cache'].set_ebook(filepath, file_hash, ebooks_dict[authortitle])
+
                 # don't need to send author/title since they're composed into the key
                 del(ebooks_dict[authortitle]['firstname'])
                 del(ebooks_dict[authortitle]['lastname'])
                 del(ebooks_dict[authortitle]['title'])
+            else:
+                # add book to the cache as a skip
+                config['ebook_cache'].set_ebook(filepath, file_hash, skip=True)
 
         i += 1
         prntr.progressf(num_blocks=i, total_size=len(ebooks))
@@ -249,12 +257,9 @@ def clean_all_drm(config, prntr, ebooks_dict):
 
 
 def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
-    # pull the cache object out of config
-    ebook_cache = config['ebook_cache']
-
     if config['debug'] is False or config['use_cache'] is True:
         # attempt load ebook from local cache
-        _, drmfree, skip = ebook_cache.get_ebook(filepath, file_hash)
+        _, drmfree, skip = config['ebook_cache'].get_ebook(filepath, file_hash)
 
         # return if book marked DRM free in the cache
         if bool(drmfree) is True or bool(skip) is True:
@@ -271,7 +276,7 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
 
             if state == DRM.none:
                 # update cache to mark book as drmfree
-                ebook_cache.set_ebook(filepath, file_hash, drmfree=True)
+                config['ebook_cache'].set_ebook(filepath, drmfree=True)
 
             elif state == DRM.decrypted:
                 if config['verbose']:
@@ -299,14 +304,14 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
                     prntr.p(u'Decrypted book moved to {}'.format(new_filepath), CliPrinter.DEDRM, success=True)
 
                 # mark decrypted book as drmfree=True in cache
-                ebook_cache.set_ebook(filepath, new_filehash, drmfree=True)
+                config['ebook_cache'].set_ebook(filepath, new_filehash, drmfree=True)
 
                 # update existing DRM-scuppered as skip=True in cache
-                ebook_cache.set_ebook(filepath, file_hash, skip=True)
+                config['ebook_cache'].set_ebook(filepath, skip=True)
 
             else:
                 # mark book as having DRM
-                ebook_cache.set_ebook(filepath, file_hash, drmfree=False)
+                config['ebook_cache'].set_ebook(filepath, file_hash, drmfree=False)
 
                 if state == DRM.wrong_key:
                     raise DecryptionFailed('Incorrect key found for ebook')

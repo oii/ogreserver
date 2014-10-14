@@ -154,7 +154,11 @@ def search_for_ebooks(config, prntr):
         # check for duplicated authortitle/format
         if authortitle in ebooks_dict.keys() and ebooks_dict[authortitle]['format'] == ebook_obj.format:
             # warn user on error stack
-            errord_list[ebook_obj.path] = DuplicateEbookFoundError
+            errord_list[ebook_obj.path] = DuplicateEbookFoundError(
+                u"Duplicate ebook found '{}':\n  {}\n  {}".format(
+                    ebook_obj, ebook_obj.path, ebooks_dict[authortitle]['path']
+                )
+            )
         else:
             # new ebook, or different format of duplicate ebook found
             write = False

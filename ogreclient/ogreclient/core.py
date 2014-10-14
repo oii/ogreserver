@@ -3,22 +3,18 @@ from __future__ import division
 
 import json
 import os
-import shutil
-import subprocess
-import sys
 
 import urllib
 import urllib2
 from urllib2 import HTTPError, URLError
 from .urllib2_file import newHTTPHandler
 
-from .utils import compute_md5
-from .utils import id_generator
+from .ebook_obj import EbookObject
 from .utils import make_temp_directory
 from .printer import CliPrinter
 from .dedrm import decrypt, DRM, DeDrmMissingError, DecryptionFailed
 
-from .definitions import RANKED_EBOOK_FORMATS, MOBI_FORMATS
+from .definitions import RANKED_EBOOK_FORMATS
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, DuplicateEbookFoundError
 from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
@@ -109,7 +105,7 @@ def search_for_ebooks(config, prntr):
             fn, ext = os.path.splitext(filename)
             if ext[1:] in RANKED_EBOOK_FORMATS.keys() and fn[0:2] != '._':
                 ebooks.append(
-                    (os.path.join(root, filename), fn, ext)
+                    (os.path.join(root, filename), fn, ext[1:])
                 )
 
     # search for ebooks in all provider dirs & ebook_home
@@ -130,47 +126,43 @@ def search_for_ebooks(config, prntr):
     errord_list = {}
 
     for item in ebooks:
-        # create readable variable names
-        filepath = item[0]
-        filename = item[1]
-        suffix = item[2]
-
+        ebook_obj = EbookObject(
+            config=config,
+            filepath=item[0],
+            filename=item[1],
+            fmt=item[2],
+            owner=config['username'],
+        )
         # calculate MD5 of ebook
-        md5_tup = compute_md5(filepath, buf_size=524288)
-        filesize, file_hash = md5_tup[2], md5_tup[0]
-
-        meta = {}
+        ebook_obj.compute_md5()
 
         try:
-            # extract and parse ebook metadata
-            meta = metadata_extract(config['calibre_ebook_meta_bin'], filepath=filepath)
+            # extract ebook metadata and build key
+            # books are indexed by 'authortitle' to handle multiple copies of the same book
+            authortitle = ebook_obj.get_metadata()
 
         except CorruptEbookError as e:
             # record books which failed during search
-            errord_list[filepath] = e
+            errord_list[ebook_obj.path] = e
 
             # add book to the cache as a skip
-            config['ebook_cache'].set_ebook(filepath, skip=True)
+            config['ebook_cache'].set_ebook(ebook_obj.path, skip=True)
 
             # skip books which can't have metadata extracted
             continue
 
-        # books are indexed by 'authortitle' to handle multiple copies of the same book
-        # delimit fields with non-printable chars
-        authortitle = u'{}\u0006{}\u0007{}'.format(meta['firstname'], meta['lastname'], meta['title'])
-
         # check for duplicated authortitle/format
-        if authortitle in ebooks_dict.keys() and ebooks_dict[authortitle]['format'] == suffix[1:]:
+        if authortitle in ebooks_dict.keys() and ebooks_dict[authortitle]['format'] == ebook_obj.format:
             # warn user on error stack
-            errord_list[filepath] = DuplicateEbookFoundError(ebooks_dict[authortitle])
+            errord_list[ebook_obj.path] = DuplicateEbookFoundError
         else:
-            # different format of duplicate book found
+            # new ebook, or different format of duplicate ebook found
             write = False
 
             if authortitle in ebooks_dict.keys():
                 # compare the rank of the format already found against this one
                 existing_rank = RANKED_EBOOK_FORMATS[ebooks_dict[authortitle]['format']]
-                new_rank = RANKED_EBOOK_FORMATS[suffix[1:]]
+                new_rank = RANKED_EBOOK_FORMATS[ebook_obj.format]
 
                 # lower is better
                 if new_rank < existing_rank:
@@ -180,27 +172,14 @@ def search_for_ebooks(config, prntr):
                 write = True
 
             if write:
-                ebooks_dict[authortitle] = {
-                    'path': filepath,
-                    'filename': filename,
-                    'format': suffix[1:],
-                    'size': filesize,
-                    'file_hash': file_hash,
-                    'owner': config['username'],
-                }
-                # merge all the meta data constructed above
-                ebooks_dict[authortitle].update(meta)
+                # output dictionary for sending to ogreserver
+                ebooks_dict[authortitle] = ebook_obj.to_dict()
 
                 # add book to the cache
-                config['ebook_cache'].set_ebook(filepath, file_hash, ebooks_dict[authortitle])
-
-                # don't need to send author/title since they're composed into the key
-                del(ebooks_dict[authortitle]['firstname'])
-                del(ebooks_dict[authortitle]['lastname'])
-                del(ebooks_dict[authortitle]['title'])
+                config['ebook_cache'].set_ebook(ebook_obj.path, ebook_obj.file_hash, ebooks_dict[authortitle])
             else:
                 # add book to the cache as a skip
-                config['ebook_cache'].set_ebook(filepath, file_hash, skip=True)
+                config['ebook_cache'].set_ebook(ebook_obj.path, ebook_obj.file_hash, skip=True)
 
         i += 1
         prntr.progressf(num_blocks=i, total_size=len(ebooks))
@@ -282,13 +261,12 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
                 if config['verbose']:
                     prntr.p(u'DRM removed from {}'.format(filepath), CliPrinter.DEDRM, success=True)
 
-                # get hash of decrypted ebook
-                md5_tup = compute_md5(decrypted_filepath)
-                new_filehash = md5_tup[0]
-                new_filesize = md5_tup[2]
+                # create new ebook_obj for decrypted ebook
+                ebook_obj = EbookObject(config=config, filepath=decrypted_filepath)
+                new_filehash, new_filesize = ebook_obj.compute_md5()
 
                 # add the OGRE DeDRM tag to the decrypted ebook
-                add_dedrm_tag(config['calibre_ebook_meta_bin'], decrypted_filepath)
+                ebook_obj.add_dedrm_tag()
 
                 # init OGRE directory in user's ebook dir
                 if not os.path.exists(os.path.join(config['ebook_home'], 'ogre')):
@@ -368,16 +346,20 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
         for authortitle, ebook_data in ebooks_dict.items():
             if file_hash == ebook_data['file_hash']:
                 try:
-                    # update the metadata on the ebook, and communicate that to ogreserver
-                    new_file_hash = add_ogre_id_to_ebook(
-                        config['calibre_ebook_meta_bin'],
-                        file_hash,
-                        ebook_data['path'],
-                        ebook_data['tags'] if 'tags' in ebook_data else None,
-                        item['ebook_id'],
-                        config['host'],
-                        session_key,
+                    # create new ebook_obj for ebook to be updated
+                    ebook_obj = EbookObject(
+                        config=config,
+                        filepath=ebook_data['path'],
+                        file_hash=ebook_data['file_hash']
                     )
+
+                    # update the metadata on the ebook, and communicate that to ogreserver
+                    new_file_hash = ebook_obj.add_ogre_id_tag(
+                        item['ebook_id'],
+                        ebook_data['tags'] if 'tags' in ebook_data else None,
+                        session_key
+                    )
+
                     # update file hash in ogreclient data
                     ebook_data['file_hash'] = new_file_hash
                     success += 1
@@ -388,11 +370,7 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
                     config['ebook_cache'].set_ebook(ebook_data['path'], new_file_hash)
 
                 except (FailedWritingMetaDataError, FailedConfirmError) as e:
-                    prntr.e(
-                        u'Failed saving OGRE_ID in {}'.format(
-                            ebook_data['path']
-                        ), excp=e
-                    )
+                    prntr.e(u'Failed saving OGRE_ID in {}'.format(ebook_data['path']), excp=e)
                     failed += 1
 
     if success > 0:
@@ -461,219 +439,6 @@ def upload_single_book(host, session_key, filepath, upload_obj):
         raise SpinachError(str(e))
     except IOError, e:
         pass
-
-
-def metadata_extract(calibre_ebook_meta_bin, filepath):
-    # get the current filesystem encoding
-    fs_encoding = sys.getfilesystemencoding()
-
-    # call ebook-metadata
-    proc = subprocess.Popen(
-        '{} "{}"'.format(calibre_ebook_meta_bin, filepath.encode(fs_encoding)),
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
-    )
-
-    # get raw bytes from stdout and stderr
-    out_bytes, err_bytes = proc.communicate()
-
-    if err_bytes.find('EPubException') > 0:
-        raise CorruptEbookError(err_bytes)
-
-    # interpret bytes as UTF-8
-    extracted = out_bytes.decode('utf-8')
-
-    # initialize all the metadata we attempt to extract
-    meta = {}
-
-    # modify behaviour for epub/mobi
-    format = os.path.splitext(filepath)[1]
-
-    for line in extracted.splitlines():
-        # extract the simple metadata
-        for prop in ('title', 'publisher'):
-            if line.lower().startswith(prop):
-                meta[prop] = line[line.find(':')+1:].strip()
-                continue
-
-        # rename published to publish_date
-        if line.lower().startswith('published'):
-            meta['publish_date'] = line[line.find(':')+1:].strip()
-            continue
-
-        if 'Tags' in line:
-            meta['tags'] = line[line.find(':')+1:].strip()
-
-            # extract the ogre_id which may be embedded into the tags field
-            if format[1:] in MOBI_FORMATS:
-                if 'ogre_id' in meta['tags']:
-                    tags = meta['tags'].split(', ')
-                    for j in reversed(xrange(len(tags))):
-                        if 'ogre_id' in tags[j]:
-                            meta['ebook_id'] = tags[j][8:]
-                            del(tags[j])
-                    meta['tags'] = ', '.join(tags)
-            continue
-
-        if 'Author' in line:
-            # derive firstname & lastname from author tag
-            author = line[line.find(':')+1:].strip()
-            meta['firstname'], meta['lastname'] = _parse_author(author)
-            continue
-
-        if 'Identifiers' in line:
-            identifiers = line[line.find(':')+1:].strip()
-            for ident in identifiers.split(','):
-                if ident.startswith('isbn'):
-                    meta['isbn'] = ident[5:].strip()
-                if ident.startswith('asin'):
-                    meta['asin'] = ident[5:].strip()
-                if ident.startswith('mobi-asin'):
-                    meta['mobi-asin'] = ident[10:].strip()
-                if ident.startswith('uri'):
-                    meta['uri'] = ident[4:].strip()
-                if ident.startswith('epubbud'):
-                    meta['epubbud'] = ident[7:].strip()
-                if ident.startswith('ogre_id'):
-                    meta['ebook_id'] = ident[8:].strip()
-
-            # clean up mixed ASIN tags
-            if 'mobi-asin' in meta.keys() and 'asin' not in meta.keys():
-                meta['asin'] = meta['mobi-asin']
-                del(meta['mobi-asin'])
-            elif 'mobi-asin' in meta.keys() and 'asin' in meta.keys() and meta['asin'] == meta['mobi-asin']:
-                del(meta['mobi-asin'])
-
-            continue
-
-    if not meta:
-        raise CorruptEbookError('Failed extracting from {}'.format(filepath))
-
-    # calculate file MD5
-    meta['file_hash'] = compute_md5(filepath)[0]
-    return meta
-
-
-def _parse_author(author):
-    if type(author) is not unicode:
-        # convert from UTF-8
-        author = author.decode('UTF-8')
-
-    bracketpos = author.find('[')
-    # if square bracket in author, parse the contents of the brackets
-    if(bracketpos > -1):
-        endbracketpos = author.find(']', bracketpos)
-        if endbracketpos > -1:
-            author = author[bracketpos+1:endbracketpos].strip()
-    else:
-        author = author.strip()
-
-    if ',' in author:
-        # author containing comma is "surname, firstname"
-        names = author.split(',')
-        lastname = names[0].strip()
-        firstname = ' '.join(names[1:]).strip()
-    else:
-        names = author.split(' ')
-        # assume final part is surname, all other parts are firstname
-        firstname = ' '.join(names[:-1]).strip()
-        lastname = names[len(names[:-1]):][0].strip()
-
-    return firstname, lastname
-
-
-def add_ogre_id_to_ebook(calibre_ebook_meta_bin, file_hash, filepath, existing_tags, ogre_id, host, session_key):
-    # ebook file format
-    fmt = os.path.splitext(filepath)[1]
-
-    with make_temp_directory() as temp_dir:
-        # copy the ebook to a temp file
-        tmp_name = '{}{}'.format(os.path.join(temp_dir, id_generator()), fmt)
-        shutil.copy(filepath, tmp_name)
-
-        try:
-            if fmt[1:] in MOBI_FORMATS:
-                # append ogre's ebook_id to the ebook's comma-separated tags field
-                if existing_tags is not None and len(existing_tags) > 0:
-                    new_tags = u'ogre_id={}, {}'.format(ogre_id, existing_tags)
-                else:
-                    new_tags = u'ogre_id={}'.format(ogre_id)
-
-                # write ogre_id to --tags
-                subprocess.check_output(
-                    [calibre_ebook_meta_bin, tmp_name, '--tags', new_tags],
-                    stderr=subprocess.STDOUT
-                )
-            else:
-                # write ogre_id to --identifier
-                subprocess.check_output(
-                    [calibre_ebook_meta_bin, tmp_name, '--identifier', 'ogre_id:{}'.format(ogre_id)],
-                    stderr=subprocess.STDOUT
-                )
-
-            # calculate new MD5 after updating metadata
-            new_hash = compute_md5(tmp_name)[0]
-
-            # ping ogreserver with the book's new hash
-            req = urllib2.Request(
-                url='http://{}/confirm/{}'.format(host, urllib.quote_plus(session_key))
-            )
-            req.add_data(urllib.urlencode({
-                'file_hash': file_hash,
-                'new_hash': new_hash
-            }))
-            resp = urllib2.urlopen(req)
-            data = resp.read()
-
-            if data == 'ok':
-                # move file back into place
-                shutil.copy(tmp_name, filepath)
-                return new_hash
-            else:
-                raise FailedConfirmError("Server said 'no'")
-
-        except subprocess.CalledProcessError as e:
-            raise FailedWritingMetaDataError(str(e))
-
-        except (HTTPError, URLError) as e:
-            raise FailedConfirmError(str(e))
-
-
-def add_dedrm_tag(calibre_ebook_meta_bin, filepath):
-    # get the existing tags from the meta data on the ebook
-    meta = metadata_extract(calibre_ebook_meta_bin, filepath)
-    existing_tags = meta['tags'] if 'tags' in meta else None
-
-    if existing_tags is not None and 'OGRE-DeDRM' in existing_tags:
-        return
-
-    with make_temp_directory() as temp_dir:
-        # ebook file format
-        fmt = os.path.splitext(filepath)[1]
-
-        # copy the ebook to a temp file
-        tmp_name = '{}{}'.format(os.path.join(temp_dir, id_generator()), fmt)
-        shutil.copy(filepath, tmp_name)
-
-        try:
-            # append DeDRM to the tags list
-            if existing_tags is not None and len(existing_tags) > 0:
-                new_tags = u'OGRE-DeDRM, {}'.format(existing_tags)
-            else:
-                new_tags = u'OGRE-DeDRM'
-
-            # write DeDRM to --tags
-            subprocess.check_output(
-                [calibre_ebook_meta_bin, tmp_name, '--tags', new_tags],
-                stderr=subprocess.STDOUT
-            )
-
-            # move file back into place
-            shutil.copy(tmp_name, filepath)
-
-        except subprocess.CalledProcessError as e:
-            raise FailedWritingMetaDataError(str(e))
 
 
 def send_logs(prntr, host, session_key, errord_list):

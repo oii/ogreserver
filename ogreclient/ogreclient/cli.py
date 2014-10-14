@@ -6,7 +6,8 @@ import sys
 
 from . import __version__
 
-from .core import sync, metadata_extract
+from .core import sync
+from .ebook_obj import EbookObject
 from .prereqs import setup_ogreclient
 from .printer import CliPrinter, DummyPrinter
 
@@ -196,8 +197,9 @@ def dedrm_single_ebook(conf, prntr, inputfile, output_dir):
 
 
 def display_info(conf, prntr, filepath):
-    meta = metadata_extract(conf['calibre_ebook_meta_bin'], filepath)
-    prntr.p('Book meta', extra=meta)
+    ebook_obj = EbookObject(filepath)
+    ebook_obj.get_metadata(conf)
+    prntr.p('Book meta', extra=ebook_obj.meta)
 
 
 def run_sync(conf, prntr):

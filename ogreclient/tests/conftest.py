@@ -1,9 +1,12 @@
 from __future__ import absolute_import
 
+import os
 import subprocess
 
 import mock
 import pytest
+
+from ogreclient.ebook_obj import EbookObject
 
 
 @pytest.fixture(scope='session')
@@ -15,8 +18,6 @@ def calibre_ebook_meta_bin():
 def client_config():
     return {
         'config_dir': None,
-        'ebook_cache': None,
-        'calibre_ebook_meta_bin': '/usr/bin/ebook-meta',
         'providers': {},
         'ebook_home': None,
         'username': 'test',
@@ -29,43 +30,62 @@ def client_config():
     }
 
 
+@pytest.fixture(scope='function')
+def parse_author_method():
+    return EbookObject._parse_author
+
+
+@pytest.fixture(scope='function')
+def helper_get_ebook(client_config, ebook_lib_path):
+    def _get_ebook(filename, basepath=None):
+        # ebook_obj creation helper
+        ebook_obj = EbookObject(
+            config=client_config,
+            filepath=os.path.join(basepath, filename) if basepath else os.path.join(ebook_lib_path, filename),
+        )
+        ebook_obj.get_metadata()
+        return ebook_obj
+
+    return _get_ebook
+
+
 @pytest.yield_fixture(scope='function')
-def mock_urlopen(request):
+def mock_urlopen():
     m = mock.patch('ogreclient.core.urllib2.urlopen')
     yield m.start()
     m.stop()
 
 
 @pytest.yield_fixture(scope='function')
-def mock_subprocess_popen(request):
-    m = mock.patch('ogreclient.core.subprocess.Popen')
+def mock_subprocess_popen():
+    m = mock.patch('ogreclient.ebook_obj.subprocess.Popen')
     yield m.start()
     m.stop()
 
 
 @pytest.yield_fixture(scope='function')
-def mock_os_environ_get(request):
+def mock_os_environ_get():
     m = mock.patch('ogreclient.prereqs.os.environ.get')
     yield m.start()
     m.stop()
 
 
 @pytest.yield_fixture(scope='function')
-def mock_subprocess_check_output(request):
+def mock_subprocess_check_output():
     m = mock.patch('ogreclient.prereqs.subprocess.check_output')
     yield m.start()
     m.stop()
 
 
 @pytest.yield_fixture(scope='function')
-def mock_raw_input(request):
+def mock_raw_input():
     m = mock.patch('__builtin__.raw_input')
     yield m.start()
     m.stop()
 
 
 @pytest.yield_fixture(scope='function')
-def mock_getpass_getpass(request):
+def mock_getpass_getpass():
     m = mock.patch('ogreclient.prereqs.getpass.getpass')
     yield m.start()
     m.stop()

@@ -69,3 +69,10 @@ def mock_getpass_getpass(request):
     m = mock.patch('ogreclient.prereqs.getpass.getpass')
     yield m.start()
     m.stop()
+
+
+@pytest.yield_fixture(scope='function')
+def mock_os_mkdir():
+    m = mock.patch('ogreclient.prereqs.os.mkdir')
+    yield m.start()
+    m.stop()

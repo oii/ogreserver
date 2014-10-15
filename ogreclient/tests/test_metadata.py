@@ -88,9 +88,21 @@ def test_parse_authortitle(parse_author_method):
     assert lastname == u'Andersen'
 
 
-@pytest.mark.xfail
-def test_metadata_drm(helper_get_ebook):
-    pass
+@pytest.mark.requires_calibre
+def test_metadata_dedrm(helper_get_ebook, ebook_lib_path, tmpdir):
+    # stick Alice in Wonderland into a tmpdir
+    shutil.copy(os.path.join(ebook_lib_path, 'pg11.epub'), tmpdir.strpath)
+
+    ebook_obj = helper_get_ebook('pg11.epub', basepath=tmpdir.strpath)
+
+    # add DeDRM tag to test epub
+    ebook_obj.add_dedrm_tag()
+
+    # verify that ogre_id is on the epub
+    ebook_obj.get_metadata()
+    assert 'uri' in ebook_obj.meta.keys()
+    assert 'ogre_dedrm' in ebook_obj.meta.keys()
+    assert 'OGRE-DeDRM' not in ebook_obj.meta['tags']
 
 
 @pytest.mark.requires_calibre
@@ -112,6 +124,7 @@ def test_metadata_ogreid_epub(mock_urlopen, helper_get_ebook, ebook_lib_path, tm
 
     # verify that ogre_id is on the epub
     ebook_obj.get_metadata()
+    assert 'uri' in ebook_obj.meta.keys()
     assert 'ebook_id' in ebook_obj.meta.keys()
     assert ebook_obj.meta['ebook_id'] == 'egg'
 

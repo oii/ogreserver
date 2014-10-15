@@ -112,6 +112,15 @@ class EbookObject:
             if 'Tags' in line:
                 meta['tags'] = line[line.find(':')+1:].strip()
 
+                # extract DeDRM tag and remove from list
+                if 'OGRE-DeDRM' in meta['tags']:
+                    tags = meta['tags'].split(', ')
+                    for j in reversed(xrange(len(tags))):
+                        if 'OGRE-DeDRM' in tags[j]:
+                            meta['ogre_dedrm'] = True
+                            del(tags[j])
+                    meta['tags'] = ', '.join(tags)
+
                 # extract the ogre_id which may be embedded into the tags field
                 if fmt[1:] in MOBI_FORMATS:
                     if 'ogre_id' in meta['tags']:
@@ -132,16 +141,22 @@ class EbookObject:
             if 'Identifiers' in line:
                 identifiers = line[line.find(':')+1:].strip()
                 for ident in identifiers.split(','):
+                    ident = ident.strip()
                     if ident.startswith('isbn'):
                         meta['isbn'] = ident[5:].strip()
+                        continue
                     if ident.startswith('asin'):
                         meta['asin'] = ident[5:].strip()
+                        continue
                     if ident.startswith('mobi-asin'):
                         meta['mobi-asin'] = ident[10:].strip()
+                        continue
                     if ident.startswith('uri'):
                         meta['uri'] = ident[4:].strip()
+                        continue
                     if ident.startswith('epubbud'):
                         meta['epubbud'] = ident[7:].strip()
+                        continue
                     if ident.startswith('ogre_id'):
                         meta['ebook_id'] = ident[8:].strip()
 

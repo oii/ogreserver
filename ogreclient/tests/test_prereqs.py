@@ -52,11 +52,11 @@ def test_setup_user_auth_env(mock_os_environ_get, client_config):
     fakeargs = namedtuple('fakeargs', ('username', 'password'))
 
     # setup_user_auth() modifies client_config in place
-    setup_user_auth(DummyPrinter(), fakeargs(None, None), client_config)
+    username, password = setup_user_auth(DummyPrinter(), fakeargs(None, None), client_config)
 
     # ensure ENV vars are returned when --params are None
-    assert client_config['username'] == 'env_user'
-    assert client_config['password'] == 'env_pass'
+    assert username == 'env_user'
+    assert password == 'env_pass'
 
 
 def test_setup_user_auth_config(mock_os_environ_get, client_config):
@@ -70,11 +70,11 @@ def test_setup_user_auth_config(mock_os_environ_get, client_config):
     fakeargs = namedtuple('fakeargs', ('username', 'password'))
 
     # setup_user_auth() modifies client_config in place
-    setup_user_auth(DummyPrinter(), fakeargs(None, None), client_config)
+    username, password = setup_user_auth(DummyPrinter(), fakeargs(None, None), client_config)
 
     # ensure saved config var returned when ENV & --params are None
-    assert client_config['username'] == 'client_user'
-    assert client_config['password'] == 'client_pass'
+    assert username == 'client_user'
+    assert password == 'client_pass'
 
 
 def test_setup_user_auth_params(mock_os_environ_get, mock_raw_input, mock_getpass_getpass, client_config):
@@ -95,11 +95,11 @@ def test_setup_user_auth_params(mock_os_environ_get, mock_raw_input, mock_getpas
     fakeargs = namedtuple('fakeargs', ('username', 'password'))
 
     # setup_user_auth() modifies client_config in place
-    setup_user_auth(DummyPrinter(), fakeargs(None, None), client_config)
+    username, password = setup_user_auth(DummyPrinter(), fakeargs(None, None), client_config)
 
     # ensure ENV vars are returned when --params passed as None
-    assert client_config['username'] == 'manual_user'
-    assert client_config['password'] == 'manual_pass'
+    assert username == 'manual_user'
+    assert password == 'manual_pass'
 
 
 def test_setup_ebook_home_env(mock_os_environ_get, mock_os_mkdir, client_config):

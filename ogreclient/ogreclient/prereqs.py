@@ -68,7 +68,7 @@ def setup_ogreclient(args, prntr):
         #  - saved values in ogre config
         #  - CLI readline interface
         # output is written directly into conf var
-        setup_user_auth(prntr, args, conf)
+        conf['username'], conf['password'] = setup_user_auth(prntr, args, conf)
 
         # set default hostname
         if args.host is not None:
@@ -201,9 +201,7 @@ def setup_user_auth(prntr, args, conf):
         if len(password) == 0:
             raise ConfigSetupError('O.G.R.E. password not supplied')
 
-    # return values via conf var
-    conf['username'] = username
-    conf['password'] = password
+    return username, password
 
 
 def setup_ebook_home(prntr, args, conf):

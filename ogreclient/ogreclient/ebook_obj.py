@@ -172,8 +172,6 @@ class EbookObject:
         if not meta:
             raise CorruptEbookError('Failed extracting from {}'.format(self.path))
 
-        # calculate file MD5
-        meta['file_hash'] = compute_md5(self.path)[0]
         return meta
 
 

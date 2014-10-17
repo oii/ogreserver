@@ -15,11 +15,10 @@ from .utils import compute_md5, id_generator, make_temp_directory
 
 
 class EbookObject:
-    def __init__(self, config, filepath, file_hash=None, filename=None, fmt=None, owner=None):
+    def __init__(self, config, filepath, file_hash=None, fmt=None, owner=None):
         self.config = config
         self.path = filepath
         self.file_hash = file_hash
-        self.filename = filename
         self.format = fmt
         self.owner = owner
         self.meta = {}
@@ -32,7 +31,7 @@ class EbookObject:
                 self.meta['title']
             )
         else:
-            return unicode(self.filename)
+            return unicode(os.path.splitext(os.path.basename(self.path))[0])
 
     def __str__(self):
         return unicode(self).encode('utf-8')
@@ -41,7 +40,6 @@ class EbookObject:
     def to_dict(self):
         output = {
             u'path': self.path,
-            u'filename': self.filename,
             u'format': self.format,
             u'size': self.size,
             u'file_hash': self.file_hash,

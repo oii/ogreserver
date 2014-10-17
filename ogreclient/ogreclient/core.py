@@ -105,7 +105,7 @@ def search_for_ebooks(config, prntr):
             fn, ext = os.path.splitext(filename)
             if ext[1:] in RANKED_EBOOK_FORMATS.keys() and fn[0:2] != '._':
                 ebooks.append(
-                    (os.path.join(root, filename), fn, ext[1:])
+                    (os.path.join(root, filename), ext[1:])
                 )
 
     # search for ebooks in all provider dirs & ebook_home
@@ -129,8 +129,7 @@ def search_for_ebooks(config, prntr):
         ebook_obj = EbookObject(
             config=config,
             filepath=item[0],
-            filename=item[1],
-            fmt=item[2],
+            fmt=item[1],
             owner=config['username'],
         )
         # calculate MD5 of ebook
@@ -219,7 +218,6 @@ def clean_all_drm(config, prntr, ebooks_dict):
                 ebook_data['file_hash'] = new_filehash
                 ebook_data['size'] = new_filesize
                 filename, suffix = os.path.splitext(os.path.basename(new_filepath))
-                ebook_data['filename'] = filename
                 ebook_data['format'] = suffix[1:]
                 ebook_data['dedrm'] = True
                 cleaned += 1

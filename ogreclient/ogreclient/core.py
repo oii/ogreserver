@@ -124,6 +124,7 @@ def search_for_ebooks(config, prntr):
 
     prntr.p(u'Scanning ebook meta data and checking DRM..')
     ebooks_by_authortitle = {}
+    ebooks_by_filehash = {}
     errord_list = {}
 
     for item in ebooks:
@@ -162,8 +163,9 @@ def search_for_ebooks(config, prntr):
                 # skip books which can't have metadata extracted
                 continue
 
-        # check for duplicated authortitle/format
-        if ebook_obj.authortitle in ebooks_by_authortitle.keys() and ebooks_by_authortitle[ebook_obj.authortitle].format == ebook_obj.format:
+        # check for identical filehash (exact duplicate) or duplicated authortitle/format
+        if ebook_obj.file_hash in ebooks_by_filehash.keys() or \
+            ebook_obj.authortitle in ebooks_by_authortitle.keys() and ebooks_by_authortitle[ebook_obj.authortitle].format == ebook_obj.format:
             # warn user on error stack
             errord_list[ebook_obj.path] = DuplicateEbookFoundError(
                 u"Duplicate ebook found '{}':\n  {}\n  {}".format(
@@ -189,6 +191,9 @@ def search_for_ebooks(config, prntr):
             if write:
                 # output dictionary for sending to ogreserver
                 ebooks_by_authortitle[ebook_obj.authortitle] = ebook_obj
+
+                # track all unique file hashes found
+                ebooks_by_filehash[ebook_obj.file_hash] = ebook_obj
             else:
                 ebook_obj.skip = True
 

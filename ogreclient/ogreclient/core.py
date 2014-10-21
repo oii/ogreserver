@@ -19,6 +19,7 @@ from .definitions import RANKED_EBOOK_FORMATS
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, DuplicateEbookFoundError
 from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
 from .exceptions import FailedWritingMetaDataError, FailedConfirmError, FailedDebugLogsError
+from .exceptions import MissingFromCacheError
 
 
 def authenticate(host, username, password):
@@ -126,45 +127,56 @@ def search_for_ebooks(config, prntr):
     errord_list = {}
 
     for item in ebooks:
-        ebook_obj = EbookObject(
-            config=config,
-            filepath=item[0],
-            fmt=item[1],
-            owner=config['username'],
-        )
-        # calculate MD5 of ebook
-        ebook_obj.compute_md5()
-
         try:
-            # extract ebook metadata and build key
-            # books are indexed by 'authortitle' to handle multiple copies of the same book
-            authortitle = ebook_obj.get_metadata()
+            # skip the cache during debug
+            if config['debug'] is True and config['use_cache'] is False:
+                raise MissingFromCacheError
 
-        except CorruptEbookError as e:
-            # record books which failed during search
-            errord_list[ebook_obj.path] = e
+            # get ebook from the cache
+            ebook_obj = config['ebook_cache'].get_ebook(path=item[0])
 
-            # add book to the cache as a skip
-            config['ebook_cache'].set_ebook(ebook_obj.path, skip=True)
+        except MissingFromCacheError:
+            # init the EbookObject
+            ebook_obj = EbookObject(
+                config=config,
+                filepath=item[0],
+                fmt=item[1],
+                owner=config['username'],
+            )
+            # calculate MD5 of ebook
+            ebook_obj.compute_md5()
 
-            # skip books which can't have metadata extracted
-            continue
+            try:
+                # extract ebook metadata and build key
+                # books are indexed by 'authortitle' to handle multiple copies of the same book
+                ebook_obj.get_metadata()
+
+            except CorruptEbookError as e:
+                # record books which failed during search
+                errord_list[ebook_obj.path] = e
+
+                # add book to the cache as a skip
+                ebook_obj.skip = True
+                config['ebook_cache'].store_ebook(ebook_obj)
+
+                # skip books which can't have metadata extracted
+                continue
 
         # check for duplicated authortitle/format
-        if authortitle in ebooks_dict.keys() and ebooks_dict[authortitle]['format'] == ebook_obj.format:
+        if ebook_obj.authortitle in ebooks_dict.keys() and ebooks_dict[ebook_obj.authortitle]['format'] == ebook_obj.format:
             # warn user on error stack
             errord_list[ebook_obj.path] = DuplicateEbookFoundError(
                 u"Duplicate ebook found '{}':\n  {}\n  {}".format(
-                    ebook_obj, ebook_obj.path, ebooks_dict[authortitle]['path']
+                    ebook_obj, ebook_obj.path, ebooks_dict[ebook_obj.authortitle]['path']
                 )
             )
         else:
             # new ebook, or different format of duplicate ebook found
             write = False
 
-            if authortitle in ebooks_dict.keys():
+            if ebook_obj.authortitle in ebooks_dict.keys():
                 # compare the rank of the format already found against this one
-                existing_rank = RANKED_EBOOK_FORMATS[ebooks_dict[authortitle]['format']]
+                existing_rank = RANKED_EBOOK_FORMATS[ebooks_dict[ebook_obj.authortitle]['format']]
                 new_rank = RANKED_EBOOK_FORMATS[ebook_obj.format]
 
                 # lower is better
@@ -176,13 +188,12 @@ def search_for_ebooks(config, prntr):
 
             if write:
                 # output dictionary for sending to ogreserver
-                ebooks_dict[authortitle] = ebook_obj.to_dict()
-
-                # add book to the cache
-                config['ebook_cache'].set_ebook(ebook_obj.path, ebook_obj.file_hash, ebooks_dict[authortitle])
+                ebooks_dict[ebook_obj.authortitle] = ebook_obj.serialize()
             else:
-                # add book to the cache as a skip
-                config['ebook_cache'].set_ebook(ebook_obj.path, ebook_obj.file_hash, skip=True)
+                ebook_obj.skip = True
+
+            # add book to the cache
+            config['ebook_cache'].store_ebook(ebook_obj)
 
         i += 1
         prntr.progressf(num_blocks=i, total_size=len(ebooks))
@@ -239,12 +250,16 @@ def clean_all_drm(config, prntr, ebooks_dict):
 
 def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
     if config['debug'] is False or config['use_cache'] is True:
-        # attempt load ebook from local cache
-        _, drmfree, skip = config['ebook_cache'].get_ebook(filepath, file_hash)
+        try:
+            # attempt load ebook from local cache
+            ebook_obj = config['ebook_cache'].get_ebook(filepath, file_hash)
 
-        # return if book marked DRM free in the cache
-        if bool(drmfree) is True or bool(skip) is True:
-            return None, None, None
+            # return if book marked DRM free in the cache
+            if ebook_obj.drmfree is True or ebook_obj.skip is True:
+                return None, None, None
+
+        except MissingFromCacheError:
+            pass
 
     new_filepath = new_filehash = new_filesize = None
 
@@ -257,7 +272,7 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
 
             if state == DRM.none:
                 # update cache to mark book as drmfree
-                config['ebook_cache'].set_ebook(filepath, drmfree=True)
+                config['ebook_cache'].update_ebook_property(filepath, drmfree=True)
 
             elif state == DRM.decrypted:
                 if config['verbose']:
@@ -268,6 +283,7 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
                 new_filehash, new_filesize = ebook_obj.compute_md5()
 
                 # add the OGRE DeDRM tag to the decrypted ebook
+                # TODO handle CorruptEbookError via get_metadata
                 ebook_obj.add_dedrm_tag()
 
                 # init OGRE directory in user's ebook dir
@@ -284,14 +300,14 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
                     prntr.p(u'Decrypted book moved to {}'.format(new_filepath), CliPrinter.DEDRM, success=True)
 
                 # mark decrypted book as drmfree=True in cache
-                config['ebook_cache'].set_ebook(filepath, new_filehash, drmfree=True)
+                config['ebook_cache'].update_ebook_property(filepath, new_filehash, drmfree=True)
 
                 # update existing DRM-scuppered as skip=True in cache
-                config['ebook_cache'].set_ebook(filepath, skip=True)
+                config['ebook_cache'].update_ebook_property(filepath, skip=True)
 
             else:
                 # mark book as having DRM
-                config['ebook_cache'].set_ebook(filepath, file_hash, drmfree=False)
+                config['ebook_cache'].update_ebook_property(filepath, drmfree=False)
 
                 if state == DRM.wrong_key:
                     raise DecryptionFailed('Incorrect key found for ebook')
@@ -369,7 +385,7 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
                         prntr.p(u'Wrote OGRE_ID to {}'.format(ebook_data['path']))
 
                     # write to ogreclient cache
-                    config['ebook_cache'].set_ebook(ebook_data['path'], new_file_hash)
+                    config['ebook_cache'].update_ebook_property(ebook_data['path'], file_hash=new_file_hash)
 
                 except (FailedWritingMetaDataError, FailedConfirmError) as e:
                     prntr.e(u'Failed saving OGRE_ID in {}'.format(ebook_data['path']), excp=e)

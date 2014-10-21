@@ -12,6 +12,7 @@ def test_sync_duplicate(datastore, rethinkdb, user):
             'owner': 'mafro',
             'size': 139654,
             'dedrm': False,
+            'meta': {},
         },
     }
 
@@ -43,6 +44,7 @@ def test_sync_ogre_id(datastore, rethinkdb, user):
             'owner': 'mafro',
             'size': 139654,
             'dedrm': False,
+            'meta': {},
         },
     }
 
@@ -78,6 +80,7 @@ def test_sync_multiple_versions(datastore, rethinkdb, user):
             'owner': 'mafro',
             'size': 139654,
             'dedrm': False,
+            'meta': {},
         },
     }
 

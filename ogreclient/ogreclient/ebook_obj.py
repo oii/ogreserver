@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import json
 import os
 import shutil
 import subprocess
@@ -15,20 +16,26 @@ from .utils import compute_md5, id_generator, make_temp_directory
 
 
 class EbookObject:
-    def __init__(self, config, filepath, file_hash=None, fmt=None, owner=None):
+    def __init__(self, config, filepath, size=None, file_hash=None, authortitle=None, fmt=None, owner=None, drmfree=False, skip=False):
         self.config = config
         self.path = filepath
+        self.size = size
         self.file_hash = file_hash
+        self.authortitle = authortitle
         self.format = fmt
         self.owner = owner
+        self.drmfree = drmfree
+        self.skip = skip
         self.meta = {}
+        self.in_cache = False
 
     def __unicode__(self):
         if self.meta:
-            return u'{} {} - {}'.format(
+            return u'{} {} - {}.{}'.format(
                 self.meta['firstname'],
                 self.meta['lastname'],
-                self.meta['title']
+                self.meta['title'],
+                self.format
             )
         else:
             return unicode(os.path.splitext(os.path.basename(self.path))[0])
@@ -37,17 +44,50 @@ class EbookObject:
         return unicode(self).encode('utf-8')
 
 
-    def to_dict(self):
-        output = {
+    @staticmethod
+    def deserialize(config, path, cached_obj):
+        '''
+        Deserialize from a cached object into an EbookObject
+        '''
+        # parse the data object from the cache entry
+        data = json.loads(cached_obj[1])
+
+        # return an EbookObject
+        ebook_obj = EbookObject(
+            config=config,
+            filepath=path,
+            file_hash=cached_obj[0],
+            authortitle=data['authortitle'],
+            fmt=data['format'],
+            owner=config['username'],
+            drmfree=bool(cached_obj[2]),
+            skip=bool(cached_obj[3]),
+        )
+        ebook_obj.in_cache = True
+        ebook_obj.meta = data['meta']
+        return ebook_obj
+
+
+    def serialize(self, for_cache=False):
+        '''
+        Serialize the EbookObject for sending or caching
+        '''
+        data = {
             u'path': self.path,
             u'format': self.format,
             u'size': self.size,
             u'file_hash': self.file_hash,
             u'owner': self.owner,
+            u'dedrm': self.drmfree,
+            u'meta': self.meta
         }
-        # merge all the ebook meta data
-        output.update(self.meta)
-        return output
+        if for_cache:
+            # different serialisation for writing the local ogreclient cache
+            del(data['path'])
+            del(data['owner'])
+            del(data['file_hash'])
+            data['authortitle'] = self.authortitle
+        return data
 
 
     def compute_md5(self):
@@ -115,7 +155,7 @@ class EbookObject:
                     tags = meta['tags'].split(', ')
                     for j in reversed(xrange(len(tags))):
                         if 'OGRE-DeDRM' in tags[j]:
-                            meta['ogre_dedrm'] = True
+                            self.drmfree = True
                             del(tags[j])
                     meta['tags'] = ', '.join(tags)
 
@@ -292,6 +332,8 @@ class EbookObject:
 
                 # move file back into place
                 shutil.copy(tmp_name, self.path)
+
+                self.drmfree = True
 
             except subprocess.CalledProcessError as e:
                 raise FailedWritingMetaDataError(str(e))

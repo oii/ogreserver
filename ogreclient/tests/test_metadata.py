@@ -101,7 +101,7 @@ def test_metadata_dedrm(helper_get_ebook, ebook_lib_path, tmpdir):
     # verify that ogre_id is on the epub
     ebook_obj.get_metadata()
     assert 'uri' in ebook_obj.meta.keys()
-    assert 'ogre_dedrm' in ebook_obj.meta.keys()
+    assert hasattr(ebook_obj, 'drmfree')
     assert 'OGRE-DeDRM' not in ebook_obj.meta['tags']
 
 

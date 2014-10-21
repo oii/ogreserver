@@ -46,7 +46,8 @@ def client_config(calibre_ebook_meta_bin):
         'verbose': False,
         'quiet': True,
         'no_drm': True,
-        'debug': False,
+        'debug': True,
+        'use_cache': False,
     }
 
 

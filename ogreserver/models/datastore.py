@@ -91,13 +91,13 @@ class DataStore():
                         'lastname': lastname,
                         'rating': None,
                         'comments': [],
-                        'publisher': incoming['publisher'] if 'publisher' in incoming else None,
-                        'publish_date': incoming['publish_date'] if 'publish_date' in incoming else None,
+                        'publisher': incoming['meta']['publisher'] if 'publisher' in incoming['meta'] else None,
+                        'publish_date': incoming['meta']['publish_date'] if 'publish_date' in incoming['meta'] else None,
                         'meta': {
-                            'isbn': incoming['isbn'] if 'isbn' in incoming else None,
-                            'asin': incoming['asin'] if 'asin' in incoming else None,
-                            'uri': incoming['uri'] if 'uri' in incoming else None,
-                            'raw_tags': incoming['tags'] if 'tags' in incoming else None,
+                            'isbn': incoming['meta']['isbn'] if 'isbn' in incoming['meta'] else None,
+                            'asin': incoming['meta']['asin'] if 'asin' in incoming['meta'] else None,
+                            'uri': incoming['meta']['uri'] if 'uri' in incoming['meta'] else None,
+                            'raw_tags': incoming['meta']['tags'] if 'tags' in incoming['meta'] else None,
                         },
                     }
                     r.table('ebooks').insert(new_book).run()

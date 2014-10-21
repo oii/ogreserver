@@ -18,9 +18,8 @@ from .providers import PROVIDERS, find_ebook_providers
 def setup_ogreclient(args, prntr):
     first_scan_warning = False
 
-    # setup some ebook cache file paths
+    # setup config dir path
     config_dir = os.path.join(os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config')), 'ogre')
-    ebook_cache = Cache(os.path.join(config_dir, 'ebook_cache.db'))
 
     # use existing config if available
     if os.path.exists(config_dir) and os.path.exists(os.path.join(config_dir, 'app.config')):
@@ -109,8 +108,11 @@ def setup_ogreclient(args, prntr):
     # return the config directory
     conf['config_dir'] = config_dir
 
+    # setup some ebook cache file paths
+    conf['ebook_cache'] = Cache(conf, os.path.join(config_dir, 'ebook_cache.db'))
+
     # verify the ogreclient cache; true means it was initialised
-    if ebook_cache.verify_cache(prntr):
+    if conf['ebook_cache'].verify_cache(prntr):
         first_scan_warning = True
 
     # ensure the DRM tools are installed and up-to-date
@@ -125,11 +127,10 @@ def setup_ogreclient(args, prntr):
         dedrm_check(prntr, args, conf)
 
     if first_scan_warning is True:
-        prntr.p('Please note that DRM scanning means the first run of ogreclient '
+        prntr.p('Please note that metadata/DRM scanning means the first run of ogreclient '
                 'will be much slower than subsequent runs.')
 
     # return config object
-    conf['ebook_cache'] = ebook_cache
     return conf
 
 

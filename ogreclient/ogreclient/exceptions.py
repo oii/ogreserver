@@ -13,7 +13,8 @@ class AuthError(OgreException):
     pass
 
 class NoEbooksError(OgreException):
-    pass
+    def __init__(self):
+        super(NoEbooksError, self).__init__(u'No ebooks found!')
 
 class NoUploadsError(OgreException):
     pass
@@ -46,4 +47,7 @@ class NoEbookSourcesFoundError(OgreException):
     pass
 
 class DuplicateEbookFoundError(OgreException):
+    pass
+
+class MissingFromCacheError(OgreException):
     pass

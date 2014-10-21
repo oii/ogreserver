@@ -4,13 +4,15 @@ import json
 import os
 import sqlite3
 
-from .exceptions import OgreException
+from .ebook_obj import EbookObject
+from .exceptions import OgreException, MissingFromCacheError
 
 __CACHEVERSION__ = 1
 
 
 class Cache:
-    def __init__(self, ebook_cache_path):
+    def __init__(self, config, ebook_cache_path):
+        self.config = config
         self.ebook_cache_path = ebook_cache_path
 
 
@@ -86,21 +88,28 @@ class Cache:
                 if file_hash is not None and obj[0] != file_hash:
                     c.execute('DELETE FROM ebooks WHERE path = ?', (path,))
                     conn.commit()
-                else:
-                    return obj[1], obj[2], obj[3]
+                    raise MissingFromCacheError
+            else:
+                raise MissingFromCacheError
+
+        except MissingFromCacheError as e:
+            raise e
         except Exception as e:
             raise CacheReadError(e)
         finally:
             conn.close()
 
-        return None, None, None
+        return EbookObject.deserialize(self.config, path, obj)
 
 
-    def set_ebook(self, path, file_hash=None, data=None, drmfree=False, skip=False):
+    def store_ebook(self, ebook_obj):
+        # serialize the ebook object for storage
+        data = ebook_obj.serialize(for_cache=True)
+
         conn = sqlite3.connect(self.ebook_cache_path)
         try:
             c = conn.cursor()
-            c.execute('SELECT drmfree FROM ebooks WHERE path = ?', (path,))
+            c.execute('SELECT drmfree FROM ebooks WHERE path = ?', (ebook_obj.path,))
             obj = c.fetchone()
             # update if exists, otherwise insert
             if obj is not None:
@@ -108,20 +117,66 @@ class Cache:
                 params = []
 
                 # build update parameter list
+                values += 'file_hash = ?, '
+                params.append(ebook_obj.file_hash)
+                values += 'data = ?, '
+                params.append(json.dumps(data))
+                values += 'drmfree = ?, '
+                params.append(int(ebook_obj.drmfree))
+                values += 'skip = ?'
+                params.append(int(ebook_obj.skip))
+
+                # where path
+                params.append(ebook_obj.path)
+
+                c.execute(
+                    'UPDATE ebooks SET {} WHERE path = ?'.format(values), params
+                )
+            else:
+                params = (
+                    ebook_obj.path,
+                    ebook_obj.file_hash,
+                    json.dumps(data),
+                    int(ebook_obj.drmfree),
+                    int(ebook_obj.skip)
+                )
+                c.execute('INSERT INTO ebooks VALUES (?,?,?,?,?)', params)
+
+            # write the cache DB
+            conn.commit()
+        except Exception as e:
+            raise CacheReadError(e)
+        finally:
+            conn.close()
+
+
+    def update_ebook_property(self, path, file_hash=None, drmfree=None, skip=None):
+        conn = sqlite3.connect(self.ebook_cache_path)
+        try:
+            c = conn.cursor()
+            c.execute('SELECT drmfree FROM ebooks WHERE path = ?', (path,))
+            obj = c.fetchone()
+            if obj is None:
+                raise MissingFromCacheError
+            else:
+                values = ''
+                params = []
+
+                # build update parameter list
                 if file_hash is not None:
                     values += 'file_hash = ?, '
                     params.append(file_hash)
-                if data is not None:
-                    values += 'data = ?, '
-                    params.append(json.dumps(data))
 
                 if drmfree is not None:
                     values += 'drmfree = ?, '
                     params.append(int(drmfree))
 
                 if skip is not None:
-                    values += 'skip = ?'
+                    values += 'skip = ?, '
                     params.append(int(skip))
+
+                # drop trailing comma
+                values = values[:-2]
 
                 # where path
                 params.append(path)
@@ -129,12 +184,7 @@ class Cache:
                 c.execute(
                     'UPDATE ebooks SET {} WHERE path = ?'.format(values), params
                 )
-            else:
-                c.execute(
-                    'INSERT INTO ebooks VALUES (?,?,?,?,?)',
-                    (path, file_hash, json.dumps(data), int(drmfree), int(skip))
-                )
-            conn.commit()
+                conn.commit()
         except Exception as e:
             raise CacheReadError(e)
         finally:

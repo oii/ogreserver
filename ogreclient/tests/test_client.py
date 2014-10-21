@@ -26,7 +26,7 @@ def test_search(mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):
     # verify found book
     assert len(data) == 1
     assert data.keys()[0] == u"Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland"
-    assert data[data.keys()[0]]['file_hash'] == '42344f0e247923fcb347c0e5de5fc762'
+    assert data[data.keys()[0]].file_hash == '42344f0e247923fcb347c0e5de5fc762'
 
 
 def test_search_ranking(mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):
@@ -46,4 +46,4 @@ def test_search_ranking(mock_subprocess_popen, client_config, ebook_lib_path, tm
 
     # verify found mobi file hash; it is ranked higher than epub
     assert len(data) == 1
-    assert data[data.keys()[0]]['file_hash'] == 'f2cb3defc99fc9630722677843565721'
+    assert data[data.keys()[0]].file_hash == 'f2cb3defc99fc9630722677843565721'

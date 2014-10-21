@@ -181,6 +181,8 @@ def client_config(user):
         'host': 'localhost:6543',
         'verbose': False,
         'quiet': True,
+        'debug': True,
+        'use_cache': False,
     }
 
 

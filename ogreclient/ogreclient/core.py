@@ -123,7 +123,7 @@ def search_for_ebooks(config, prntr):
         raise NoEbooksError
 
     prntr.p(u'Scanning ebook meta data and checking DRM..')
-    ebooks_dict = {}
+    ebooks_by_authortitle = {}
     errord_list = {}
 
     for item in ebooks:
@@ -163,20 +163,20 @@ def search_for_ebooks(config, prntr):
                 continue
 
         # check for duplicated authortitle/format
-        if ebook_obj.authortitle in ebooks_dict.keys() and ebooks_dict[ebook_obj.authortitle]['format'] == ebook_obj.format:
+        if ebook_obj.authortitle in ebooks_by_authortitle.keys() and ebooks_by_authortitle[ebook_obj.authortitle].format == ebook_obj.format:
             # warn user on error stack
             errord_list[ebook_obj.path] = DuplicateEbookFoundError(
                 u"Duplicate ebook found '{}':\n  {}\n  {}".format(
-                    ebook_obj, ebook_obj.path, ebooks_dict[ebook_obj.authortitle]['path']
+                    ebook_obj, ebook_obj.path, ebooks_by_authortitle[ebook_obj.authortitle].path
                 )
             )
         else:
             # new ebook, or different format of duplicate ebook found
             write = False
 
-            if ebook_obj.authortitle in ebooks_dict.keys():
+            if ebook_obj.authortitle in ebooks_by_authortitle.keys():
                 # compare the rank of the format already found against this one
-                existing_rank = RANKED_EBOOK_FORMATS[ebooks_dict[ebook_obj.authortitle]['format']]
+                existing_rank = RANKED_EBOOK_FORMATS[ebooks_by_authortitle[ebook_obj.authortitle].format]
                 new_rank = RANKED_EBOOK_FORMATS[ebook_obj.format]
 
                 # lower is better
@@ -188,7 +188,7 @@ def search_for_ebooks(config, prntr):
 
             if write:
                 # output dictionary for sending to ogreserver
-                ebooks_dict[ebook_obj.authortitle] = ebook_obj.serialize()
+                ebooks_by_authortitle[ebook_obj.authortitle] = ebook_obj
             else:
                 ebook_obj.skip = True
 
@@ -198,12 +198,12 @@ def search_for_ebooks(config, prntr):
         i += 1
         prntr.progressf(num_blocks=i, total_size=len(ebooks))
 
-    prntr.p(u'Found {} ebooks'.format(len(ebooks_dict)), success=True)
+    prntr.p(u'Found {} ebooks'.format(len(ebooks_by_authortitle)), success=True)
 
-    if len(ebooks_dict) == 0:
+    if len(ebooks_by_authortitle) == 0:
         return {}, errord_list
 
-    return ebooks_dict, errord_list
+    return ebooks_by_authortitle, errord_list
 
 
 def clean_all_drm(config, prntr, ebooks_dict):
@@ -212,30 +212,27 @@ def clean_all_drm(config, prntr, ebooks_dict):
     i = 0
     cleaned = 0
 
-    for authortitle, ebook_data in ebooks_dict.items():
-        ebook_data['dedrm'] = False
-
+    for authortitle, ebook_obj in ebooks_dict.items():
         try:
-            filename, suffix = os.path.splitext(os.path.basename(ebook_data['path']))
+            filename, suffix = os.path.splitext(os.path.basename(ebook_obj.path))
 
             # remove DRM from ebook
             new_filepath, new_filehash, new_filesize = remove_drm_from_ebook(
-                config, prntr, ebook_data['path'], ebook_data['file_hash'], suffix
+                config, prntr, ebook_obj.path, ebook_obj.file_hash, suffix
             )
 
             if new_filepath is not None:
                 # update the sync data with the decrypted ebook
-                ebook_data['path'] = new_filepath
-                ebook_data['file_hash'] = new_filehash
-                ebook_data['size'] = new_filesize
+                ebook_obj.path = new_filepath
+                ebook_obj.file_hash = new_filehash
+                ebook_obj.size = new_filesize
                 filename, suffix = os.path.splitext(os.path.basename(new_filepath))
-                ebook_data['format'] = suffix[1:]
-                ebook_data['dedrm'] = True
+                ebook_obj.format = suffix[1:]
                 cleaned += 1
 
         except CorruptEbookError as e:
             # record books which failed due to unicode filename issues
-            errord_list[ebook_data['path']] = e
+            errord_list[ebook_obj.path] = e
             continue
 
         if config['verbose'] is False:
@@ -325,6 +322,11 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
 
 
 def sync_with_server(config, prntr, session_key, ebooks_dict):
+    # serialize ebooks to dictionary for sending to ogreserver
+    ebooks_for_sync = {}
+    for authortitle, ebook_obj in ebooks_dict.iteritems():
+        ebooks_for_sync[authortitle] = ebook_obj.serialize()
+
     try:
         # post json dict of ebook data
         req = urllib2.Request(
@@ -334,7 +336,7 @@ def sync_with_server(config, prntr, session_key, ebooks_dict):
             ),
             headers={'Content-Type': 'application/json'},
         )
-        req.add_data(json.dumps(ebooks_dict))
+        req.add_data(json.dumps(ebooks_for_sync))
         resp = urllib2.urlopen(req)
         data = resp.read()
 
@@ -359,36 +361,23 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
     success, failed = 0, 0
 
     # update any books with ogre_id supplied from ogreserver
-    for file_hash, item in ebooks_to_update.items():
+    for file_hash, item in ebooks_to_update.iteritems():
         # find this book in the scan data
-        for authortitle, ebook_data in ebooks_dict.items():
-            if file_hash == ebook_data['file_hash']:
+        for authortitle, ebook_obj in ebooks_dict.iteritems():
+            if file_hash == ebook_obj.file_hash:
                 try:
-                    # create new ebook_obj for ebook to be updated
-                    ebook_obj = EbookObject(
-                        config=config,
-                        filepath=ebook_data['path'],
-                        file_hash=ebook_data['file_hash']
-                    )
-
                     # update the metadata on the ebook, and communicate that to ogreserver
-                    new_file_hash = ebook_obj.add_ogre_id_tag(
-                        item['ebook_id'],
-                        ebook_data['tags'] if 'tags' in ebook_data else None,
-                        session_key
-                    )
+                    new_file_hash = ebook_obj.add_ogre_id_tag(item['ebook_id'], session_key)
 
-                    # update file hash in ogreclient data
-                    ebook_data['file_hash'] = new_file_hash
                     success += 1
                     if config['verbose']:
-                        prntr.p(u'Wrote OGRE_ID to {}'.format(ebook_data['path']))
+                        prntr.p(u'Wrote OGRE_ID to {}'.format(ebook_obj.path))
 
                     # write to ogreclient cache
-                    config['ebook_cache'].update_ebook_property(ebook_data['path'], file_hash=new_file_hash)
+                    config['ebook_cache'].update_ebook_property(ebook_obj.path, file_hash=new_file_hash)
 
                 except (FailedWritingMetaDataError, FailedConfirmError) as e:
-                    prntr.e(u'Failed saving OGRE_ID in {}'.format(ebook_data['path']), excp=e)
+                    prntr.e(u'Failed saving OGRE_ID in {}'.format(ebook_obj.path), excp=e)
                     failed += 1
 
     if success > 0:
@@ -411,19 +400,14 @@ def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):
     # upload each requested by the server
     for upload in ebooks_to_upload:
         # iterate all user's found books
-        for authortitle, ebook_data in ebooks_dict.items():
-            if upload['file_hash'] == ebook_data['file_hash']:
+        for authortitle, ebook_obj in ebooks_dict.iteritems():
+            if upload['file_hash'] == ebook_obj.file_hash:
                 try:
-                    upload_single_book(
-                        config['host'],
-                        session_key,
-                        ebook_data['path'],
-                        upload,
-                    )
+                    upload_single_book(config['host'], session_key, ebook_obj.path, upload)
                     success += 1
 
                 except SpinachError as e:
-                    prntr.e(u'Failed uploading {}'.format(ebook_data['path']), excp=e)
+                    prntr.e(u'Failed uploading {}'.format(ebook_obj.path), excp=e)
                     failed += 1
 
         i += 1

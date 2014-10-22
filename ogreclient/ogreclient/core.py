@@ -19,7 +19,7 @@ from .definitions import RANKED_EBOOK_FORMATS
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, DuplicateEbookFoundError
 from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
 from .exceptions import FailedWritingMetaDataError, FailedConfirmError, FailedDebugLogsError
-from .exceptions import MissingFromCacheError
+from .exceptions import MissingFromCacheError, OgreException
 
 
 def authenticate(host, username, password):
@@ -67,6 +67,9 @@ def sync(config, prntr):
     response = sync_with_server(config, prntr, session_key, ebooks_dict)
 
     if not response['ebooks_to_upload'] and not response['ebooks_to_update']:
+        # filter the OgreWarnings out of the error list
+        errord_list = [err for err in errord_list if isinstance(err, OgreException)]
+
         if not errord_list:
             prntr.p('Finished, nothing to do.')
         else:

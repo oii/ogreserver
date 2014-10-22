@@ -3,6 +3,10 @@ class OgreException(Exception):
         super(OgreException, self).__init__(message)
         self.inner_excp = inner_excp
 
+class OgreWarning(Exception):
+    def __init__(self, message=None):
+        super(OgreWarning, self).__init__(message)
+
 class ConfigSetupError(OgreException):
     pass
 
@@ -12,7 +16,7 @@ class AuthDeniedError(OgreException):
 class AuthError(OgreException):
     pass
 
-class NoEbooksError(OgreException):
+class NoEbooksError(OgreWarning):
     def __init__(self):
         super(NoEbooksError, self).__init__(u'No ebooks found!')
 
@@ -46,7 +50,7 @@ class KindlePrereqsError(OgreException):
 class NoEbookSourcesFoundError(OgreException):
     pass
 
-class DuplicateEbookFoundError(OgreException):
+class DuplicateEbookFoundError(OgreWarning):
     pass
 
 class MissingFromCacheError(OgreException):

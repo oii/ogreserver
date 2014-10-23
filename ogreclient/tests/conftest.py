@@ -78,7 +78,7 @@ def mock_urlopen():
 
 
 @pytest.yield_fixture(scope='function')
-def mock_subprocess_popen():
+def mock_subprocess_popen(calibre_ebook_meta_bin):
     m = mock.patch('ogreclient.ebook_obj.subprocess.Popen')
     yield m.start()
     m.stop()

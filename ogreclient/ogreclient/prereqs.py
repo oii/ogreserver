@@ -34,23 +34,25 @@ def setup_ogreclient(args, prntr):
         if not os.path.exists(config_dir):
             os.makedirs(config_dir)
 
-        calibre_ebook_meta_bin = ''
+        calibre_ebook_meta_bin = None
 
-        try:
-            # locate calibre's binaries with shell
-            calibre_ebook_meta_bin = subprocess.check_output('which ebook-meta', shell=True).strip()
-        except subprocess.CalledProcessError:
-            # filesystem search
-            if os.path.exists('/Applications/Calibre.app'):
-                try:
-                    calibre_ebook_meta_bin = subprocess.check_output(
-                        'find /Applications/Calibre.app -type f -name ebook-meta', shell=True
-                    ).strip()
-                except subprocess.CalledProcessError:
-                    pass
+        if platform.system() == 'Darwin':
+            # hardcoded path
+            if not calibre_ebook_meta_bin and os.path.exists('/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-meta'):
+                calibre_ebook_meta_bin = '/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-meta'
+
+            # hardcoded path for pre-v2 calibre
+            if not calibre_ebook_meta_bin and os.path.exists('/Applications/calibre.app/Contents/MacOS/ebook-meta'):
+                calibre_ebook_meta_bin = '/Applications/calibre.app/Contents/MacOS/ebook-meta'
+        else:
+            try:
+                # locate calibre's binaries with shell
+                calibre_ebook_meta_bin = subprocess.check_output('which ebook-meta', shell=True).strip()
+            except subprocess.CalledProcessError:
+                pass
 
         # ogreclient requires calibre (unfortunately)
-        if len(calibre_ebook_meta_bin) == 0:
+        if not calibre_ebook_meta_bin:
             prntr.e('You must install Calibre in order to use ogreclient.')
             prntr.e('Please follow the simple instructions at http://{}/install'.format(OGRESERVER_HOST))
             sys.exit(1)

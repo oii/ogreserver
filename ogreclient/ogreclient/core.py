@@ -145,7 +145,6 @@ def search_for_ebooks(config, prntr):
                 config=config,
                 filepath=item[0],
                 fmt=item[1],
-                owner=config['username'],
             )
             # calculate MD5 of ebook
             ebook_obj.compute_md5()

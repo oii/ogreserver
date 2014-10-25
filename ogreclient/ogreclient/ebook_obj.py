@@ -16,14 +16,13 @@ from .utils import compute_md5, id_generator, make_temp_directory
 
 
 class EbookObject:
-    def __init__(self, config, filepath, size=None, file_hash=None, authortitle=None, fmt=None, owner=None, drmfree=False, skip=False):
+    def __init__(self, config, filepath, size=None, file_hash=None, authortitle=None, fmt=None, drmfree=False, skip=False):
         self.config = config
         self.path = filepath
         self.size = size
         self.file_hash = file_hash
         self.authortitle = authortitle
         self.format = fmt
-        self.owner = owner
         self.drmfree = drmfree
         self.skip = skip
         self.meta = {}
@@ -59,7 +58,6 @@ class EbookObject:
             file_hash=cached_obj[0],
             authortitle=data['authortitle'],
             fmt=data['format'],
-            owner=config['username'],
             drmfree=bool(cached_obj[2]),
             skip=bool(cached_obj[3]),
         )
@@ -77,14 +75,12 @@ class EbookObject:
             u'format': self.format,
             u'size': self.size,
             u'file_hash': self.file_hash,
-            u'owner': self.owner,
             u'dedrm': self.drmfree,
             u'meta': self.meta
         }
         if for_cache:
             # different serialisation for writing the local ogreclient cache
             del(data['path'])
-            del(data['owner'])
             del(data['file_hash'])
             data['authortitle'] = self.authortitle
         return data

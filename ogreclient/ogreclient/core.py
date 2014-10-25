@@ -199,8 +199,8 @@ def search_for_ebooks(config, prntr):
             else:
                 ebook_obj.skip = True
 
-            # add book to the cache
-            config['ebook_cache'].store_ebook(ebook_obj)
+        # add book to the cache
+        config['ebook_cache'].store_ebook(ebook_obj)
 
         i += 1
         prntr.progressf(num_blocks=i, total_size=len(ebooks))

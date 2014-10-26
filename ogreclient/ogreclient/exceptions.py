@@ -50,8 +50,21 @@ class KindlePrereqsError(OgreException):
 class NoEbookSourcesFoundError(OgreException):
     pass
 
-class DuplicateEbookFoundError(OgreWarning):
-    pass
+
+class DuplicateEbookBaseError(OgreWarning):
+    def __init__(self, kind, ebook_obj, path2):
+        super(DuplicateEbookBaseError, self).__init__(
+            u"Duplicate ebook found ({}) '{}':\n  {}\n  {}".format(kind, ebook_obj.path, path2)
+        )
+
+class ExactDuplicateEbookError(DuplicateEbookBaseError):
+    def __init__(self, ebook_obj, path2):
+        super(ExactDuplicateEbookError, self).__init__('exact', ebook_obj, path2)
+
+class AuthortitleDuplicateEbookError(DuplicateEbookBaseError):
+    def __init__(self, ebook_obj, path2):
+        super(AuthortitleDuplicateEbookError, self).__init__('author/title', ebook_obj, path2)
+
 
 class MissingFromCacheError(OgreException):
     pass

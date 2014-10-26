@@ -16,7 +16,8 @@ from .dedrm import decrypt, DRM, DeDrmMissingError, DecryptionFailed
 
 from .definitions import RANKED_EBOOK_FORMATS
 
-from .exceptions import AuthDeniedError, AuthError, NoEbooksError, DuplicateEbookFoundError
+from .exceptions import AuthDeniedError, AuthError, NoEbooksError
+from .exceptions import ExactDuplicateEbookError, AuthortitleDuplicateEbookError
 from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
 from .exceptions import FailedWritingMetaDataError, FailedConfirmError, FailedDebugLogsError
 from .exceptions import MissingFromCacheError, OgreException
@@ -166,13 +167,15 @@ def search_for_ebooks(config, prntr):
                 continue
 
         # check for identical filehash (exact duplicate) or duplicated authortitle/format
-        if ebook_obj.file_hash in ebooks_by_filehash.keys() or \
-            ebook_obj.authortitle in ebooks_by_authortitle.keys() and ebooks_by_authortitle[ebook_obj.authortitle].format == ebook_obj.format:
+        if ebook_obj.file_hash in ebooks_by_filehash.keys():
             # warn user on error stack
-            errord_list[ebook_obj.path] = DuplicateEbookFoundError(
-                u"Duplicate ebook found '{}':\n  {}\n  {}".format(
-                    ebook_obj, ebook_obj.path, ebooks_by_authortitle[ebook_obj.authortitle].path
-                )
+            errord_list[ebook_obj.path] = ExactDuplicateEbookError(
+                ebook_obj, ebooks_by_authortitle[ebook_obj.authortitle].path
+            )
+        elif ebook_obj.authortitle in ebooks_by_authortitle.keys() and ebooks_by_authortitle[ebook_obj.authortitle].format == ebook_obj.format:
+            # warn user on error stack
+            errord_list[ebook_obj.path] = AuthortitleDuplicateEbookError(
+                ebook_obj, ebooks_by_authortitle[ebook_obj.authortitle].path
             )
         else:
             # new ebook, or different format of duplicate ebook found

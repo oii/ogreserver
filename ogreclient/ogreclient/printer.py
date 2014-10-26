@@ -19,6 +19,8 @@ class CliPrinter:
     GREY = '\033[90m'
     END = '\033[0m'
 
+    TAB_SIZE = 4
+
     DEFAULT = 'OGRECLIENT'
     ERROR = 'ERROR'
     DEBUG = 'DEBUG'
@@ -82,7 +84,7 @@ class CliPrinter:
         else:
             self.p(msg, mode, success=False, notime=notime)
 
-    def p(self, msg, mode=None, notime=False, success=None, extra=None, nonl=False):
+    def p(self, msg, mode=None, notime=False, success=None, extra=None, nonl=False, tabular=False):
         # print a newline if required (this also ends any active progress bars)
         self.print_newline()
 
@@ -101,6 +103,10 @@ class CliPrinter:
 
         # calculate and format elapsed time
         t = self._get_time_elapsed(notime)
+
+        # format tabular data
+        if tabular is True and type(msg) is list:
+            msg = self._format_tabular(msg)
 
         # thread-safe printing to stdout
         with self.lock:
@@ -188,6 +194,62 @@ class CliPrinter:
             return '{: <4} '.format(formatted_ts)
         else:
             return ts
+
+
+    def _format_tabular(self, data):
+        column_tab_sizes = {}
+
+        # iterate columns
+        for colindex in range(len(data[0])):
+            # get the longest string in this column
+            len_max_string = max(len(str(row[colindex])) for row in data)
+            # calculate the number of tabs required
+            num_tabs = 1
+            while len_max_string - (CliPrinter.TAB_SIZE * num_tabs) > 0:
+                num_tabs += 1
+            # store for later
+            column_tab_sizes[colindex] = num_tabs
+
+        # assume the first item in the list is the table header
+        header_row = data.pop(0)
+
+        # create table header
+        header = ''
+        for colindex in range(len(header_row)):
+            header += '| {}{}'.format(
+                header_row[colindex],
+                self._get_padding(header_row[colindex], column_tab_sizes[colindex])
+            )
+
+        # create table separator
+        separator = '+{}\n'.format(len(header) * '-')
+
+        table = ''
+        for row in data:
+            # check for separator row
+            sep = True
+            for item in row:
+                if item != '-':
+                    sep = False
+                    break
+            if sep is True:
+                table += separator
+                continue
+
+            # output rows
+            for colindex in range(len(row)):
+                table += '| {}{}'.format(
+                    row[colindex],
+                    self._get_padding(row[colindex], column_tab_sizes[colindex])
+                )
+            table += '\n'
+
+        # compose table and remove trailing newline
+        return '\n{0}{1}\n{0}{2}{0}'.format(separator, header, table)[:-1]
+
+    def _get_padding(self, word, num_tabs):
+        return ' ' * ((CliPrinter.TAB_SIZE * num_tabs) - len(str(word)))
+
 
     def format_excp(self, ex, debug=False):
         msg = '{}: {}'.format(ex.__class__.__name__, ex)

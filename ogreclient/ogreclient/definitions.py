@@ -1,15 +1,22 @@
+import collections
+
 OGRESERVER_HOST = 'ogre.oii.yt'
 
-RANKED_EBOOK_FORMATS = {
-    'mobi': 1,
-    'azw': 2,
-    'azw3': 3,
-    'azw4': 4,
-    'pdf': 5,
-    'epub': 6,
-    'pdb': 7,
-    'azw1': 8,
-    'tpz': 9,
-}
+# data structure:
+#  is_valid_format (bool): sync to ogreserver
+#  is_amazon_family (bool): an amazon-family format
 
-MOBI_FORMATS = ('mobi', 'azw', 'azw3', 'azw4', 'azw1')
+EBOOK_FORMATS = collections.OrderedDict([
+    ('mobi', [True,True]),
+    ('azw', [True,True]),
+    ('azw3', [True,True]),
+    ('azw4', [True,True]),
+    ('epub', [True,False]),
+    ('azw1', [True,True]),
+    ('tpz', [True,False]),
+    ('pdb', [False,False,]),
+    ('pdf', [False,False,]),
+    ('lit', [False,False,]),
+    ('html', [False,False]),
+    ('zip', [False,False]),
+])

@@ -14,7 +14,7 @@ from .utils import make_temp_directory
 from .printer import CliPrinter
 from .dedrm import decrypt, DRM, DeDrmMissingError, DecryptionFailed
 
-from .definitions import RANKED_EBOOK_FORMATS
+from .definitions import EBOOK_FORMATS
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError
 from .exceptions import ExactDuplicateEbookError, AuthortitleDuplicateEbookError
@@ -108,7 +108,8 @@ def search_for_ebooks(config, prntr):
     def _process_ebook_dir(root, files):
         for filename in files:
             fn, ext = os.path.splitext(filename)
-            if ext[1:] in RANKED_EBOOK_FORMATS.keys() and fn[0:2] != '._':
+            # check file not hidden, is valid format for ogre
+            if fn[1:1] != '.' and ext[1:] in EBOOK_FORMATS.keys() and EBOOK_FORMATS[ext[1:]][0]:
                 ebooks.append(
                     (os.path.join(root, filename), ext[1:])
                 )
@@ -183,8 +184,8 @@ def search_for_ebooks(config, prntr):
 
             if ebook_obj.authortitle in ebooks_by_authortitle.keys():
                 # compare the rank of the format already found against this one
-                existing_rank = RANKED_EBOOK_FORMATS[ebooks_by_authortitle[ebook_obj.authortitle].format]
-                new_rank = RANKED_EBOOK_FORMATS[ebook_obj.format]
+                existing_rank = EBOOK_FORMATS.keys().index(ebooks_by_authortitle[ebook_obj.authortitle].format)
+                new_rank = EBOOK_FORMATS.keys().index(ebook_obj.format)
 
                 # lower is better
                 if new_rank < existing_rank:

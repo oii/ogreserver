@@ -10,7 +10,7 @@ import urllib
 import urllib2
 from urllib2 import HTTPError, URLError
 
-from .definitions import MOBI_FORMATS
+from .definitions import EBOOK_FORMATS
 from .exceptions import CorruptEbookError, FailedWritingMetaDataError, FailedConfirmError
 from .utils import compute_md5, id_generator, make_temp_directory
 
@@ -155,8 +155,9 @@ class EbookObject:
                             del(tags[j])
                     meta['tags'] = ', '.join(tags)
 
-                # extract the ogre_id which may be embedded into the tags field
-                if fmt[1:] in MOBI_FORMATS:
+                is_amazon_format = EBOOK_FORMATS[fmt[1:]][1]
+                if is_amazon_format:
+                    # extract the ogre_id which may be embedded into the tags field
                     if 'ogre_id' in meta['tags']:
                         tags = meta['tags'].split(', ')
                         for j in reversed(xrange(len(tags))):
@@ -248,7 +249,8 @@ class EbookObject:
             shutil.copy(self.path, tmp_name)
 
             try:
-                if fmt[1:] in MOBI_FORMATS:
+                is_amazon_format = EBOOK_FORMATS[fmt[1:]][1]
+                if is_amazon_format:
                     # append ogre's ebook_id to the ebook's comma-separated tags field
                     # as they don't support --identifier
                     if 'tags' in self.meta and self.meta['tags']:

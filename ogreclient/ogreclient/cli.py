@@ -6,7 +6,7 @@ import sys
 
 from . import __version__
 
-from .core import sync
+from .core import sync, stats
 from .ebook_obj import EbookObject
 from .prereqs import setup_ogreclient
 from .printer import CliPrinter, DummyPrinter
@@ -88,10 +88,6 @@ def parse_command_line():
         help='Synchronise with the OGRE server',
     )
     psync.set_defaults(mode='sync')
-    psync.add_argument(
-        '--ebook-home', '-H',
-        help=('The directory where you keep your ebooks. '
-              'You can also set the environment variable $EBOOK_HOME'))
 
     psync.add_argument(
         '--host',
@@ -112,9 +108,23 @@ def parse_command_line():
         '--dry-run', '-d', action='store_true',
         help="Dry run the sync; don't actually upload anything to the server")
 
-    psync.add_argument(
-        '--ignore-kindle', action='store_true',
-        help='Ignore ebooks in a local Amazon Kindle install')
+
+    # setup parser for stats command
+    pstats = subparsers.add_parser('stats',
+        parents=[parent_parser],
+        help='View stats on your ebook library',
+    )
+    pstats.set_defaults(mode='stats')
+
+    # set ogreserver params which apply to sync & stats
+    for p in (psync, pstats):
+        p.add_argument(
+            '--ignore-kindle', action='store_true',
+            help='Ignore ebooks in a local Amazon Kindle install')
+        p.add_argument(
+            '--ebook-home', '-H',
+            help=('The directory where you keep your ebooks. '
+                  'You can also set the environment variable $EBOOK_HOME'))
 
 
     # setup parser for dedrm command
@@ -141,6 +151,7 @@ def parse_command_line():
         'inputfile',
         help='Ebook for which to display info')
 
+
     args = parser.parse_args()
 
     if args.mode == 'sync' and args.verbose and args.quiet:
@@ -165,6 +176,10 @@ def main(conf, args, prntr):
     elif args.mode == 'dedrm':
         # decrypt a single book
         ret = dedrm_single_ebook(conf, prntr, args.inputfile, args.output_dir)
+
+    elif args.mode == 'stats':
+        # calculate and display library stats
+        ret = stats(conf, prntr)
 
     elif args.mode == 'sync':
         # run ogreclient

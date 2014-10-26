@@ -17,7 +17,7 @@ from .dedrm import decrypt, DRM, DeDrmMissingError, DecryptionFailed
 from .definitions import EBOOK_FORMATS
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError
-from .exceptions import ExactDuplicateEbookError, AuthortitleDuplicateEbookError
+from .exceptions import DuplicateEbookBaseError, ExactDuplicateEbookError, AuthortitleDuplicateEbookError
 from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
 from .exceptions import FailedWritingMetaDataError, FailedConfirmError, FailedDebugLogsError
 from .exceptions import MissingFromCacheError, OgreException
@@ -96,6 +96,43 @@ def sync(config, prntr):
     # 6) send a log of all events, and upload bad books
     if config['debug'] is True:
         send_logs(prntr, config['host'], session_key, errord_list)
+
+
+def stats(config, prntr, ebooks_dict=None):
+    ebooks_dict, errord_list = search_for_ebooks(config, prntr)
+
+    counts = {}
+    errors = {}
+
+    # iterate authortitle:EbookObject pairs
+    for key, e in ebooks_dict.iteritems():
+        if e.format not in counts.keys():
+            counts[e.format] = 1
+        else:
+            counts[e.format] += 1
+
+    # iterate list of exceptions
+    for e in errord_list.values():
+        if isinstance(e, CorruptEbookError):
+            if 'corrupt' not in errors.keys():
+                errors['corrupt'] = 1
+            else:
+                errors['corrupt'] += 1
+        elif isinstance(e, DuplicateEbookBaseError):
+            if 'duplicate' not in errors.keys():
+                errors['duplicate'] = 1
+            else:
+                errors['duplicate'] += 1
+
+    # add header to output table
+    output = [('format', 'count')]
+    output += [(k,v) for k,v in counts.iteritems()]
+    # add a separator row and the error counts
+    output.append(('-', '-'))
+    output += [(k,v) for k,v in errors.iteritems()]
+
+    # print table
+    prntr.p(output, CliPrinter.STATS, tabular=True, notime=True)
 
 
 def search_for_ebooks(config, prntr):

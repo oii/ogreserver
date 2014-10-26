@@ -31,6 +31,7 @@ class CliPrinter:
     CORRUPT = 'CORRUPT'
     NONE = 'NONE'
     RESPONSE = 'RESPONSE'
+    STATS = 'STATISTICS'
 
     log_output = False
     logs = []

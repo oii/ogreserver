@@ -82,7 +82,7 @@ def setup_ogreclient(args, prntr):
     # return the user's OS
     conf['platform'] = platform.system()
 
-    if args.mode == 'sync':
+    if args.mode in ('sync', 'stats'):
         ebook_home_found, conf['ebook_home'] = setup_ebook_home(prntr, args, conf)
 
         # ignore certain providers as determined by --ignore-* params
@@ -125,6 +125,10 @@ def setup_ogreclient(args, prntr):
 
     elif args.mode == 'dedrm':
         dedrm_check(prntr, args, conf)
+
+    if args.mode == 'stats' and 'username' not in conf:
+        # supply a default username during stats queries
+        conf['username'] = 'oc'
 
     if first_scan_warning is True:
         prntr.p('Please note that metadata/DRM scanning means the first run of ogreclient '

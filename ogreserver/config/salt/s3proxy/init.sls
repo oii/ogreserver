@@ -6,8 +6,8 @@ s3proxy-dependencies:
 s3proxy-install:
   file.managed:
     - name: /usr/local/bin/s3proxy
-    - source: https://github.com/andrewgaul/s3proxy/releases/download/s3proxy-1.0.0/s3proxy
-    - source_hash: sha1=9a6de7b37d6ff8e4b45401f6c0ce0025e399f2b8
+    - source: https://github.com/andrewgaul/s3proxy/releases/download/s3proxy-1.2.0/s3proxy
+    - source_hash: sha1=145bf11781d744a43c9f649fac4c5bf4d12a9f26
   cmd.wait:
     - name: chmod u+x /usr/local/bin/s3proxy
     - watch:

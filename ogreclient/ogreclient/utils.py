@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import base64
 import contextlib
 import hashlib
@@ -90,4 +92,4 @@ def capture():
 
 def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
-    return type('Enum', (), enums)
+    return type(str('Enum'), (), enums)

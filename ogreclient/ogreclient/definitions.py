@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import collections
 
 OGRESERVER_HOST = 'ogre.oii.yt'

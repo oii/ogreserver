@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
 import json
 import os
@@ -30,7 +31,7 @@ class EbookObject:
 
     def __unicode__(self):
         if self.meta:
-            return u'{} {} - {}.{}'.format(
+            return '{} {} - {}.{}'.format(
                 self.meta['firstname'],
                 self.meta['lastname'],
                 self.meta['title'],
@@ -71,12 +72,12 @@ class EbookObject:
         Serialize the EbookObject for sending or caching
         '''
         data = {
-            u'path': self.path,
-            u'format': self.format,
-            u'size': self.size,
-            u'file_hash': self.file_hash,
-            u'dedrm': self.drmfree,
-            u'meta': self.meta
+            'path': self.path,
+            'format': self.format,
+            'size': self.size,
+            'file_hash': self.file_hash,
+            'dedrm': self.drmfree,
+            'meta': self.meta
         }
         if for_cache:
             # different serialisation for writing the local ogreclient cache
@@ -98,7 +99,7 @@ class EbookObject:
         self.meta = self._metadata_extract()
 
         # delimit fields with non-printable chars
-        self.authortitle = u'{}\u0006{}\u0007{}'.format(
+        self.authortitle = '{}\u0006{}\u0007{}'.format(
             self.meta['firstname'], self.meta['lastname'], self.meta['title']
         )
         return self.authortitle
@@ -110,7 +111,7 @@ class EbookObject:
 
         # call ebook-metadata
         proc = subprocess.Popen(
-            '{} "{}"'.format(self.config['calibre_ebook_meta_bin'], self.path.encode(fs_encoding)),
+            '{} "{}"'.format(self.config['calibre_ebook_meta_bin'], self.path).encode(fs_encoding),
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
@@ -254,9 +255,9 @@ class EbookObject:
                     # append ogre's ebook_id to the ebook's comma-separated tags field
                     # as they don't support --identifier
                     if 'tags' in self.meta and self.meta['tags']:
-                        new_tags = u'ogre_id={}, {}'.format(ogre_id, self.meta['tags'])
+                        new_tags = 'ogre_id={}, {}'.format(ogre_id, self.meta['tags'])
                     else:
-                        new_tags = u'ogre_id={}'.format(ogre_id)
+                        new_tags = 'ogre_id={}'.format(ogre_id)
 
                     # write ogre_id to --tags
                     subprocess.check_output(
@@ -318,9 +319,9 @@ class EbookObject:
             try:
                 # append DeDRM to the tags list
                 if existing_tags is not None and len(existing_tags) > 0:
-                    new_tags = u'OGRE-DeDRM, {}'.format(existing_tags)
+                    new_tags = 'OGRE-DeDRM, {}'.format(existing_tags)
                 else:
-                    new_tags = u'OGRE-DeDRM'
+                    new_tags = 'OGRE-DeDRM'
 
                 # write DeDRM to --tags
                 subprocess.check_output(

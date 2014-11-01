@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
 import datetime
 import sys
@@ -100,7 +101,7 @@ class CliPrinter:
 
         # log all prints to a stack for later use
         if self.log_output is True:
-            self.logs.append(u'[{: <10}]  {}'.format(prefix, msg))
+            self.logs.append('[{: <10}]  {}'.format(prefix, msg))
 
         # calculate and format elapsed time
         t = self._get_time_elapsed(notime)
@@ -111,26 +112,26 @@ class CliPrinter:
 
         # thread-safe printing to stdout
         with self.lock:
-            out.write(u'{}[{: <10}]{} {}{}{}{}'.format(
+            out.write('{}[{: <10}]{} {}{}{}{}'.format(
                 CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour, msg, CliPrinter.END
             ))
 
             if type(extra) is list:
                 t = self._get_time_prefix(notime=True)
                 for line in extra:
-                    out.write(u'\n{}[{: <10}]  {}{}> {}{}'.format(
+                    out.write('\n{}[{: <10}]  {}{}> {}{}'.format(
                         CliPrinter.YELLOW, prefix, CliPrinter.WHITE, t, CliPrinter.END, line
                     ))
             elif extra is not None:
                 t = self._get_time_prefix(notime=True)
-                out.write(u'\n{}[{: <10}]  {}{}> {}{}'.format(
+                out.write('\n{}[{: <10}]  {}{}> {}{}'.format(
                     CliPrinter.YELLOW, prefix, CliPrinter.WHITE, t, CliPrinter.END, extra
                 ))
 
             if nonl is True:
                 self.line_needs_finishing = True
             else:
-                out.write(u'\n')
+                out.write('\n')
 
             out.flush()
 
@@ -141,7 +142,7 @@ class CliPrinter:
         self.progress_running = True
 
         t = self._get_time_elapsed(notime)
-        sys.stdout.write(u'\r{}[{: <10}]{} {}{}{}{}'.format(
+        sys.stdout.write('\r{}[{: <10}]{} {}{}{}{}'.format(
             CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour,
             (amount * self.progressbar_char),
             CliPrinter.END
@@ -161,7 +162,7 @@ class CliPrinter:
         progress = progress if progress < 1 else 1
 
         t = self._get_time_elapsed(notime)
-        sys.stdout.write(u'\r{}[{: <10}]{} {}{}[ {}{} ] {}%{}'.format(
+        sys.stdout.write('\r{}[{: <10}]{} {}{}[ {}{} ] {}%{}'.format(
             CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour,
             self.progressbar_char * int(progress * self.progressbar_len),
             ' ' * (self.progressbar_len - int(progress * self.progressbar_len)),
@@ -275,7 +276,7 @@ class CliPrinter:
             if self.line_needs_finishing is True or self.progress_running is True:
                 self.progress_running = False
                 self.line_needs_finishing = False
-                sys.stdout.write(u'\n')
+                sys.stdout.write('\n')
                 sys.stdout.flush()
 
 

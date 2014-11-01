@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+
+
 class OgreException(Exception):
     def __init__(self, message=None, inner_excp=None):
         super(OgreException, self).__init__(message)
@@ -18,7 +21,7 @@ class AuthError(OgreException):
 
 class NoEbooksError(OgreWarning):
     def __init__(self):
-        super(NoEbooksError, self).__init__(u'No ebooks found!')
+        super(NoEbooksError, self).__init__('No ebooks found.. Cannot continue!')
 
 class NoUploadsError(OgreException):
     pass

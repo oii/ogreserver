@@ -1,5 +1,6 @@
 # coding: utf-8 -*-
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
 import os
 import shutil
@@ -12,43 +13,43 @@ import pytest
 def test_metadata_epub(helper_get_ebook):
     # Frankenstein
     ebook_obj = helper_get_ebook('pg84.epub')
-    assert ebook_obj.meta['firstname'] == u'Mary Wollstonecraft'
-    assert ebook_obj.meta['lastname'] == u'Shelley'
-    assert ebook_obj.meta['title'] == u'Frankenstein'
-    assert ebook_obj.meta['uri'] == u'http://www.gutenberg.org/ebooks/84'
+    assert ebook_obj.meta['firstname'] == 'Mary Wollstonecraft'
+    assert ebook_obj.meta['lastname'] == 'Shelley'
+    assert ebook_obj.meta['title'] == 'Frankenstein'
+    assert ebook_obj.meta['uri'] == 'http://www.gutenberg.org/ebooks/84'
 
     # Beowulf
     ebook_obj = helper_get_ebook('pg16328.epub')
-    assert ebook_obj.meta['lastname'] == u'Unknown'
-    assert ebook_obj.meta['title'] == u'Beowulf / An Anglo-Saxon Epic Poem'
-    assert ebook_obj.meta['uri'] == u'http://www.gutenberg.org/ebooks/16328'
+    assert ebook_obj.meta['lastname'] == 'Unknown'
+    assert ebook_obj.meta['title'] == 'Beowulf / An Anglo-Saxon Epic Poem'
+    assert ebook_obj.meta['uri'] == 'http://www.gutenberg.org/ebooks/16328'
 
     # Wizard of Oz
     ebook_obj = helper_get_ebook('pg55.epub')
-    assert ebook_obj.meta['firstname'] == u'L. Frank (Lyman Frank)'
-    assert ebook_obj.meta['lastname'] == u'Baum'
-    assert ebook_obj.meta['title'] == u'The Wonderful Wizard of Oz'
-    assert ebook_obj.meta['uri'] == u'http://www.gutenberg.org/ebooks/55'
-    assert ebook_obj.meta['tags'] == u'Fantasy, Oz (Imaginary place) -- Fiction'
+    assert ebook_obj.meta['firstname'] == 'L. Frank (Lyman Frank)'
+    assert ebook_obj.meta['lastname'] == 'Baum'
+    assert ebook_obj.meta['title'] == 'The Wonderful Wizard of Oz'
+    assert ebook_obj.meta['uri'] == 'http://www.gutenberg.org/ebooks/55'
+    assert ebook_obj.meta['tags'] == 'Fantasy, Oz (Imaginary place) -- Fiction'
 
 
 @pytest.mark.requires_calibre
 def test_metadata_mobi(helper_get_ebook):
     # Wonderland, converted to mobi
     ebook_obj = helper_get_ebook('pg11.mobi')
-    assert ebook_obj.meta['firstname'] == u'Lewis'
-    assert ebook_obj.meta['lastname'] == u'Carroll'
-    assert ebook_obj.meta['title'] == u"Alice's Adventures in Wonderland"
-    assert ebook_obj.meta['tags'] == u'Fantasy'
-    assert ebook_obj.meta['asin'] == u'4373df90-da57-42de-9327-90f0e73e8e45'
+    assert ebook_obj.meta['firstname'] == 'Lewis'
+    assert ebook_obj.meta['lastname'] == 'Carroll'
+    assert ebook_obj.meta['title'] == "Alice's Adventures in Wonderland"
+    assert ebook_obj.meta['tags'] == 'Fantasy'
+    assert ebook_obj.meta['asin'] == '4373df90-da57-42de-9327-90f0e73e8e45'
 
 
 @pytest.mark.requires_calibre
 def test_metadata_utf8(helper_get_ebook):
     # Wuthering Heights
     ebook_obj = helper_get_ebook('pg768.epub')
-    assert ebook_obj.meta['firstname'] == u'Emily'
-    assert ebook_obj.meta['lastname'] == u'Brontë'
+    assert ebook_obj.meta['firstname'] == 'Emily'
+    assert ebook_obj.meta['lastname'] == 'Brontë'
 
 
 def test_parse_authortitle(parse_author_method):
@@ -56,36 +57,43 @@ def test_parse_authortitle(parse_author_method):
     firstname, lastname = parse_author_method('H. C. Andersen')
     for var in (firstname, lastname):
         assert type(var) is unicode
-    assert firstname == u'H. C.'
-    assert lastname == u'Andersen'
+    assert firstname == 'H. C.'
+    assert lastname == 'Andersen'
 
-    # UTF-8 encoded lastname
-    firstname, lastname = parse_author_method('Emily Bront\xc3\xab')
+    # UTF-8 encoded lastname (unicode)
+    firstname, lastname = parse_author_method('Emily Brontë')
     for var in (firstname, lastname):
         assert type(var) is unicode
-    assert firstname == u'Emily'
-    assert lastname == u'Brontë'
+    assert firstname == 'Emily'
+    assert lastname == 'Brontë'
+
+    # UTF-8 encoded lastname (utf8 byte string)
+    firstname, lastname = parse_author_method('Emily Brontë'.encode('utf8'))
+    for var in (firstname, lastname):
+        assert type(var) is unicode
+    assert firstname == 'Emily'
+    assert lastname == 'Brontë'
 
     # comma-separated lastname, firstname
     firstname, lastname = parse_author_method('Carroll, Lewis')
     for var in (firstname, lastname):
         assert type(var) is unicode
-    assert firstname == u'Lewis'
-    assert lastname == u'Carroll'
+    assert firstname == 'Lewis'
+    assert lastname == 'Carroll'
 
     # comma-separated lastname, firstname in appended brackets
     firstname, lastname = parse_author_method('Lewis Carroll [Carroll, Lewis]')
     for var in (firstname, lastname):
         assert type(var) is unicode
-    assert firstname == u'Lewis'
-    assert lastname == u'Carroll'
+    assert firstname == 'Lewis'
+    assert lastname == 'Carroll'
 
     # comma-separated lastname, firstname & double-barrelled firstname
     firstname, lastname = parse_author_method('Andersen, H. C.')
     for var in (firstname, lastname):
         assert type(var) is unicode
-    assert firstname == u'H. C.'
-    assert lastname == u'Andersen'
+    assert firstname == 'H. C.'
+    assert lastname == 'Andersen'
 
 
 @pytest.mark.requires_calibre
@@ -179,4 +187,4 @@ def test_metadata_ogreid_mobi_utf8(mock_urlopen, helper_get_ebook, ebook_lib_pat
 
     # verify that --tags still has the UTF-8
     ebook_obj.get_metadata()
-    assert ebook_obj.meta['tags'] == u'diaëresis'
+    assert ebook_obj.meta['tags'] == 'diaëresis'

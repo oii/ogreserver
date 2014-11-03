@@ -111,7 +111,9 @@ class EbookObject:
 
         # call ebook-metadata
         proc = subprocess.Popen(
-            '{} "{}"'.format(self.config['calibre_ebook_meta_bin'], self.path).encode(fs_encoding),
+            '{} "{}"'.format(
+                self.config['calibre_ebook_meta_bin'], self.path.replace('"', '\\"')
+            ).encode(fs_encoding),
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE

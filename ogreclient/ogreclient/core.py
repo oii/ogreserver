@@ -21,7 +21,7 @@ from .exceptions import AuthDeniedError, AuthError, NoEbooksError
 from .exceptions import DuplicateEbookBaseError, ExactDuplicateEbookError, AuthortitleDuplicateEbookError
 from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
 from .exceptions import FailedWritingMetaDataError, FailedConfirmError, FailedDebugLogsError
-from .exceptions import MissingFromCacheError, OgreException
+from .exceptions import MissingFromCacheError, OgreException, OgreserverDownError
 
 
 def authenticate(host, username, password):
@@ -41,7 +41,10 @@ def authenticate(host, username, password):
         else:
             raise AuthError(str(e))
     except URLError as e:
-        raise AuthError(str(e))
+        if 'Connection refused' in str(e):
+            raise OgreserverDownError
+        else:
+            raise AuthError(str(e))
 
 
 def sync(config, prntr):

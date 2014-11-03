@@ -19,6 +19,10 @@ class AuthDeniedError(OgreException):
 class AuthError(OgreException):
     pass
 
+class OgreserverDownError(OgreException):
+    def __init__(self):
+        super(OgreserverDownError, self).__init__('Please try again later :(')
+
 class NoEbooksError(OgreWarning):
     def __init__(self):
         super(NoEbooksError, self).__init__('No ebooks found.. Cannot continue!')

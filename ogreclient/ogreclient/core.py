@@ -193,8 +193,8 @@ def search_for_ebooks(config, prntr):
             ebook_obj.compute_md5()
 
             try:
-                # extract ebook metadata and build key
-                # books are indexed by 'authortitle' to handle multiple copies of the same book
+                # extract ebook metadata and build key; books are stored in a dict
+                # with 'authortitle' as the key in a naive attempt at de-deduplication
                 ebook_obj.get_metadata()
 
             except CorruptEbookError as e:

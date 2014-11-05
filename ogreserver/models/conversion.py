@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
 import os
 import shutil
@@ -136,9 +137,9 @@ class Conversion:
             if fmt[1:] in self.config['MOBI_FORMATS']:
                 # append ogre's ebook_id to the ebook's comma-separated tags field
                 if ebook['raw_tags'] is not None and len(ebook['raw_tags']) > 0:
-                    new_tags = u'ogre_id={}, {}'.format(ebook['ebook_id'], ebook['raw_tags'])
+                    new_tags = 'ogre_id={}, {}'.format(ebook['ebook_id'], ebook['raw_tags'])
                 else:
-                    new_tags = u'ogre_id={}'.format(ebook['ebook_id'])
+                    new_tags = 'ogre_id={}'.format(ebook['ebook_id'])
 
                 # write ogre_id to --tags
                 subprocess.check_output(

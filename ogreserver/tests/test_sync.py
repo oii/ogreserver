@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
 
 def test_sync_duplicate(datastore, rethinkdb, user):
@@ -6,7 +7,7 @@ def test_sync_duplicate(datastore, rethinkdb, user):
     Test two basic syncs with the same data. Book should be flagged as dupe
     '''
     ebooks_dict = {
-        u"H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
+        "H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
             'format': 'epub',
             'file_hash': '38b3fc3aa7fe67e76f0d8b248e62b940',
             'owner': 'mafro',
@@ -38,7 +39,7 @@ def test_sync_ogre_id(datastore, rethinkdb, user):
     as ogreclient should do
     '''
     ebooks_dict = {
-        u"H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
+        "H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
             'format': 'epub',
             'file_hash': 'b889dec977aef12c6973acc2cf5b8590',
             'owner': 'mafro',
@@ -74,7 +75,7 @@ def test_sync_multiple_versions(datastore, rethinkdb, user):
     result in two different versions on the same ebook
     '''
     ebooks_dict = {
-        u"Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland": {
+        "Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland": {
             'format': 'epub',
             'file_hash': 'd41d8cd98f00b204e9800998ecf8427e',
             'owner': 'mafro',

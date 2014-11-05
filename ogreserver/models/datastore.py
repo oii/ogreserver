@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
 import hashlib
 import re
@@ -71,8 +72,8 @@ class DataStore():
 
                 try:
                     # derive author and title from the key
-                    author, title = authortitle.split(u'\u0007')
-                    firstname, lastname = author.split(u'\u0006')
+                    author, title = authortitle.split('\u0007')
+                    firstname, lastname = author.split('\u0006')
                 except Exception as e:
                     raise BadMetaDataError(
                         'Bad meta data on {}'.format(incoming['file_hash']), e
@@ -119,7 +120,7 @@ class DataStore():
                     ).count().run()
 
                     if other_versions > 0:
-                        msg = u'Rejecting new version of {} from {}'.format(
+                        msg = 'Rejecting new version of {} from {}'.format(
                             authortitle, user.username
                         )
                         self.logger.info(msg)

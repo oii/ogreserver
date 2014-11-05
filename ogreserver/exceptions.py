@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+
+
 class OgreException(Exception):
     def __init__(self, message=None, inner_excp=None):
         super(OgreException, self).__init__(message)

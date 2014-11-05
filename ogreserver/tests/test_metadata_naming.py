@@ -1,5 +1,6 @@
 # coding: utf-8 -*-
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
 import pytest
 
@@ -9,23 +10,23 @@ def test_generate_filename(datastore):
     with pytest.raises(UnicodeWarning):
         filename = datastore.generate_filename(
             '38b3fc3aa7fe67e76f0d8b248e62b940',
-            firstname='H. C.',
+            firstname=str('H. C.'),
         )
 
     filename = datastore.generate_filename(
         '38b3fc3aa7fe67e76f0d8b248e62b940',
-        firstname=u'H. C.',
-        lastname=u'Andersen',
-        title=u"Andersen's Fairy Tales",
+        firstname='H. C.',
+        lastname='Andersen',
+        title="Andersen's Fairy Tales",
         format='epub'
     )
     assert filename == 'H_C_Andersen__Andersens_Fairy_Tales.38b3fc3a.epub'
 
     filename = datastore.generate_filename(
         '38b3fc3aa7fe67e76f0d8b248e62b940',
-        firstname=u'H. C. (Hans Christian)',
-        lastname=u'Andersen',
-        title=u"Andersen's Fairy Tales",
+        firstname='H. C. (Hans Christian)',
+        lastname='Andersen',
+        title="Andersen's Fairy Tales",
         format='epub'
     )
     assert filename == 'H_C_Hans_Christian_Andersen__Andersens_Fairy_Tales.38b3fc3a.epub'
@@ -35,13 +36,13 @@ def test_generate_filename_transpose(datastore):
     # test unicode transcode
     filename = datastore.generate_filename(
         '38b3fc3aa7fe67e76f0d8b248e62b940',
-        firstname=u'Emily',
-        lastname='Bront\xc3\xab'.decode('UTF-8'),
-        title=u'Wuthering Heights',
+        firstname='Emily',
+        lastname='Brontë',
+        title='Wuthering Heights',
         format='epub'
     )
 
-    assert 'Bronte' in filename, u'transcode of ë failed'
+    assert 'Bronte' in filename, 'transcode of ë failed'
 
 
 def test_generate_filename_with_db_load(datastore, rethinkdb, user):
@@ -66,8 +67,8 @@ def test_generate_filename_with_db_load(datastore, rethinkdb, user):
     # test filename generate with everything except format
     filename = datastore.generate_filename(
         '38b3fc3aa7fe67e76f0d8b248e62b940',
-        firstname=u'H. C.',
-        lastname=u'Andersen',
-        title=u"Andersen's Fairy Tales"
+        firstname='H. C.',
+        lastname='Andersen',
+        title="Andersen's Fairy Tales"
     )
     assert filename == 'H_C_Andersen__Andersens_Fairy_Tales.38b3fc3a.epub'

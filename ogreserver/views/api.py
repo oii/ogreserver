@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
 import base64
 import codecs
@@ -107,7 +108,7 @@ def post_logs(auth_key):
 
     # write request body to file
     with codecs.open(log_file_path, 'w', 'utf-8') as f:
-        f.write(u'{}\n'.format(request.data.decode('utf-8')))
+        f.write('{}\n'.format(request.data.decode('utf-8')))
 
     return 'ok'
 
@@ -116,7 +117,7 @@ def post_logs(auth_key):
 def upload_errord(auth_key, filename):
     user = check_auth(auth_key)
 
-    filename = u'{}.{}.{}'.format(
+    filename = '{}.{}.{}'.format(
         user.username,
         datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         filename,

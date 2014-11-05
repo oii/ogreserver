@@ -135,8 +135,15 @@ class DataStore():
             except OgreException as e:
                 # TODO log this and report back to client
                 self.logger.info(unicode(e).encode('utf8'))
+
+                # don't update on client for failed books
+                output[incoming['file_hash']]['update'] = False
+
             except Exception as e:
                 self.logger.error(unicode(e).encode('utf8'), exc_info=True)
+
+                # don't update on client for failed books
+                output[incoming['file_hash']]['update'] = False
 
         return output
 

@@ -265,6 +265,10 @@ def clean_all_drm(config, prntr, ebooks_dict):
     cleaned = 0
 
     for authortitle, ebook_obj in ebooks_dict.items():
+        # only attempt decrypt on ebooks which are defined as is_valid_format
+        if EBOOK_FORMATS[ebook_obj.format][0] is False:
+            continue
+
         try:
             filename, suffix = os.path.splitext(os.path.basename(ebook_obj.path))
 
@@ -377,7 +381,9 @@ def sync_with_server(config, prntr, session_key, ebooks_dict):
     # serialize ebooks to dictionary for sending to ogreserver
     ebooks_for_sync = {}
     for authortitle, ebook_obj in ebooks_dict.iteritems():
-        ebooks_for_sync[authortitle] = ebook_obj.serialize()
+        # only send format is defined as is_valid_format
+        if EBOOK_FORMATS[ebook_obj.format][0] is True:
+            ebooks_for_sync[authortitle] = ebook_obj.serialize()
 
     try:
         # post json dict of ebook data

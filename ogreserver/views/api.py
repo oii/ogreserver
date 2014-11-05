@@ -70,6 +70,9 @@ def post(auth_key):
         key: item for key, item in syncd_books.items() if item['update'] is True
     }
 
+    # extract list of errors
+    errors = [item['error'] for key, item in syncd_books.items() if 'error' in item.keys()]
+
     app.logger.info('NEW {}'.format(len(new_books)))
 
     # store sync events
@@ -90,7 +93,8 @@ def post(auth_key):
     return json.dumps({
         'ebooks_to_update': update_books,
         'ebooks_to_upload': missing_books,
-        'messages': msgs
+        'messages': msgs,
+        'errors': errors
     })
 
 

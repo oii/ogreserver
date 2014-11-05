@@ -402,9 +402,12 @@ def sync_with_server(config, prntr, session_key, ebooks_dict):
     # display server messages
     for msg in response['messages']:
         if len(msg) == 2:
-            prntr.p("{0} {1}".format(msg[0], msg[1]), CliPrinter.RESPONSE)
+            prntr.p('{} {}'.format(msg[0], msg[1]), CliPrinter.RESPONSE)
         else:
             prntr.p(msg, CliPrinter.RESPONSE)
+
+    for msg in response['errors']:
+        prntr.e(msg, CliPrinter.RESPONSE)
 
     return response
 

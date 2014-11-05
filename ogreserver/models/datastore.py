@@ -75,9 +75,10 @@ class DataStore():
                     author, title = authortitle.split('\u0007')
                     firstname, lastname = author.split('\u0006')
                 except Exception as e:
-                    raise BadMetaDataError(
-                        'Bad meta data on {}'.format(incoming['file_hash']), e
-                    )
+                    raise BadMetaDataError("Bad meta data on '{}' ({})".format(
+                        authortitle.replace('\u0007', ' ').replace('\u0006', ' '),
+                        incoming['file_hash'][0:7]
+                    ), e)
 
                 # check for this book by meta data in the library
                 ebook_id = DataStore.build_ebook_key(lastname, firstname, title)
@@ -133,8 +134,9 @@ class DataStore():
                     output[incoming['file_hash']]['ebook_id'] = ebook_id
 
             except OgreException as e:
-                # TODO log this and report back to client
+                # log this and report back to client
                 self.logger.info(unicode(e).encode('utf8'))
+                output[incoming['file_hash']]['error'] = unicode(e).encode('utf8')
 
                 # don't update on client for failed books
                 output[incoming['file_hash']]['update'] = False

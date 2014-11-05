@@ -13,6 +13,8 @@ from boto.exception import S3ResponseError
 from whoosh.query import Every
 from whoosh.qparser import MultifieldParser, OrGroup
 
+import ftfy
+
 from .user import User
 from ..utils import connect_s3
 
@@ -74,6 +76,14 @@ class DataStore():
                     # derive author and title from the key
                     author, title = authortitle.split('\u0007')
                     firstname, lastname = author.split('\u0006')
+
+                    # sanitize incoming text
+                    for value in (title, firstname, lastname):
+                        value = ftfy.fix_text(value.strip())
+
+                    for _, value in incoming['meta'].iteritems():
+                        value = ftfy.fix_text(value.strip())
+
                 except Exception as e:
                     raise BadMetaDataError("Bad meta data on '{}' ({})".format(
                         authortitle.replace('\u0007', ' ').replace('\u0006', ' '),

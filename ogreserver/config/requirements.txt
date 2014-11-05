@@ -15,3 +15,4 @@ whoosh==2.5.7
 sesame==0.3.3
 rethinkdb==1.13.0-3
 Unidecode==0.04.16
+ftfy==3.3.0

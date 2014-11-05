@@ -408,6 +408,35 @@ class DataStore():
         return file_hash
 
 
+    def increment_popularity(self, file_hash):
+        """
+        Increase an ebook version's popularity by one
+        """
+        # get the version_id from the file_hash
+        version_id = r.table('formats').get(file_hash)['version_id'].run()
+
+        # increment the popularity
+        r.table('versions').get(version_id).update({
+            'popularity': r.row['popularity']+1
+        }).run()
+
+        # reindex ebook version ranking
+        self.set_version_rank(version_id)
+
+
+    def set_version_rank(self, version_id):
+        """
+        Set a version's ranking, which is based on quality & popularity.
+        See versions_rank_algorithm
+        """
+        # get the version object
+        version = r.table('versions').get(version_id).run()
+        # calculate ranking
+        ranking = DataStore.versions_rank_algorithm(version['quality'], version['popularity'])
+        # update the version table
+        r.table('versions').get(version_id).update({'ranking': ranking}).run()
+
+
     def get_ebook_url(self, ebook_id, version_id=None, fmt=None, user=None):
         """
         Generate a download URL for the requested ebook
@@ -421,6 +450,9 @@ class DataStore():
 
         # generate the filename - which is the key on S3
         filename = self.generate_filename(file_hash)
+
+        # increase popularity on download
+        self.increment_popularity(file_hash)
 
         # create an expiring auto-authenticate url for S3
         s3 = connect_s3(self.config)

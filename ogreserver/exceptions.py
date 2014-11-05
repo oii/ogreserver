@@ -20,3 +20,6 @@ class ConversionFailedError(OgreException):
 
 class EbookNotFoundOnS3Error(OgreException):
     pass
+
+class SameHashSuppliedOnUpdateError(OgreException):
+    pass

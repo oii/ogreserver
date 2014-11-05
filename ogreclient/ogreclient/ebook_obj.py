@@ -290,8 +290,13 @@ class EbookObject:
                     shutil.copy(tmp_name, self.path)
                     self.file_hash = new_hash
                     return new_hash
-                else:
+
+                elif data == 'fail':
                     raise FailedConfirmError("Server said 'no'")
+                elif data == 'same':
+                    raise FailedConfirmError("Server said 'same'")
+                else:
+                    raise FailedConfirmError('Unknown response from server!')
 
             except subprocess.CalledProcessError as e:
                 raise FailedWritingMetaDataError(str(e))

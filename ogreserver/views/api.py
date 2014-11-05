@@ -12,6 +12,7 @@ from flask import Blueprint, request, make_response
 
 from werkzeug.exceptions import Forbidden
 
+from ..exceptions import SameHashSuppliedOnUpdateError
 from ..models.datastore import DataStore
 from ..models.reputation import Reputation
 from ..models.user import User
@@ -137,10 +138,13 @@ def confirm(auth_key):
 
     ds = DataStore(app.config, app.logger)
 
-    if ds.update_book_hash(current_file_hash, updated_file_hash):
-        return 'ok'
-    else:
-        return 'fail'
+    try:
+        if ds.update_book_hash(current_file_hash, updated_file_hash):
+            return 'ok'
+        else:
+            return 'fail'
+    except SameHashSuppliedOnUpdateError:
+        return 'same'
 
 
 @bp_api.route('/upload/<auth_key>', methods=['POST'])

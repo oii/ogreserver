@@ -17,7 +17,7 @@ from .user import User
 from ..utils import connect_s3
 
 from ..exceptions import OgreException, BadMetaDataError, ExactDuplicateError
-from ..exceptions import NoFormatAvailableError
+from ..exceptions import NoFormatAvailableError, SameHashSuppliedOnUpdateError
 
 
 class DataStore():
@@ -427,7 +427,7 @@ class DataStore():
         This is called after the OGRE-ID meta data is written into an ebook on the client
         """
         if current_file_hash == updated_file_hash:
-            return None
+            raise SameHashSuppliedOnUpdateError(current_file_hash)
 
         data = r.table('formats').get(current_file_hash).run()
         if data is None:

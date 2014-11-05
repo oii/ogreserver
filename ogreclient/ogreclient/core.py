@@ -149,8 +149,8 @@ def search_for_ebooks(config, prntr):
     def _process_ebook_dir(root, files):
         for filename in files:
             fn, ext = os.path.splitext(filename)
-            # check file not hidden, is valid format for ogre
-            if fn[1:1] != '.' and ext[1:] in EBOOK_FORMATS.keys() and EBOOK_FORMATS[ext[1:]][0]:
+            # check file not hidden, is in list of known file suffixes
+            if fn[1:1] != '.' and ext[1:] in EBOOK_FORMATS.keys():
                 ebooks.append(
                     (os.path.join(root, filename), ext[1:])
                 )

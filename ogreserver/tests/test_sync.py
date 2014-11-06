@@ -109,6 +109,53 @@ def test_sync_matching_authortitle(datastore, rethinkdb, user):
     ).count().run() == 2, 'should be 2 versions'
 
 
+def test_sync_matching_ogre_id(datastore, rethinkdb, user):
+    '''
+    Test a sync with different file hashes, but ogre_id/ebook_id supplied on second sync gives two versions
+    '''
+    ebooks_dict = {
+        "Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland": {
+            'format': 'epub',
+            'file_hash': 'd41d8cd9',
+            'size': 139654,
+            'dedrm': False,
+            'meta': {},
+        },
+    }
+
+    # create the datastore and run a sync
+    syncd_books = datastore.update_library(ebooks_dict, user)
+
+    # extract ebook_id of syncd book
+    ebook_id = syncd_books.itervalues().next()['ebook_id']
+
+    assert rethinkdb.table('versions').filter(
+        {'ebook_id': ebook_id}
+    ).count().run() == 1, 'should be 1 version'
+
+    # different author/title
+    ebooks_dict["Lewis\u0006Carroll\u0007Alice's Wonderland"] = ebooks_dict[ebooks_dict.keys()[0]]
+    del(ebooks_dict["Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland"])
+
+    # supply ebook_id in second sync
+    ebooks_dict[ebooks_dict.keys()[0]]['ebook_id'] = ebook_id
+
+    # different file_hash, user
+    ebooks_dict[ebooks_dict.keys()[0]]['file_hash'] = '058e92c0'
+    user.username = '2ndsync'
+
+    # sync again
+    datastore.update_library(ebooks_dict, user)
+
+    # assert only one ebook in DB
+    assert rethinkdb.table('ebooks').count().run() == 1, 'should only be 1 ebook'
+
+    # assert ebook has two versions attached
+    assert rethinkdb.table('versions').filter(
+        {'ebook_id': ebook_id}
+    ).count().run() == 2, 'should be 2 versions'
+
+
 def test_sync_matching_original_hash(datastore, rethinkdb, user):
     '''
     Since ebooks have their meta data rewritten when adding OGRE_ID, the file hash

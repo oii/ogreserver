@@ -6,8 +6,10 @@ class OgreException(Exception):
         super(OgreException, self).__init__(message)
         self.inner_excp = inner_excp
 
-class ExactDuplicateError(OgreException):
-    pass
+class ExactDuplicateError(Exception):
+    def __init__(self, ebook_id):
+        super(ExactDuplicateError, self).__init__()
+        self.ebook_id = ebook_id
 
 class BadMetaDataError(OgreException):
     pass

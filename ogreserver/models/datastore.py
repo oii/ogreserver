@@ -45,32 +45,24 @@ class DataStore():
                 # build output to return to client
                 output[incoming['file_hash']] = {'new': False, 'update': False, 'dupe': False}
 
-                skip_existing = False
+                existing_ebook = None
+
+                # check for ogre_id from metadata passed as ebook_id
                 if 'ebook_id' in incoming and incoming['ebook_id'] is not None:
-                    skip_existing = True
+                    existing_ebook = self.load_ebook(incoming['ebook_id'])
                 else:
                     # tell client to set ogre_id on this ebook
                     output[incoming['file_hash']]['update'] = True
 
-                # query formats table by key, joining to versions to get ebook pk
-                existing = list(
-                    r.table('formats').filter(
-                        {'file_hash': incoming['file_hash']}
-                    ).eq_join(
-                        'version_id', r.table('versions')
-                    ).zip().run()
-                )
 
-                # skip existing books
-                if skip_existing is True or len(existing) > 0:
-                    output[incoming['file_hash']]['ebook_id'] = existing[0]['ebook_id']
-                    output[incoming['file_hash']]['dupe'] = True
+                # check if this exact file has been uploaded before
+                if r.table('formats').get(incoming['file_hash']).run():
+                    if existing_ebook is not None:
+                        raise ExactDuplicateError(incoming['ebook_id'])
+                    else:
+                        ebook = self.load_ebook_by_file_hash(incoming['file_hash'])
+                        raise ExactDuplicateError(ebook['ebook_id'])
 
-                    raise ExactDuplicateError(
-                        u'Ignoring exact duplicate {} {}'.format(
-                            existing[0]['ebook_id'], authortitle,
-                        )
-                    )
 
                 try:
                     # derive author and title from the key
@@ -90,11 +82,10 @@ class DataStore():
                         incoming['file_hash'][0:7]
                     ), e)
 
-                # check for this book by meta data in the library
-                ebook_id = DataStore.build_ebook_key(lastname, firstname, title)
-                existing = r.table('ebooks').get(ebook_id).run()
+                if not existing_ebook:
+                    # generate the ebook_id from the metadata
+                    ebook_id = DataStore.build_ebook_key(lastname, firstname, title)
 
-                if existing is None:
                     # create this as a new book
                     new_book = {
                         'ebook_id': ebook_id,
@@ -127,7 +118,7 @@ class DataStore():
                 else:
                     # parse the ebook data
                     other_versions = r.table('versions').filter(
-                        {'ebook_id': ebook_id, 'user': user.username}
+                        {'ebook_id': existing_ebook['ebook_id'], 'user': user.username}
                     ).count().run()
 
                     if other_versions > 0:
@@ -138,10 +129,17 @@ class DataStore():
                         continue
 
                     # create new version, with its initial format
-                    self._create_new_version(ebook_id, user.username, incoming)
+                    self._create_new_version(existing_ebook['ebook_id'], user.username, incoming)
 
                     # mark with ebook_id and return
-                    output[incoming['file_hash']]['ebook_id'] = ebook_id
+                    output[incoming['file_hash']]['ebook_id'] = existing_ebook['ebook_id']
+
+            except ExactDuplicateError as e:
+                # enable client to update book with ebook_id
+                output[incoming['file_hash']]['ebook_id'] = e.ebook_id
+
+                # inform client of duplicate
+                output[incoming['file_hash']]['dupe'] = True
 
             except OgreException as e:
                 # log this and report back to client

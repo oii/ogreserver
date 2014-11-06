@@ -135,10 +135,13 @@ def rethinkdb_init(request):
     r.db('test').table_create('versions', primary_key='version_id').run()
     r.db('test').table_create('formats', primary_key='file_hash').run()
     r.db('test').table_create('sync_events').run()
+    # create FK indexes
     r.db('test').table('versions').index_create('ebook_id').run()
     r.db('test').table('versions').index_wait('ebook_id').run()
     r.db('test').table('formats').index_create('version_id').run()
     r.db('test').table('formats').index_wait('version_id').run()
+    # create further indexes
+    r.db('test').table('versions').index_create('original_filehash').run()
 
     r.connect(db='test').repl()
     yield r

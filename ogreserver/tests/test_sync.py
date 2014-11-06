@@ -108,3 +108,42 @@ def test_sync_multiple_versions(datastore, rethinkdb, user):
     assert rethinkdb.table('versions').filter(
         {'ebook_id': ebook_id}
     ).count().run() == 2, 'should be 2 versions'
+
+
+def test_sync_same_original_hash(datastore, rethinkdb, user):
+    '''
+    Since ebooks have their meta data rewritten when adding OGRE_ID, the file hash
+    will change. Ensure that we match up incoming duplicates.
+    '''
+    ebooks_dict = {
+        u"Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland": {
+            'format': 'epub',
+            'file_hash': 'd41d8cd9',
+            'size': 139654,
+            'dedrm': False,
+            'meta': {},
+        },
+    }
+
+    # create the datastore and run a sync
+    syncd_books = datastore.update_library(ebooks_dict, user)
+
+    # assert book is new
+    file_hash, data = syncd_books.items()[0]
+    assert data['new'] is True, "wasn't stored on first sync"
+    assert data['dupe'] is False, 'book should not be a duplicate'
+
+    # update file_hash post-metadata rewrite
+    datastore.update_book_hash('d41d8cd9', '058e92c0')
+
+    # sync again, using same source file_hash, and no ogre_id in metadata
+    syncd_books = datastore.update_library(ebooks_dict, user)
+
+    # assert book is duplicate
+    file_hash, data = syncd_books.items()[0]
+    assert data['dupe'] is True, 'book should be a duplicate'
+
+    # assert ebook has single version attached
+    assert rethinkdb.table('versions').filter(
+        {'ebook_id': data['ebook_id']}
+    ).count().run() == 1, 'should be single version'

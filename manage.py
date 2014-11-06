@@ -216,6 +216,7 @@ def set_indexes():
 
     # create the rethinkdb indexes used by ogreserver
     create_index('versions', 'ebook_id')
+    create_index('versions', 'original_filehash')
     create_index('formats', 'version_id')
     create_index('formats', 'user_uploads', index=[r.row['user'], r.row['uploaded']])
     create_index('formats', 'user_dedrm', index=[r.row['user'], r.row['dedrm']])

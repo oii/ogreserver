@@ -63,6 +63,18 @@ class DataStore():
                         ebook = self.load_ebook_by_file_hash(incoming['file_hash'])
                         raise ExactDuplicateError(ebook['ebook_id'])
 
+                else:
+                    # check if original source ebook was uploaded with this hash
+                    original_ebook = next(iter(
+                        r.table('versions').get_all(
+                            incoming['file_hash'], index='original_filehash'
+                        ).run()
+                    ), None)
+
+                    if original_ebook is not None:
+                        raise ExactDuplicateError(
+                            original_ebook['ebook_id']
+                        )
 
                 try:
                     # derive author and title from the key
@@ -106,7 +118,12 @@ class DataStore():
                     r.table('ebooks').insert(new_book).run()
 
                     # create version and initial format
-                    self._create_new_version(ebook_id, user.username, incoming)
+                    version_id = self._create_new_version(ebook_id, user.username, incoming)
+
+                    # record the original file_hash of the originally supplied ebook
+                    r.table('versions').get(version_id).update({
+                        'original_filehash': incoming['file_hash']
+                    }).run()
 
                     # mark book as new
                     output[incoming['file_hash']]['ebook_id'] = ebook_id

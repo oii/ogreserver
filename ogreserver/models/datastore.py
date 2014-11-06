@@ -268,17 +268,15 @@ class DataStore():
         else:
             filter_func = {'file_hash': file_hash}
 
-        try:
-            ebook_id = list(
-                r.table('formats').filter(filter_func).eq_join(
-                    'version_id', r.table('versions'), index='version_id'
-                ).zip().pluck('ebook_id')['ebook_id'].run()
-            )[0]
-        except IndexError:
-            return None
+        ebook_id = next(iter(
+            r.table('formats').filter(filter_func).eq_join(
+                'version_id', r.table('versions'), index='version_id'
+            ).zip().pluck('ebook_id')['ebook_id'].run()
+        ), None)
 
-        # now return the full ebook object
-        return self.load_ebook(ebook_id)
+        if ebook_id is not None:
+            # now return the full ebook object
+            return self.load_ebook(ebook_id)
 
 
     def index_for_search(self, book_data):
@@ -613,7 +611,7 @@ class DataStore():
 
         if firstname is None or lastname is None or title is None:
             # load the author and title of this book
-            ebook_data = list(
+            ebook_data = next(iter(
                 r.table('formats').filter({'file_hash': file_hash}).eq_join(
                     'version_id', r.table('versions'), index='version_id'
                 ).zip().eq_join(
@@ -621,7 +619,7 @@ class DataStore():
                 ).zip().pluck(
                     'firstname', 'lastname', 'title', 'format'
                 ).run()
-            )[0]
+            ), None)
             firstname = ebook_data['firstname']
             lastname = ebook_data['lastname']
             title = ebook_data['title']

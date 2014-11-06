@@ -58,22 +58,25 @@ class DataStore():
                 # check if this exact file has been uploaded before
                 if r.table('formats').get(incoming['file_hash']).run():
                     if existing_ebook is not None:
-                        raise ExactDuplicateError(incoming['ebook_id'])
+                        raise ExactDuplicateError(existing_ebook['ebook_id'], incoming['file_hash'])
                     else:
                         ebook = self.load_ebook_by_file_hash(incoming['file_hash'])
-                        raise ExactDuplicateError(ebook['ebook_id'])
+                        raise ExactDuplicateError(ebook['ebook_id'], incoming['file_hash'])
 
                 else:
                     # check if original source ebook was uploaded with this hash
                     original_ebook = next(iter(
                         r.table('versions').get_all(
                             incoming['file_hash'], index='original_filehash'
-                        ).run()
+                        ).eq_join(
+                            'version_id', r.table('formats'), index='version_id'
+                        ).zip().run()
                     ), None)
 
                     if original_ebook is not None:
                         raise ExactDuplicateError(
-                            original_ebook['ebook_id']
+                            original_ebook['ebook_id'],
+                            original_ebook['file_hash']
                         )
 
                 try:
@@ -152,6 +155,9 @@ class DataStore():
                     output[incoming['file_hash']]['ebook_id'] = existing_ebook['ebook_id']
 
             except ExactDuplicateError as e:
+                # increase popularity on incoming duplicate ebook
+                self.increment_popularity(e.file_hash)
+
                 # enable client to update book with ebook_id
                 output[incoming['file_hash']]['ebook_id'] = e.ebook_id
 
@@ -372,6 +378,7 @@ class DataStore():
 
         Popularity is set to 10 when a newly decrypted ebook is added to OGRE
         Every download increases a version's popularity
+        Every duplicate found on sync increases a version's popularity
         """
         return (quality * 0.7) + (float(popularity) / User.get_total_users() * 100 * 0.3)
 

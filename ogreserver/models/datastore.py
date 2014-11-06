@@ -18,7 +18,7 @@ import ftfy
 from .user import User
 from ..utils import connect_s3
 
-from ..exceptions import OgreException, BadMetaDataError, ExactDuplicateError
+from ..exceptions import OgreException, BadMetaDataError, ExactDuplicateError, RethinkdbError
 from ..exceptions import NoFormatAvailableError, SameHashSuppliedOnUpdateError
 
 
@@ -118,15 +118,19 @@ class DataStore():
                             'raw_tags': incoming['meta']['tags'] if 'tags' in incoming['meta'] else None,
                         },
                     }
-                    r.table('ebooks').insert(new_book).run()
+                    ret = r.table('ebooks').insert(new_book).run()
+                    if 'first_error' in ret:
+                        raise RethinkdbError(ret['first_error'])
 
                     # create version and initial format
                     version_id = self._create_new_version(ebook_id, user.username, incoming)
 
                     # record the original file_hash of the originally supplied ebook
-                    r.table('versions').get(version_id).update({
+                    ret = r.table('versions').get(version_id).update({
                         'original_filehash': incoming['file_hash']
                     }).run()
+                    if 'first_error' in ret:
+                        raise RethinkdbError(ret['first_error'])
 
                     # mark book as new
                     output[incoming['file_hash']]['ebook_id'] = ebook_id
@@ -200,6 +204,8 @@ class DataStore():
             'original_format': incoming['format'],
             'date_added': r.now(),
         }).run()
+        if 'first_error' in ret:
+            raise RethinkdbError(ret['first_error'])
 
         # create a new format
         self._create_new_format(
@@ -213,7 +219,7 @@ class DataStore():
 
 
     def _create_new_format(self, version_id, file_hash, fmt, username=None, dedrm=None, ogreid_tagged=False):
-        r.table('formats').insert({
+        ret = r.table('formats').insert({
             'file_hash': file_hash,
             'version_id': version_id,
             'format': fmt,
@@ -222,6 +228,8 @@ class DataStore():
             'ogreid_tagged': ogreid_tagged,
             'dedrm': dedrm,
         }).run()
+        if 'first_error' in ret:
+            raise RethinkdbError(ret['first_error'])
 
 
     def load_ebook(self, ebook_id):

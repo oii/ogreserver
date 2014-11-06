@@ -26,3 +26,6 @@ class EbookNotFoundOnS3Error(OgreException):
 
 class SameHashSuppliedOnUpdateError(OgreException):
     pass
+
+class RethinkdbError(OgreException):
+    pass

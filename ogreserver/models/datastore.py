@@ -97,47 +97,14 @@ class DataStore():
                         incoming['file_hash'][0:7]
                     ), e)
 
+
                 if not existing_ebook:
-                    # generate the ebook_id from the metadata
-                    ebook_id = DataStore.build_ebook_key(lastname, firstname, title)
-
-                    # create this as a new book
-                    new_book = {
-                        'ebook_id': ebook_id,
-                        'title': title,
-                        'firstname': firstname,
-                        'lastname': lastname,
-                        'rating': None,
-                        'comments': [],
-                        'publisher': incoming['meta']['publisher'] if 'publisher' in incoming['meta'] else None,
-                        'publish_date': incoming['meta']['publish_date'] if 'publish_date' in incoming['meta'] else None,
-                        'meta': {
-                            'isbn': incoming['meta']['isbn'] if 'isbn' in incoming['meta'] else None,
-                            'asin': incoming['meta']['asin'] if 'asin' in incoming['meta'] else None,
-                            'uri': incoming['meta']['uri'] if 'uri' in incoming['meta'] else None,
-                            'raw_tags': incoming['meta']['tags'] if 'tags' in incoming['meta'] else None,
-                        },
-                    }
-                    ret = r.table('ebooks').insert(new_book).run()
-                    if 'first_error' in ret:
-                        raise RethinkdbError(ret['first_error'])
-
-                    # create version and initial format
-                    version_id = self._create_new_version(ebook_id, user.username, incoming)
-
-                    # record the original file_hash of the originally supplied ebook
-                    ret = r.table('versions').get(version_id).update({
-                        'original_filehash': incoming['file_hash']
-                    }).run()
-                    if 'first_error' in ret:
-                        raise RethinkdbError(ret['first_error'])
+                    # new books are easy
+                    self._create_new_ebook(title, firstname, lastname, user, incoming)
 
                     # mark book as new
-                    output[incoming['file_hash']]['ebook_id'] = ebook_id
+                    output[incoming['file_hash']]['ebook_id'] = existing_ebook['ebook_id']
                     output[incoming['file_hash']]['new'] = True
-
-                    # update the whoosh text search interface
-                    self.index_for_search(new_book)
 
                 else:
                     # parse the ebook data
@@ -157,6 +124,7 @@ class DataStore():
 
                     # mark with ebook_id and return
                     output[incoming['file_hash']]['ebook_id'] = existing_ebook['ebook_id']
+
 
             except ExactDuplicateError as e:
                 # increase popularity on incoming duplicate ebook
@@ -183,6 +151,47 @@ class DataStore():
                 output[incoming['file_hash']]['update'] = False
 
         return output
+
+
+    def _create_new_ebook(self, title, firstname, lastname, user, incoming):
+        # generate the ebook_id from the metadata
+        ebook_id = DataStore.build_ebook_key(lastname, firstname, title)
+
+        # create this as a new book
+        new_book = {
+            'ebook_id': ebook_id,
+            'title': title,
+            'firstname': firstname,
+            'lastname': lastname,
+            'rating': None,
+            'comments': [],
+            'publisher': incoming['meta']['publisher'] if 'publisher' in incoming['meta'] else None,
+            'publish_date': incoming['meta']['publish_date'] if 'publish_date' in incoming['meta'] else None,
+            'meta': {
+                'isbn': incoming['meta']['isbn'] if 'isbn' in incoming['meta'] else None,
+                'asin': incoming['meta']['asin'] if 'asin' in incoming['meta'] else None,
+                'uri': incoming['meta']['uri'] if 'uri' in incoming['meta'] else None,
+                'raw_tags': incoming['meta']['tags'] if 'tags' in incoming['meta'] else None,
+            },
+        }
+        ret = r.table('ebooks').insert(new_book).run()
+        if 'first_error' in ret:
+            raise RethinkdbError(ret['first_error'])
+
+        # create version and initial format
+        version_id = self._create_new_version(ebook_id, user.username, incoming)
+
+        # record the original file_hash of the originally supplied ebook
+        ret = r.table('versions').get(version_id).update({
+            'original_filehash': incoming['file_hash']
+        }).run()
+        if 'first_error' in ret:
+            raise RethinkdbError(ret['first_error'])
+
+        # update the whoosh text search interface
+        self.index_for_search(new_book)
+
+        return ebook_id
 
 
     def _create_new_version(self, ebook_id, username, incoming):

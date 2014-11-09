@@ -99,31 +99,42 @@ class DataStore():
 
 
                 if not existing_ebook:
-                    # new books are easy
-                    self._create_new_ebook(title, firstname, lastname, user, incoming)
+                    # check this authortitle for duplicates
+                    existing_ebook = next(iter(
+                        r.table('ebooks').get_all(
+                            [lastname.lower(), firstname.lower(), title.lower()],
+                            index='authortitle'
+                        ).run()
+                    ), None)
 
-                    # mark book as new
-                    output[incoming['file_hash']]['ebook_id'] = existing_ebook['ebook_id']
-                    output[incoming['file_hash']]['new'] = True
+                    if existing_ebook:
+                        # duplicate authortitle found
+                        # must be a new version of the book else it would have been matched above
+                        # don't accept new version of book from user who has already syncd it before
+                        duplicate = next(iter(
+                            r.table('versions').get_all(
+                                [existing_ebook['ebook_id'], user.username],
+                                index='ebook_username'
+                            ).run()
+                        ), None)
 
-                else:
-                    # parse the ebook data
-                    other_versions = r.table('versions').filter(
-                        {'ebook_id': existing_ebook['ebook_id'], 'user': user.username}
-                    ).count().run()
+                        if duplicate:
+                            raise ExactDuplicateError(existing_ebook['ebook_id'], incoming['file_hash'])
 
-                    if other_versions > 0:
-                        msg = 'Rejecting new version of {} from {}'.format(
-                            authortitle, user.username
-                        )
-                        self.logger.info(msg)
+                    else:
+                        # new books are easy
+                        ebook_id = self._create_new_ebook(title, firstname, lastname, user, incoming)
+
+                        # mark book as new
+                        output[incoming['file_hash']]['ebook_id'] = ebook_id
+                        output[incoming['file_hash']]['new'] = True
                         continue
 
-                    # create new version, with its initial format
-                    self._create_new_version(existing_ebook['ebook_id'], user.username, incoming)
+                # create new version, with its initial format
+                self._create_new_version(existing_ebook['ebook_id'], user.username, incoming)
 
-                    # mark with ebook_id and return
-                    output[incoming['file_hash']]['ebook_id'] = existing_ebook['ebook_id']
+                # mark with ebook_id and return
+                output[incoming['file_hash']]['ebook_id'] = existing_ebook['ebook_id']
 
 
             except ExactDuplicateError as e:

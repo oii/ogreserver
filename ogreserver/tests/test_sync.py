@@ -91,8 +91,9 @@ def test_sync_matching_authortitle(datastore, rethinkdb, user):
         {'ebook_id': ebook_id}
     ).count().run() == 1, 'should be 1 version'
 
-    # same book author/title, different file hash
+    # same book author/title, different file hash, from a different user
     ebooks_dict[ebooks_dict.keys()[0]]['file_hash'] = '058e92c0'
+    user.username = '2ndsync'
 
     # sync again
     datastore.update_library(ebooks_dict, user)

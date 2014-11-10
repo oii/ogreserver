@@ -47,10 +47,14 @@ class DataStore():
 
                 existing_ebook = None
 
-                # check for ogre_id from metadata passed as ebook_id
-                if 'ebook_id' in incoming and incoming['ebook_id'] is not None:
-                    existing_ebook = self.load_ebook(incoming['ebook_id'])
-                else:
+                try:
+                    # check for ogre_id from metadata passed as ebook_id
+                    existing_ebook = self.load_ebook(incoming['meta']['ebook_id'])
+
+                    # remove ebook_id from incoming metadata dict
+                    del(incoming['meta']['ebook_id'])
+
+                except KeyError as e:
                     # tell client to set ogre_id on this ebook
                     output[incoming['file_hash']]['update'] = True
 

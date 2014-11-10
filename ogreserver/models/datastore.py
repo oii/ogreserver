@@ -389,9 +389,9 @@ class DataStore():
         Generate a key for this ebook from the author and title
         This is used as the ebook's key in the DB - referred to as ebook_id in code
         """
-        return hashlib.md5(
+        return unicode(hashlib.md5(
             ("~".join((lastname, firstname, title))).encode('UTF-8')
-        ).hexdigest()
+        ).hexdigest())
 
     @staticmethod
     def versions_rank_algorithm(quality, popularity):

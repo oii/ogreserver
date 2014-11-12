@@ -10,7 +10,6 @@ def test_sync_duplicate(datastore, rethinkdb, user):
         "H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
             'format': 'epub',
             'file_hash': '38b3fc3a',
-            'owner': 'mafro',
             'size': 139654,
             'dedrm': False,
             'meta': {},
@@ -42,7 +41,6 @@ def test_sync_ogre_id(datastore, rethinkdb, user):
         "H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
             'format': 'epub',
             'file_hash': 'b889dec9',
-            'owner': 'mafro',
             'size': 139654,
             'dedrm': False,
             'meta': {},
@@ -77,7 +75,6 @@ def test_sync_matching_authortitle(datastore, rethinkdb, user):
         "Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland": {
             'format': 'epub',
             'file_hash': 'd41d8cd9',
-            'owner': 'mafro',
             'size': 139654,
             'dedrm': False,
             'meta': {},

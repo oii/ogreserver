@@ -86,8 +86,8 @@ def capture():
         yield out
     finally:
         sys.stdout, sys.stderr = oldout, olderr
-        out[0] = out[0].getvalue()
-        out[1] = out[1].getvalue()
+        out[0] = out[0].getvalue().decode('utf-8')
+        out[1] = out[1].getvalue().decode('utf-8')
 
 
 def enum(*sequential, **named):

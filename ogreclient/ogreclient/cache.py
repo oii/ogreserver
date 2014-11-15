@@ -72,8 +72,8 @@ class Cache:
             conn.commit()
             c.execute('INSERT INTO meta VALUES (?)', (__CACHEVERSION__,))
             conn.commit()
-        except:
-            raise CacheInitError
+        except Exception as e:
+            raise CacheInitError(inner_excp=e)
         finally:
             conn.close()
 
@@ -96,7 +96,7 @@ class Cache:
         except MissingFromCacheError as e:
             raise e
         except Exception as e:
-            raise CacheReadError(e)
+            raise CacheReadError(inner_excp=e)
         finally:
             conn.close()
 
@@ -146,7 +146,7 @@ class Cache:
             # write the cache DB
             conn.commit()
         except Exception as e:
-            raise CacheReadError(e)
+            raise CacheReadError(inner_excp=e)
         finally:
             conn.close()
 
@@ -187,7 +187,7 @@ class Cache:
                 )
                 conn.commit()
         except Exception as e:
-            raise CacheReadError(e)
+            raise CacheReadError(inner_excp=e)
         finally:
             conn.close()
 

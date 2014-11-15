@@ -1,10 +1,10 @@
 from __future__ import unicode_literals
 
+from .printer import CoreException
 
-class OgreException(Exception):
-    def __init__(self, message=None, inner_excp=None):
-        super(OgreException, self).__init__(message)
-        self.inner_excp = inner_excp
+
+class OgreException(CoreException):
+    pass
 
 class OgreWarning(Exception):
     def __init__(self, message=None):

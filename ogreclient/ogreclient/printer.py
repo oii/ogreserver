@@ -257,14 +257,20 @@ class CliPrinter:
         msg = '{}: {}'.format(ex.__class__.__name__, ex)
 
         if debug is True:
-            ex_type, ex, tb = sys.exc_info()
+            # extract and print the latest exception; which is good for printing
+            # immediately when the exception occurs
+            _, _, tb = sys.exc_info()
             if tb is not None:
                 msg += '\n{}'.format(traceback.extract_tb(tb))
 
+            # the ex.inner_excp from CoreException mechanism provides a way to
+            # wrap a lower exception in a meaningful application specific one
             if hasattr(ex, 'inner_excp') and ex.inner_excp is not None:
                 msg += '\nInner Exception:\n > {}: {}'.format(
                     ex.inner_excp.__class__.__name__, ex.inner_excp
                 )
+                if hasattr(ex, 'inner_traceback') and ex.inner_traceback is not None:
+                    msg += '\n   {}'.format(ex.inner_traceback)
 
         return msg
 
@@ -299,3 +305,18 @@ class ProgressfArgumentError(Exception):
         super(ProgressfArgumentError, self).__init__(
             'You must supply num_blocks and total_size'
         )
+
+
+class CoreException(Exception):
+    def __init__(self, message=None, inner_excp=None):
+        super(CoreException, self).__init__(message)
+        self.inner_excp = inner_excp
+        self.inner_traceback = None
+
+        if self.inner_excp is not None:
+            # extract traceback from inner_excp
+            # this is not guaranteed to work since sys.exc_info()
+            # gets only the _most recent_ exception
+            _, _, tb = sys.exc_info()
+            if tb is not None:
+                self.inner_traceback = traceback.extract_tb(tb)

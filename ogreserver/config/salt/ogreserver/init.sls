@@ -2,6 +2,7 @@ include:
   - app.virtualenv
   - app.supervisor
   - calibre
+  - compass
   - github
   - gunicorn
   - mysql
@@ -74,6 +75,17 @@ bower-ogreserver-install:
     - unless: test -d /srv/{{ pillar['app_directory_name'] }}/ogreserver/static/bower_components
     - require:
       - git: git-clone-app
+
+# compile sass to css
+sass-compile:
+  cmd.run:
+    - name: compass compile --force --boring
+    - cwd: /srv/{{ pillar['app_directory_name'] }}/ogreserver/static
+    - user: {{ pillar['app_user'] }}
+    - require:
+      - git: git-clone-app
+      - gem: compass-gem
+      - cmd: bower-ogreserver-install
 
 
 {% if grains.get('env', '') == 'prod' %}

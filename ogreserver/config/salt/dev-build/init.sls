@@ -1,6 +1,6 @@
 include:
   - awscli
-  - compass
+  - compass.supervisor
   - dev-build.tmux
   - logs
   - s3proxy

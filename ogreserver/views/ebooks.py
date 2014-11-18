@@ -39,19 +39,3 @@ def view(ebook_id):
 def download(ebook_id, version_id=None, fmt=None):
     ds = DataStore(app.config, app.logger)
     return redirect(ds.get_ebook_url(ebook_id, version_id=version_id, fmt=fmt))
-
-
-@bp_ebooks.route('/ajax/rating/<ebook_id>')
-@login_required
-def get_rating(ebook_id):
-    ds = DataStore(app.config, app.logger)
-    rating = ds.get_rating(ebook_id)
-    return jsonify({'rating': rating})
-
-
-@bp_ebooks.route('/ajax/comment-count/<ebook_id>')
-@login_required
-def get_comment_count(ebook_id):
-    ds = DataStore(app.config, app.logger)
-    comments = ds.get_comments(ebook_id)
-    return jsonify({'comments': len(comments)})

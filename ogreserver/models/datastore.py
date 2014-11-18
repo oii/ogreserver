@@ -374,19 +374,6 @@ class DataStore():
         ).run()
 
 
-    def get_rating(self, ebook_id):
-        """
-        Get the user rating for this book
-        """
-        return r.table('ebooks').get(ebook_id)['rating'].run()
-
-    def get_comments(self, ebook_id):
-        """
-        Get the list of comments on this book
-        """
-        return r.table('ebooks').get(ebook_id)['comments'].run()
-
-
     @staticmethod
     def build_ebook_key(lastname, firstname, title):
         """

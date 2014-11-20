@@ -12,14 +12,15 @@ bp_ebooks = Blueprint('ebooks', __name__)
 
 
 @bp_ebooks.route('/list', methods=['GET', 'POST'])
+@bp_ebooks.route('/list/<terms>')
 @login_required
-def listing():
+def listing(terms=None):
+    # redirect search POST onto a nice GET url
+    if request.method == 'POST':
+        return redirect('/list/{}'.format(request.form['s']), code=303)
+
     ds = DataStore(app.config, app.logger, app.whoosh)
-    s = request.args.get('s')
-    if s:
-        rs = ds.search(s)
-    else:
-        rs = ds.search()
+    rs = ds.search(terms)
 
     return render_template('list.html', ebooks=rs)
 

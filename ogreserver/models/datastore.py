@@ -318,7 +318,7 @@ class DataStore():
         except Exception as e:
             self.logger.error(e)
 
-    def search(self, searchstr=None, page=1):
+    def search(self, terms=None):
         """
         Search for books using whoosh, or return first page from all
         """
@@ -327,13 +327,13 @@ class DataStore():
 
         output = []
 
-        if searchstr is None:
+        if terms is None:
             # default to list all authors
             query = Every('author')
         else:
             # create a search by author and then title
             qp = MultifieldParser(['author', 'title'], self.whoosh.schema, group=OrGroup)
-            query = qp.parse(searchstr)
+            query = qp.parse(terms)
 
         # start a paginated search
         with self.whoosh.searcher() as s:

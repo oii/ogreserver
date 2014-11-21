@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import hashlib
+import math
 import re
 
 import rethinkdb as r
@@ -318,14 +319,12 @@ class DataStore():
         except Exception as e:
             self.logger.error(e)
 
-    def search(self, terms=None):
+    def search(self, terms=None, pagenum=1, allpages=False):
         """
         Search for books using whoosh, or return first page from all
         """
         if self.whoosh is None:
             return
-
-        output = []
 
         if terms is None:
             # default to list all authors
@@ -335,13 +334,25 @@ class DataStore():
             qp = MultifieldParser(['author', 'title'], self.whoosh.schema, group=OrGroup)
             query = qp.parse(terms)
 
-        # start a paginated search
-        with self.whoosh.searcher() as s:
-            results = s.search_page(query, page, pagelen=20)
-            for res in results:
-                output.append(res.fields())
+        output = []
+        pagecount = None
 
-        return output
+        with self.whoosh.searcher() as s:
+            if allpages:
+                # special search returning all pages upto pagenum
+                results = s.search(query, limit=(self.config['SEARCH_PAGELEN'] * pagenum))
+            else:
+                # paginated search for specific page, or to feed infinite scroll
+                results = s.search_page(query, int(pagenum), pagelen=self.config['SEARCH_PAGELEN'])
+                pagecount = results.pagecount
+
+            for item in results:
+                output.append(item.fields())
+
+            if pagecount is None:
+                pagecount = int(math.ceil(float(len(output)) / self.config['SEARCH_PAGELEN']))
+
+        return {'results': output, 'pagecount': pagecount}
 
 
     def find_missing_formats(self, fmt):

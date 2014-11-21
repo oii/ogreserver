@@ -1,9 +1,11 @@
 {% extends "layout.html" %}
 {% block body %}
 
+<input id="total-pagecount" type="hidden" value="{{ ebooks['pagecount'] }}" />
+
 <ul id="ebook-listing">
 
-{% for b in ebooks %}
+{% for b in ebooks['results'] %}
 
 <li class="ebook">
 	<div class="panel radius">

@@ -13,15 +13,22 @@ bp_ebooks = Blueprint('ebooks', __name__)
 
 @bp_ebooks.route('/list', methods=['GET', 'POST'])
 @bp_ebooks.route('/list/<terms>')
+@bp_ebooks.route('/list/<terms>/')
+@bp_ebooks.route('/list/<terms>/<int:pagenum>')
 @login_required
-def listing(terms=None):
+def listing(terms=None, pagenum=1):
     # redirect search POST onto a nice GET url
     if request.method == 'POST':
         return redirect('/list/{}'.format(request.form['s']), code=303)
 
-    ds = DataStore(app.config, app.logger, app.whoosh)
-    rs = ds.search(terms)
+    # map single plus char onto an empty search
+    if terms == '+':
+        terms = None
 
+    ds = DataStore(app.config, app.logger, app.whoosh)
+
+    # return all pages upto pagenum as HTML
+    rs = ds.search(terms, pagenum=pagenum, allpages=True)
     return render_template('list.html', ebooks=rs)
 
 

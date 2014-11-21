@@ -54,6 +54,9 @@ MOBI_FORMATS = ('mobi', 'azw', 'azw3', 'azw4', 'azw1')
 # OGRE download links expire in 10 seconds
 DOWNLOAD_LINK_EXPIRY = 10
 
+# Default number of results for paging on search listing
+SEARCH_PAGELEN = 20
+
 {% if grains['env'] == 'prod' %}
 # Production logging level
 import logging

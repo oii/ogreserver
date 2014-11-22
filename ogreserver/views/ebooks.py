@@ -3,10 +3,11 @@ from __future__ import unicode_literals
 
 from flask import current_app as app
 
-from flask import Blueprint, request, redirect, render_template
+from flask import Blueprint, request, jsonify, redirect, render_template
 from flask.ext.login import login_required
 
 from ..models.datastore import DataStore
+from ..utils import request_wants_json
 
 bp_ebooks = Blueprint('ebooks', __name__)
 
@@ -27,9 +28,13 @@ def listing(terms=None, pagenum=1):
 
     ds = DataStore(app.config, app.logger, app.whoosh)
 
-    # return all pages upto pagenum as HTML
-    rs = ds.search(terms, pagenum=pagenum, allpages=True)
-    return render_template('list.html', ebooks=rs)
+    if request_wants_json(request):
+        # return single page as JSON
+        return jsonify(ds.search(terms, pagenum=pagenum))
+    else:
+        # return all pages upto pagenum as HTML
+        rs = ds.search(terms, pagenum=pagenum, allpages=True)
+        return render_template('list.html', ebooks=rs)
 
 
 @bp_ebooks.route('/view/<ebook_id>')

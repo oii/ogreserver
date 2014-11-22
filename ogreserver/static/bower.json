@@ -1,6 +1,7 @@
 {
 	"name": "ogreserver",
 	"dependencies": {
-		"foundation": "zurb/bower-foundation#~5.4.4"
+		"foundation": "zurb/bower-foundation#~5.4.4",
+		"jquery-infinite-scroll-helper": "jquery-infinite-scroll-helper#1.2.1"
 	}
 }

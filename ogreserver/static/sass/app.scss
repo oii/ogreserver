@@ -84,7 +84,6 @@ ul#ebook-listing, ul.users, ul.formats { list-style-type: none; margin-left: 0px
 
 li.ebook {
 	clear: both;
-	padding: 6px;
 
 	.secondsection {
 		height: 1.3em;
@@ -96,6 +95,11 @@ li.ebook {
 	span.info {
 		float: right;
 		line-height:20px;
+	}
+
+	.panel {
+		margin-bottom: 0.755rem;
+		padding: 1rem;
 	}
 }
 
@@ -109,6 +113,9 @@ ul.formats {
 	margin-bottom: 0px;
 	li { float: left; margin-bottom: 0px; font-size: 0.9em; }
 }
+
+p#loading-message { display: none; }
+p#loading-message.loading { display: block; }
 
 .hidden { display: none; }
 

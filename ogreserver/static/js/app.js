@@ -42,7 +42,7 @@ $(document).ready(function() {
 
 		loadMore: function(page, done) {
 			var url = this.processUrl(page);
-			console.log('loadMore '+url);
+			;;; console.log('loadMore '+url);
 
 			$.getJSON(url, function(data){
 				$('#loading-message').removeClass('loading');
@@ -70,10 +70,9 @@ $(document).ready(function() {
 				window.history.replaceState({}, '', url);
 
 				// seppuku on final page
-				console.log(page+' '+data.pagecount);
 				if(page == data.pagecount) {
 					$('#ebook-listing').infiniteScrollHelper('destroy');
-					console.log('destroyed');
+					;;; console.log('destroyed');
 					return;
 				}
 				done();
@@ -81,14 +80,14 @@ $(document).ready(function() {
 		}
 	};
 
-	console.log('pagecount: '+$('#total-pagecount').val());
+	;;; console.log('pagecount: '+$('#total-pagecount').val());
 
 	var totalPageCount = $('#total-pagecount').val();
 
 	if(totalPageCount > 1) {
 		// parse URL to determine current page to start ISH from
 		ish_options.startingPageCount = ish_options.getPageFromUrl();
-		console.log(ish_options.startingPageCount);
+		;;; console.log('starting page: '+ish_options.startingPageCount);
 
 		// don't init ISH if current-page in url == total-pagecount
 		if(ish_options.startingPageCount != totalPageCount) {

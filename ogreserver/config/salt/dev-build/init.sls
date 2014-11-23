@@ -1,5 +1,6 @@
 include:
   - awscli
+  - closure-compiler.local
   - compass.supervisor
   - dev-build.tmux
   - logs

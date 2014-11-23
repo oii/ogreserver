@@ -2,6 +2,7 @@ include:
   - app.virtualenv
   - app.supervisor
   - calibre
+  - closure-compiler
   - compass
   - github
   - gunicorn
@@ -89,6 +90,15 @@ sass-compile:
 
 
 {% if grains.get('env', '') == 'prod' %}
+# compress js to gzip
+javascript-compile:
+  cmd.run:
+    - name: closure-compiler --output-format gzip app.js
+    - cwd: /srv/{{ pillar['app_directory_name'] }}/ogreserver/static/js
+    - user: {{ pillar['app_user'] }}
+    - require:
+      - git: git-clone-app
+
 gevent:
   pip.installed:
     - bin_env: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}

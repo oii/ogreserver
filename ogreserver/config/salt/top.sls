@@ -13,6 +13,7 @@ base:
   'G@role:ogreserver and G@env:prod':
     - match: compound
     - nginx.config
+    - ogreserver.prod
 
   'env:dev':
     - match: grain

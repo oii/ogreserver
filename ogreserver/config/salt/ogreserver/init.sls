@@ -58,7 +58,7 @@ extend:
     file.managed:
       - context:
           server_name: ogre.oii.yt
-          root: /srv/{{ pillar['app_directory_name'] }}
+          root: /srv/{{ pillar['app_directory_name'] }}/ogreserver
   {% endif %}
 
 

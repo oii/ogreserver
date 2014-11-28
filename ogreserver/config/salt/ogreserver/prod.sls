@@ -10,7 +10,7 @@ extend:
         - file: /etc/nginx/proxy_params
         - file: /etc/nginx/sites-enabled/{{ pillar['app_name'] }}.conf
 
-  /etc/nginx/sites-available/{{ pillar['app_name'] }}.conf:
+  nginx-app-config:
     file.managed:
       - context:
           server_name: ogre.oii.yt

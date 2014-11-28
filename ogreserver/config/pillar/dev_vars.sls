@@ -34,10 +34,7 @@ rabbitmq_pass: {{ defaults.rabbitmq_pass }}
 
 # flask app settings
 flask_secret: {{ defaults.flask_secret }}
-aws_access_key: ""
-aws_secret_key: ""
-aws_region: ap-southeast-2
-s3_bucket: ogre-dev-au
+s3_bucket: ogre-dev
 
 aws_advertising_api_access_key: ""
 aws_advertising_api_secret_key: ""

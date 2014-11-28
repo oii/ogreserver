@@ -1,5 +1,4 @@
 include:
-  - awscli
   - closure-compiler.local
   - compass.supervisor
   - dev-build.tmux
@@ -60,12 +59,6 @@ extend:
     supervisord.running:
       - require_in:
         - supervisord: watchdog-service
-
-  awscli-config:
-    file.managed:
-      - context:
-          s3_access_key: {{ pillar['aws_access_key'] }}
-          s3_secret_key: {{ pillar['aws_secret_key'] }}
 
   ogre-init:
     cmd.run:

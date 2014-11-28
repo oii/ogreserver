@@ -10,9 +10,9 @@ CELERY_TIMEZONE = '{{ pillar['timezone'] }}'
 
 
 # AWS config
-AWS_ACCESS_KEY = "{{ pillar['aws_access_key'] }}"
-AWS_SECRET_KEY = "{{ pillar['aws_secret_key'] }}"
-AWS_REGION = "{{ pillar['aws_region'] }}"
+AWS_ACCESS_KEY = "{{ pillar.get('aws_access_key', '') }}"
+AWS_SECRET_KEY = "{{ pillar.get('aws_secret_key', '') }}"
+AWS_REGION = "{{ pillar.get('aws_region', '') }}"
 S3_BUCKET = "{{ pillar['s3_bucket'] }}"
 
 # AWS Advertising API config

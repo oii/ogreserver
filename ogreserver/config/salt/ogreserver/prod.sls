@@ -15,6 +15,7 @@ extend:
       - context:
           server_name: ogre.oii.yt
           root: /srv/{{ pillar['app_directory_name'] }}/ogreserver
+          upstream_gzip: true
 
 
 # compress js to gzip

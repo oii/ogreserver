@@ -19,7 +19,7 @@ from .definitions import EBOOK_FORMATS
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError
 from .exceptions import DuplicateEbookBaseError, ExactDuplicateEbookError, AuthortitleDuplicateEbookError
-from .exceptions import BaconError, MushroomError, SpinachError, CorruptEbookError
+from .exceptions import SyncError, UploadError, CorruptEbookError
 from .exceptions import FailedWritingMetaDataError, FailedConfirmError, FailedDebugLogsError
 from .exceptions import MissingFromCacheError, OgreException, OgreserverDownError
 
@@ -39,12 +39,12 @@ def authenticate(host, username, password):
         if e.getcode() == 403:
             raise AuthDeniedError
         else:
-            raise AuthError(str(e))
+            raise AuthError(inner_excp=e)
     except URLError as e:
         if 'Connection refused' in str(e):
             raise OgreserverDownError
         else:
-            raise AuthError(str(e))
+            raise AuthError(inner_excp=e)
 
 
 def sync(config, prntr):
@@ -400,10 +400,8 @@ def sync_with_server(config, prntr, session_key, ebooks_dict):
 
         response = json.loads(data)
 
-    except ValueError as e:
-        raise BaconError(str(e))
     except (HTTPError, URLError) as e:
-        raise MushroomError(str(e))
+        raise SyncError(inner_excp=e)
 
     # display server messages
     for msg in response['messages']:
@@ -467,7 +465,7 @@ def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):
                     upload_single_book(config['host'], session_key, ebook_obj.path, upload)
                     success += 1
 
-                except SpinachError as e:
+                except UploadError as e:
                     prntr.e('Failed uploading {}'.format(ebook_obj.path), excp=e)
                     failed += 1
 
@@ -499,7 +497,7 @@ def upload_single_book(host, session_key, filepath, upload_obj):
             return req.read()
 
     except (HTTPError, URLError), e:
-        raise SpinachError(str(e))
+        raise UploadError(inner_excp=e)
     except IOError, e:
         pass
 
@@ -548,4 +546,4 @@ def send_logs(prntr, host, session_key, errord_list):
                 prntr.progressf(num_blocks=i, total_size=len(errord_list))
 
     except (HTTPError, URLError) as e:
-        raise FailedDebugLogsError(str(e))
+        raise FailedDebugLogsError(inner_excp=e)

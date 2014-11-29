@@ -30,13 +30,10 @@ class NoEbooksError(OgreWarning):
 class NoUploadsError(OgreException):
     pass
 
-class BaconError(OgreException):
+class SyncError(OgreException):
     pass
 
-class MushroomError(OgreException):
-    pass
-
-class SpinachError(OgreException):
+class UploadError(OgreException):
     pass
 
 class CorruptEbookError(OgreException):

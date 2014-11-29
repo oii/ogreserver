@@ -14,7 +14,7 @@ from .printer import CliPrinter, DummyPrinter
 
 from .exceptions import OgreException, ConfigSetupError
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
-from .exceptions import BaconError, MushroomError, SpinachError
+from .exceptions import SyncError, UploadError
 
 
 def entrypoint():
@@ -225,7 +225,7 @@ def run_sync(conf, prntr):
         ret = sync(conf, prntr)
 
     # print messages on error
-    except (AuthError, BaconError, MushroomError, SpinachError) as e:
+    except (AuthError, SyncError, UploadError) as e:
         prntr.e('Something went wrong.', excp=e)
     except AuthDeniedError:
         prntr.e('Permission denied. This is a private system.')

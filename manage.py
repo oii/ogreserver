@@ -81,10 +81,18 @@ def create_user(username, password, email, test=False):
     test (bool)
         Only check if user has been created; don't actually do anything
     """
-    # load a user
-    get_db(app)
-    from ogreserver.models.user import User
-    user = User.query.filter_by(username=username).first()
+    try:
+        # load a user
+        get_db(app)
+        from ogreserver.models.user import User
+        user = User.query.filter_by(username=username).first()
+
+    except ProgrammingError as e:
+        if "doesn't exist" in str(e):
+            print 'You must run init_ogre command first!'
+            sys.exit(1)
+        else:
+            raise e
 
     if test is True:
         # only report state in test mode

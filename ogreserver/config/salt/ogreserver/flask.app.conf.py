@@ -62,3 +62,38 @@ SEARCH_PAGELEN = 20
 import logging
 LOGGING_LEVEL = logging.WARNING
 {% endif %}
+
+
+# Site security settings
+SECURITY_PASSWORD_SALT = '{{ pillar['password_salt'] }}'
+SECURITY_PASSWORD_HASH = 'pbkdf2_sha256'
+
+# Name of HTTP header for ogreclient API
+SECURITY_TOKEN_AUTHENTICATION_HEADER = 'Ogre-Key'
+
+# More salts for various password activities
+SECURITY_CONFIRM_SALT = 'confirm-{}'.format(SECRET_KEY)
+SECURITY_RESET_SALT = 'reset-{}'.format(SECRET_KEY)
+SECURITY_LOGIN_SALT = 'login-{}'.format(SECRET_KEY)
+SECURITY_CHANGE_SALT = 'change-{}'.format(SECRET_KEY)
+SECURITY_REMEMBER_SALT = 'remember-{}'.format(SECRET_KEY)
+
+# Confirmation emails and password reset
+SECURITY_CONFIRM_EMAIL_WITHIN = '7 days'
+SECURITY_RESET_PASSWORD_WITHIN = '1 days'
+SECURITY_LOGIN_WITHOUT_CONFIRMATION = False
+
+# Allow login with username & email
+SECURITY_USER_IDENTITY_ATTRIBUTES = ['email', 'username']
+
+# Can reset password, must confirm email, can change password, track logins
+SECURITY_RECOVERABLE = True
+SECURITY_CONFIRMABLE = True
+SECURITY_CHANGEABLE = True
+SECURITY_TRACKABLE = True
+
+#SECURITY_UNAUTHORIZED_VIEW = 'core.unauthorized'
+
+SECURITY_MSG_INVALID_PASSWORD = ('Bad username or password', 'error')
+SECURITY_MSG_PASSWORD_NOT_PROVIDED = ('Bad username or password', 'error')
+SECURITY_MSG_USER_DOES_NOT_EXIST = ('Bad username or password', 'error')

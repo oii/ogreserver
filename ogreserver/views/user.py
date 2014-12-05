@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from flask import Blueprint, g, request, render_template, redirect
 
-from flask.ext.login import login_required
+from flask.ext.security.decorators import login_required
 
 from werkzeug.exceptions import Forbidden
 

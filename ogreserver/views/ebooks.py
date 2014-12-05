@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from flask import current_app as app
 
 from flask import Blueprint, request, jsonify, redirect, render_template
-from flask.ext.login import login_required
+from flask.ext.security.decorators import login_required
 
 from ..models.datastore import DataStore
 from ..utils import request_wants_json

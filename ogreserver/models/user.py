@@ -1,17 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import datetime
-
-from flask.ext.login import UserMixin
+from flask.ext.security import UserMixin, RoleMixin
+from flask.ext.security import utils as security_utils
 
 import rethinkdb as r
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
-from sqlalchemy.orm import relationship
+from sqlalchemy import Table, Column, Integer, String, DateTime, Boolean, ForeignKey
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy.sql import func
 
-from .security import pwd_context
 from .reputation import Reputation, UserBadge
 
 from flask import current_app as app
@@ -19,96 +17,55 @@ from flask import current_app as app
 from ..extensions.database import Base, get_db
 
 
+roles_users = Table(
+    'roles_users', Base.metadata,
+    Column('user_id', Integer, ForeignKey('user.id')),
+    Column('role_id', Integer, ForeignKey('role.id'))
+)
+
+class Role(Base, RoleMixin):
+    __tablename__ = 'role'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(80), unique=True)
+    description = Column(String(100))
+
+
 class User(Base, UserMixin):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
-    username = Column(String(80))
+    username = Column(String(80), unique=True)
     password = Column(String(256))
     email = Column(String(120), unique=True)
-    display_name = Column(String(50), unique=True)
-    api_key_expires = Column(DateTime)
+    roles = relationship(
+        Role, secondary=roles_users, backref=backref('users', lazy='dynamic')
+    )
     points = Column(Integer, default=0)
     needs_password_reset = Column(Boolean, default=1)
     preferred_ebook_format = Column(String(4))
     dont_email_me = Column(Boolean, default=False)
     badges = relationship(UserBadge, backref='user', lazy='dynamic')
-    total_users = None
-    session_api_key = None
 
-    def __init__(self, username, password, email):
+    active = Column(Boolean)
+    confirmed_at = Column(DateTime)
+    last_login_at = Column(DateTime)
+    current_login_at = Column(DateTime)
+    last_login_ip = Column(String(15))
+    current_login_ip = Column(String(15))
+    login_count = Column(Integer)
+
+    total_users = None
+
+    def __init__(self, username, password, email, active, roles):
         self.username = username
-        self.password = pwd_context.encrypt(password)
+        self.password = security_utils.encrypt_password(password)
         self.email = email
+        self.active = active
+        self.roles = roles
 
     def save(self):
         db_session = get_db(app)
         db_session.add(self)
         db_session.commit()
-
-    @staticmethod
-    def authenticate(username, password):
-        """
-        Authenticate a user by username and password
-        """
-        user = User.query.filter_by(username=username).first()
-        if not user:
-            return None
-        elif pwd_context.verify(password, user.password) is False:
-            return None
-        return user
-
-    @staticmethod
-    def _compile_pre_key(username, password, timestamp):
-        return "%s:%s:%s:%s" % (app.config['SECRET_KEY'], username, password, timestamp)
-
-    @staticmethod
-    def create_auth_key(username, password, timestamp):
-        """
-        Construct a unique identifier for an API key by encrypting output from _compile_pre_key()
-        """
-        return pwd_context.encrypt(User._compile_pre_key(username, password, timestamp))
-
-    @staticmethod
-    def validate_auth_key(username, api_key):
-        """
-        Validate an incoming API key
-        """
-        # load the user by name
-        user = User.query.filter_by(username=username).first()
-        if not user:
-            return None
-
-        # TODO check API key hasn't expired
-
-        # reconstruct the key and verify it
-        prekey = User._compile_pre_key(user.username, user.password, user.api_key_expires)
-        if pwd_context.verify(prekey, api_key) == True:
-            user.session_api_key = api_key
-            return user
-        else:
-            return None
-
-    def assign_auth_key(self):
-        """
-        Generate a new API key and save against the user
-        """
-        self.api_key_expires = datetime.datetime.utcnow()
-        self.api_key_expires = self.api_key_expires.replace(microsecond=0)    # remove microseconds for mysql
-        api_key = User.create_auth_key(self.username, self.password, self.api_key_expires)
-        db_session = get_db(app)
-        db_session.add(self)
-        db_session.commit()
-        return "%s+%s" % (self.username, api_key)
-
-    # Flask-Login method
-    def is_authenticated(self):
-        """
-        Check user is authenticated
-        """
-        if self.email is not None:
-            return True
-        else:
-            return False
 
     def has_badge(self, badge):
         """

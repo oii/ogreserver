@@ -39,6 +39,7 @@ rabbitmq_pass: dev
 
 # flask app settings
 flask_secret: its_a_secret
+password_salt: eggs
 
 # default OGRE user
 ogre_user_name: dev-user

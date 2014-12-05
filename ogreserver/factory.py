@@ -65,9 +65,9 @@ def configure_extensions(app):
     from .extensions.whoosh import init_whoosh
     app.whoosh = init_whoosh(app)
 
-    # setup Flask-Login
-    from .extensions.flask_login import init_login, add_user_to_globals
-    app.login_manager = init_login(app)
+    # setup Flask-Security
+    from .extensions.flask_security import init_security, add_user_to_globals
+    app.security = init_security(app)
     app.before_request(add_user_to_globals)
 
     # setup Flask-Uploads
@@ -83,19 +83,14 @@ def register_blueprints(app):
     # import view blueprints and register with the Flask app
     from .views import bp_core
     from .views.api import bp_api
-    from .views.auth import bp_auth
     from .views.docs import bp_docs
     from .views.ebooks import bp_ebooks
     from .views.user import bp_user
     app.register_blueprint(bp_core)
     app.register_blueprint(bp_api)
-    app.register_blueprint(bp_auth)
     app.register_blueprint(bp_docs)
     app.register_blueprint(bp_ebooks)
     app.register_blueprint(bp_user)
-
-    # map the blueprint's login() func to Flask-Login
-    app.login_manager.login_view = 'auth.login'
 
 
 def setup_db_session():

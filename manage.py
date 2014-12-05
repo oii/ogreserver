@@ -16,7 +16,7 @@ import rethinkdb as r
 from rethinkdb.errors import RqlRuntimeError
 
 from ogreserver.factory import create_app
-from ogreserver.extensions.database import get_db, create_tables
+from ogreserver.extensions.database import get_db, create_tables, setup_roles
 from ogreserver.utils import connect_s3
 
 app = create_app()
@@ -74,7 +74,7 @@ def verify_s3():
 
 
 @manager.command
-def create_user(username, password, email, test=False):
+def create_user(username, password, email, role='user', confirmed=False, test=False):
     """
     Create a new user for OGRE
 
@@ -104,16 +104,23 @@ def create_user(username, password, email, test=False):
             sys.exit(0)
     else:
         if user is None:
-            user = User(username, password, email)
-            db_session = get_db(app)
-            db_session.add(user)
             try:
-                db_session.commit()
+                from ogreserver.extensions.flask_security import init_security
+                app.security = init_security(app)
+                user = app.security.datastore.create_user(
+                    username=username, email=email, password=password
+                )
+                if confirmed:
+                    from flask.ext.security.confirmable import confirm_user
+                    confirm_user(user)
+
+                app.security.datastore.commit()
+
+                print "Created user {} with role '{}'".format(username, role)
+
             except IntegrityError:
                 print 'A user with this email address already exists'
                 sys.exit(1)
-
-            print 'Created user {}'.format(username)
         else:
             print 'User {} already exists'.format(username)
             sys.exit(1)
@@ -177,6 +184,7 @@ def init_ogre(test=False):
         # create the local mysql database from our models
         if db_setup is False:
             create_tables(app)
+            setup_roles(app)
 
         if aws_setup is False:
             try:

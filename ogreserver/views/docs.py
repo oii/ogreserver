@@ -6,7 +6,7 @@ import fnmatch
 import os
 
 from flask import Blueprint, abort, render_template, render_template_string
-from flask.ext.login import login_required
+from flask.ext.security.decorators import login_required
 
 bp_docs = Blueprint('docs', __name__)
 

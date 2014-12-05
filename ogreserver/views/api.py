@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import base64
 import codecs
 import datetime
 import json
@@ -9,49 +8,29 @@ import os
 
 from flask import current_app as app
 from flask import Blueprint, request, make_response
-
-from werkzeug.exceptions import Forbidden
+from flask.ext.security import current_user
+from flask.ext.security.decorators import auth_token_required
 
 from ..exceptions import SameHashSuppliedOnUpdateError
 from ..models.datastore import DataStore
 from ..models.reputation import Reputation
-from ..models.user import User
 
 from ..tasks import store_ebook as task_store_ebook
 
 bp_api = Blueprint('api', __name__, url_prefix='/api/v1')
 
 
-def check_auth(auth_key):
-    user = None
-    try:
-        # authenticate user from supplied API key
-        key_parts = base64.b64decode(str(auth_key), '_-').split('+')
-        user = User.validate_auth_key(
-            username=key_parts[0],
-            api_key=key_parts[1]
-        )
-    except:
-        app.logger.error('Bad authentication key: {}'.format(auth_key), exc_info=True)
-
-    if user is None:
-        raise Forbidden
-    return user
-
-
-@bp_api.route('/download-dedrm/<auth_key>')
-def download_dedrm(auth_key):
-    check_auth(auth_key)
-
+@bp_api.route('/download-dedrm')
+@auth_token_required
+def download_dedrm():
     # supply the latest DRM tools to the client
     with open('/var/pypiserver-cache/dedrm-6.0.7.tar.gz', 'r') as f:
         return make_response(f.read())
 
 
-@bp_api.route('/post/<auth_key>', methods=['POST'])
-def post(auth_key):
-    user = check_auth(auth_key)
-
+@bp_api.route('/post', methods=['POST'])
+@auth_token_required
+def post():
     # get the json payload
     data = json.loads(request.data)
 
@@ -60,7 +39,7 @@ def post(auth_key):
 
     # update the library
     ds = DataStore(app.config, app.logger, app.whoosh)
-    syncd_books = ds.update_library(data, user)
+    syncd_books = ds.update_library(data, current_user)
 
     # extract the subset of newly supplied books
     new_books = [item for key, item in syncd_books.items() if item['new'] is True]
@@ -76,10 +55,10 @@ def post(auth_key):
     app.logger.info('NEW {}'.format(len(new_books)))
 
     # store sync events
-    ds.log_event(user, len(data), len(new_books))
+    ds.log_event(current_user, len(data), len(new_books))
 
     # handle badge and reputation changes
-    r = Reputation(user)
+    r = Reputation(current_user)
     r.new_ebooks(len(new_books))
     r.earn_badges()
     msgs = r.get_new_badges()
@@ -88,7 +67,7 @@ def post(auth_key):
     incoming = [item['file_hash'] for item in data.values()]
 
     # query books missing from S3 and supply back to the client
-    missing_books = ds.get_missing_books(username=user.username, hash_filter=incoming)
+    missing_books = ds.get_missing_books(username=current_user.username, hash_filter=incoming)
 
     return json.dumps({
         'ebooks_to_update': update_books,
@@ -98,13 +77,15 @@ def post(auth_key):
     })
 
 
-@bp_api.route('/post-logs/<auth_key>', methods=['POST'])
-def post_logs(auth_key):
-    user = check_auth(auth_key)
-
+@bp_api.route('/post-logs', methods=['POST'])
+@auth_token_required
+def post_logs():
     log_file_path = os.path.join(
         app.uploaded_logs.config.destination,
-        '{}.{}.log'.format(user.username, datetime.datetime.now().strftime("%Y%m%d-%H%M%S")),
+        '{}.{}.log'.format(
+            current_user.username,
+            datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        ),
     )
 
     # ensure target upload directory exists
@@ -118,12 +99,11 @@ def post_logs(auth_key):
     return 'ok'
 
 
-@bp_api.route('/upload-errord/<auth_key>/<filename>', methods=['POST'])
-def upload_errord(auth_key, filename):
-    user = check_auth(auth_key)
-
+@bp_api.route('/upload-errord/<filename>', methods=['POST'])
+@auth_token_required
+def upload_errord(filename):
     filename = '{}.{}.{}'.format(
-        user.username,
+        current_user.username,
         datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
         filename,
     )
@@ -132,10 +112,9 @@ def upload_errord(auth_key, filename):
     return 'ok'
 
 
-@bp_api.route('/confirm/<auth_key>', methods=['POST'])
-def confirm(auth_key):
-    check_auth(auth_key)
-
+@bp_api.route('/confirm', methods=['POST'])
+@auth_token_required
+def confirm():
     # update a file's md5 hash
     current_file_hash = request.form.get('file_hash')
     updated_file_hash = request.form.get('new_hash')
@@ -151,15 +130,14 @@ def confirm(auth_key):
         return 'same'
 
 
-@bp_api.route('/upload/<auth_key>', methods=['POST'])
-def upload(auth_key):
-    user = check_auth(auth_key)
-
+@bp_api.route('/upload', methods=['POST'])
+@auth_token_required
+def upload():
     # stats log the upload
     app.logger.info('UPLOADED 1')
 
     app.logger.debug('{} {} {}'.format(
-        user.session_api_key,
+        current_user.id,
         request.form.get('pk'),
         request.files['ebook'].content_length
     ))

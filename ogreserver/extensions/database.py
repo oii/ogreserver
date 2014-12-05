@@ -26,10 +26,20 @@ def shutdown_db_session(exception=None):
 
 
 def create_tables(app):
-    # import all modules here that might define models
+    # import all modules here that define models
     from ..models.reputation import UserBadge
-    from ..models.user import User
+    from ..models.user import User, Role, roles_users
 
     # create the DB tables
     engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'], convert_unicode=True)
     Base.metadata.create_all(bind=engine)
+
+
+def setup_roles(app):
+    # create the roles
+    from ogreserver.extensions.flask_security import init_security
+    app.security = init_security(app)
+    app.security.datastore.create_role(name='Admin')
+    app.security.datastore.create_role(name='Editor')
+    app.security.datastore.create_role(name='User')
+    app.security.datastore.commit()

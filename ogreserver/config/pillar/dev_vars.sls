@@ -34,6 +34,7 @@ rabbitmq_pass: {{ defaults.rabbitmq_pass }}
 
 # flask app settings
 flask_secret: {{ defaults.flask_secret }}
+password_salt: {{ defaults.password_salt }}
 s3_bucket: ogre-dev
 
 aws_advertising_api_access_key: ""

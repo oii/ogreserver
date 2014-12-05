@@ -114,7 +114,7 @@ def user(request, mysqldb):
     # create random username
     username = ''.join(random.choice(string.ascii_lowercase) for n in range(6))
     # create user in auth DB
-    user = User(username, password=username, email='{}@example.com'.format(username))
+    user = User(username, password=username, email='{}@example.com'.format(username), active=True, roles=[])
     user.preferred_ebook_format = 'mobi'
     mysqldb.add(user)
     mysqldb.commit()

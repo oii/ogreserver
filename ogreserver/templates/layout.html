@@ -25,11 +25,11 @@
 				<ul class="right">
 					<li class="divider"></li>
 					{% if not session.user_id %}
-					<li><a href="{{ url_for('auth.login') }}">log in</a></li>
+					<li><a href="{{ url_for_security('login') }}">log in</a></li>
 					{% else %}
 					<li><a href="{{ url_for('user.profile') }}">{{ g.user.username }}</a></li>
 					<li class="divider"></li>
-					<li><a href="{{ url_for('auth.logout') }}">log out</a></li>
+					<li><a href="{{ url_for_security('logout') }}">log out</a></li>
 					{% endif %}
 					<li class="divider"></li>
 					<li>

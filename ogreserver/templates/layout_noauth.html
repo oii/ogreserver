@@ -23,20 +23,9 @@
 		</nav>
 
 		<div class="row">
-			<div class="large-4 columns">
-
-				{% for error in form.errors %}<p class="error">{{ form.errors[error][0] }}</p>{% endfor %}
-
-				<form action="{{ url_for('auth.login') }}" method="post">
-					{{ form.csrf_token }}
-					<dl>
-						<dt>{{ form.username.label }}</dt>
-						<dd>{{ form.username() }}</dd>
-						<dt>{{ form.password.label }}</dt>
-						<dd>{{ form.password() }}</dd>
-						<dd><input type="submit" value="Login" class="button small radius primary-dark" /></dd>
-					</dl>
-				</form>
+			<div class="large-8 columns">
+				<br/>
+				{% block body %}{% endblock %}
 			</div>
 		</div>
 
@@ -54,6 +43,5 @@
 		<script>
 		  $(document).foundation();
 		</script>
-		<script src="{{ url_for('core.static', filename='js/app.js') }}"></script>
 	</body>
 </html>

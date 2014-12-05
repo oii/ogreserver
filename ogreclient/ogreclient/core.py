@@ -388,7 +388,7 @@ def sync_with_server(config, prntr, session_key, ebooks_dict):
     try:
         # post json dict of ebook data
         req = urllib2.Request(
-            url='http://{}/post/{}'.format(
+            url='http://{}/api/v1/post/{}'.format(
                 config['host'],
                 urllib.quote_plus(session_key)
             ),
@@ -492,7 +492,7 @@ def upload_single_book(host, session_key, filepath, upload_obj):
                 'ebook': f,
             }
             req = opener.open(
-                "http://{0}/upload/{1}".format(host, urllib.quote_plus(session_key)), params
+                "http://{0}/api/v1/upload/{1}".format(host, urllib.quote_plus(session_key)), params
             )
             return req.read()
 
@@ -506,7 +506,7 @@ def send_logs(prntr, host, session_key, errord_list):
     try:
         # post all logs to ogreserver
         req = urllib2.Request(
-            url='http://{}/post-logs/{}'.format(host, urllib.quote_plus(session_key)).encode('utf-8'),
+            url='http://{}/api/v1/post-logs/{}'.format(host, urllib.quote_plus(session_key)).encode('utf-8'),
             headers={'Content-Type': 'application/json'},
         )
         req.add_data('\n'.join(prntr.logs).encode('utf-8'))
@@ -532,7 +532,7 @@ def send_logs(prntr, host, session_key, errord_list):
                 with open(filepath, "rb") as f:
                     # post the file contents
                     req = opener.open(
-                        'http://{}/upload-errord/{}/{}'.format(
+                        'http://{}/api/v1/upload-errord/{}/{}'.format(
                             host,
                             urllib.quote_plus(session_key),
                             urllib.quote_plus(filename),

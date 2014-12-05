@@ -278,7 +278,7 @@ class EbookObject:
 
                 # ping ogreserver with the book's new hash
                 req = urllib2.Request(
-                    url='http://{}/confirm/{}'.format(self.config['host'], urllib.quote_plus(session_key))
+                    url='http://{}/api/v1/confirm/{}'.format(self.config['host'], urllib.quote_plus(session_key))
                 )
                 req.add_data(urllib.urlencode({
                     'file_hash': self.file_hash,

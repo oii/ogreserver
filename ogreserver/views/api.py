@@ -19,7 +19,7 @@ from ..models.user import User
 
 from ..tasks import store_ebook as task_store_ebook
 
-bp_api = Blueprint('api', __name__)
+bp_api = Blueprint('api', __name__, url_prefix='/api/v1')
 
 
 def check_auth(auth_key):

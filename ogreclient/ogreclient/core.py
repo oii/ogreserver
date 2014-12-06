@@ -27,14 +27,26 @@ from .exceptions import MissingFromCacheError, OgreException, OgreserverDownErro
 def authenticate(host, username, password):
     try:
         # authenticate the user; retrieve an session_key for subsequent requests
-        params = urllib.urlencode({
-            'username': username,
-            'password': password
-        })
-        req = urllib2.Request(url='http://{}/auth'.format(host), data=params)
+        req = urllib2.Request(
+            url='http://{}/login'.format(host),
+            data=json.dumps({
+                'email': username,
+                'password': password
+            }),
+            headers={
+                'Content-type': 'application/json'
+            }
+        )
         f = urllib2.urlopen(req)
-        return f.read()
+        data = json.loads(f.read())
 
+        if data['meta']['code'] == 200:
+            return data['response']['user']['authentication_token']
+        else:
+            raise AuthError(json.dumps(data))
+
+    except KeyError as e:
+        raise AuthError(inner_excp=e)
     except HTTPError as e:
         if e.getcode() == 403:
             raise AuthDeniedError
@@ -388,13 +400,15 @@ def sync_with_server(config, prntr, session_key, ebooks_dict):
     try:
         # post json dict of ebook data
         req = urllib2.Request(
-            url='http://{}/api/v1/post/{}'.format(
-                config['host'],
-                urllib.quote_plus(session_key)
+            url='http://{}/api/v1/post'.format(
+                config['host']
             ),
-            headers={'Content-Type': 'application/json'},
+            data=json.dumps(ebooks_for_sync),
+            headers={
+                'Content-type': 'application/json',
+                'Ogre-key': session_key
+            },
         )
-        req.add_data(json.dumps(ebooks_for_sync))
         resp = urllib2.urlopen(req)
         data = resp.read()
 
@@ -483,6 +497,9 @@ def upload_single_book(host, session_key, filepath, upload_obj):
         with open(filepath, "rb") as f:
             # configure for uploads
             opener = urllib2.build_opener(newHTTPHandler())
+            opener.addheaders = [
+                ('Ogre-key', session_key)
+            ]
 
             # build the post params
             params = {
@@ -492,7 +509,7 @@ def upload_single_book(host, session_key, filepath, upload_obj):
                 'ebook': f,
             }
             req = opener.open(
-                "http://{0}/api/v1/upload/{1}".format(host, urllib.quote_plus(session_key)), params
+                'http://{}/api/v1/upload'.format(host), params
             )
             return req.read()
 
@@ -504,12 +521,17 @@ def upload_single_book(host, session_key, filepath, upload_obj):
 
 def send_logs(prntr, host, session_key, errord_list):
     try:
+        log_data = '\n'.join(prntr.logs).encode('utf-8')
+
         # post all logs to ogreserver
         req = urllib2.Request(
-            url='http://{}/api/v1/post-logs/{}'.format(host, urllib.quote_plus(session_key)).encode('utf-8'),
-            headers={'Content-Type': 'application/json'},
+            url='http://{}/api/v1/post-logs'.format(host),
+            data=log_data,
+            headers={
+                'Content-type': 'application/json',
+                'Ogre-key': session_key
+            },
         )
-        req.add_data('\n'.join(prntr.logs).encode('utf-8'))
         resp = urllib2.urlopen(req)
         data = resp.read()
 
@@ -523,6 +545,9 @@ def send_logs(prntr, host, session_key, errord_list):
             prntr.p('Uploaded failed books to OGRE for debug..')
 
             opener = urllib2.build_opener(newHTTPHandler())
+            opener.addheaders = [
+                ('Ogre-key', session_key)
+            ]
 
             i = 0
 
@@ -532,9 +557,8 @@ def send_logs(prntr, host, session_key, errord_list):
                 with open(filepath, "rb") as f:
                     # post the file contents
                     req = opener.open(
-                        'http://{}/api/v1/upload-errord/{}/{}'.format(
+                        'http://{}/api/v1/upload-errord/{}'.format(
                             host,
-                            urllib.quote_plus(session_key),
                             urllib.quote_plus(filename),
                         ),
                         {'ebook': f},

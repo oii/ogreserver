@@ -31,15 +31,12 @@ def download_dedrm():
 @bp_api.route('/post', methods=['POST'])
 @auth_token_required
 def post():
-    # get the json payload
-    data = json.loads(request.data)
-
     # stats log the upload
-    app.logger.info('CONNECT {}'.format(len(data)))
+    app.logger.info('CONNECT {}'.format(len(request.json)))
 
     # update the library
     ds = DataStore(app.config, app.logger, app.whoosh)
-    syncd_books = ds.update_library(data, current_user)
+    syncd_books = ds.update_library(request.json, current_user)
 
     # extract the subset of newly supplied books
     new_books = [item for key, item in syncd_books.items() if item['new'] is True]
@@ -55,7 +52,7 @@ def post():
     app.logger.info('NEW {}'.format(len(new_books)))
 
     # store sync events
-    ds.log_event(current_user, len(data), len(new_books))
+    ds.log_event(current_user, len(request.json), len(new_books))
 
     # handle badge and reputation changes
     r = Reputation(current_user)
@@ -64,7 +61,7 @@ def post():
     msgs = r.get_new_badges()
 
     # only request books for upload which are in client's current set
-    incoming = [item['file_hash'] for item in data.values()]
+    incoming = [item['file_hash'] for item in request.json.values()]
 
     # query books missing from S3 and supply back to the client
     missing_books = ds.get_missing_books(username=current_user.username, hash_filter=incoming)
@@ -116,8 +113,8 @@ def upload_errord(filename):
 @auth_token_required
 def confirm():
     # update a file's md5 hash
-    current_file_hash = request.form.get('file_hash')
-    updated_file_hash = request.form.get('new_hash')
+    current_file_hash = request.json['file_hash']
+    updated_file_hash = request.json['new_hash']
 
     ds = DataStore(app.config, app.logger)
 

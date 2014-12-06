@@ -7,7 +7,6 @@ import shutil
 import subprocess
 import sys
 
-import urllib
 import urllib2
 from urllib2 import HTTPError, URLError
 
@@ -278,12 +277,16 @@ class EbookObject:
 
                 # ping ogreserver with the book's new hash
                 req = urllib2.Request(
-                    url='http://{}/api/v1/confirm/{}'.format(self.config['host'], urllib.quote_plus(session_key))
+                    url='http://{}/api/v1/confirm'.format(self.config['host']),
+                    data=json.dumps({
+                        'file_hash': self.file_hash,
+                        'new_hash': new_hash
+                    }),
+                    headers={
+                        'Content-type': 'application/json',
+                        'Ogre-key': session_key
+                    },
                 )
-                req.add_data(urllib.urlencode({
-                    'file_hash': self.file_hash,
-                    'new_hash': new_hash
-                }))
                 resp = urllib2.urlopen(req)
                 data = resp.read()
 

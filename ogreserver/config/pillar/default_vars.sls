@@ -68,6 +68,7 @@ extras:
 pip:
   - pyflakes
   - virtualenvwrapper
+  - ipdb
 
 # set backports to AU in bit.ly/19Nso9M
 deb_mirror_prefix: ftp.au

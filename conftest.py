@@ -16,7 +16,7 @@ try:
 
     from .ogreserver.factory import create_app, make_celery, configure_extensions, register_blueprints
     from .ogreserver.models.user import User
-    from .ogreserver.extensions.database import get_db, create_tables
+    from .ogreserver.extensions.database import setup_db_session, create_tables
 
     from .ogreserver.extensions.celery import register_tasks
 
@@ -102,7 +102,7 @@ def mysqldb(request, flask_app):
     with flask_app.test_request_context():
         # init app tables into test database
         create_tables(flask_app)
-        db_session = get_db(flask_app)
+        db_session = setup_db_session(flask_app)
         yield db_session
 
     # cleanup the test mysql db

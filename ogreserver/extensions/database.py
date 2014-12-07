@@ -9,8 +9,9 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 
-def get_db(app):
+def setup_db_session(app):
     if not hasattr(g, 'db_session'):
+        # DB connection added to request globals via Flask.before_request()
         engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'], convert_unicode=True)
         g.db_session = scoped_session(sessionmaker(autocommit=False,
                                                    autoflush=False,
@@ -21,6 +22,7 @@ def get_db(app):
 
 
 def shutdown_db_session(exception=None):
+    # DB connection shutdown called by Flask.teardown_appcontext()
     if hasattr(g, 'db_session'):
         g.db_session.remove()
 

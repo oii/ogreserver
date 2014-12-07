@@ -5,9 +5,10 @@ import rethinkdb as r
 
 from sqlalchemy import Column, Integer, Boolean, ForeignKey
 
+from flask import g
 from flask import current_app as app
 
-from ..extensions.database import Base, get_db
+from ..extensions.database import Base
 
 
 class Badges:
@@ -24,9 +25,8 @@ class Reputation():
         Each new book uploaded earns a user a point
         """
         self.user.points += count
-        db_session = get_db(app)
-        db_session.add(self.user)
-        db_session.commit()
+        g.db_session.add(self.user)
+        g.db_session.commit()
 
     def get_new_badges(self):
         """
@@ -95,9 +95,8 @@ class Reputation():
         if Reputation.has_badge(self.user, badge):
             return
         ub = UserBadge(user_id=self.user.id, badge=badge)
-        db_session = get_db(app)
-        db_session.add(ub)
-        db_session.commit()
+        g.db_session.add(ub)
+        g.db_session.commit()
 
     @staticmethod
     def has_badge(user, badge):
@@ -134,6 +133,5 @@ class UserBadge(Base):
         Flag that the has been alerted about earning this badge
         """
         self.been_alerted = True
-        db_session = get_db(app)
-        db_session.add(self)
-        db_session.commit()
+        g.db_session.add(self)
+        g.db_session.commit()

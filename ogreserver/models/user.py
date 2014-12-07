@@ -12,9 +12,10 @@ from sqlalchemy.sql import func
 
 from .reputation import Reputation, UserBadge
 
+from flask import g
 from flask import current_app as app
 
-from ..extensions.database import Base, get_db
+from ..extensions.database import Base
 
 
 roles_users = Table(
@@ -63,9 +64,8 @@ class User(Base, UserMixin):
         self.roles = roles
 
     def save(self):
-        db_session = get_db(app)
-        db_session.add(self)
-        db_session.commit()
+        g.db_session.add(self)
+        g.db_session.commit()
 
     def has_badge(self, badge):
         """
@@ -103,9 +103,8 @@ class User(Base, UserMixin):
         Return the total number of registered users
         """
         if User.total_users is None:
-            db_session = get_db(app)
-            q = db_session.query(func.count(User.id))
-            User.total_users = db_session.execute(q).scalar()
+            q = g.db_session.query(func.count(User.id))
+            User.total_users = g.db_session.execute(q).scalar()
         return User.total_users
 
     def __str__(self):

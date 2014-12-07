@@ -16,7 +16,7 @@ import rethinkdb as r
 from rethinkdb.errors import RqlRuntimeError
 
 from ogreserver.factory import create_app
-from ogreserver.extensions.database import get_db, create_tables, setup_roles
+from ogreserver.extensions.database import setup_db_session, create_tables, setup_roles
 from ogreserver.utils import connect_s3
 
 app = create_app()
@@ -83,7 +83,7 @@ def create_user(username, password, email, role='user', confirmed=False, test=Fa
     """
     try:
         # load a user
-        get_db(app)
+        setup_db_session(app)
         from ogreserver.models.user import User
         user = User.query.filter_by(username=username).first()
 
@@ -153,7 +153,7 @@ def init_ogre(test=False):
 
     # check mysql DB created
     try:
-        get_db(app)
+        setup_db_session(app)
         from ogreserver.models.user import User
         User.query.first()
         db_setup = True

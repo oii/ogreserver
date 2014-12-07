@@ -5,7 +5,7 @@ import os
 
 from flask import current_app as app
 
-from .extensions.database import get_db
+from .extensions.database import setup_db_session
 
 from .exceptions import ConversionFailedError, EbookNotFoundOnS3Error
 from .models.datastore import DataStore, S3DatastoreError
@@ -20,7 +20,7 @@ def store_ebook(ebook_id, file_hash, fmt):
         filepath = None
 
         # initialise the DB connection in our fake app context
-        get_db(app)
+        setup_db_session(app)
 
         try:
             # create the datastore & generate a nice filename

@@ -23,9 +23,14 @@ def create_app(config=None):
         except IOError:
             raise Exception('Missing application config! No file at {}'.format(flask_conf))
 
+    def setup_db_before_request():
+        # setup DB connection for each request via Flask.before_request()
+        from .extensions.database import setup_db_session
+        setup_db_session(app)
+
     # import SQLAlchemy disconnect and map to Flask request shutdown
     from .extensions.database import shutdown_db_session
-    app.before_request(setup_db_session)
+    app.before_request(setup_db_before_request)
     app.teardown_appcontext(shutdown_db_session)
 
     # setup application logging
@@ -91,9 +96,3 @@ def register_blueprints(app):
     app.register_blueprint(bp_docs)
     app.register_blueprint(bp_ebooks)
     app.register_blueprint(bp_user)
-
-
-def setup_db_session():
-    from flask import current_app
-    from .extensions.database import get_db
-    get_db(current_app)

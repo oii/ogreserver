@@ -8,7 +8,6 @@ from flask.ext.security.datastore import Datastore, UserDatastore
 from flask.ext.security.forms import LoginForm
 from flask.ext.security.utils import get_identity_attributes
 
-from ..extensions.database import get_db
 from ..models.user import User, Role
 
 
@@ -29,17 +28,14 @@ class SQLAlchemyDatastore(Datastore):
         self.app = app
 
     def commit(self):
-        db_session = get_db(self.app)
-        db_session.commit()
+        g.db_session.commit()
 
     def put(self, model):
-        db_session = get_db(self.app)
-        db_session.add(model)
+        g.db_session.add(model)
         return model
 
     def delete(self, model):
-        db_session = get_db(self.app)
-        db_session.delete(model)
+        g.db_session.delete(model)
 
 
 class OgreUserDatastore(SQLAlchemyDatastore, UserDatastore):
@@ -75,4 +71,6 @@ class OgreUserDatastore(SQLAlchemyDatastore, UserDatastore):
 
 
 def add_user_to_globals():
+    # this function is mapped to Flask.before_request() to add the current_user
+    # to the Flask request globals
     g.user = current_user

@@ -276,7 +276,7 @@ def clean_all_drm(config, prntr, ebooks_dict):
     i = 0
     cleaned = 0
 
-    for authortitle, ebook_obj in ebooks_dict.items():
+    for authortitle, ebook_obj in ebooks_dict.iteritems():
         # only attempt decrypt on ebooks which are defined as is_valid_format
         if EBOOK_FORMATS[ebook_obj.format][0] is False:
             continue
@@ -285,17 +285,13 @@ def clean_all_drm(config, prntr, ebooks_dict):
             filename, suffix = os.path.splitext(os.path.basename(ebook_obj.path))
 
             # remove DRM from ebook
-            new_filepath, new_filehash, new_filesize = remove_drm_from_ebook(
+            new_ebook_obj = remove_drm_from_ebook(
                 config, prntr, ebook_obj.path, ebook_obj.file_hash, suffix
             )
 
-            if new_filepath is not None:
+            if new_ebook_obj is not None:
                 # update the sync data with the decrypted ebook
-                ebook_obj.path = new_filepath
-                ebook_obj.file_hash = new_filehash
-                ebook_obj.size = new_filesize
-                filename, suffix = os.path.splitext(os.path.basename(new_filepath))
-                ebook_obj.format = suffix[1:]
+                ebooks_dict[authortitle] = new_ebook_obj
                 cleaned += 1
 
         except CorruptEbookError as e:
@@ -321,12 +317,12 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
 
             # return if book marked DRM free in the cache
             if ebook_obj.drmfree is True or ebook_obj.skip is True:
-                return None, None, None
+                return None
 
         except MissingFromCacheError:
             pass
 
-    new_filepath = new_filehash = new_filesize = None
+    ebook_obj = None
 
     try:
         # decrypt into a temp path
@@ -345,7 +341,7 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
 
                 # create new ebook_obj for decrypted ebook
                 ebook_obj = EbookObject(config=config, filepath=decrypted_filepath)
-                new_filehash, new_filesize = ebook_obj.compute_md5()
+                ebook_obj.compute_md5()
 
                 # add the OGRE DeDRM tag to the decrypted ebook
                 # TODO handle CorruptEbookError via get_metadata
@@ -356,16 +352,16 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
                     os.mkdir(os.path.join(config['ebook_home'], 'ogre'))
 
                 # move decrypted book into ebook library
-                new_filepath = os.path.join(
+                ebook_obj.path = os.path.join(
                     config['ebook_home'], 'ogre', os.path.basename(decrypted_filepath)
                 )
-                os.rename(decrypted_filepath, new_filepath)
+                os.rename(decrypted_filepath, ebook_obj.path)
 
                 if config['verbose']:
-                    prntr.p('Decrypted book moved to {}'.format(new_filepath), CliPrinter.DEDRM, success=True)
+                    prntr.p('Decrypted book moved to {}'.format(ebook_obj.path), CliPrinter.DEDRM, success=True)
 
                 # mark decrypted book as drmfree=True in cache
-                config['ebook_cache'].update_ebook_property(filepath, new_filehash, drmfree=True)
+                config['ebook_cache'].update_ebook_property(filepath, ebook_obj.file_hash, drmfree=True)
 
                 # update existing DRM-scuppered as skip=True in cache
                 config['ebook_cache'].update_ebook_property(filepath, skip=True)
@@ -386,7 +382,7 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
     except (DecryptionFailed, UnicodeDecodeError) as e:
         raise CorruptEbookError(filepath, inner_excp=e)
 
-    return new_filepath, new_filehash, new_filesize
+    return ebook_obj
 
 
 def sync_with_server(config, prntr, session_key, ebooks_dict):

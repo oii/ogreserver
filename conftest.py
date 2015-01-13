@@ -204,7 +204,7 @@ def client_config(user):
         'verbose': False,
         'quiet': True,
         'debug': True,
-        'use_cache': False,
+        'skip_cache': True,
     }
 
 

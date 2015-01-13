@@ -80,8 +80,8 @@ def parse_command_line():
         '--quiet', '-q', action='store_true',
         help="Don't produce any output")
     parent_parser.add_argument(
-        '--use-cache', action='store_true',
-        help='Used in conjunction with --debug to force using the cache in debug mode')
+        '--skip-cache', action='store_true',
+        help='Ignore the local cache; useful for debugging')
 
     # setup parser for sync command
     psync = subparsers.add_parser('sync',
@@ -165,7 +165,7 @@ def main(conf, args, prntr):
     # setup config for sync
     conf.update({
         'debug': args.debug,
-        'use_cache': args.use_cache,
+        'skip_cache': args.skip_cache,
         'verbose': True if args.debug is True else args.verbose,
         'quiet': args.quiet,
     })

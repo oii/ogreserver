@@ -187,8 +187,8 @@ def search_for_ebooks(config, prntr):
 
     for item in ebooks:
         try:
-            # skip the cache during debug
-            if config['debug'] is True and config['use_cache'] is False:
+            # optionally skip the cache
+            if config['skip_cache'] is True:
                 raise MissingFromCacheError
 
             # get ebook from the cache
@@ -310,7 +310,7 @@ def clean_all_drm(config, prntr, ebooks_dict):
 
 
 def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
-    if config['debug'] is False or config['use_cache'] is True:
+    if config['skip_cache'] is False:
         try:
             # attempt load ebook from local cache
             ebook_obj = config['ebook_cache'].get_ebook(filepath, file_hash)

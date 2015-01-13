@@ -360,10 +360,10 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
                 if config['verbose']:
                     prntr.p('Decrypted book moved to {}'.format(ebook_obj.path), CliPrinter.DEDRM, success=True)
 
-                # mark decrypted book as drmfree=True in cache
-                config['ebook_cache'].update_ebook_property(filepath, ebook_obj.file_hash, drmfree=True)
+                # add decrypted book to cache
+                config['ebook_cache'].store_ebook(ebook_obj)
 
-                # update existing DRM-scuppered as skip=True in cache
+                # update existing DRM-scuppered book as skip=True in cache
                 config['ebook_cache'].update_ebook_property(filepath, skip=True)
 
             else:

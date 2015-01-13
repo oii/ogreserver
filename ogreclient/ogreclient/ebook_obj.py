@@ -22,6 +22,9 @@ class EbookObject:
         self.size = size
         self.file_hash = file_hash
         self.authortitle = authortitle
+        if fmt is None:
+            _, ext = os.path.splitext(filepath)
+            fmt = ext[1:]
         self.format = fmt
         self.drmfree = drmfree
         self.skip = skip

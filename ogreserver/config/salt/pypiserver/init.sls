@@ -4,7 +4,7 @@ pypiserver-virtualenv:
     - requirements: salt://pypiserver/requirements.txt
     - user: {{ pillar['app_user'] }}
     - require:
-      - pip: virtualenv-init-setuptools
+      - pkg: pip-dependencies
 
 pypiserver-log-dir:
   file.directory:

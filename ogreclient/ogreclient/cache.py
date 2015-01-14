@@ -6,7 +6,7 @@ import os
 import sqlite3
 
 from .ebook_obj import EbookObject
-from .exceptions import OgreException, MissingFromCacheError
+from .exceptions import OgreException, MissingFromCacheError, EbookIdDuplicateEbookError
 
 __CACHEVERSION__ = 1
 
@@ -145,6 +145,16 @@ class Cache:
 
             # write the cache DB
             conn.commit()
+
+        except sqlite3.IntegrityError as e:
+            if e.message == 'UNIQUE constraint failed: ebooks.ebook_id':
+                # ebook_id UNIQUE failure; load the existing book from the cache
+                c = conn.cursor()
+                c.execute('SELECT path FROM ebooks WHERE ebook_id = ?', (ebook_obj.ebook_id,))
+                obj = c.fetchone()
+                raise EbookIdDuplicateEbookError(ebook_obj, obj[0])
+            else:
+                raise CacheReadError(inner_excp=e)
         except Exception as e:
             raise CacheReadError(inner_excp=e)
         finally:

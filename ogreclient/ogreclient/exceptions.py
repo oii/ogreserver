@@ -69,6 +69,10 @@ class AuthortitleDuplicateEbookError(DuplicateEbookBaseError):
     def __init__(self, ebook_obj, path2):
         super(AuthortitleDuplicateEbookError, self).__init__('author/title', ebook_obj, path2)
 
+class EbookIdDuplicateEbookError(DuplicateEbookBaseError):
+    def __init__(self, ebook_obj, path2):
+        super(EbookIdDuplicateEbookError, self).__init__('ebook_id', ebook_obj, path2)
+
 
 class MissingFromCacheError(OgreException):
     pass

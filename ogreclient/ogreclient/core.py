@@ -18,7 +18,8 @@ from .dedrm import decrypt, DRM, DeDrmMissingError, DecryptionFailed
 from .definitions import EBOOK_FORMATS
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError
-from .exceptions import DuplicateEbookBaseError, ExactDuplicateEbookError, AuthortitleDuplicateEbookError
+from .exceptions import DuplicateEbookBaseError, ExactDuplicateEbookError
+from .exceptions import AuthortitleDuplicateEbookError, EbookIdDuplicateEbookError
 from .exceptions import SyncError, UploadError, CorruptEbookError
 from .exceptions import FailedWritingMetaDataError, FailedConfirmError, FailedDebugLogsError
 from .exceptions import MissingFromCacheError, OgreException, OgreserverDownError
@@ -256,8 +257,13 @@ def search_for_ebooks(config, prntr):
             else:
                 ebook_obj.skip = True
 
-        # add book to the cache
-        config['ebook_cache'].store_ebook(ebook_obj)
+        try:
+            # add book to the cache
+            config['ebook_cache'].store_ebook(ebook_obj)
+
+        except EbookIdDuplicateEbookError as e:
+            # handle duplicate books with same ebook_id in metadata
+            errord_list[ebook_obj.path] = e
 
         i += 1
         prntr.progressf(num_blocks=i, total_size=len(ebooks))

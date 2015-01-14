@@ -57,7 +57,7 @@ def test_sync_ogre_id(datastore, rethinkdb, user):
     assert 'ebook_id' in data, 'ebook_id should be present in ogreserver response'
 
     # set ogre_id in incoming data, same as ogreclient would
-    ebooks_dict[ebooks_dict.keys()[0]]['meta']['ebook_id'] = data['ebook_id']
+    ebooks_dict[ebooks_dict.keys()[0]]['ebook_id'] = data['ebook_id']
 
     # sync again
     syncd_books = datastore.update_library(ebooks_dict, user)
@@ -149,7 +149,7 @@ def test_sync_dupe_on_ebookid(datastore, rethinkdb, user, user2):
     del(ebooks_dict["Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland"])
 
     # supply ebook_id in second sync
-    ebooks_dict[ebooks_dict.keys()[0]]['meta']['ebook_id'] = ebook_id
+    ebooks_dict[ebooks_dict.keys()[0]]['ebook_id'] = ebook_id
 
     # different file_hash, user
     ebooks_dict[ebooks_dict.keys()[0]]['file_hash'] = '058e92c0'

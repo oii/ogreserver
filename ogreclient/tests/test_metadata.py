@@ -126,15 +126,14 @@ def test_metadata_ogreid_epub(mock_urlopen, helper_get_ebook, ebook_lib_path, tm
 
     # add ogre_id to test epub
     ebook_obj.add_ogre_id_tag(
-        ogre_id='egg',
+        ebook_id='egg',
         session_key='thisisnotakey',
     )
 
     # verify that ogre_id is on the epub
     ebook_obj.get_metadata()
     assert 'uri' in ebook_obj.meta.keys()
-    assert 'ebook_id' in ebook_obj.meta.keys()
-    assert ebook_obj.meta['ebook_id'] == 'egg'
+    assert ebook_obj.ebook_id == 'egg'
 
 
 @pytest.mark.requires_calibre
@@ -153,14 +152,13 @@ def test_metadata_ogreid_mobi(mock_urlopen, helper_get_ebook, ebook_lib_path, tm
 
     # add ogre_id to test mobi
     ebook_obj.add_ogre_id_tag(
-        ogre_id='egg',
+        ebook_id='egg',
         session_key='thisisnotakey',
     )
 
     # verify that ogre_id is on the mobi
     ebook_obj.get_metadata()
-    assert 'ebook_id' in ebook_obj.meta
-    assert ebook_obj.meta['ebook_id'] == 'egg'
+    assert ebook_obj.ebook_id == 'egg'
     assert ebook_obj.meta['tags'] == 'Fantasy'
     assert 'ogre_id' not in ebook_obj.meta['tags']
 
@@ -181,7 +179,7 @@ def test_metadata_ogreid_mobi_utf8(mock_urlopen, helper_get_ebook, ebook_lib_pat
 
     # mobi books add ogre_id it --tags
     ebook_obj.add_ogre_id_tag(
-        ogre_id='egg',
+        ebook_id='egg',
         session_key='thisisnotakey',
     )
 

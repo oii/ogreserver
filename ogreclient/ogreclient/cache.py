@@ -63,6 +63,7 @@ class Cache:
                 CREATE TABLE ebooks (
                       path TEXT PRIMARY KEY,
                       file_hash TEXT NULL,
+                      ebook_id TEXT,
                       data TEXT NULL,
                       drmfree INT DEFAULT 0,
                       skip INT DEFAULT 0
@@ -82,7 +83,7 @@ class Cache:
         conn = sqlite3.connect(self.ebook_cache_path)
         try:
             c = conn.cursor()
-            c.execute('SELECT file_hash, data, drmfree, skip FROM ebooks WHERE path = ?', (path,))
+            c.execute('SELECT file_hash, ebook_id, data, drmfree, skip FROM ebooks WHERE path = ?', (path,))
             obj = c.fetchone()
             if obj is not None:
                 # verify file_hash matches between cache and filesystem
@@ -120,6 +121,8 @@ class Cache:
                 # build update parameter list
                 values += 'file_hash = ?, '
                 params.append(ebook_obj.file_hash)
+                values += 'ebook_id = ?, '
+                params.append(ebook_obj.ebook_id)
                 values += 'data = ?, '
                 params.append(json.dumps(data))
                 values += 'drmfree = ?, '
@@ -137,11 +140,12 @@ class Cache:
                 params = (
                     ebook_obj.path,
                     ebook_obj.file_hash,
+                    ebook_obj.ebook_id,
                     json.dumps(data),
                     int(ebook_obj.drmfree),
                     int(ebook_obj.skip)
                 )
-                c.execute('INSERT INTO ebooks VALUES (?,?,?,?,?)', params)
+                c.execute('INSERT INTO ebooks VALUES (?,?,?,?,?,?)', params)
 
             # write the cache DB
             conn.commit()
@@ -161,7 +165,7 @@ class Cache:
             conn.close()
 
 
-    def update_ebook_property(self, path, file_hash=None, drmfree=None, skip=None):
+    def update_ebook_property(self, path, file_hash=None, ebook_id=None, drmfree=None, skip=None):
         conn = sqlite3.connect(self.ebook_cache_path)
         try:
             c = conn.cursor()
@@ -177,6 +181,10 @@ class Cache:
                 if file_hash is not None:
                     values += 'file_hash = ?, '
                     params.append(file_hash)
+
+                if ebook_id is not None:
+                    values += 'ebook_id = ?, '
+                    params.append(ebook_id)
 
                 if drmfree is not None:
                     values += 'drmfree = ?, '

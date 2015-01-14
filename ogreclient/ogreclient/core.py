@@ -453,7 +453,11 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
                         prntr.p('Wrote OGRE_ID to {}'.format(ebook_obj.path))
 
                     # write to ogreclient cache
-                    config['ebook_cache'].update_ebook_property(ebook_obj.path, file_hash=new_file_hash)
+                    config['ebook_cache'].update_ebook_property(
+                        ebook_obj.path,
+                        file_hash=new_file_hash,
+                        ebook_id=item['ebook_id']
+                    )
 
                 except (FailedWritingMetaDataError, FailedConfirmError) as e:
                     prntr.e('Failed saving OGRE_ID in {}'.format(ebook_obj.path), excp=e)

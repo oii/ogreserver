@@ -51,10 +51,10 @@ class DataStore():
 
                 try:
                     # check for ogre_id from metadata passed as ebook_id
-                    existing_ebook = self.load_ebook(incoming['meta']['ebook_id'])
+                    existing_ebook = self.load_ebook(incoming['ebook_id'])
 
                     # remove ebook_id from incoming metadata dict
-                    del(incoming['meta']['ebook_id'])
+                    del(incoming['ebook_id'])
 
                 except KeyError as e:
                     # tell client to set ogre_id on this ebook

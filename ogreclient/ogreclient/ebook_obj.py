@@ -16,11 +16,12 @@ from .utils import compute_md5, id_generator, make_temp_directory
 
 
 class EbookObject:
-    def __init__(self, config, filepath, size=None, file_hash=None, authortitle=None, fmt=None, drmfree=False, skip=False):
+    def __init__(self, config, filepath, file_hash=None, ebook_id=None, size=None, authortitle=None, fmt=None, drmfree=False, skip=False):
         self.config = config
         self.path = filepath
-        self.size = size
         self.file_hash = file_hash
+        self.ebook_id = ebook_id
+        self.size = size
         self.authortitle = authortitle
         if fmt is None:
             _, ext = os.path.splitext(filepath)
@@ -52,17 +53,20 @@ class EbookObject:
         Deserialize from a cached object into an EbookObject
         '''
         # parse the data object from the cache entry
-        data = json.loads(cached_obj[1])
+        # dictionary indexes defined by SQL query in Cache.get_ebook()
+        data = json.loads(cached_obj[2])
 
         # return an EbookObject
         ebook_obj = EbookObject(
             config=config,
             filepath=path,
             file_hash=cached_obj[0],
+            ebook_id=cached_obj[1],
             authortitle=data['authortitle'],
             fmt=data['format'],
-            drmfree=bool(cached_obj[2]),
-            skip=bool(cached_obj[3]),
+            size=data['size'],
+            drmfree=bool(cached_obj[3]),
+            skip=bool(cached_obj[4]),
         )
         ebook_obj.in_cache = True
         ebook_obj.meta = data['meta']
@@ -74,16 +78,20 @@ class EbookObject:
         Serialize the EbookObject for sending or caching
         '''
         data = {
+            'file_hash': self.file_hash,
             'format': self.format,
             'size': self.size,
-            'file_hash': self.file_hash,
             'dedrm': self.drmfree,
             'meta': self.meta
         }
+        if self.ebook_id is not None:
+            data['ebook_id'] = self.ebook_id
+
         if for_cache:
             # different serialisation for writing the local ogreclient cache
             del(data['file_hash'])
             data['authortitle'] = self.authortitle
+
         return data
 
 
@@ -165,7 +173,7 @@ class EbookObject:
                         tags = meta['tags'].split(', ')
                         for j in reversed(xrange(len(tags))):
                             if 'ogre_id' in tags[j]:
-                                meta['ebook_id'] = tags[j][8:]
+                                self.ebook_id = tags[j][8:]
                                 del(tags[j])
                         meta['tags'] = ', '.join(tags)
                 continue
@@ -196,7 +204,7 @@ class EbookObject:
                         meta['epubbud'] = ident[7:].strip()
                         continue
                     if ident.startswith('ogre_id'):
-                        meta['ebook_id'] = ident[8:].strip()
+                        self.ebook_id = ident[8:].strip()
 
                 # clean up mixed ASIN tags
                 if 'mobi-asin' in meta.keys() and 'asin' not in meta.keys():
@@ -242,7 +250,9 @@ class EbookObject:
         return firstname, lastname
 
 
-    def add_ogre_id_tag(self, ogre_id, session_key):
+    def add_ogre_id_tag(self, ebook_id, session_key):
+        self.ebook_id = ebook_id
+
         # ebook file format
         fmt = os.path.splitext(self.path)[1]
 
@@ -257,9 +267,9 @@ class EbookObject:
                     # append ogre's ebook_id to the ebook's comma-separated tags field
                     # as they don't support --identifier
                     if 'tags' in self.meta and self.meta['tags']:
-                        new_tags = 'ogre_id={}, {}'.format(ogre_id, self.meta['tags'])
+                        new_tags = 'ogre_id={}, {}'.format(ebook_id, self.meta['tags'])
                     else:
-                        new_tags = 'ogre_id={}'.format(ogre_id)
+                        new_tags = 'ogre_id={}'.format(ebook_id)
 
                     # write ogre_id to --tags
                     subprocess.check_output(
@@ -269,7 +279,7 @@ class EbookObject:
                 else:
                     # write ogre_id to --identifier
                     subprocess.check_output(
-                        [self.config['calibre_ebook_meta_bin'], tmp_name, '--identifier', 'ogre_id:{}'.format(ogre_id)],
+                        [self.config['calibre_ebook_meta_bin'], tmp_name, '--identifier', 'ogre_id:{}'.format(ebook_id)],
                         stderr=subprocess.STDOUT
                     )
 

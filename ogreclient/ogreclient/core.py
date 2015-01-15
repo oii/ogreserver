@@ -4,6 +4,7 @@ from __future__ import division
 
 import json
 import os
+import shutil
 
 import urllib
 import urllib2
@@ -361,7 +362,7 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
                 ebook_obj.path = os.path.join(
                     config['ebook_home'], 'ogre', os.path.basename(decrypted_filepath)
                 )
-                os.rename(decrypted_filepath, ebook_obj.path)
+                shutil.move(decrypted_filepath, ebook_obj.path)
 
                 if config['verbose']:
                     prntr.p('Decrypted book moved to {}'.format(ebook_obj.path), CliPrinter.DEDRM, success=True)

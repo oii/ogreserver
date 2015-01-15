@@ -219,8 +219,11 @@ def search_for_ebooks(config, prntr):
                 ebook_obj.skip = True
                 config['ebook_cache'].store_ebook(ebook_obj)
 
-                # skip books which can't have metadata extracted
-                continue
+        # skip previously scanned books which are marked skip (DRM'd or duplicates)
+        if ebook_obj.skip:
+            i += 1
+            prntr.progressf(num_blocks=i, total_size=len(ebooks))
+            continue
 
         # check for identical filehash (exact duplicate) or duplicated authortitle/format
         if ebook_obj.file_hash in ebooks_by_filehash.keys():

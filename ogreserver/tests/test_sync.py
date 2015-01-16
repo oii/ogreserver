@@ -67,9 +67,12 @@ def test_sync_ogre_id(datastore, rethinkdb, user):
     assert data['update'] is False, 'book should not need update'
 
 
-def test_sync_matching_authortitle(datastore, rethinkdb, user):
+def test_sync_dupe_on_authortitle(datastore, rethinkdb, user):
     '''
-    Test a sync with different file hashes, but same author/title gives two versions
+    Test sync from two users with same book (different file hash)
+
+    - Ensure the second sync attaches 2 versions to the single ebook_id
+    - Ensure 2 versions are created on said ebook
     '''
     ebooks_dict = {
         "Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland": {
@@ -93,23 +96,29 @@ def test_sync_matching_authortitle(datastore, rethinkdb, user):
 
     # same book author/title, different file hash, from a different user
     ebooks_dict[ebooks_dict.keys()[0]]['file_hash'] = '058e92c0'
-    user.username = '2ndsync'
 
-    # sync again
-    datastore.update_library(ebooks_dict, user)
+    # sync with diff user
+    user.username = '2ndsync'
+    syncd_books = datastore.update_library(ebooks_dict, user)
+
+    # assert first sync ebook_id returned
+    assert syncd_books.itervalues().next()['ebook_id'] == ebook_id
 
     # assert only one ebook in DB
     assert rethinkdb.table('ebooks').count().run() == 1, 'should only be 1 ebook'
 
     # assert ebook has two versions attached
-    assert rethinkdb.table('versions').filter(
-        {'ebook_id': ebook_id}
-    ).count().run() == 2, 'should be 2 versions'
+    ebook = datastore.load_ebook(ebook_id)
+    assert len(ebook['versions']) == 2, 'should be 2 versions'
 
 
-def test_sync_matching_ogre_id(datastore, rethinkdb, user):
+def test_sync_dupe_on_ebookid(datastore, rethinkdb, user):
     '''
-    Test a sync with different file hashes, but ogre_id/ebook_id supplied on second sync gives two versions
+    Test sync from two users with same book (different file hash/authortitle);
+    On the 2nd sync ebook_id is supplied
+
+    - Ensure the second sync attaches 2 versions to the single ebook_id
+    - Ensure 2 versions are created on said ebook
     '''
     ebooks_dict = {
         "Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland": {
@@ -140,24 +149,27 @@ def test_sync_matching_ogre_id(datastore, rethinkdb, user):
 
     # different file_hash, user
     ebooks_dict[ebooks_dict.keys()[0]]['file_hash'] = '058e92c0'
-    user.username = '2ndsync'
 
-    # sync again
-    datastore.update_library(ebooks_dict, user)
+    # sync with diff user
+    user.username = '2ndsync'
+    syncd_books = datastore.update_library(ebooks_dict, user)
 
     # assert only one ebook in DB
     assert rethinkdb.table('ebooks').count().run() == 1, 'should only be 1 ebook'
 
     # assert ebook has two versions attached
-    assert rethinkdb.table('versions').filter(
-        {'ebook_id': ebook_id}
-    ).count().run() == 2, 'should be 2 versions'
+    ebook = datastore.load_ebook(ebook_id)
+    assert len(ebook['versions']) == 2, 'should be 2 versions'
 
 
-def test_sync_matching_original_hash(datastore, rethinkdb, user):
+def test_sync_dupe_on_original_hash(datastore, rethinkdb, user):
     '''
-    Since ebooks have their meta data rewritten when adding OGRE_ID, the file hash
-    will change. Ensure that we match up incoming duplicates.
+    Test sync from two users with same book (same file hash)
+    (Ebooks' file_hash will change when adding OGRE_ID to metadata, so test
+     that ogre still recognises this second sync as being duplicate)
+
+    - Ensure the second sync rejects the duplicate
+    - Ensure only a single version is attached to said ebook
     '''
     ebooks_dict = {
         u"Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland": {
@@ -180,7 +192,8 @@ def test_sync_matching_original_hash(datastore, rethinkdb, user):
     # update file_hash post-metadata rewrite
     datastore.update_book_hash('d41d8cd9', '058e92c0')
 
-    # sync again, using same source file_hash, and no ogre_id in metadata
+    # sync with diff user
+    user.username = '2ndsync'
     syncd_books = datastore.update_library(ebooks_dict, user)
 
     # assert book is duplicate
@@ -188,6 +201,5 @@ def test_sync_matching_original_hash(datastore, rethinkdb, user):
     assert data['dupe'] is True, 'book should be a duplicate'
 
     # assert ebook has single version attached
-    assert rethinkdb.table('versions').filter(
-        {'ebook_id': data['ebook_id']}
-    ).count().run() == 1, 'should be single version'
+    ebook = datastore.load_ebook(data['ebook_id'])
+    assert len(ebook['versions']) == 1, 'should be single version'

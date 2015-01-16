@@ -124,44 +124,44 @@ def user(request, mysqldb):
 @pytest.yield_fixture(scope='session')
 def rethinkdb_init(request):
     import rethinkdb as r
-    conn = r.connect('localhost', 28015).repl()
+    conn = r.connect('localhost', 28015)
 
+    # drop/create test database
     if 'test' in r.db_list().run(conn):
         r.db_drop('test').run(conn)
-
-    # create test datebase
     r.db_create('test').run(conn)
-    r.db('test').table_create('ebooks', primary_key='ebook_id').run()
-    r.db('test').table_create('versions', primary_key='version_id').run()
-    r.db('test').table_create('formats', primary_key='file_hash').run()
-    r.db('test').table_create('sync_events').run()
+
+    # reconnect with db=test and repl
+    r.connect(db='test').repl()
+
+    r.table_create('ebooks', primary_key='ebook_id').run()
+    r.table_create('versions', primary_key='version_id').run()
+    r.table_create('formats', primary_key='file_hash').run()
+    r.table_create('sync_events').run()
+
+    def create_index(table, name, index=None):
+        if name not in r.table(table).index_list().run():
+            if index is None:
+                r.db('test').table(table).index_create(name).run()
+            else:
+                r.db('test').table(table).index_create(name, index).run()
+            r.db('test').table(table).index_wait(name).run()
 
     # create FK indexes
-    r.db('test').table('versions').index_create('ebook_id').run()
-    r.db('test').table('versions').index_wait('ebook_id').run()
+    create_index(
+        'ebooks', 'authortitle',
+        index=[r.row['lastname'].downcase(), r.row['firstname'].downcase(), r.row['title'].downcase()]
+    )
+    create_index('versions', 'ebook_id')
+    create_index('versions', 'original_filehash')
+    create_index('versions', 'ebook_username', index=[r.row['ebook_id'], r.row['username']])
+    create_index('formats', 'version_id')
+    create_index('formats', 'user_uploads', index=[r.row['user'], r.row['uploaded']])
+    create_index('formats', 'user_dedrm', index=[r.row['user'], r.row['dedrm']])
+    create_index('sync_events', 'username')
+    create_index('sync_events', 'timestamp')
+    create_index('sync_events', 'user_new_books_count', index=[r.row['username'], r.row['new_books_count']])
 
-    r.db('test').table('formats').index_create('version_id').run()
-    r.db('test').table('formats').index_wait('version_id').run()
-
-    # create further indexes
-    r.db('test').table('ebooks').index_create(
-        'authortitle', [
-            r.row['lastname'].downcase(),
-            r.row['firstname'].downcase(),
-            r.row['title'].downcase()
-        ]
-    ).run()
-    r.db('test').table('ebooks').index_wait('authortitle').run()
-
-    r.db('test').table('versions').index_create(
-        'ebook_username', [r.row['ebook_id'], r.row['username']]
-    ).run()
-    r.db('test').table('versions').index_wait('ebook_username').run()
-
-    r.db('test').table('versions').index_create('original_filehash').run()
-    r.db('test').table('versions').index_wait('original_filehash').run()
-
-    r.connect(db='test').repl()
     yield r
 
     # remove test database

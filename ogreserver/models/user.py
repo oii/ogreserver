@@ -83,12 +83,12 @@ class User(Base, UserMixin):
 
         # total uploads
         total_uploads = r.table('formats').get_all(
-            [self.username, True], index='user_uploads'
+            self.username, index='uploaded_by'
         ).count().run(conn)
 
         # number of DRM cleaned books
         total_dedrm = r.table('formats').get_all(
-            [self.username, True], index='user_dedrm'
+            [self.username, True], index='uploadedby_dedrm'
         ).count().run(conn)
 
         return {

@@ -67,12 +67,13 @@ def test_sync_ogre_id(datastore, rethinkdb, user):
     assert data['update'] is False, 'book should not need update'
 
 
-def test_sync_dupe_on_authortitle(datastore, rethinkdb, user):
+def test_sync_dupe_on_authortitle(datastore, rethinkdb, user, user2):
     '''
     Test sync from two users with same book (different file hash)
 
     - Ensure the second sync attaches 2 versions to the single ebook_id
     - Ensure 2 versions are created on said ebook
+    - Ensure the book is marked with both owners
     '''
     ebooks_dict = {
         "Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland": {
@@ -98,8 +99,7 @@ def test_sync_dupe_on_authortitle(datastore, rethinkdb, user):
     ebooks_dict[ebooks_dict.keys()[0]]['file_hash'] = '058e92c0'
 
     # sync with diff user
-    user.username = '2ndsync'
-    syncd_books = datastore.update_library(ebooks_dict, user)
+    syncd_books = datastore.update_library(ebooks_dict, user2)
 
     # assert first sync ebook_id returned
     assert syncd_books.itervalues().next()['ebook_id'] == ebook_id
@@ -111,14 +111,18 @@ def test_sync_dupe_on_authortitle(datastore, rethinkdb, user):
     ebook = datastore.load_ebook(ebook_id)
     assert len(ebook['versions']) == 2, 'should be 2 versions'
 
+    # assert both users are owners (2 unique users)
+    assert len({v['user']:None for v in ebook['versions']}.keys()) == 2
 
-def test_sync_dupe_on_ebookid(datastore, rethinkdb, user):
+
+def test_sync_dupe_on_ebookid(datastore, rethinkdb, user, user2):
     '''
     Test sync from two users with same book (different file hash/authortitle);
     On the 2nd sync ebook_id is supplied
 
     - Ensure the second sync attaches 2 versions to the single ebook_id
     - Ensure 2 versions are created on said ebook
+    - Ensure the book is marked with both owners
     '''
     ebooks_dict = {
         "Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland": {
@@ -151,8 +155,7 @@ def test_sync_dupe_on_ebookid(datastore, rethinkdb, user):
     ebooks_dict[ebooks_dict.keys()[0]]['file_hash'] = '058e92c0'
 
     # sync with diff user
-    user.username = '2ndsync'
-    syncd_books = datastore.update_library(ebooks_dict, user)
+    syncd_books = datastore.update_library(ebooks_dict, user2)
 
     # assert only one ebook in DB
     assert rethinkdb.table('ebooks').count().run() == 1, 'should only be 1 ebook'
@@ -161,8 +164,11 @@ def test_sync_dupe_on_ebookid(datastore, rethinkdb, user):
     ebook = datastore.load_ebook(ebook_id)
     assert len(ebook['versions']) == 2, 'should be 2 versions'
 
+    # assert both users are owners (2 unique users)
+    assert len({v['user']:None for v in ebook['versions']}.keys()) == 2
 
-def test_sync_dupe_on_original_hash(datastore, rethinkdb, user):
+
+def test_sync_dupe_on_original_hash(datastore, rethinkdb, user, user2):
     '''
     Test sync from two users with same book (same file hash)
     (Ebooks' file_hash will change when adding OGRE_ID to metadata, so test
@@ -170,6 +176,7 @@ def test_sync_dupe_on_original_hash(datastore, rethinkdb, user):
 
     - Ensure the second sync rejects the duplicate
     - Ensure only a single version is attached to said ebook
+    - Ensure the book is marked with both owners
     '''
     ebooks_dict = {
         u"Lewis\u0006Carroll\u0007Alice's Adventures in Wonderland": {
@@ -193,8 +200,7 @@ def test_sync_dupe_on_original_hash(datastore, rethinkdb, user):
     datastore.update_book_hash('d41d8cd9', '058e92c0')
 
     # sync with diff user
-    user.username = '2ndsync'
-    syncd_books = datastore.update_library(ebooks_dict, user)
+    syncd_books = datastore.update_library(ebooks_dict, user2)
 
     # assert book is duplicate
     file_hash, data = syncd_books.items()[0]
@@ -203,3 +209,6 @@ def test_sync_dupe_on_original_hash(datastore, rethinkdb, user):
     # assert ebook has single version attached
     ebook = datastore.load_ebook(data['ebook_id'])
     assert len(ebook['versions']) == 1, 'should be single version'
+
+    # assert both users are owners of single format
+    assert len(ebook['versions'][0]['formats'][0]['owners']) == 2

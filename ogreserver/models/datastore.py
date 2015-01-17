@@ -146,6 +146,9 @@ class DataStore():
                 # increase popularity on incoming duplicate ebook
                 self.increment_popularity(e.file_hash)
 
+                # add the current user as an owner of this file
+                self.append_owner(e.file_hash, user.username)
+
                 # enable client to update book with ebook_id
                 output[incoming['file_hash']]['ebook_id'] = e.ebook_id
 
@@ -248,13 +251,23 @@ class DataStore():
             'file_hash': file_hash,
             'version_id': version_id,
             'format': fmt,
-            'user': username if username is not None else 'ogrebot',
+            'owners': [username if username is not None else 'ogrebot'],
+            'uploaded_by': None,
             'uploaded': False,
             'ogreid_tagged': ogreid_tagged,
             'dedrm': dedrm,
         }).run()
         if 'first_error' in ret:
             raise RethinkdbError(ret['first_error'])
+
+
+    def append_owner(self, file_hash, username):
+        """
+        Append the current user to the list of owners of this particular file
+        """
+        r.table('formats').get(file_hash).update(
+            {'owners': r.row['owners'].set_insert(username)}
+        ).run()
 
 
     def load_ebook(self, ebook_id):
@@ -556,11 +569,14 @@ class DataStore():
         """
         return r.table('formats').get(file_hash)['uploaded'].run()
 
-    def set_uploaded(self, file_hash, isit=True):
+    def set_uploaded(self, file_hash, username, isit=True):
         """
         Mark an ebook as having been uploaded to S3
         """
-        r.table('formats').get(file_hash).update({'uploaded': isit}).run()
+        r.table('formats').get(file_hash).update({
+            'uploaded': isit,
+            'uploaded_by': username
+        }).run()
 
     def set_dedrm_flag(self, file_hash):
         """
@@ -569,7 +585,7 @@ class DataStore():
         r.table('formats').get(file_hash).update({'dedrm': True}).run()
 
 
-    def store_ebook(self, ebook_id, file_hash, filename, filepath, fmt):
+    def store_ebook(self, ebook_id, file_hash, filename, filepath, fmt, username):
         """
         Store an ebook on S3
         """
@@ -586,7 +602,7 @@ class DataStore():
             metadata = k._get_remote_metadata()
             if 'x-amz-meta-ogre-key' in metadata and metadata['x-amz-meta-ogre-key'] == ebook_id:
                 # if already exists, abort and flag as uploaded
-                self.set_uploaded(file_hash)
+                self.set_uploaded(file_hash, username)
                 return False
 
         # calculate uploaded file md5
@@ -609,7 +625,7 @@ class DataStore():
                 self.logger.info('UPLOADED {}'.format(filename))
 
                 # mark ebook as stored
-                self.set_uploaded(file_hash)
+                self.set_uploaded(file_hash, username)
 
             except S3ResponseError:
                 # TODO log
@@ -703,7 +719,7 @@ class DataStore():
 
         # filter by username
         if username is not None:
-            query = query.filter({'user': username})
+            query = query.filter(lambda d: d['owners'].contains(username))
 
         cursor = query.run()
 

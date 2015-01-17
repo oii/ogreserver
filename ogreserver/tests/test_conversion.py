@@ -21,7 +21,7 @@ def test_search(datastore, user, rethinkdb, s3bucket, conversion, mock_task_conv
         'size': 1234,
         'dedrm': False,
     })
-    datastore.set_uploaded(file_hash)
+    datastore.set_uploaded(file_hash, user.username)
 
     # search for books which need converting; this starts convert() tasks
     conversion.search()
@@ -83,7 +83,7 @@ def test_convert(datastore, user, rethinkdb, s3bucket, conversion,
     conversion.ebook_write_metadata.call_count == 1
 
     # assert celery store task was called
-    mock_task_store_ebook.assert_called_once_with('bcddb798', converted_file_hash, 'mobi')
+    mock_task_store_ebook.assert_called_once_with('bcddb798', converted_file_hash, 'mobi', 'ogrebot')
 
     # verify new format object was created
     format_obj = rethinkdb.table('formats').get(converted_file_hash).run()

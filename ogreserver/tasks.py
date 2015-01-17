@@ -12,7 +12,7 @@ from .models.datastore import DataStore, S3DatastoreError
 
 
 @app.celery.task
-def store_ebook(ebook_id, file_hash, fmt):
+def store_ebook(ebook_id, file_hash, fmt, username):
     """
     Store an ebook in the datastore
     """
@@ -31,7 +31,7 @@ def store_ebook(ebook_id, file_hash, fmt):
             filepath = os.path.join(app.config['UPLOADED_EBOOKS_DEST'], '{}.{}'.format(file_hash, fmt))
 
             # store the file into S3
-            if ds.store_ebook(ebook_id, file_hash, filename, filepath, fmt):
+            if ds.store_ebook(ebook_id, file_hash, filename, filepath, fmt, username):
                 app.logger.info('{} was uploaded'.format(filename))
                 return True
             else:

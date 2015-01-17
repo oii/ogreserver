@@ -114,7 +114,7 @@ class Conversion:
         self.datastore._create_new_format(version_id, md5_tup[0], dest_fmt)
 
         # store on S3
-        task_store_ebook.delay(ebook_id, md5_tup[0], dest_fmt)
+        task_store_ebook.delay(ebook_id, md5_tup[0], dest_fmt, 'ogrebot')
 
 
     def ebook_write_metadata(self, ebook_id, file_hash, filepath, fmt):

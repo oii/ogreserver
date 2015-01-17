@@ -134,7 +134,7 @@ def upload():
     app.logger.info('UPLOADED 1')
 
     app.logger.debug('{} {} {}'.format(
-        current_user.id,
+        current_user.username,
         request.form.get('pk'),
         request.files['ebook'].content_length
     ))
@@ -148,6 +148,7 @@ def upload():
     res = task_store_ebook.delay(
         ebook_id=request.form.get('ebook_id'),
         file_hash=request.form.get('file_hash'),
-        fmt=request.form.get('format')
+        fmt=request.form.get('format'),
+        username=current_user.username
     )
     return res.task_id

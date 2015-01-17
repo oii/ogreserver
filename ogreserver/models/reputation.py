@@ -68,7 +68,7 @@ class Reputation():
         if not self.user.has_badge(Badges.Librarian):
             # award badges based on how many books a user has uploaded
             count = r.table('formats').get_all(
-                [self.user.username, True], index='user_uploads'
+                self.user.username, index='uploaded_by'
             ).count().run(conn)
 
             if count >= 200:
@@ -81,7 +81,7 @@ class Reputation():
         if not self.user.has_badge(Badges.Pirate):
             # award badge for decrypted ebooks
             count = r.table('formats').get_all(
-                [self.user.username, True], index='user_dedrm'
+                [self.user.username, True], index='uploadedby_dedrm'
             ).count().run(conn)
 
             if count > 0:

@@ -111,6 +111,13 @@ def mysqldb(request, flask_app):
 
 @pytest.fixture(scope='session')
 def user(request, mysqldb):
+    return _create_user(mysqldb)
+
+@pytest.fixture(scope='session')
+def user2(request, mysqldb):
+    return _create_user(mysqldb)
+
+def _create_user(mysqldb):
     # create random username
     username = ''.join(random.choice(string.ascii_lowercase) for n in range(6))
     # create user in auth DB
@@ -156,8 +163,8 @@ def rethinkdb_init(request):
     create_index('versions', 'original_filehash')
     create_index('versions', 'ebook_username', index=[r.row['ebook_id'], r.row['username']])
     create_index('formats', 'version_id')
-    create_index('formats', 'user_uploads', index=[r.row['user'], r.row['uploaded']])
-    create_index('formats', 'user_dedrm', index=[r.row['user'], r.row['dedrm']])
+    create_index('formats', 'uploaded_by')
+    create_index('formats', 'uploadedby_dedrm', index=[r.row['uploaded_by'], r.row['dedrm']])
     create_index('sync_events', 'username')
     create_index('sync_events', 'timestamp')
     create_index('sync_events', 'user_new_books_count', index=[r.row['username'], r.row['new_books_count']])

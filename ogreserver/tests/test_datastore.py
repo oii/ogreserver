@@ -8,9 +8,9 @@ def test_update_book_hash(datastore, rethinkdb, user):
         'firstname': 'H. C.',
         'lastname': 'Andersen',
         'title': "Andersen's Fairy Tales",
-        'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
+        'ebook_id': 'bcddb798'
     }).run()
-    datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user.username, {
+    datastore._create_new_version('bcddb798', user.username, {
         'format': 'epub',
         'file_hash': '38b3fc3a',
         'size': 1234,
@@ -26,14 +26,17 @@ def test_update_book_hash(datastore, rethinkdb, user):
 
 
 def test_find_formats(datastore, user, rethinkdb):
+    '''
+    Ensure mobi format is found to be missing from a book with only epub format
+    '''
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
         'firstname': 'H. C.',
         'lastname': 'Andersen',
         'title': "Andersen's Fairy Tales",
-        'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
+        'ebook_id': 'bcddb798'
     }).run()
-    datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user.username, {
+    datastore._create_new_version('bcddb798', user.username, {
         'format': 'epub',
         'file_hash': '38b3fc3a',
         'size': 1234,
@@ -45,14 +48,17 @@ def test_find_formats(datastore, user, rethinkdb):
 
 
 def test_find_formats_none(datastore, user, rethinkdb):
+    '''
+    Ensure no formats missing when both epub & mobi are available
+    '''
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
         'firstname': 'H. C.',
         'lastname': 'Andersen',
         'title': "Andersen's Fairy Tales",
-        'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
+        'ebook_id': 'bcddb798'
     }).run()
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user.username, {
+    version_id = datastore._create_new_version('bcddb798', user.username, {
         'format': 'epub',
         'file_hash': '38b3fc3a',
         'size': 1234,

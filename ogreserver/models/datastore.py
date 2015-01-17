@@ -694,26 +694,18 @@ class DataStore():
         return '{}.{}.{}'.format(authortitle, file_hash[0:8], format)
 
 
-    def get_missing_books(self, username=None, hash_filter=None, verify_s3=False):
+    def get_missing_books(self, username=None, verify_s3=False):
         """
         Query the DB for books marked as not uploaded
 
         The verify_s3 flag enables a further check to be run against S3 to ensure 
         the file is actually there
         """
-        if username is None and hash_filter is None and verify_s3 is True:
+        if username is None and verify_s3 is True:
             raise Exception("Can't verify entire library in one go.")
 
         # query the formats table for missing ebooks
-        query = r.table('formats').filter({'uploaded': False})
-
-        # filter by list of md5 file hashes
-        if hash_filter is not None:
-            query = r.expr(hash_filter).do(
-                lambda hash_filter: query.filter(
-                    lambda d: hash_filter.contains(d['file_hash'])
-                )
-            )
+        query = r.table('formats').get_all(False, index='uploaded')
 
         # join up to the versions table
         query = query.eq_join('version_id', r.table('versions'), index='version_id').zip()

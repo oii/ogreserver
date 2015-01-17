@@ -70,3 +70,51 @@ def test_find_formats_none(datastore, user, rethinkdb):
     assert len(versions) == 0
     versions = datastore.find_missing_formats('mobi')
     assert len(versions) == 0
+
+
+def test_get_missing_books_for_user(datastore, user, user2, rethinkdb):
+    # create test ebook data directly in rethinkdb
+    rethinkdb.table('ebooks').insert({
+        'firstname': 'H. C.',
+        'lastname': 'Andersen',
+        'title': "Andersen's Fairy Tales",
+        'ebook_id': 'bcddb798'
+    }).run()
+    version_id = datastore._create_new_version('bcddb798', user.username, {
+        'format': 'epub',
+        'file_hash': '38b3fc3a',
+        'size': 1234,
+        'dedrm': False,
+    })
+    # add another format and mark uploaded=True
+    datastore._create_new_format(version_id, '9da4f3ba', 'mobi', username=user.username)
+    datastore.set_uploaded('9da4f3ba', user.username)
+
+    # should be a single missing book for user
+    assert len(datastore.get_missing_books(username=user.username)) == 1
+
+    # add another version
+    version_id = datastore._create_new_version('bcddb798', user.username, {
+        'format': 'epub',
+        'file_hash': '06bc5351',
+        'size': 1234,
+        'dedrm': False,
+    })
+
+    # should now be two missing books for user
+    assert len(datastore.get_missing_books(username=user.username)) == 2
+
+    # mark book uploaded
+    datastore.set_uploaded('06bc5351', user.username)
+
+    # should be a single missing book for user
+    assert len(datastore.get_missing_books(username=user.username)) == 1
+
+    # assert there are no books for user2
+    assert len(datastore.get_missing_books(username=user2.username)) == 0
+
+    # add this user as another owner of the un-uploaded file
+    datastore.append_owner('38b3fc3a', user2.username)
+
+    # should be now a single missing book for user2
+    assert len(datastore.get_missing_books(username=user2.username)) == 1

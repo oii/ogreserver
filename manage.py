@@ -239,6 +239,7 @@ def set_indexes():
     create_index('versions', 'original_filehash')
     create_index('versions', 'ebook_username', index=[r.row['ebook_id'], r.row['username']])
     create_index('formats', 'version_id')
+    create_index('formats', 'uploaded')
     create_index('formats', 'uploaded_by')
     create_index('formats', 'uploadedby_dedrm', index=[r.row['uploaded_by'], r.row['dedrm']])
     create_index('sync_events', 'username')

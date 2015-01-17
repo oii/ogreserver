@@ -29,3 +29,6 @@ class SameHashSuppliedOnUpdateError(OgreException):
 
 class RethinkdbError(OgreException):
     pass
+
+class S3DatastoreError(OgreException):
+    pass

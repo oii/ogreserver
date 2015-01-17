@@ -7,8 +7,8 @@ from flask import current_app as app
 
 from .extensions.database import setup_db_session
 
-from .exceptions import ConversionFailedError, EbookNotFoundOnS3Error
-from .models.datastore import DataStore, S3DatastoreError
+from .exceptions import ConversionFailedError, EbookNotFoundOnS3Error, S3DatastoreError
+from .models.datastore import DataStore
 
 
 @app.celery.task

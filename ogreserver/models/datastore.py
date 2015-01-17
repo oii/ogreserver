@@ -19,7 +19,8 @@ import ftfy
 from .user import User
 from ..utils import connect_s3
 
-from ..exceptions import OgreException, BadMetaDataError, ExactDuplicateError, RethinkdbError
+from ..exceptions import OgreException, BadMetaDataError, ExactDuplicateError
+from ..exceptions import S3DatastoreError, RethinkdbError
 from ..exceptions import NoFormatAvailableError, SameHashSuppliedOnUpdateError
 
 
@@ -758,7 +759,3 @@ class DataStore():
             'new_books_count': new_books_count,
             'timestamp': r.now(),
         }).run()
-
-
-class S3DatastoreError(Exception):
-    pass

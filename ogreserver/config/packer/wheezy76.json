@@ -4,6 +4,7 @@
 		"salt_version": "",
 		"cleanup_pause": "",
 		"headless": "true",
+		"dist_upgrade": "false",
 		"iso_local": "debian-7.6.0-amd64-netinst.iso"
 	},
 	"builders": [{
@@ -39,7 +40,8 @@
 			"memsize": "512",
 			"numvcpus": "1"
 		}
-	},{
+	},
+	{
 		"type": "amazon-ebs",
 		"ami_name": "ami-{{user `app_name`}}-{{ timestamp }}",
 		"instance_type": "t2.micro",
@@ -49,18 +51,21 @@
 	}],
 	"provisioners": [{
 		"type": "shell",
-		"inline": "sudo apt-get update"
-	},{
+		"inline": "echo 'vagrant' | sudo -S apt-get -y update"
+	},
+	{
 		"type": "shell",
 		"override": {
 			"vmware-iso": {
 				"execute_command": "echo 'vagrant' | {{.Vars}} sudo -E -S bash '{{.Path}}'",
 				"environment_vars": [
 					"CLEANUP_PAUSE={{user `cleanup_pause`}}",
-					"SALT_VERSION={{user `salt_version`}}"
+					"SALT_VERSION={{user `salt_version`}}",
+					"DIST_UPGRADE={{user `dist_upgrade`}}"
 				],
 				"scripts": [
 					"scripts/debian.base.sh",
+					"scripts/dist-upgrade.sh",
 					"scripts/vagrant.sh",
 					"scripts/vmtool.sh",
 					"scripts/saltstack.sh",
@@ -70,7 +75,6 @@
 			"amazon-ebs": {
 				"execute_command": "{{.Vars}} sudo -E bash '{{.Path}}'",
 				"environment_vars": [
-					"CLEANUP_PAUSE={{user `cleanup_pause`}}",
 					"SALT_VERSION={{user `salt_version`}}"
 				],
 				"scripts": [
@@ -78,7 +82,8 @@
 				]
 			}
 		}
-	},{
+	},
+	{
 		"type": "salt-masterless",
 		"local_state_tree": "../salt",
 		"local_pillar_roots": "../pillar",

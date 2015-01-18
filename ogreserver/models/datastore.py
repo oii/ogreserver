@@ -599,7 +599,6 @@ class DataStore():
 
         # check if our file is already up on S3
         if k.exists() is True:
-            k = bucket.get_key(filename)
             metadata = k._get_remote_metadata()
             if 'x-amz-meta-ogre-key' in metadata and metadata['x-amz-meta-ogre-key'] == ebook_id:
                 # if already exists, abort and flag as uploaded
@@ -613,24 +612,22 @@ class DataStore():
 
         # error check uploaded file
         if file_hash != md5_tup[0]:
-            # TODO logging
             raise S3DatastoreError("Upload failed checksum 1")
         else:
             try:
-                # TODO time this and print
                 # push file to S3
-                k.set_contents_from_filename(filepath,
+                k.set_contents_from_filename(
+                    filepath,
                     headers={'x-amz-meta-ogre-key': ebook_id},
-                    md5=md5_tup,
+                    md5=md5_tup
                 )
                 self.logger.info('UPLOADED {}'.format(filename))
 
                 # mark ebook as stored
                 self.set_uploaded(file_hash, username)
 
-            except S3ResponseError:
-                # TODO log
-                raise S3DatastoreError("Upload failed checksum 2")
+            except S3ResponseError as e:
+                raise S3DatastoreError("Upload failed checksum 2", inner_excp=e)
 
         return True
 

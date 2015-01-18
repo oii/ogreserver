@@ -76,3 +76,6 @@ class EbookIdDuplicateEbookError(DuplicateEbookBaseError):
 
 class MissingFromCacheError(OgreException):
     pass
+
+class FailedUploadsQueryError(OgreException):
+    pass

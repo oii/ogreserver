@@ -24,6 +24,7 @@ from .exceptions import AuthortitleDuplicateEbookError, EbookIdDuplicateEbookErr
 from .exceptions import SyncError, UploadError, CorruptEbookError
 from .exceptions import FailedWritingMetaDataError, FailedConfirmError, FailedDebugLogsError
 from .exceptions import MissingFromCacheError, OgreException, OgreserverDownError
+from .exceptions import FailedUploadsQueryError
 
 
 def authenticate(host, username, password):
@@ -85,35 +86,28 @@ def sync(config, prntr):
     # 3) send dict of ebooks / md5s to ogreserver
     response = sync_with_server(config, prntr, session_key, ebooks_dict)
 
-    if not response['ebooks_to_upload'] and not response['ebooks_to_update']:
-        # filter the OgreWarnings out of the error list
-        errord_list = [err for err in errord_list if isinstance(err, OgreException)]
-
-        if not errord_list:
-            prntr.p('Finished, nothing to do.')
-        else:
-            if config['debug'] is False:
-                prntr.e('Finished with errors. Re-run with --debug to send logs to OGRE')
-            else:
-                prntr.e('Finished with errors.')
-                send_logs(prntr, config['host'], session_key, errord_list)
-        return
-
     prntr.p('Come on sucker, lick my battery')
 
     # 4) set ogre_id in metadata of each sync'd ebook
-    update_local_metadata(
-        config, prntr, session_key, ebooks_dict, response['ebooks_to_update']
-    )
+    update_local_metadata(config, prntr, session_key, ebooks_dict, response['to_update'])
 
-    # 5) upload the ebooks requested by ogreserver
-    upload_ebooks(
-        config, prntr, session_key, ebooks_dict, response['ebooks_to_upload']
-    )
+    # 5) query the set of books to upload
+    ebooks_to_upload = query_for_uploads(config, prntr, session_key)
 
-    # 6) send a log of all events, and upload bad books
-    if config['debug'] is True:
-        send_logs(prntr, config['host'], session_key, errord_list)
+    # 6) upload the ebooks requested by ogreserver
+    upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload)
+
+    # 7) display/send errors
+    errord_list = [err for err in errord_list if isinstance(err, OgreException)]
+
+    if errord_list:
+        if not config['debug']:
+            prntr.e('Finished with errors. Re-run with --debug to send logs to OGRE')
+        else:
+            # send a log of all events, and upload bad books
+            send_logs(prntr, config['host'], session_key, errord_list)
+    else:
+        prntr.p('Finished, nothing further to do.')
 
 
 def stats(config, prntr, ebooks_dict=None):
@@ -467,6 +461,23 @@ def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_upd
         prntr.p('Updated {} ebooks'.format(success), success=True)
     if failed > 0:
         prntr.e('Failed updating {} ebooks'.format(failed))
+
+
+def query_for_uploads(config, prntr, session_key):
+    try:
+        # query ogreserver for books to upload
+        req = urllib2.Request(
+            url='http://{}/api/v1/to-upload'.format(config['host']),
+            headers={
+                'Content-type': 'application/json',
+                'Ogre-key': session_key
+            },
+        )
+        resp = urllib2.urlopen(req)
+        return json.loads(resp.read())
+
+    except (HTTPError, URLError) as e:
+        raise FailedUploadsQueryError(inner_excp=e)
 
 
 def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):

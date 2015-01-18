@@ -60,15 +60,8 @@ def post():
     r.earn_badges()
     msgs = r.get_new_badges()
 
-    # only request books for upload which are in client's current set
-    incoming = [item['file_hash'] for item in request.json.values()]
-
-    # query books missing from S3 and supply back to the client
-    missing_books = ds.get_missing_books(username=current_user.username, hash_filter=incoming)
-
     return json.dumps({
-        'ebooks_to_update': update_books,
-        'ebooks_to_upload': missing_books,
+        'to_update': update_books,
         'messages': msgs,
         'errors': errors
     })
@@ -127,6 +120,17 @@ def confirm():
         return 'same'
 
 
+@bp_api.route('/to-upload', methods=['GET'])
+@auth_token_required
+def to_upload():
+    ds = DataStore(app.config, app.logger, app.whoosh)
+
+    # query books missing from S3 and supply back to the client
+    missing_books = ds.get_missing_books(username=current_user.username)
+
+    return json.dumps(missing_books)
+
+
 @bp_api.route('/upload', methods=['POST'])
 @auth_token_required
 def upload():
@@ -135,7 +139,7 @@ def upload():
 
     app.logger.debug('{} {} {}'.format(
         current_user.username,
-        request.form.get('pk'),
+        request.form.get('ebook_id'),
         request.files['ebook'].content_length
     ))
 

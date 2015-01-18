@@ -22,7 +22,7 @@ def test_search(mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):
     shutil.copy(os.path.join(ebook_lib_path, 'pg11.epub'), client_config['ebook_home'])
 
     # search for ebooks
-    data, errord = search_for_ebooks(client_config, prntr=DummyPrinter())
+    data, _, errord = search_for_ebooks(client_config, prntr=DummyPrinter())
 
     # verify found book
     assert len(data) == 1
@@ -43,7 +43,7 @@ def test_search_ranking(mock_subprocess_popen, client_config, ebook_lib_path, tm
         shutil.copy(os.path.join(ebook_lib_path, book), client_config['ebook_home'])
 
     # search for ebooks
-    data, errord = search_for_ebooks(client_config, prntr=DummyPrinter())
+    data, _, errord = search_for_ebooks(client_config, prntr=DummyPrinter())
 
     # verify found mobi file hash; it is ranked higher than epub
     assert len(data) == 1

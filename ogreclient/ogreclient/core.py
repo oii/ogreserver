@@ -67,7 +67,7 @@ def sync(config, prntr):
     session_key = authenticate(config['host'], config['username'], config['password'])
 
     # 1) find ebooks in config['ebook_home'] on local machine
-    ebooks_dict, errord_list = search_for_ebooks(config, prntr)
+    ebooks_by_authortitle, ebooks_by_filehash, errord_list = search_for_ebooks(config, prntr)
 
     if len(errord_list) > 0:
         prntr.p('Errors occurred during scan:')
@@ -76,7 +76,7 @@ def sync(config, prntr):
 
     # 2) remove DRM
     if config['no_drm'] is False:
-        errord_list = clean_all_drm(config, prntr, ebooks_dict)
+        errord_list = clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash)
 
         if len(errord_list) > 0:
             prntr.p('Errors occurred during decryption:')
@@ -84,18 +84,18 @@ def sync(config, prntr):
                 prntr.e('{}'.format(unicode(message)), excp=e)
 
     # 3) send dict of ebooks / md5s to ogreserver
-    response = sync_with_server(config, prntr, session_key, ebooks_dict)
+    response = sync_with_server(config, prntr, session_key, ebooks_by_authortitle)
 
     prntr.p('Come on sucker, lick my battery')
 
     # 4) set ogre_id in metadata of each sync'd ebook
-    update_local_metadata(config, prntr, session_key, ebooks_dict, response['to_update'])
+    update_local_metadata(config, prntr, session_key, ebooks_by_filehash, response['to_update'])
 
     # 5) query the set of books to upload
     ebooks_to_upload = query_for_uploads(config, prntr, session_key)
 
     # 6) upload the ebooks requested by ogreserver
-    upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload)
+    upload_ebooks(config, prntr, session_key, ebooks_by_filehash, ebooks_to_upload)
 
     # 7) display/send errors
     errord_list = [err for err in errord_list if isinstance(err, OgreException)]
@@ -110,14 +110,14 @@ def sync(config, prntr):
         prntr.p('Finished, nothing further to do.')
 
 
-def stats(config, prntr, ebooks_dict=None):
-    ebooks_dict, errord_list = search_for_ebooks(config, prntr)
+def stats(config, prntr, ebooks_by_authortitle=None):
+    ebooks_by_authortitle, ebooks_by_filehash, errord_list = search_for_ebooks(config, prntr)
 
     counts = {}
     errors = {}
 
     # iterate authortitle:EbookObject pairs
-    for key, e in ebooks_dict.iteritems():
+    for key, e in ebooks_by_authortitle.iteritems():
         if e.format not in counts.keys():
             counts[e.format] = 1
         else:
@@ -269,18 +269,18 @@ def search_for_ebooks(config, prntr):
     prntr.p('Found {} ebooks'.format(len(ebooks_by_authortitle)), success=True)
 
     if len(ebooks_by_authortitle) == 0:
-        return {}, errord_list
+        return {}, {}, errord_list
 
-    return ebooks_by_authortitle, errord_list
+    return ebooks_by_authortitle, ebooks_by_filehash, errord_list
 
 
-def clean_all_drm(config, prntr, ebooks_dict):
+def clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash):
     errord_list = {}
 
     i = 0
     cleaned = 0
 
-    for authortitle, ebook_obj in ebooks_dict.iteritems():
+    for authortitle, ebook_obj in ebooks_by_authortitle.iteritems():
         # only attempt decrypt on ebooks which are defined as is_valid_format
         if EBOOK_FORMATS[ebook_obj.format][0] is False:
             continue
@@ -295,7 +295,9 @@ def clean_all_drm(config, prntr, ebooks_dict):
 
             if new_ebook_obj is not None:
                 # update the sync data with the decrypted ebook
-                ebooks_dict[authortitle] = new_ebook_obj
+                ebooks_by_authortitle[authortitle] = new_ebook_obj
+                del(ebooks_by_filehash[ebook_obj.file_hash])
+                ebooks_by_filehash[new_ebook_obj.file_hash] = new_ebook_obj
                 cleaned += 1
 
         except CorruptEbookError as e:
@@ -305,7 +307,7 @@ def clean_all_drm(config, prntr, ebooks_dict):
 
         if config['verbose'] is False:
             i += 1
-            prntr.progressf(num_blocks=i, total_size=len(ebooks_dict))
+            prntr.progressf(num_blocks=i, total_size=len(ebooks_by_authortitle))
 
     if config['verbose'] is False:
         prntr.p('Cleaned DRM from {} ebooks'.format(cleaned), success=True)
@@ -389,10 +391,10 @@ def remove_drm_from_ebook(config, prntr, filepath, file_hash, suffix):
     return ebook_obj
 
 
-def sync_with_server(config, prntr, session_key, ebooks_dict):
+def sync_with_server(config, prntr, session_key, ebooks_by_authortitle):
     # serialize ebooks to dictionary for sending to ogreserver
     ebooks_for_sync = {}
-    for authortitle, ebook_obj in ebooks_dict.iteritems():
+    for authortitle, ebook_obj in ebooks_by_authortitle.iteritems():
         # only send format is defined as is_valid_format
         if EBOOK_FORMATS[ebook_obj.format][0] is True:
             ebooks_for_sync[authortitle] = ebook_obj.serialize()
@@ -430,32 +432,35 @@ def sync_with_server(config, prntr, session_key, ebooks_dict):
     return response
 
 
-def update_local_metadata(config, prntr, session_key, ebooks_dict, ebooks_to_update):
+def update_local_metadata(config, prntr, session_key, ebooks_by_filehash, ebooks_to_update):
     success, failed = 0, 0
 
     # update any books with ogre_id supplied from ogreserver
     for file_hash, item in ebooks_to_update.iteritems():
-        # find this book in the scan data
-        for authortitle, ebook_obj in ebooks_dict.iteritems():
-            if file_hash == ebook_obj.file_hash:
-                try:
-                    # update the metadata on the ebook, and communicate that to ogreserver
-                    new_file_hash = ebook_obj.add_ogre_id_tag(item['ebook_id'], session_key)
+        ebook_obj = ebooks_by_filehash[file_hash]
 
-                    success += 1
-                    if config['verbose']:
-                        prntr.p('Wrote OGRE_ID to {}'.format(ebook_obj.path))
+        try:
+            # update the metadata on the ebook, and communicate that to ogreserver
+            new_file_hash = ebook_obj.add_ogre_id_tag(item['ebook_id'], session_key)
 
-                    # write to ogreclient cache
-                    config['ebook_cache'].update_ebook_property(
-                        ebook_obj.path,
-                        file_hash=new_file_hash,
-                        ebook_id=item['ebook_id']
-                    )
+            # update the global dict with the new file_hash
+            del(ebooks_by_filehash[file_hash])
+            ebooks_by_filehash[new_file_hash] = ebook_obj
 
-                except (FailedWritingMetaDataError, FailedConfirmError) as e:
-                    prntr.e('Failed saving OGRE_ID in {}'.format(ebook_obj.path), excp=e)
-                    failed += 1
+            success += 1
+            if config['verbose']:
+                prntr.p('Wrote OGRE_ID to {}'.format(ebook_obj.path))
+
+            # write to ogreclient cache
+            config['ebook_cache'].update_ebook_property(
+                ebook_obj.path,
+                file_hash=new_file_hash,
+                ebook_id=item['ebook_id']
+            )
+
+        except (FailedWritingMetaDataError, FailedConfirmError) as e:
+            prntr.e('Failed saving OGRE_ID in {}'.format(ebook_obj.path), excp=e)
+            failed += 1
 
     if success > 0:
         prntr.p('Updated {} ebooks'.format(success), success=True)
@@ -480,7 +485,7 @@ def query_for_uploads(config, prntr, session_key):
         raise FailedUploadsQueryError(inner_excp=e)
 
 
-def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):
+def upload_ebooks(config, prntr, session_key, ebooks_by_filehash, ebooks_to_upload):
     if len(ebooks_to_upload) == 0:
         return
 
@@ -493,16 +498,15 @@ def upload_ebooks(config, prntr, session_key, ebooks_dict, ebooks_to_upload):
 
     # upload each requested by the server
     for upload in ebooks_to_upload:
-        # iterate all user's found books
-        for authortitle, ebook_obj in ebooks_dict.iteritems():
-            if upload['file_hash'] == ebook_obj.file_hash:
-                try:
-                    upload_single_book(config['host'], session_key, ebook_obj.path, upload)
-                    success += 1
+        ebook_obj = ebooks_by_filehash[upload['file_hash']]
 
-                except UploadError as e:
-                    prntr.e('Failed uploading {}'.format(ebook_obj.path), excp=e)
-                    failed += 1
+        try:
+            upload_single_book(config['host'], session_key, ebook_obj.path, upload)
+            success += 1
+
+        except UploadError as e:
+            prntr.e('Failed uploading {}'.format(ebook_obj.path), excp=e)
+            failed += 1
 
         i += 1
         prntr.progressf(num_blocks=i, total_size=len(ebooks_to_upload))

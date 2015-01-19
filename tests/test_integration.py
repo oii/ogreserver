@@ -44,33 +44,3 @@ def test_update_ogre_id(ogreserver, client_config, tmpdir):
     test client/server interaction in add_ogre_id_to_ebook
     '''
     pass
-
-
-@pytest.mark.xfail
-def test_drm_tools_install(ogreserver, client_config, virtualenv):
-    '''
-    test client download & install of dedrm tools via pypiserver
-    '''
-    # locate python binary in venv
-    venv_bin_python = os.path.join(virtualenv.path, 'bin', 'python')
-
-    # change into ogreclient directory from project root
-    os.chdir(os.path.join(os.getcwd(), 'ogreclient'))
-
-    # install ogreclient from source
-    virtualenv._execute([venv_bin_python, 'setup.py', 'install'])
-
-    # TODO currently the following fails since it calls "pip install"
-    # which is not pointing to the new virtualenv we created for the test
-
-    # test install dedrm from ogreserver
-    ret = download_dedrm(
-        client_config['host'],
-        client_config['username'],
-        client_config['password'],
-        prntr=DummyPrinter()
-    )
-
-    # authentication failure
-    assert ret is not None, 'authentication failure'
-    assert ret is not False, 'authentication failure'

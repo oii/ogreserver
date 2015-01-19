@@ -2,12 +2,15 @@ from __future__ import unicode_literals
 
 import base64
 import contextlib
+import functools
 import hashlib
 import random
 import shutil
 import string
 import sys
 import tempfile
+
+from .exceptions import OgreException
 
 
 def compute_md5(filepath, buf_size=8192):
@@ -88,6 +91,34 @@ def capture():
         sys.stdout, sys.stderr = oldout, olderr
         out[0] = out[0].getvalue().decode('utf-8')
         out[1] = out[1].getvalue().decode('utf-8')
+
+
+def retry(times):
+    def decorator(f):
+        @functools.wraps(f)
+        def wrapped(*args, **kwargs):
+            """
+            Retry method $times number of times.
+
+            - Expects OgreExceptions to indicate called method failure.
+            - The most recent OgreException is re-raised if no success.
+            """
+            retry = 0
+
+            while retry < times:
+                last_error = None
+                try:
+                    f(*args, **kwargs)
+                    break
+                except OgreException as e:
+                    last_error = e
+                retry += 1
+
+            if last_error is not None:
+                raise last_error
+
+        return wrapped
+    return decorator
 
 
 def enum(*sequential, **named):

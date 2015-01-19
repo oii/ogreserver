@@ -33,7 +33,12 @@ class NoUploadsError(OgreException):
 class SyncError(OgreException):
     pass
 
-class UploadError(OgreException):
+class BaseEbookError(OgreException):
+    def __init__(self, ebook_obj, message=None, inner_excp=None):
+        self.ebook_obj = ebook_obj
+        super(BaseEbookError, self).__init__(message, inner_excp)
+
+class UploadError(BaseEbookError):
     pass
 
 class CorruptEbookError(OgreException):

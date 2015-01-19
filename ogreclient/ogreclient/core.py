@@ -12,7 +12,7 @@ from urllib2 import HTTPError, URLError
 from .urllib2_file import newHTTPHandler
 
 from .ebook_obj import EbookObject
-from .utils import make_temp_directory
+from .utils import make_temp_directory, retry
 from .printer import CliPrinter
 from .dedrm import decrypt, DRM, DeDrmMissingError, DecryptionFailed
 
@@ -494,32 +494,52 @@ def upload_ebooks(config, prntr, session_key, ebooks_by_filehash, ebooks_to_uplo
 
     prntr.p('Uploading {} file{}. Go make a brew.'.format(len(ebooks_to_upload), plural))
 
-    success, failed, i = 0, 0, 0
+    success, i = 0, 0
+    failed_uploads = []
 
     # upload each requested by the server
     for upload in ebooks_to_upload:
         ebook_obj = ebooks_by_filehash[upload['file_hash']]
 
+        # failed uploads are retried three times;
+        # a total fail will raise the last exception
         try:
-            upload_single_book(config['host'], session_key, ebook_obj.path, upload)
-            success += 1
+            upload_single_book(config['host'], session_key, ebook_obj, upload)
 
         except UploadError as e:
-            prntr.e('Failed uploading {}'.format(ebook_obj.path), excp=e)
-            failed += 1
+            # print failures or save for later
+            if config['verbose'] is True:
+                prntr.e('Failed uploading {}'.format(ebook_obj.path), excp=e)
+            else:
+                failed_uploads.append(e)
+        else:
+            if config['verbose'] is True:
+                prntr.p('Uploaded {}'.format(ebook_obj.path), success=True)
+            success += 1
 
-        i += 1
-        prntr.progressf(num_blocks=i, total_size=len(ebooks_to_upload))
+        if config['verbose'] is False:
+            i += 1
+            prntr.progressf(num_blocks=i, total_size=len(ebooks_to_upload))
 
+    # only print completion message after all retries
     if success > 0:
         prntr.p('Completed {} uploads'.format(success), success=True)
-    if failed > 0:
-        prntr.e('Failed uploading {} ebooks'.format(failed))
+
+    if len(failed_uploads) > 0:
+        prntr.e('Failed uploading {} ebooks:'.format(len(failed_uploads)))
+        for e in failed_uploads:
+            prntr.e(
+                '{}'.format(
+                    ebooks_by_filehash[e.ebook_obj.file_hash].path
+                ), excp=e.inner_excp
+            )
+        prntr.p('Please run another sync', success=True)
 
 
-def upload_single_book(host, session_key, filepath, upload_obj):
+@retry(times=3)
+def upload_single_book(host, session_key, ebook_obj, upload_obj):
     try:
-        with open(filepath, "rb") as f:
+        with open(ebook_obj.path, "rb") as f:
             # configure for uploads
             opener = urllib2.build_opener(newHTTPHandler())
             opener.addheaders = [
@@ -536,12 +556,13 @@ def upload_single_book(host, session_key, filepath, upload_obj):
             req = opener.open(
                 'http://{}/api/v1/upload'.format(host), params
             )
-            return req.read()
+            if req.code != 200:
+                raise UploadError(ebook_obj)
 
-    except (HTTPError, URLError), e:
-        raise UploadError(inner_excp=e)
-    except IOError, e:
-        pass
+    except (HTTPError, URLError) as e:
+        raise UploadError(ebook_obj, inner_excp=e)
+    except IOError as e:
+        raise UploadError(ebook_obj, inner_excp=e)
 
 
 def send_logs(prntr, host, session_key, errord_list):

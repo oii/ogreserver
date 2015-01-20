@@ -19,9 +19,10 @@ import ftfy
 from .user import User
 from ..utils import connect_s3
 
-from ..exceptions import OgreException, BadMetaDataError, ExactDuplicateError
-from ..exceptions import S3DatastoreError, RethinkdbError
+from ..exceptions import OgreException, BadMetaDataError, S3DatastoreError, RethinkdbError
 from ..exceptions import NoFormatAvailableError, SameHashSuppliedOnUpdateError
+from ..exceptions import DuplicateBaseError, FileHashDuplicateError
+from ..exceptions import AuthortitleDuplicateError
 
 
 class DataStore():
@@ -64,10 +65,10 @@ class DataStore():
                 # check if this exact file has been uploaded before
                 if r.table('formats').get(incoming['file_hash']).run():
                     if existing_ebook is not None:
-                        raise ExactDuplicateError(existing_ebook['ebook_id'], incoming['file_hash'])
+                        raise FileHashDuplicateError(existing_ebook['ebook_id'], incoming['file_hash'])
                     else:
                         ebook = self.load_ebook_by_file_hash(incoming['file_hash'])
-                        raise ExactDuplicateError(ebook['ebook_id'], incoming['file_hash'])
+                        raise FileHashDuplicateError(ebook['ebook_id'], incoming['file_hash'])
 
                 else:
                     # check if original source ebook was uploaded with this hash
@@ -80,7 +81,7 @@ class DataStore():
                     ), None)
 
                     if original_ebook is not None:
-                        raise ExactDuplicateError(
+                        raise FileHashDuplicateError(
                             original_ebook['ebook_id'],
                             original_ebook['file_hash']
                         )
@@ -105,7 +106,7 @@ class DataStore():
 
 
                 if not existing_ebook:
-                    # check this authortitle for duplicates
+                    # check for authortitle duplicates
                     existing_ebook = next(iter(
                         r.table('ebooks').get_all(
                             [lastname.lower(), firstname.lower(), title.lower()],
@@ -125,7 +126,7 @@ class DataStore():
                         ), None)
 
                         if duplicate:
-                            raise ExactDuplicateError(existing_ebook['ebook_id'], incoming['file_hash'])
+                            raise AuthortitleDuplicateError(existing_ebook['ebook_id'], incoming['file_hash'])
 
                     else:
                         # new books are easy
@@ -139,11 +140,11 @@ class DataStore():
                 # create new version, with its initial format
                 self._create_new_version(existing_ebook['ebook_id'], user.username, incoming)
 
-                # mark with ebook_id and return
+                # mark with ebook_id and continue
                 output[incoming['file_hash']]['ebook_id'] = existing_ebook['ebook_id']
 
 
-            except ExactDuplicateError as e:
+            except DuplicateBaseError as e:
                 # increase popularity on incoming duplicate ebook
                 self.increment_popularity(e.file_hash)
 

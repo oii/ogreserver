@@ -6,11 +6,19 @@ class OgreException(Exception):
         super(OgreException, self).__init__(message)
         self.inner_excp = inner_excp
 
-class ExactDuplicateError(Exception):
+class DuplicateBaseError(Exception):
     def __init__(self, ebook_id, file_hash):
-        super(ExactDuplicateError, self).__init__()
+        super(DuplicateBaseError, self).__init__()
         self.ebook_id = ebook_id
         self.file_hash = file_hash
+
+class FileHashDuplicateError(DuplicateBaseError):
+    def __init__(self, ebook_id, file_hash):
+        super(FileHashDuplicateError, self).__init__(ebook_id, file_hash)
+
+class AuthortitleDuplicateError(DuplicateBaseError):
+    def __init__(self, ebook_id, file_hash):
+        super(AuthortitleDuplicateError, self).__init__(ebook_id, file_hash)
 
 class BadMetaDataError(OgreException):
     pass

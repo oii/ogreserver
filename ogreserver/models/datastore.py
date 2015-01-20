@@ -72,13 +72,13 @@ class DataStore():
 
                 else:
                     # check if original source ebook was uploaded with this hash
-                    original_ebook = next(iter(
+                    original_ebook = next(
                         r.table('versions').get_all(
                             incoming['file_hash'], index='original_filehash'
                         ).eq_join(
                             'version_id', r.table('formats'), index='version_id'
-                        ).zip().run()
-                    ), None)
+                        ).zip().run(), None
+                    )
 
                     if original_ebook is not None:
                         raise FileHashDuplicateError(
@@ -120,23 +120,23 @@ class DataStore():
 
                 if not existing_ebook:
                     # check for authortitle duplicates
-                    existing_ebook = next(iter(
+                    existing_ebook = next(
                         r.table('ebooks').get_all(
                             [lastname.lower(), firstname.lower(), title.lower()],
                             index='authortitle'
-                        ).run()
-                    ), None)
+                        ).run(), None
+                    )
 
                     if existing_ebook:
                         # duplicate authortitle found
                         # must be a new version of the book else it would have been matched above
                         # don't accept new version of book from user who has already syncd it before
-                        duplicate = next(iter(
+                        duplicate = next(
                             r.table('versions').get_all(
                                 [existing_ebook['ebook_id'], user.username],
                                 index='ebook_username'
-                            ).run()
-                        ), None)
+                            ).run(), None
+                        )
 
                         if duplicate:
                             raise AuthortitleDuplicateError(existing_ebook['ebook_id'], incoming['file_hash'])
@@ -322,11 +322,13 @@ class DataStore():
         else:
             filter_func = {'file_hash': file_hash}
 
-        ebook_id = next(iter(
+        ebook_id = next(
             r.table('formats').filter(filter_func).eq_join(
                 'version_id', r.table('versions'), index='version_id'
-            ).zip().pluck('ebook_id')['ebook_id'].run()
-        ), None)
+            ).zip().pluck(
+                'ebook_id'
+            )['ebook_id'].run(), None
+        )
 
         if ebook_id is not None:
             # now return the full ebook object
@@ -662,15 +664,15 @@ class DataStore():
 
         if firstname is None or lastname is None or title is None:
             # load the author and title of this book
-            ebook_data = next(iter(
+            ebook_data = next(
                 r.table('formats').filter({'file_hash': file_hash}).eq_join(
                     'version_id', r.table('versions'), index='version_id'
                 ).zip().eq_join(
                     'ebook_id', r.table('ebooks'), index='ebook_id'
                 ).zip().pluck(
                     'firstname', 'lastname', 'title', 'format'
-                ).run()
-            ), None)
+                ).run(), None
+            )
             firstname = ebook_data['firstname']
             lastname = ebook_data['lastname']
             title = ebook_data['title']

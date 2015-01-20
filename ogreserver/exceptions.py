@@ -20,6 +20,10 @@ class AuthortitleDuplicateError(DuplicateBaseError):
     def __init__(self, ebook_id, file_hash):
         super(AuthortitleDuplicateError, self).__init__(ebook_id, file_hash)
 
+class AsinDuplicateError(DuplicateBaseError):
+    def __init__(self, ebook_id):
+        super(AsinDuplicateError, self).__init__(ebook_id, None)
+
 class BadMetaDataError(OgreException):
     pass
 

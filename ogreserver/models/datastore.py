@@ -22,7 +22,7 @@ from ..utils import connect_s3
 from ..exceptions import OgreException, BadMetaDataError, S3DatastoreError, RethinkdbError
 from ..exceptions import NoFormatAvailableError, SameHashSuppliedOnUpdateError
 from ..exceptions import DuplicateBaseError, FileHashDuplicateError
-from ..exceptions import AuthortitleDuplicateError
+from ..exceptions import AuthortitleDuplicateError, AsinDuplicateError
 
 
 class DataStore():
@@ -86,6 +86,19 @@ class DataStore():
                             original_ebook['file_hash']
                         )
 
+                # check for ASIN duplicates
+                # the assumption is that ASIN dupes are the same book from the Amazon store
+                # they will ALWAYS have different file_hashes due to decryption of every file
+                if 'asin' in incoming['meta']:
+                    existing_ebook = next(r.table('ebooks').get_all(incoming['meta']['asin'], index='asin').run(), None)
+                    if existing_ebook is not None:
+                        raise AsinDuplicateError(existing_ebook['ebook_id'])
+
+                # check for ISBN duplicates
+                # these are treated as new versions of an existing ebook
+                if 'isbn' in incoming['meta']:
+                    existing_ebook = next(r.table('ebooks').get_all(incoming['meta']['isbn'], index='isbn').run(), None)
+
                 try:
                     # derive author and title from the key
                     author, title = authortitle.split('\u0007')
@@ -145,11 +158,12 @@ class DataStore():
 
 
             except DuplicateBaseError as e:
-                # increase popularity on incoming duplicate ebook
-                self.increment_popularity(e.file_hash)
+                if e.file_hash:
+                    # increase popularity on incoming duplicate ebook
+                    self.increment_popularity(e.file_hash)
 
-                # add the current user as an owner of this file
-                self.append_owner(e.file_hash, user.username)
+                    # add the current user as an owner of this file
+                    self.append_owner(e.file_hash, user.username)
 
                 # enable client to update book with ebook_id
                 output[incoming['file_hash']]['ebook_id'] = e.ebook_id

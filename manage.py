@@ -235,6 +235,8 @@ def set_indexes():
         'ebooks', 'authortitle',
         index=[r.row['lastname'].downcase(), r.row['firstname'].downcase(), r.row['title'].downcase()]
     )
+    create_index('ebooks', 'asin', index=r.row['meta']['asin'])
+    create_index('ebooks', 'isbn', index=r.row['meta']['isbn'])
     create_index('versions', 'ebook_id')
     create_index('versions', 'original_filehash')
     create_index('versions', 'ebook_username', index=[r.row['ebook_id'], r.row['username']])

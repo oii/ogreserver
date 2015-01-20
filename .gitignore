@@ -29,3 +29,6 @@ uploads
 ogreserver/config/packer/box/*
 ogreserver/config/packer/packer_cache
 ogreserver/config/packer/*.iso
+
+celerybeat-schedule
+celerybeat.pid

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import os
+import platform
 import subprocess
 
 import mock
@@ -11,13 +12,32 @@ from ogreclient.ebook_obj import EbookObject
 
 @pytest.fixture(scope='session')
 def calibre_ebook_meta_bin():
-    return subprocess.check_output('which ebook-meta', shell=True).strip()
+    calibre_ebook_meta_bin = None
+
+    if platform.system() == 'Darwin':
+        # hardcoded path
+        if not calibre_ebook_meta_bin and os.path.exists('/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-meta'):
+            calibre_ebook_meta_bin = '/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-meta'
+
+        # hardcoded path for pre-v2 calibre
+        if not calibre_ebook_meta_bin and os.path.exists('/Applications/calibre.app/Contents/MacOS/ebook-meta'):
+            calibre_ebook_meta_bin = '/Applications/calibre.app/Contents/MacOS/ebook-meta'
+    else:
+        try:
+            # locate calibre's binaries with shell
+            calibre_ebook_meta_bin = subprocess.check_output('which ebook-meta', shell=True).strip()
+        except subprocess.CalledProcessError:
+            pass
+
+    return calibre_ebook_meta_bin
 
 
 @pytest.fixture(scope='session')
-def client_config():
+def client_config(calibre_ebook_meta_bin):
     return {
         'config_dir': None,
+        'ebook_cache': None,
+        'calibre_ebook_meta_bin': calibre_ebook_meta_bin,
         'providers': {},
         'ebook_home': None,
         'username': 'test',

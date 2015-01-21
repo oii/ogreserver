@@ -6,11 +6,8 @@ import shutil
 
 import mock
 
-from ..ogreclient.core import search_for_ebooks
-from ..ogreclient.printer import DummyPrinter
 
-
-def test_search(mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):
+def test_search(search_for_ebooks, mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):
     # mock return from Popen().communicate()
     mock_subprocess_popen.return_value = mock.Mock()
     mock_subprocess_popen.return_value.communicate.return_value = (b"Title               : Alice's Adventures in Wonderland\nAuthor(s)           : Lewis Carroll [Carroll, Lewis]\nTags                : Fantasy\nLanguages           : eng\nPublished           : 2008-06-26T14:00:00+00:00\nRights              : Public domain in the USA.\nIdentifiers         : uri:http://www.gutenberg.org/ebooks/11\n", b'')
@@ -22,7 +19,7 @@ def test_search(mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):
     shutil.copy(os.path.join(ebook_lib_path, 'pg11.epub'), client_config['ebook_home'])
 
     # search for ebooks
-    data, _, errord = search_for_ebooks(client_config, prntr=DummyPrinter())
+    data, errord = search_for_ebooks(client_config)
 
     # verify found book
     assert len(data) == 1
@@ -30,7 +27,7 @@ def test_search(mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):
     assert data[data.keys()[0]].file_hash == '42344f0e247923fcb347c0e5de5fc762'
 
 
-def test_search_ranking(mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):
+def test_search_ranking(search_for_ebooks, mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):
     # mock return from Popen().communicate()
     mock_subprocess_popen.return_value = mock.Mock()
     mock_subprocess_popen.return_value.communicate.return_value = (b"Title               : Alice's Adventures in Wonderland\nAuthor(s)           : Lewis Carroll [Carroll, Lewis]\nTags                : Fantasy\nLanguages           : eng\nPublished           : 2008-06-26T14:00:00+00:00\nRights              : Public domain in the USA.\nIdentifiers         : uri:http://www.gutenberg.org/ebooks/11\n", b'')
@@ -43,7 +40,7 @@ def test_search_ranking(mock_subprocess_popen, client_config, ebook_lib_path, tm
         shutil.copy(os.path.join(ebook_lib_path, book), client_config['ebook_home'])
 
     # search for ebooks
-    data, _, errord = search_for_ebooks(client_config, prntr=DummyPrinter())
+    data, errord = search_for_ebooks(client_config)
 
     # verify found mobi file hash; it is ranked higher than epub
     assert len(data) == 1

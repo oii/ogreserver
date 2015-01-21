@@ -5,11 +5,8 @@ import platform
 
 from collections import namedtuple
 
-from ..ogreclient.prereqs import setup_ogreclient, setup_user_auth, setup_ebook_home
-from ..ogreclient.printer import DummyPrinter
 
-
-def test_setup_ogreclient(tmpdir, mock_os_environ_get, mock_subprocess_check_output):
+def test_setup_ogreclient(setup_ogreclient, tmpdir, mock_os_environ_get, mock_subprocess_check_output):
     # setup mock for os.environ.get('XDG_CONFIG_HOME')
     def os_environ_get_side_effect(env_var, default=None):
         if env_var in 'XDG_CONFIG_HOME':
@@ -21,15 +18,9 @@ def test_setup_ogreclient(tmpdir, mock_os_environ_get, mock_subprocess_check_out
     # setup mock for subprocess.check_output()
     mock_subprocess_check_output.return_value = 'fake-bin-path'
 
-    # setup fake argparse object
-    fakeargs = namedtuple(
-        'fakeargs',
-        ('mode', 'no_drm', 'host', 'ebook_home', 'username', 'password', 'ignore_kindle'),
-    )
-
     config = setup_ogreclient(
-        fakeargs('sync', True, 'test', 'param_home', 'param_user', 'param_pass', True),
-        DummyPrinter()
+        mode='sync', no_drm=True, host='test', ebook_home='param_home',
+        username='param_user', password='param_pass', ignore_kindle=True
     )
 
     # ensure user params came back from setup_user_auth()
@@ -38,7 +29,7 @@ def test_setup_ogreclient(tmpdir, mock_os_environ_get, mock_subprocess_check_out
     assert config['password'] == 'param_pass'
 
 
-def test_setup_user_auth_env(mock_os_environ_get, client_config):
+def test_setup_user_auth_env(setup_user_auth, mock_os_environ_get, client_config):
     # setup mock for os.environ.get()
     def os_environ_get_side_effect(env_var, default=None):
         if env_var == 'EBOOK_USER':
@@ -49,36 +40,30 @@ def test_setup_user_auth_env(mock_os_environ_get, client_config):
             return default
     mock_os_environ_get.side_effect = os_environ_get_side_effect
 
-    # setup fake argparse object
-    fakeargs = namedtuple('fakeargs', ('username', 'password'))
-
     # setup_user_auth() modifies client_config in place
-    username, password = setup_user_auth(DummyPrinter(), fakeargs(None, None), client_config)
+    username, password = setup_user_auth(client_config)
 
     # ensure ENV vars are returned when --params are None
     assert username == 'env_user'
     assert password == 'env_pass'
 
 
-def test_setup_user_auth_config(mock_os_environ_get, client_config):
+def test_setup_user_auth_config(setup_user_auth, mock_os_environ_get, client_config):
     # setup mock for os.environ.get()
     mock_os_environ_get.return_value = None
 
     client_config['username'] = 'client_user'
     client_config['password'] = 'client_pass'
 
-    # setup fake argparse object
-    fakeargs = namedtuple('fakeargs', ('username', 'password'))
-
     # setup_user_auth() modifies client_config in place
-    username, password = setup_user_auth(DummyPrinter(), fakeargs(None, None), client_config)
+    username, password = setup_user_auth(client_config)
 
     # ensure saved config var returned when ENV & --params are None
     assert username == 'client_user'
     assert password == 'client_pass'
 
 
-def test_setup_user_auth_params(mock_os_environ_get, mock_raw_input, mock_getpass_getpass, client_config):
+def test_setup_user_auth_params(setup_user_auth, mock_os_environ_get, mock_raw_input, mock_getpass_getpass, client_config):
     # setup mock for os.environ.get()
     mock_os_environ_get.return_value = None
 
@@ -92,18 +77,15 @@ def test_setup_user_auth_params(mock_os_environ_get, mock_raw_input, mock_getpas
     # setup mock for getpass module 
     mock_getpass_getpass.return_value = 'manual_pass'
 
-    # setup fake argparse object
-    fakeargs = namedtuple('fakeargs', ('username', 'password'))
-
     # setup_user_auth() modifies client_config in place
-    username, password = setup_user_auth(DummyPrinter(), fakeargs(None, None), client_config)
+    username, password = setup_user_auth(client_config)
 
     # ensure ENV vars are returned when --params passed as None
     assert username == 'manual_user'
     assert password == 'manual_pass'
 
 
-def test_setup_ebook_home_env(mock_os_environ_get, mock_os_mkdir, client_config):
+def test_setup_ebook_home_env(setup_ebook_home, mock_os_environ_get, mock_os_mkdir, client_config):
     # setup mock for os.environ.get()
     def os_environ_get_side_effect(env_var, default=None):
         if env_var in 'EBOOK_HOME':
@@ -112,33 +94,27 @@ def test_setup_ebook_home_env(mock_os_environ_get, mock_os_mkdir, client_config)
             return default
     mock_os_environ_get.side_effect = os_environ_get_side_effect
 
-    # setup fake argparse object
-    fakeargs = namedtuple('fakeargs', ('ebook_home'))
-
-    _, ebook_home = setup_ebook_home(DummyPrinter(), fakeargs(None), client_config)
+    ebook_home = setup_ebook_home(client_config)
 
     # ensure ENV vars are returned when --params are None
     assert ebook_home == 'env_home'
     assert not mock_os_mkdir.called
 
 
-def test_setup_ebook_home_params(mock_os_environ_get, mock_os_mkdir, client_config):
+def test_setup_ebook_home_params(setup_ebook_home, mock_os_environ_get, mock_os_mkdir, client_config):
     # setup mock for os.environ.get()
     mock_os_environ_get.return_value = None
 
     client_config['ebook_home'] = 'client_home'
 
-    # setup fake argparse object
-    fakeargs = namedtuple('fakeargs', ('ebook_home'))
-
-    _, ebook_home = setup_ebook_home(DummyPrinter(), fakeargs(None), client_config)
+    ebook_home = setup_ebook_home(client_config)
 
     # ensure saved config var returned when ENV & --params are None
     assert ebook_home == 'client_home'
     assert not mock_os_mkdir.called
 
 
-def test_setup_ebook_home_mkdir(mock_os_environ_get, mock_os_mkdir, client_config):
+def test_setup_ebook_home_mkdir(setup_ebook_home, mock_os_environ_get, mock_os_mkdir, client_config):
     # setup mock for os.environ.get()
     mock_os_environ_get.return_value = None
 
@@ -146,10 +122,7 @@ def test_setup_ebook_home_mkdir(mock_os_environ_get, mock_os_mkdir, client_confi
     client_config['ebook_home'] = None
     client_config['platform'] = platform.system()
 
-    # setup fake argparse object
-    fakeargs = namedtuple('fakeargs', ('ebook_home'))
-
-    _, ebook_home = setup_ebook_home(DummyPrinter(), fakeargs(None), client_config)
+    setup_ebook_home(client_config)
 
     # ensure mkdir called when no ebook_home specified
     assert mock_os_mkdir.called

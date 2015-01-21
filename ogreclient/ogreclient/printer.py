@@ -10,15 +10,30 @@ PROGBAR_LEN = 40
 
 
 class CliPrinter:
-    WHITE = '\033[97m'
-    CYAN = '\033[96m'
-    MAGENTA = '\033[95m'
-    BLUE = '\033[94m'
-    YELLOW = '\033[93m'
-    GREEN = '\033[92m'
-    RED = '\033[91m'
-    GREY = '\033[90m'
-    END = '\033[0m'
+    class Colours:
+        def __init__(self, nocolour=False):
+            self.nocolour = nocolour
+
+        def __getattr__(self, key):
+            if self.nocolour:
+                return ''
+            _colours = {
+                'WHITE': '\033[97m',
+                'CYAN': '\033[96m',
+                'MAGENTA': '\033[95m',
+                'BLUE': '\033[94m',
+                'YELLOW': '\033[93m',
+                'GREEN': '\033[92m',
+                'RED': '\033[91m',
+                'GREY': '\033[90m',
+                'END': '\033[0m',
+            }
+            try:
+                return _colours[key]
+            except KeyError:
+                raise AttributeError
+
+    colours = Colours()
 
     TAB_SIZE = 4
 
@@ -37,11 +52,12 @@ class CliPrinter:
     log_output = False
     logs = []
 
-    def __init__(self, notimer=False, debug=False, progressbar_len=PROGBAR_LEN, progressbar_char="#"):
+    def __init__(self, notimer=False, debug=False, progressbar_len=PROGBAR_LEN, progressbar_char="#", nocolour=False):
         self.notimer = notimer
         self.debug = debug
         self.progressbar_len = progressbar_len
         self.progressbar_char = progressbar_char
+        self.colours.nocolour = nocolour
 
         # start the timer if it's in use
         if notimer is False:
@@ -57,25 +73,25 @@ class CliPrinter:
 
     @staticmethod
     def _get_colour_and_prefix(mode=None, success=None):
-        colour = CliPrinter.WHITE
+        colour = CliPrinter.colours.WHITE
 
         if mode == CliPrinter.UNKNOWN:
-            colour = CliPrinter.BLUE
+            colour = CliPrinter.colours.BLUE
         elif success is True:
-            colour = CliPrinter.GREEN
+            colour = CliPrinter.colours.GREEN
 
         if mode == CliPrinter.ERROR:
             prefix = 'ERROR'
-            colour = CliPrinter.RED
+            colour = CliPrinter.colours.RED
         elif mode is None:
             prefix = CliPrinter.DEFAULT
         else:
             prefix = mode
 
         if success is True:
-            colour = CliPrinter.GREEN
+            colour = CliPrinter.colours.GREEN
         elif success is False:
-            colour = CliPrinter.RED
+            colour = CliPrinter.colours.RED
             if prefix is None:
                 prefix = 'ERROR'
 
@@ -115,19 +131,22 @@ class CliPrinter:
         # thread-safe printing to stdout
         with self.lock:
             out.write('{}[{: <10}]{} {}{}{}{}'.format(
-                CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour, msg, CliPrinter.END
+                CliPrinter.colours.YELLOW, prefix, CliPrinter.colours.GREY,
+                t, colour, msg, CliPrinter.colours.END
             ))
 
             if type(extra) is list:
                 t = self._get_time_prefix(notime=True)
                 for line in extra:
                     out.write('\n{}[{: <10}]  {}{}> {}{}'.format(
-                        CliPrinter.YELLOW, prefix, CliPrinter.WHITE, t, CliPrinter.END, line
+                        CliPrinter.colours.YELLOW, prefix, CliPrinter.colours.WHITE,
+                        t, CliPrinter.colours.END, line
                     ))
             elif extra is not None:
                 t = self._get_time_prefix(notime=True)
                 out.write('\n{}[{: <10}]  {}{}> {}{}'.format(
-                    CliPrinter.YELLOW, prefix, CliPrinter.WHITE, t, CliPrinter.END, extra
+                    CliPrinter.colours.YELLOW, prefix, CliPrinter.colours.WHITE,
+                    t, CliPrinter.colours.END, extra
                 ))
 
             if nonl is True:
@@ -145,9 +164,9 @@ class CliPrinter:
 
         t = self._get_time_elapsed(notime)
         sys.stdout.write('\r{}[{: <10}]{} {}{}{}{}'.format(
-            CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour,
+            CliPrinter.colours.YELLOW, prefix, CliPrinter.colours.GREY, t, colour,
             (amount * self.progressbar_char),
-            CliPrinter.END
+            CliPrinter.colours.END
         ))
         sys.stdout.flush()
 
@@ -165,11 +184,11 @@ class CliPrinter:
 
         t = self._get_time_elapsed(notime)
         sys.stdout.write('\r{}[{: <10}]{} {}{}[ {}{} ] {}%{}'.format(
-            CliPrinter.YELLOW, prefix, CliPrinter.GREY, t, colour,
+            CliPrinter.colours.YELLOW, prefix, CliPrinter.colours.GREY, t, colour,
             self.progressbar_char * int(progress * self.progressbar_len),
             ' ' * (self.progressbar_len - int(progress * self.progressbar_len)),
             round(progress * 100, 1),
-            CliPrinter.END
+            CliPrinter.colours.END
         ))
         sys.stdout.flush()
 

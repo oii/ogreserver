@@ -6,8 +6,8 @@ import shutil
 
 import mock
 
-from ogreclient.core import search_for_ebooks
-from ogreclient.printer import DummyPrinter
+from ..ogreclient.core import search_for_ebooks
+from ..ogreclient.printer import DummyPrinter
 
 
 def test_search(mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):

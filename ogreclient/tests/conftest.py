@@ -8,7 +8,7 @@ import subprocess
 import mock
 import pytest
 
-from ogreclient.ebook_obj import EbookObject
+from ..ogreclient.ebook_obj import EbookObject
 
 
 @pytest.fixture(scope='session')
@@ -73,28 +73,28 @@ def helper_get_ebook(client_config, ebook_lib_path):
 
 @pytest.yield_fixture(scope='function')
 def mock_urlopen():
-    m = mock.patch('ogreclient.core.urllib2.urlopen')
+    m = mock.patch('ogre.ogreclient.ogreclient.core.urllib2.urlopen')
     yield m.start()
     m.stop()
 
 
 @pytest.yield_fixture(scope='function')
 def mock_subprocess_popen(calibre_ebook_meta_bin):
-    m = mock.patch('ogreclient.ebook_obj.subprocess.Popen')
+    m = mock.patch('ogre.ogreclient.ogreclient.ebook_obj.subprocess.Popen')
     yield m.start()
     m.stop()
 
 
 @pytest.yield_fixture(scope='function')
 def mock_os_environ_get():
-    m = mock.patch('ogreclient.prereqs.os.environ.get')
+    m = mock.patch('ogre.ogreclient.ogreclient.prereqs.os.environ.get')
     yield m.start()
     m.stop()
 
 
 @pytest.yield_fixture(scope='function')
 def mock_subprocess_check_output():
-    m = mock.patch('ogreclient.prereqs.subprocess.check_output')
+    m = mock.patch('ogre.ogreclient.ogreclient.prereqs.subprocess.check_output')
     yield m.start()
     m.stop()
 
@@ -108,13 +108,13 @@ def mock_raw_input():
 
 @pytest.yield_fixture(scope='function')
 def mock_getpass_getpass():
-    m = mock.patch('ogreclient.prereqs.getpass.getpass')
+    m = mock.patch('ogre.ogreclient.ogreclient.prereqs.getpass.getpass')
     yield m.start()
     m.stop()
 
 
 @pytest.yield_fixture(scope='function')
 def mock_os_mkdir():
-    m = mock.patch('ogreclient.prereqs.os.mkdir')
+    m = mock.patch('ogre.ogreclient.ogreclient.prereqs.os.mkdir')
     yield m.start()
     m.stop()

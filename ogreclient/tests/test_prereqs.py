@@ -5,8 +5,8 @@ import platform
 
 from collections import namedtuple
 
-from ogreclient.prereqs import setup_ogreclient, setup_user_auth, setup_ebook_home
-from ogreclient.printer import DummyPrinter
+from ..ogreclient.prereqs import setup_ogreclient, setup_user_auth, setup_ebook_home
+from ..ogreclient.printer import DummyPrinter
 
 
 def test_setup_ogreclient(tmpdir, mock_os_environ_get, mock_subprocess_check_output):

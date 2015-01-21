@@ -55,30 +55,32 @@ class CliPrinter:
         self.lock = threading.Lock()
 
 
-    def _get_colour_and_prefix(self, mode=None, success=None):
-        colour = self.WHITE
+    @staticmethod
+    def _get_colour_and_prefix(mode=None, success=None):
+        colour = CliPrinter.WHITE
 
-        if mode == self.UNKNOWN:
-            colour = self.BLUE
+        if mode == CliPrinter.UNKNOWN:
+            colour = CliPrinter.BLUE
         elif success is True:
-            colour = self.GREEN
+            colour = CliPrinter.GREEN
 
-        if mode == self.ERROR:
+        if mode == CliPrinter.ERROR:
             prefix = 'ERROR'
-            colour = self.RED
+            colour = CliPrinter.RED
         elif mode is None:
-            prefix = self.DEFAULT
+            prefix = CliPrinter.DEFAULT
         else:
             prefix = mode
 
         if success is True:
-            colour = self.GREEN
+            colour = CliPrinter.GREEN
         elif success is False:
-            colour = self.RED
+            colour = CliPrinter.RED
             if prefix is None:
                 prefix = 'ERROR'
 
         return colour, prefix
+
 
     def e(self, msg, mode=ERROR, excp=None, notime=False):
         if excp is not None:
@@ -91,7 +93,7 @@ class CliPrinter:
         self.print_newline()
 
         # setup for print
-        colour, prefix = self._get_colour_and_prefix(mode, success=success)
+        colour, prefix = CliPrinter._get_colour_and_prefix(mode, success=success)
 
         # default stdout
         out = sys.stdout
@@ -137,7 +139,7 @@ class CliPrinter:
 
 
     def progressi(self, amount, mode=None, notime=False):
-        colour, prefix = self._get_colour_and_prefix(mode)
+        colour, prefix = CliPrinter._get_colour_and_prefix(mode)
 
         self.progress_running = True
 
@@ -155,7 +157,7 @@ class CliPrinter:
 
         self.progress_running = True
 
-        colour, prefix = self._get_colour_and_prefix(None)
+        colour, prefix = CliPrinter._get_colour_and_prefix(None)
 
         # calculate progress bar size
         progress = float(num_blocks * block_size) / float(total_size)

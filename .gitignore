@@ -32,3 +32,5 @@ ogreserver/config/packer/*.iso
 
 celerybeat-schedule
 celerybeat.pid
+
+tests/ebooks/DRM.azw

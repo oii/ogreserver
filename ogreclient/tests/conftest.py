@@ -36,7 +36,7 @@ def calibre_ebook_meta_bin():
 def client_config(calibre_ebook_meta_bin):
     return {
         'config_dir': None,
-        'ebook_cache': None,
+        'ebook_cache': mock.Mock(),
         'calibre_ebook_meta_bin': calibre_ebook_meta_bin,
         'providers': {},
         'ebook_home': None,

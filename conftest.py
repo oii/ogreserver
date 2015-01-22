@@ -6,6 +6,7 @@ import shutil
 import string
 import threading
 
+import mock
 import pytest
 import virtualenvapi.manage
 
@@ -171,7 +172,7 @@ def conversion(request, app_config, datastore):
 def client_config(user):
     return {
         'config_dir': None,
-        'ebook_cache_path': None,
+        'ebook_cache': mock.Mock(),
         'calibre_ebook_meta_bin': '/usr/bin/ebook-meta',
         'ebook_home': None,
         'providers': {},

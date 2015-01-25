@@ -4,6 +4,9 @@ from __future__ import unicode_literals
 import os
 
 from flask import current_app as app
+from flask import render_template
+
+import requests
 
 from .extensions.database import setup_db_session
 
@@ -81,6 +84,52 @@ def convert(ebook_id, version_id, original_filename, dest_fmt):
                 ebook_id, version_id, original_filename, dest_fmt
             ))
             app.logger.debug(e)
+
+
+@app.celery.task
+def send_mail(recipient, subject, template, **context):
+    """
+    Send an email via Mailgun
+
+    curl -s --user 'api:YOUR_API_KEY' \
+        https://api.mailgun.net/v2/YOUR_DOMAIN_NAME/messages \
+        -F from='Excited User <YOU@YOUR_DOMAIN_NAME>' \
+        -F to='foo@example.com' \
+        -F subject='Hello' \
+        -F text='Testing some Mailgun awesomness!' \
+        --form-string html='<html>HTML version of the body</html>'
+    """
+    with app.app_context():
+        domain = app.config['HOSTNAME']
+        api_key = app.config['MAILGUN_API_KEY']
+        sender = app.config['SECURITY_EMAIL_SENDER']
+
+        parts = {}
+
+        # render both the text & html templates for the mime message
+        for part in ('txt', 'html'):
+            parts[part] = render_template(
+                'security/email/{}.{}'.format(template, part), **context
+            )
+
+        # send the email via Mailgun's API
+        resp = requests.post(
+            'https://api.mailgun.net/v2/{}/messages'.format(domain),
+            auth=('api', api_key),
+            data={
+                'from': sender,
+                'to': recipient,
+                'subject': subject,
+                'text': parts['txt'],
+                'html': parts['html'],
+            }
+        )
+        # celery logs on stdout
+        print "'{}' email sent to {}, with id='{}'".format(
+            subject,
+            recipient,
+            resp.json()['id']
+        )
 
 
 # TODO nightly which recalculates book ratings: 

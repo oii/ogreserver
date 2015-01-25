@@ -78,10 +78,28 @@ SECURITY_LOGIN_SALT = 'login-{}'.format(SECRET_KEY)
 SECURITY_CHANGE_SALT = 'change-{}'.format(SECRET_KEY)
 SECURITY_REMEMBER_SALT = 'remember-{}'.format(SECRET_KEY)
 
+
 # Confirmation emails and password reset
 SECURITY_CONFIRM_EMAIL_WITHIN = '7 days'
 SECURITY_RESET_PASSWORD_WITHIN = '1 days'
 SECURITY_LOGIN_WITHOUT_CONFIRMATION = False
+
+# Disable Flask-Security email sends, since ogre does them via Mailgun API on a celery task
+SECURITY_SEND_REGISTER_EMAIL = False
+SECURITY_SEND_PASSWORD_CHANGE_EMAIL = False
+SECURITY_SEND_PASSWORD_RESET_EMAIL = False
+SECURITY_SEND_PASSWORD_RESET_NOTICE_EMAIL = False
+
+# Setup subjects for security emails
+SECURITY_EMAIL_SUBJECT_CONFIRM = 'Please confirm your email'
+SECURITY_EMAIL_SUBJECT_PASSWORD_NOTICE = 'Your password has been reset'
+SECURITY_EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE = 'Your password has been changed'
+SECURITY_EMAIL_SUBJECT_PASSWORD_RESET = 'Password reset instructions'
+
+# Mailgun API config
+HOSTNAME = 'ogre.oii.yt'
+MAILGUN_API_KEY = '{{ pillar.get('mailgun_api_key', '') }}'
+
 
 # Allow login with username & email
 SECURITY_USER_IDENTITY_ATTRIBUTES = ['email', 'username']

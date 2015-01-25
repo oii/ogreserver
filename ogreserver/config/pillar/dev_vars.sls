@@ -41,6 +41,8 @@ aws_advertising_api_access_key: ""
 aws_advertising_api_secret_key: ""
 aws_advertising_api_associate_tag: ""
 
+mailgun_api_key: ""
+
 # default OGRE user
 ogre_user_name: {{ defaults.ogre_user_name }}
 ogre_user_pass: {{ defaults.ogre_user_pass }}

@@ -15,7 +15,8 @@ from sqlalchemy.exc import IntegrityError, ProgrammingError
 import rethinkdb as r
 from rethinkdb.errors import RqlRuntimeError
 
-from ogreserver.factory import create_app
+from ogreserver.factory import create_app, make_celery
+from ogreserver.extensions.celery import register_tasks
 from ogreserver.extensions.database import setup_db_session, create_tables, setup_roles
 from ogreserver.utils import connect_s3
 
@@ -105,7 +106,12 @@ def create_user(username, password, email, role='user', confirmed=False, test=Fa
     else:
         if user is None:
             try:
+                # celery is required for flask_security as it imports tasks.py
+                app.celery = make_celery(app)
+                register_tasks(app)
+
                 from ogreserver.extensions.flask_security import init_security
+
                 app.security = init_security(app)
                 user = app.security.datastore.create_user(
                     username=username, email=email, password=password
@@ -184,6 +190,9 @@ def init_ogre(test=False):
         # create the local mysql database from our models
         if db_setup is False:
             create_tables(app)
+            # celery is required for setup_roles as it imports tasks.py via flask_security
+            app.celery = make_celery(app)
+            register_tasks(app)
             setup_roles(app)
 
         if aws_setup is False:

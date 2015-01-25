@@ -6,12 +6,22 @@ from flask import g
 from flask.ext.security import Security, current_user
 from flask.ext.security.datastore import Datastore, UserDatastore
 from flask.ext.security.forms import LoginForm
+from flask.ext.security.signals import password_changed, password_reset, \
+        reset_password_instructions_sent, confirm_instructions_sent
 from flask.ext.security.utils import get_identity_attributes
 
 from ..models.user import User, Role
+from ..signals import when_password_reset, when_password_changed, \
+        when_reset_password_sent, when_confirm_instructions_sent
 
 
 def init_security(app):
+    # connect a few signls to trigger emails on events in Flask-Security
+    password_reset.connect(when_password_reset, app)
+    password_changed.connect(when_password_changed, app)
+    reset_password_instructions_sent.connect(when_reset_password_sent, app)
+    confirm_instructions_sent.connect(when_confirm_instructions_sent, app)
+
     # init user storage via Flask-Security
     return Security(app, OgreUserDatastore(app, User, Role), login_form=ExtendedLoginForm)
 

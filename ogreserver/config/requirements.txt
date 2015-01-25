@@ -16,3 +16,4 @@ sesame==0.3.3
 rethinkdb==1.15.0-1
 Unidecode==0.04.17
 ftfy==3.4.0
+requests==2.5.1

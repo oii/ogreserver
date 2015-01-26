@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import contextlib
 import os
 import platform
 import subprocess
@@ -175,3 +176,17 @@ def setup_ebook_home():
         )
         return ebook_home
     return run_setup_ebook_home
+
+
+@pytest.fixture(scope='session')
+def cd():
+    @contextlib.contextmanager
+    def inner_cd(new_path):
+        """ Context manager for changing the current working directory """
+        saved_path = os.getcwd()
+        try:
+            os.chdir(new_path)
+            yield new_path
+        finally:
+            os.chdir(saved_path)
+    return inner_cd

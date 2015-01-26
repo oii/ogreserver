@@ -74,6 +74,18 @@ input.button {
 	border-radius: 3px;
 }
 
+.flashes {
+	list-style-type: none;
+	margin-left: 0px;
+
+	.info {
+		background-color: $green-light;
+		padding: 6px;
+		border: 1px $green-lighter solid;
+		border-radius: 3px;
+	}
+}
+
 /* -----------------------------------------
    Listing
 ----------------------------------------- */

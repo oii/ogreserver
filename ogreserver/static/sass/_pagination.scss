@@ -2,8 +2,8 @@
   li a {
     border-radius: $global-rounded !important;
     &:hover{
-      background-color: $turquoise !important;
-      border-color: $turquoise !important;
+      background-color: $green-darker !important;
+      border-color: $green-darker !important;
       color: white;
       @include transition(background 0.2s ease-out, border-color 0.2s ease-out, color 0.2s ease-out);
 

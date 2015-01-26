@@ -11,13 +11,13 @@
     @include box-shadow(-4px 0px 8px -2px rgba(0, 0, 0, 0.1));
   }
   li a:not(.button):hover {
-    background: $midnight-blue !important;
+    background: $blue-darkest !important;
     color:$hover-color !important;
     @include transition(.25s);
   }
   .divider {
-    border-bottom: solid 1px $midnight-blue !important;
-    border-right: solid 1px $midnight-blue !important;
+    border-bottom: solid 1px $blue-darkest !important;
+    border-right: solid 1px $blue-darkest !important;
     border-top:solid 0px transparent;
   }
   .dropdown li.title h5 a:hover,
@@ -31,7 +31,7 @@
   }
 }
 .top-bar-unread{
-  background-color: $pomegranate;
+  background-color: $red-darker;
   border-radius: 30px;
   color: white;
   font-size: 12px;

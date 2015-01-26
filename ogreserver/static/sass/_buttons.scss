@@ -29,7 +29,7 @@ a,
 button,
 input[type="submit"]{
   &.primary-dark {
-    @include button-effect($belize-hole);
+    @include button-effect($blue);
   }
 
   &.secondary {
@@ -37,55 +37,43 @@ input[type="submit"]{
     text-shadow: 0 -1px 0 rgba(255, 255, 255, 0.25);
   }
   &.success{
-    @include button-effect($emerland);
+    @include button-effect($green-lighter);
   }
   &.success-dark{
-   @include button-effect($turquoise);
+   @include button-effect($green-light);
   }
   &.success-darker{
-     @include button-effect($nephritis);
+     @include button-effect($green);
   }
   &.success-darkest{
-     @include button-effect($green-sea);
+     @include button-effect($green-dark);
   }
 
   &.alert{
-   @include button-effect($alizarin);
+   @include button-effect($red-lighter);
   }
   &.alert-dark{
-   @include button-effect($pomegranate);
+   @include button-effect($red-light);
   }
 
   &.info{
-   @include button-effect($sun-flower);
+   @include button-effect($orange-light);
   }
   &.info-dark{
    @include button-effect($orange);
   }
 
   &.warning{
-   @include button-effect($carrot);
+   @include button-effect($orange-dark);
   }
   &.warning-dark{
-   @include button-effect($pumpkin);
-  }
-
-  &.highlight{
-   @include button-effect($amethyst);
-  }
-  &.highlight-dark{
-   @include button-effect($wisteria);
+   @include button-effect($orange-darker);
   }
 
   &.inverse{
    @include button-effect($wet-asphalt);
   }
   &.inverse-dark{
-   @include button-effect($midnight-blue);
+   @include button-effect($blue-darkest);
   }
 }
-
-
-
-
-

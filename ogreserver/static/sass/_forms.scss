@@ -1,12 +1,12 @@
 form{
   .error input{
-    border-color: $alizarin;
-    color: $alizarin;
+    border-color: $red;
+    color: $red;
     &:focus{
-      border-color: $alizarin;
-      @include box-shadow($alizarin 0px 0px 5px);
+      border-color: $red;
+      @include box-shadow($red 0px 0px 5px);
     }
-    color:$alizarin;
+    color:$red;
   }
   .success input{
     border-color: $success-color;

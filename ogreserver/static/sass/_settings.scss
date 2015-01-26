@@ -16,39 +16,37 @@
 // FLAT-UI CUSTOMISATIONS
 //
 
-// Shades of Green
-$emerland:  #2ECC71;
-$nephritis: #27AE60;
-$turquoise: #1ABC9C;
-$green-sea: #16A085;
+// Colours from paletton.com, using base color $blue
+$blue-lighter:	#72B0D9;
+$blue-light:	#4995C7;
+$blue:			#2980b9;
+$blue-dark:		#096EB0;
+$blue-darker:	#07507F;
+$blue-darkest:	#022F4C;
 
-// Shades of Blue
-$peter-river: #3498DB;
-$belize-hole: #2980B9;
+$green-lighter:	#6FDFA9;
+$green-light:	#44D08C;
+$green:			#22C476;
+$green-dark:	#00BC62;
+$green-darker:	#008A48;
 
-// Shades of Purple
-$amethyst: #9859b6;
-$wisteria: #8E44AD;
+$orange-lighter:#FFC67F;
+$orange-light:	#FFB353;
+$orange:		#FFA22C;
+$orange-dark:	#FF8E00;
+$orange-darker:	#C76F00;
 
-// Shades of Gray
-$clouds:        #ECF0F1;
-$dark-clouds:   darken($clouds, 3%);
-$silver:        #BDC3C7;
-$concrete:      #95A5A6;
-$asbestos:      #7F8C8D;
+$red-light:		#FFDE7F;
+$red-lighter:	#FFD253;
+$red:			#FFC82C;
+$red-dark:		#FFBC00;
+$red-darker:	#C79300;
+
+// FLAT-UI greys
 $wet-asphalt:   #34495E;
-$midnight-blue: #2C3E50;
+$clouds:		#ECF0F1;
 $grey333:		#333333;
-
-// Shades of Yellow/Orange
-$sun-flower:  #F1C40F;
-$orange:      #F39C12;
-$carrot:      #E67E22;
-$pumpkin:     #D35400;
-
-// Shades of Red
-$alizarin:    #E74C3C;
-$pomegranate: #C0392B;
+$silver:        #BDC3C7;
 
 // Rollover colour
 $hover-color: $orange;
@@ -57,17 +55,17 @@ $hover-color: $orange;
 $body-font-color: $wet-asphalt;
 
 // We use these as default colors throughout
-$primary-color: $peter-river;
+$primary-color: $blue-light;
 $secondary-color: $clouds;
-$alert-color: $alizarin;
-$success-color: $emerland;
+$alert-color: $red;
+$success-color: $green;
 
 //
 // Typography Variables
 //
 
 // We use these to control header font styles
-$header-font-color: $midnight-blue;
+$header-font-color: $blue-darkest;
 
 // We use these to style the <hr> element
 $hr-border-width: 2px;
@@ -132,7 +130,7 @@ $crumb-font-color: white;
 $crumb-font-color-unavailable: $silver;
 
 // We use these to control the slash between breadcrumbs
-$crumb-slash-color: $green-sea;
+$crumb-slash-color: $green;
 
 //
 // Clearing Variables
@@ -140,14 +138,14 @@ $crumb-slash-color: $green-sea;
 
 // We use these to set the background colors for parts of Clearing.
 $clearing-bg: $wet-asphalt;
-$clearing-carousel-bg: $midnight-blue;
+$clearing-carousel-bg: $blue-darkest;
 
 //
 // Joyride Variables
 //
 
 // Controlling default Joyride styles
-$joyride-tip-bg: $midnight-blue;
+$joyride-tip-bg: $blue-darkest;
 
 //
 // Pagination Variables
@@ -197,7 +195,7 @@ $table-border-size: 2px;
 $table-border-color: $clouds;
 
 // These control the table head styles
-$table-head-font-color: $midnight-blue;
+$table-head-font-color: $blue-darkest;
 
 // These control the row padding and font styles
 $table-row-font-color: $wet-asphalt;
@@ -215,7 +213,7 @@ $thumb-box-shadow-hover: 0 0 6px 1px rgba($primary-color,0.8);
 //
 // Tooltip Variables
 //
-$tooltip-bg: $midnight-blue;
+$tooltip-bg: $blue-darkest;
 
 //
 // TOP BAR

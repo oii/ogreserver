@@ -10,13 +10,28 @@ extend:
         - file: /etc/nginx/proxy_params
         - file: /etc/nginx/sites-enabled/{{ pillar['app_name'] }}.conf
 
-  nginx-app-config:
+  {% for port in [80, 443] %}
+  nginx-app-config-{{ port }}:
     file.managed:
       - context:
           server_name: ogre.oii.yt
           root: /srv/{{ pillar['app_directory_name'] }}/ogreserver
           upstream_gzip: true
+  {% endfor %}
 
+
+# install SSL certificate
+/etc/ssl/ogre.oii.yt.crt:
+  file.managed:
+    - contents_pillar: ssl:cert
+    - require_in:
+      - service: nginx
+
+/etc/ssl/ogre.oii.yt.key:
+  file.managed:
+    - contents_pillar: ssl:key
+    - require_in:
+      - service: nginx
 
 # compress js to gzip
 javascript-compile:

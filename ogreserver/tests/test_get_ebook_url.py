@@ -9,8 +9,7 @@ import pytest
 def test_get_ebook_filehash_specific_format(datastore, user, rethinkdb):
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
-        'firstname': 'H. C.',
-        'lastname': 'Andersen',
+        'author': 'H. C. Andersen',
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
     }).run()
@@ -39,8 +38,7 @@ def test_get_ebook_filehash_specific_format(datastore, user, rethinkdb):
 def test_get_ebook_filehash_none_uploaded(datastore, user, rethinkdb):
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
-        'firstname': 'H. C.',
-        'lastname': 'Andersen',
+        'author': 'H. C. Andersen',
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
     }).run()
@@ -65,8 +63,7 @@ def test_get_ebook_filehash_none_uploaded(datastore, user, rethinkdb):
 def test_get_ebook_filehash_user_preferred_format(datastore, user, rethinkdb):
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
-        'firstname': 'H. C.',
-        'lastname': 'Andersen',
+        'author': 'H. C. Andersen',
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
     }).run()
@@ -105,8 +102,7 @@ def test_get_ebook_filehash_user_preferred_format(datastore, user, rethinkdb):
 def test_get_ebook_filehash_OGRE_preferred_format(datastore, user, rethinkdb):
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
-        'firstname': 'H. C.',
-        'lastname': 'Andersen',
+        'author': 'H. C. Andersen',
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
     }).run()
@@ -144,8 +140,7 @@ def test_get_ebook_filehash_OGRE_preferred_format(datastore, user, rethinkdb):
 def test_get_ebook_filehash_uploaded(datastore, user, rethinkdb):
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
-        'firstname': 'H. C.',
-        'lastname': 'Andersen',
+        'author': 'H. C. Andersen',
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
     }).run()

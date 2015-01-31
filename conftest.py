@@ -161,7 +161,7 @@ def rethinkdb_init(request):
     # create FK indexes
     create_index(
         'ebooks', 'authortitle',
-        index=[r.row['lastname'].downcase(), r.row['firstname'].downcase(), r.row['title'].downcase()]
+        index=[r.row['author'].downcase(), r.row['title'].downcase()]
     )
     create_index('ebooks', 'asin', index=r.row['meta']['asin'])
     create_index('ebooks', 'isbn', index=r.row['meta']['isbn'])

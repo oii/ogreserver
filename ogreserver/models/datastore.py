@@ -117,12 +117,15 @@ class DataStore():
                         incoming['file_hash'][0:7]
                     ), e)
 
+                # recombine firstname, lastname into author
+                author = '{} {}'.format(firstname, lastname)
+
 
                 if not existing_ebook:
-                    # check for authortitle duplicates
+                    # check for author/title duplicates
                     existing_ebook = next(
                         r.table('ebooks').get_all(
-                            [lastname.lower(), firstname.lower(), title.lower()],
+                            [author.lower(), title.lower()],
                             index='authortitle'
                         ).run(), None
                     )
@@ -143,7 +146,7 @@ class DataStore():
 
                     else:
                         # new books are easy
-                        ebook_id = self._create_new_ebook(title, firstname, lastname, user, incoming)
+                        ebook_id = self._create_new_ebook(title, author, user, incoming)
 
                         # mark book as new
                         output[incoming['file_hash']]['ebook_id'] = ebook_id
@@ -188,16 +191,15 @@ class DataStore():
         return output
 
 
-    def _create_new_ebook(self, title, firstname, lastname, user, incoming):
-        # generate the ebook_id from the metadata
-        ebook_id = DataStore.build_ebook_key(lastname, firstname, title)
+    def _create_new_ebook(self, title, author, user, incoming):
+        # generate the ebook_id from the author and title
+        ebook_id = unicode(hashlib.md5(("~".join((author, title))).encode('UTF-8')).hexdigest())
 
         # create this as a new book
         new_book = {
             'ebook_id': ebook_id,
             'title': title,
-            'firstname': firstname,
-            'lastname': lastname,
+            'author': author,
             'rating': None,
             'comments': [],
             'publisher': incoming['meta']['publisher'] if 'publisher' in incoming['meta'] else None,
@@ -339,13 +341,14 @@ class DataStore():
         if self.whoosh is None:
             return
 
-        author = " ".join((book_data['firstname'], book_data['lastname']))
-        title = book_data['title']
-
         # add info about this book to the search index
         writer = self.whoosh.writer()
         try:
-            writer.add_document(ebook_id=unicode(book_data['ebook_id']), author=author, title=title)
+            writer.add_document(
+                ebook_id=book_data['ebook_id'],
+                author=book_data['author'],
+                title=book_data['title']
+            )
             writer.commit()
         except Exception as e:
             self.logger.error(e)
@@ -415,16 +418,6 @@ class DataStore():
             'format', 'original_format', 'file_hash', 'ebook_id'
         ).run()
 
-
-    @staticmethod
-    def build_ebook_key(lastname, firstname, title):
-        """
-        Generate a key for this ebook from the author and title
-        This is used as the ebook's key in the DB - referred to as ebook_id in code
-        """
-        return unicode(hashlib.md5(
-            ("~".join((lastname, firstname, title))).encode('UTF-8')
-        ).hexdigest())
 
     @staticmethod
     def versions_rank_algorithm(quality, popularity):
@@ -649,20 +642,18 @@ class DataStore():
         return True
 
 
-    def generate_filename(self, file_hash, firstname=None, lastname=None, title=None, format=None):
+    def generate_filename(self, file_hash, author=None, title=None, format=None):
         """
         Generate the filename for a book on its way to S3
 
-        firstname, lastname, title & format are loaded if they are not supplied
+        Author, title & format are loaded if they are not supplied
         """
-        if firstname is not None and type(firstname) is not unicode:
-            raise UnicodeWarning('Firstname must be unicode')
+        if author is not None and type(author) is not unicode:
+            raise UnicodeWarning('Author must be unicode')
         if title is not None and type(title) is not unicode:
             raise UnicodeWarning('Title must be unicode')
-        if lastname is not None and type(lastname) is not unicode:
-            raise UnicodeWarning('Lastname must be unicode')
 
-        if firstname is None or lastname is None or title is None:
+        if author is None or title is None:
             # load the author and title of this book
             ebook_data = next(
                 r.table('formats').filter({'file_hash': file_hash}).eq_join(
@@ -670,11 +661,10 @@ class DataStore():
                 ).zip().eq_join(
                     'ebook_id', r.table('ebooks'), index='ebook_id'
                 ).zip().pluck(
-                    'firstname', 'lastname', 'title', 'format'
+                    'author', 'title', 'format'
                 ).run(), None
             )
-            firstname = ebook_data['firstname']
-            lastname = ebook_data['lastname']
+            author = ebook_data['author']
             title = ebook_data['title']
             format = ebook_data['format']
 
@@ -684,22 +674,15 @@ class DataStore():
 
         # transpose unicode for ASCII filenames
         from unidecode import unidecode
-        firstname = unidecode(firstname)
-        lastname = unidecode(lastname)
+        author = unidecode(author)
         title = unidecode(title)
 
         # remove apostrophes & strip whitespace
-        if "'" in firstname:
-            firstname = firstname.replace("'", '').strip()
-        if "'" in lastname:
-            lastname = lastname.replace("'", '').strip()
-        if "'" in title:
-            title = title.replace("'", '').strip()
+        author = author.replace("'", '').strip()
+        title = title.replace("'", '').strip()
 
         # only alphabet allowed in filename; replace all else with underscore
-        authortitle = re.sub('[^a-zA-Z0-9~]', '_', '{}_{}~~{}'.format(
-            firstname, lastname, title
-        ))
+        authortitle = re.sub('[^a-zA-Z0-9~]', '_', '{}~~{}'.format(author, title))
 
         # replace multiple underscores with a single
         # replace double tilde between author & title with double underscore

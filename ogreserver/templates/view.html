@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<h2 class='detail_page'>{{ ebook.firstname }} {{ ebook.lastname }} - {{ ebook.title }}</h2>
+<h2 class='detail_page'>{{ ebook.author }} - {{ ebook.title }}</h2>
 
 <div class="large-9 columns">
 
@@ -11,7 +11,7 @@
 
 	<div class="row info book-info">
 		<p>
-		<strong>Author</strong>: {{ ebook.firstname }} {{ ebook.lastname }}
+		<strong>Author</strong>: {{ ebook.author }}
 		</p>
 		<p>
 		<strong>Title</strong>: {{ ebook.title }}

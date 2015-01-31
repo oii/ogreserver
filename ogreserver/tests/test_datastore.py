@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 def test_update_book_hash(datastore, rethinkdb, user):
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
-        'firstname': 'H. C.',
+        'author': 'H. C.',
         'lastname': 'Andersen',
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb798'
@@ -31,8 +31,7 @@ def test_find_formats(datastore, user, rethinkdb):
     '''
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
-        'firstname': 'H. C.',
-        'lastname': 'Andersen',
+        'author': 'H. C. Andersen',
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb798'
     }).run()
@@ -53,8 +52,7 @@ def test_find_formats_none(datastore, user, rethinkdb):
     '''
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
-        'firstname': 'H. C.',
-        'lastname': 'Andersen',
+        'author': 'H. C. Andersen',
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb798'
     }).run()
@@ -75,8 +73,7 @@ def test_find_formats_none(datastore, user, rethinkdb):
 def test_get_missing_books_for_user(datastore, user, user2, rethinkdb):
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
-        'firstname': 'H. C.',
-        'lastname': 'Andersen',
+        'author': 'H. C. Andersen',
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb798'
     }).run()

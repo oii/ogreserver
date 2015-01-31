@@ -220,6 +220,7 @@ def init_ogre(test=False):
             r.db('ogreserver').table_create('ebooks', primary_key='ebook_id').run(conn)
             r.db('ogreserver').table_create('versions', primary_key='version_id').run(conn)
             r.db('ogreserver').table_create('formats', primary_key='file_hash').run(conn)
+            r.db('ogreserver').table_create('authors', primary_key='author_id').run(conn)
             r.db('ogreserver').table_create('sync_events').run(conn)
             set_indexes()
 
@@ -242,7 +243,7 @@ def set_indexes():
     # create the rethinkdb indexes used by ogreserver
     create_index(
         'ebooks', 'authortitle',
-        index=[r.row['lastname'].downcase(), r.row['firstname'].downcase(), r.row['title'].downcase()]
+        index=[r.row['author'].downcase(), r.row['title'].downcase()]
     )
     create_index('ebooks', 'asin', index=r.row['meta']['asin'])
     create_index('ebooks', 'isbn', index=r.row['meta']['isbn'])

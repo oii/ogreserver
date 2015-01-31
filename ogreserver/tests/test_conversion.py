@@ -10,8 +10,7 @@ def test_search(datastore, user, rethinkdb, s3bucket, conversion, mock_task_conv
 
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
-        'firstname': 'H. C.',
-        'lastname': 'Andersen',
+        'author': 'H. C. Andersen',
         'title': "Andersen's Fairy Tales",
         'ebook_id': ebook_id
     }).run()
@@ -45,8 +44,7 @@ def test_convert(datastore, user, rethinkdb, s3bucket, conversion,
 
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
-        'firstname': 'H. C.',
-        'lastname': 'Andersen',
+        'author': 'H. C. Andersen',
         'title': "Andersen's Fairy Tales",
         'ebook_id': ebook_id
     }).run()

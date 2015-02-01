@@ -7,6 +7,7 @@ from flask import Blueprint, request, jsonify, redirect, render_template
 from flask.ext.security.decorators import login_required
 
 from ..models.datastore import DataStore
+from ..models.search import Search
 from ..utils import request_wants_json
 
 bp_ebooks = Blueprint('ebooks', __name__)
@@ -26,14 +27,14 @@ def listing(terms=None, pagenum=1):
     if terms == '+':
         terms = None
 
-    ds = DataStore(app.config, app.logger, app.whoosh)
+    search = Search(app.whoosh, app.config['SEARCH_PAGELEN'])
 
     if request_wants_json(request):
         # return single page as JSON
-        return jsonify(ds.search(terms, pagenum=pagenum))
+        return jsonify(search.query(terms, pagenum=pagenum))
     else:
         # return all pages upto pagenum as HTML
-        rs = ds.search(terms, pagenum=pagenum, allpages=True)
+        rs = search.query(terms, pagenum=pagenum, allpages=True)
         return render_template('list.html', ebooks=rs)
 
 

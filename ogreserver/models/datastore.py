@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import hashlib
-import math
 import re
 
 import rethinkdb as r
@@ -11,11 +10,9 @@ from rethinkdb.errors import RqlRuntimeError
 import boto
 from boto.exception import S3ResponseError
 
-from whoosh.query import Every
-from whoosh.qparser import MultifieldParser, OrGroup
-
 import ftfy
 
+from .search import Search
 from .user import User
 from ..utils import connect_s3
 
@@ -29,7 +26,10 @@ class DataStore():
     def __init__(self, config, logger, whoosh=None):
         self.config = config
         self.logger = logger
-        self.whoosh = whoosh
+        if whoosh:
+            self.search = Search(whoosh, config.get('SEARCH_PAGELEN', 20))
+        else:
+            self.search = None
 
         # connect rethinkdb and make default connection
         r.connect(db=self.config['RETHINKDB_DATABASE']).repl()
@@ -226,7 +226,8 @@ class DataStore():
             raise RethinkdbError(ret['first_error'])
 
         # update the whoosh text search interface
-        self.index_for_search(new_book)
+        if self.search:
+            self.search.index_for_search(new_book)
 
         return ebook_id
 
@@ -335,58 +336,6 @@ class DataStore():
         if ebook_id is not None:
             # now return the full ebook object
             return self.load_ebook(ebook_id)
-
-
-    def index_for_search(self, book_data):
-        if self.whoosh is None:
-            return
-
-        # add info about this book to the search index
-        writer = self.whoosh.writer()
-        try:
-            writer.add_document(
-                ebook_id=book_data['ebook_id'],
-                author=book_data['author'],
-                title=book_data['title']
-            )
-            writer.commit()
-        except Exception as e:
-            self.logger.error(e)
-
-    def search(self, terms=None, pagenum=1, allpages=False):
-        """
-        Search for books using whoosh, or return first page from all
-        """
-        if self.whoosh is None:
-            return
-
-        if terms is None:
-            # default to list all authors
-            query = Every('author')
-        else:
-            # create a search by author and then title
-            qp = MultifieldParser(['author', 'title'], self.whoosh.schema, group=OrGroup)
-            query = qp.parse(terms)
-
-        output = []
-        pagecount = None
-
-        with self.whoosh.searcher() as s:
-            if allpages:
-                # special search returning all pages upto pagenum
-                results = s.search(query, limit=(self.config['SEARCH_PAGELEN'] * pagenum))
-            else:
-                # paginated search for specific page, or to feed infinite scroll
-                results = s.search_page(query, int(pagenum), pagelen=self.config['SEARCH_PAGELEN'])
-                pagecount = results.pagecount
-
-            for item in results:
-                output.append(item.fields())
-
-            if pagecount is None:
-                pagecount = int(math.ceil(float(len(output)) / self.config['SEARCH_PAGELEN']))
-
-        return {'results': output, 'pagecount': pagecount}
 
 
     def find_missing_formats(self, fmt):

@@ -96,3 +96,17 @@ def register_blueprints(app):
     app.register_blueprint(bp_docs)
     app.register_blueprint(bp_ebooks)
     app.register_blueprint(bp_user)
+
+
+def register_signals(app):
+    from blinker import Namespace
+    app.signals = Namespace()
+
+    from .signals import when_convert_ebook, when_store_ebook
+
+    # register some application signals to help decouple Flask from Celery
+    convert_ebook = app.signals.signal('convert-ebook')
+    convert_ebook.connect(when_convert_ebook)
+
+    store_ebook = app.signals.signal('store-ebook')
+    store_ebook.connect(when_store_ebook)

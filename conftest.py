@@ -14,7 +14,8 @@ import virtualenvapi.manage
 try:
     import sqlalchemy
 
-    from .ogreserver.factory import create_app, make_celery, configure_extensions, register_blueprints
+    from .ogreserver.factory import create_app, make_celery, configure_extensions, \
+            register_blueprints, register_signals
     from .ogreserver.models.user import User
     from .ogreserver.extensions.database import setup_db_session, create_tables
 
@@ -71,6 +72,10 @@ def flask_app(app_config):
     register_tasks(app, pytest=True)
     configure_extensions(app)
     register_blueprints(app)
+    register_signals(app)
+    # mock all signals attached to the Flask app
+    for name in app.signals.keys():
+        app.signals[name] = mock.Mock()
     yield app
     if os.path.exists(app_config['WHOOSH_BASE']):
         shutil.rmtree(app_config['WHOOSH_BASE'])
@@ -199,9 +204,9 @@ def datastore(request, flask_app):
 
 
 @pytest.fixture(scope='function')
-def conversion(request, app_config, datastore):
+def conversion(request, app_config, datastore, flask_app):
     from .ogreserver.models.conversion import Conversion
-    return Conversion(app_config, datastore)
+    return Conversion(app_config, datastore, flask_app)
 
 
 @pytest.fixture(scope='session')

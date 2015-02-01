@@ -47,17 +47,3 @@ def mock_compute_md5(request):
     m = mock.patch('ogre.ogreserver.models.conversion.compute_md5')
     yield m.start()
     m.stop()
-
-
-@pytest.yield_fixture(scope='function')
-def mock_task_convert(request):
-    m = mock.patch('ogre.ogreserver.models.conversion.task_convert.delay')
-    yield m.start()
-    m.stop()
-
-
-@pytest.yield_fixture(scope='function')
-def mock_task_store_ebook(request):
-    m = mock.patch('ogre.ogreserver.models.conversion.task_store_ebook.delay')
-    yield m.start()
-    m.stop()

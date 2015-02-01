@@ -6,15 +6,14 @@ import shutil
 import subprocess
 
 from ..exceptions import ConversionFailedError, EbookNotFoundOnS3Error
-from ..tasks import convert as task_convert
-from ..tasks import store_ebook as task_store_ebook
 from ..utils import compute_md5, connect_s3, id_generator, make_temp_directory
 
 
 class Conversion:
-    def __init__(self, config, datastore):
+    def __init__(self, config, datastore, flask_app):
         self.config = config
         self.datastore = datastore
+        self.flask_app = flask_app
 
 
     def search(self):
@@ -39,11 +38,12 @@ class Conversion:
                     original_filename = self.datastore.generate_filename(original_filehash)
 
                     # convert source format to required formats
-                    task_convert.delay(
-                        ebook_id,
-                        version_id,
-                        original_filename,
-                        dest_fmt
+                    self.flask_app.signals['convert-ebook'].send(
+                        self,
+                        ebook_id=ebook_id,
+                        version_id=version_id,
+                        original_filename=original_filename,
+                        dest_fmt=dest_fmt
                     )
 
 
@@ -113,8 +113,14 @@ class Conversion:
         # add newly created format to datastore
         self.datastore._create_new_format(version_id, md5_tup[0], dest_fmt)
 
-        # store on S3
-        task_store_ebook.delay(ebook_id, md5_tup[0], dest_fmt, 'ogrebot')
+        # signal celery to store on S3
+        self.flask_app.signals['store-ebook'].send(
+            self,
+            ebook_id=ebook_id,
+            file_hash=md5_tup[0],
+            fmt=dest_fmt,
+            username='ogrebot'
+        )
 
 
     def ebook_write_metadata(self, ebook_id, file_hash, filepath, fmt):

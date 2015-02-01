@@ -15,8 +15,6 @@ from ..exceptions import SameHashSuppliedOnUpdateError
 from ..models.datastore import DataStore
 from ..models.reputation import Reputation
 
-from ..tasks import store_ebook as task_store_ebook
-
 bp_api = Blueprint('api', __name__, url_prefix='/api/v1')
 
 
@@ -148,11 +146,12 @@ def upload():
         request.form.get('file_hash'), request.form.get('format')
     ))
 
-    # let celery process the upload
-    res = task_store_ebook.delay(
+    # signal celery to process the upload
+    app.signals['store-ebook'].send(
+        bp_api,
         ebook_id=request.form.get('ebook_id'),
         file_hash=request.form.get('file_hash'),
         fmt=request.form.get('format'),
         username=current_user.username
     )
-    return res.task_id
+    return 'ok'

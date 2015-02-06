@@ -16,15 +16,13 @@ from .utils import make_temp_directory, retry
 from .printer import CliPrinter
 from .dedrm import decrypt, DRM, DeDrmMissingError, DecryptionFailed
 
-from .definitions import EBOOK_FORMATS
-
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError
 from .exceptions import DuplicateEbookBaseError, ExactDuplicateEbookError
 from .exceptions import AuthortitleDuplicateEbookError, EbookIdDuplicateEbookError
 from .exceptions import SyncError, UploadError, CorruptEbookError
 from .exceptions import FailedWritingMetaDataError, FailedConfirmError, FailedDebugLogsError
 from .exceptions import MissingFromCacheError, OgreException, OgreserverDownError
-from .exceptions import FailedUploadsQueryError
+from .exceptions import FailedUploadsQueryError, FailedGettingDefinitionsError
 
 
 def authenticate(host, username, password):
@@ -62,9 +60,28 @@ def authenticate(host, username, password):
             raise AuthError(inner_excp=e)
 
 
+def get_definitions(config, session_key):
+    try:
+        # retrieve the ebook format definitions
+        req = urllib2.Request(
+            url='http://{}/api/v1/definitions'.format(config['host']),
+            headers={
+                'Ogre-key': session_key
+            },
+        )
+        f = urllib2.urlopen(req)
+        return json.loads(f.read())
+
+    except Exception as e:
+        raise FailedGettingDefinitionsError(inner_excp=e)
+
+
 def sync(config, prntr):
     # authenticate user and generate session API key
     session_key = authenticate(config['host'], config['username'], config['password'])
+
+    # query the server for current ebook definitions (which file extensions to search for etc)
+    config['definitions'] = get_definitions(config, session_key)
 
     # 1) find ebooks in config['ebook_home'] on local machine
     ebooks_by_authortitle, ebooks_by_filehash, errord_list = search_for_ebooks(config, prntr)
@@ -158,7 +175,7 @@ def search_for_ebooks(config, prntr):
         for filename in files:
             fn, ext = os.path.splitext(filename)
             # check file not hidden, is in list of known file suffixes
-            if fn[1:1] != '.' and ext[1:] in EBOOK_FORMATS.keys():
+            if fn[1:1] != '.' and ext[1:] in config['definitions'].keys():
                 ebooks.append(
                     (os.path.join(root, filename), ext[1:])
                 )
@@ -236,8 +253,8 @@ def search_for_ebooks(config, prntr):
 
             if ebook_obj.authortitle in ebooks_by_authortitle.keys():
                 # compare the rank of the format already found against this one
-                existing_rank = EBOOK_FORMATS.keys().index(ebooks_by_authortitle[ebook_obj.authortitle].format)
-                new_rank = EBOOK_FORMATS.keys().index(ebook_obj.format)
+                existing_rank = config['definitions'].keys().index(ebooks_by_authortitle[ebook_obj.authortitle].format)
+                new_rank = config['definitions'].keys().index(ebook_obj.format)
 
                 # lower is better
                 if new_rank < existing_rank:
@@ -282,7 +299,7 @@ def clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash):
 
     for authortitle, ebook_obj in ebooks_by_authortitle.iteritems():
         # only attempt decrypt on ebooks which are defined as is_valid_format
-        if EBOOK_FORMATS[ebook_obj.format][0] is False:
+        if config['definitions'][ebook_obj.format][0] is False:
             continue
 
         try:
@@ -396,7 +413,7 @@ def sync_with_server(config, prntr, session_key, ebooks_by_authortitle):
     ebooks_for_sync = {}
     for authortitle, ebook_obj in ebooks_by_authortitle.iteritems():
         # only send format is defined as is_valid_format
-        if EBOOK_FORMATS[ebook_obj.format][0] is True:
+        if config['definitions'][ebook_obj.format][0] is True:
             ebooks_for_sync[authortitle] = ebook_obj.serialize()
 
     try:

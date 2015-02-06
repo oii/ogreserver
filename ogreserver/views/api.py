@@ -7,7 +7,7 @@ import json
 import os
 
 from flask import current_app as app
-from flask import Blueprint, request, make_response
+from flask import Blueprint, request, make_response, jsonify
 from flask.ext.security import current_user
 from flask.ext.security.decorators import auth_token_required
 
@@ -16,6 +16,13 @@ from ..models.datastore import DataStore
 from ..models.reputation import Reputation
 
 bp_api = Blueprint('api', __name__, url_prefix='/api/v1')
+
+
+@bp_api.route('/definitions')
+@auth_token_required
+def get_definitions():
+    # return to the current ebook format definitions to the client
+    return jsonify(app.config['EBOOK_DEFINITIONS'])
 
 
 @bp_api.route('/download-dedrm')

@@ -84,3 +84,6 @@ class MissingFromCacheError(OgreException):
 
 class FailedUploadsQueryError(OgreException):
     pass
+
+class FailedGettingDefinitionsError(OgreException):
+    pass

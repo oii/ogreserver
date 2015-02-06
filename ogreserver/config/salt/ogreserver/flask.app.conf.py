@@ -45,6 +45,27 @@ WHOOSH_BASE = os.path.join(basedir, 'search.db')
 UPLOADED_EBOOKS_DEST = "/srv/{{ pillar['app_directory_name'] }}/uploads"
 UPLOADED_LOGS_DEST = "/srv/{{ pillar['app_directory_name'] }}/logs"
 
+# Ebook format definitions
+# data structure:
+#  is_valid_format (bool): sync to ogreserver
+#  is_amazon_family (bool): an amazon-family format
+
+import collections
+EBOOK_DEFINITIONS = collections.OrderedDict([
+    ('mobi', [True,True]),
+    ('azw', [True,True]),
+    ('azw3', [True,True]),
+    ('azw4', [True,True]),
+    ('epub', [True,False]),
+    ('azw1', [True,True]),
+    ('tpz', [True,False]),
+    ('pdb', [False,False,]),
+    ('pdf', [False,False,]),
+    ('lit', [False,False,]),
+    ('html', [False,False]),
+    ('zip', [False,False]),
+])
+
 # Ebook conversion formats; all books will be provided in these formats by OGRE
 EBOOK_FORMATS = ['mobi', 'epub']
 

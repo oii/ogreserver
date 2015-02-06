@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import collections
 import os
 import platform
 import random
@@ -42,6 +43,14 @@ def app_config():
         'AWS_ACCESS_KEY': '',
         'AWS_SECRET_KEY': '',
         'S3_BUCKET': 'ogre-testing',
+
+        'EBOOK_DEFINITIONS': collections.OrderedDict([
+            ('mobi', [True,True]),
+            ('azw', [True,True]),
+            ('azw3', [True,True]),
+            ('azw4', [True,True]),
+            ('epub', [True,False]),
+        ]),
 
         'EBOOK_FORMATS': ['egg', 'mobi', 'epub'],
         'DOWNLOAD_LINK_EXPIRY': 10,
@@ -255,7 +264,7 @@ def calibre_ebook_meta_bin():
 
 
 @pytest.fixture(scope='function')
-def client_config(calibre_ebook_meta_bin, user):
+def client_config(flask_app, calibre_ebook_meta_bin, user):
     # when fixture used with --only-client, must fake a User model
     if user is None:
         class FakeUser():
@@ -272,6 +281,7 @@ def client_config(calibre_ebook_meta_bin, user):
         'username': user.username,
         'password': user.username,  # password=username during tests
         'host': 'localhost:6543',
+        'definitions': flask_app.config['EBOOK_DEFINITIONS'],
         'verbose': False,
         'quiet': True,
         'no_drm': True,

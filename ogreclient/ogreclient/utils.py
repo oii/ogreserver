@@ -9,6 +9,7 @@ import shutil
 import string
 import sys
 import tempfile
+import urllib2
 
 from .exceptions import OgreException
 
@@ -124,3 +125,35 @@ def retry(times):
 def enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
     return type(str('Enum'), (), enums)
+
+
+def urlretrieve(urllib2_request, filepath, reporthook=None, chunk_size=4096):
+    req = urllib2.urlopen(urllib2_request)
+
+    if reporthook:
+        # ensure progress method is callable
+        if hasattr(reporthook, '__call__'):
+            reporthook = None
+
+        try:
+            # get response length
+            total_size = req.info().getheaders('Content-Length')[0]
+        except KeyError:
+            reporthook = None
+
+    data = ''
+    num_blocks = 0
+
+    with open(filepath, 'w') as f:
+        while True:
+            data = req.read(chunk_size)
+            num_blocks += 1
+            if reporthook:
+                # report progress
+                reporthook(num_blocks, chunk_size, total_size)
+            if not data:
+                break
+            f.write(data)
+
+    # return downloaded length
+    return len(data)

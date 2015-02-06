@@ -4,10 +4,10 @@ from __future__ import unicode_literals
 import importlib
 import os
 import subprocess
-import urllib
+import urllib2
 
 from .exceptions import AuthDeniedError, AuthError, OgreException
-from .utils import capture, enum, make_temp_directory
+from .utils import capture, enum, make_temp_directory, urlretrieve
 
 try:
     # import DeDRM libs, capturing anything that's shat out on STDOUT
@@ -172,11 +172,13 @@ def download_dedrm(host, username, password, prntr, debug=False):
     prntr.p('Downloading..')
 
     # download the tarball
-    urllib.urlretrieve(
-        'http://{}/download-dedrm/{}'.format(host, session_key),
-        '/tmp/dedrm.tar.gz',
-        prntr.progressf
+    req = urllib2.Request(
+        url='http://{}/api/v1/download-dedrm'.format(host),
+        headers={
+            'Ogre-key': session_key
+        },
     )
+    urlretrieve(req, '/tmp/dedrm.tar.gz', prntr.progressf)
 
     try:
         # install DRM tools

@@ -6,7 +6,7 @@ from flask.ext.uploads import UploadSet, ALL, configure_uploads
 
 def init_uploads(app):
     # setup Flask-Upload for ebook uploads
-    ebooks = UploadSet('ebooks', ALL)
+    ebooks = UploadSet('ebooks', extensions=app.config['EBOOK_DEFINITIONS'].keys())
 
     # setup log file uploads
     logs = UploadSet('logs', ALL)

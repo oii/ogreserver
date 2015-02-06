@@ -7,9 +7,10 @@ import json
 import os
 
 from flask import current_app as app
-from flask import Blueprint, request, make_response, jsonify
+from flask import Blueprint, request, make_response, jsonify, abort
 from flask.ext.security import current_user
 from flask.ext.security.decorators import auth_token_required
+from flask.ext.uploads import UploadNotAllowed
 
 from ..exceptions import SameHashSuppliedOnUpdateError
 from ..models.datastore import DataStore
@@ -148,10 +149,16 @@ def upload():
         request.files['ebook'].content_length
     ))
 
-    # write uploaded ebook to disk, named as the hash and filetype
-    app.uploaded_ebooks.save(request.files['ebook'], name='{}.{}'.format(
-        request.form.get('file_hash'), request.form.get('format')
-    ))
+    try:
+        # write uploaded ebook to disk, named as the hash and filetype
+        app.uploaded_ebooks.save(
+            request.files['ebook'],
+            name='{}.{}'.format(
+                request.form.get('file_hash'), request.form.get('format')
+            )
+        )
+    except UploadNotAllowed:
+        abort(415)
 
     # signal celery to process the upload
     app.signals['store-ebook'].send(

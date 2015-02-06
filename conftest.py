@@ -13,24 +13,6 @@ import mock
 import pytest
 import virtualenvapi.manage
 
-try:
-    import sqlalchemy
-
-    from .ogreserver.factory import create_app, make_celery, configure_extensions, \
-            register_blueprints, register_signals
-    from .ogreserver.models.user import User
-    from .ogreserver.extensions.database import setup_db_session, create_tables
-
-    from .ogreserver.extensions.celery import register_tasks
-
-    from .ogreclient.ogreclient.printer import CliPrinter
-    from .ogreclient.ogreclient.core import sync
-
-    from wsgiref.simple_server import make_server
-
-except (ImportError, ValueError):
-    pass
-
 
 @pytest.fixture(scope='session')
 def app_config():
@@ -68,6 +50,10 @@ def app_config():
 
 @pytest.yield_fixture(scope='session')
 def flask_app(app_config):
+    from .ogreserver.factory import create_app, make_celery, configure_extensions, \
+            register_blueprints, register_signals
+    from .ogreserver.extensions.celery import register_tasks
+
     app = create_app(app_config)
     app.testing = True
     app.celery = make_celery(app)
@@ -85,6 +71,8 @@ def flask_app(app_config):
 
 @pytest.fixture(scope='session')
 def ogreserver(request, flask_app):
+    from wsgiref.simple_server import make_server
+
     server = make_server('', 6543, flask_app)
     app_thread = threading.Thread(target=server.serve_forever)
     app_thread.start()
@@ -96,6 +84,9 @@ def ogreserver(request, flask_app):
 
 @pytest.yield_fixture(scope='session')
 def mysqldb(request, flask_app):
+    import sqlalchemy
+    from .ogreserver.extensions.database import setup_db_session, create_tables
+
     # use raw sqlalchemy for create/drop DB
     engine = sqlalchemy.create_engine('mysql://root:eggs@localhost/mysql')
 
@@ -129,6 +120,8 @@ def user2(request, mysqldb):
     return _create_user(mysqldb)
 
 def _create_user(mysqldb):
+    from .ogreserver.models.user import User
+
     # create random username
     username = ''.join(random.choice(string.ascii_lowercase) for n in range(6))
     # create user in auth DB
@@ -272,6 +265,9 @@ def client_sync():
     Wrap the ogreclient sync() function with another which provides a CliPrinter
     and captures all the output from the sync
     """
+    from .ogreclient.ogreclient.core import sync
+    from .ogreclient.ogreclient.printer import CliPrinter
+
     prntr = CliPrinter(debug=True, nocolour=True)
     prntr.log_output = True
     def run_sync(config):

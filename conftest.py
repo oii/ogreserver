@@ -2,9 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import os
+import platform
 import random
 import shutil
 import string
+import subprocess
 import threading
 
 import mock
@@ -210,11 +212,33 @@ def conversion(request, app_config, datastore, flask_app):
 
 
 @pytest.fixture(scope='session')
-def client_config(user):
+def calibre_ebook_meta_bin():
+    calibre_ebook_meta_bin = None
+
+    if platform.system() == 'Darwin':
+        # hardcoded path
+        if not calibre_ebook_meta_bin and os.path.exists('/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-meta'):
+            calibre_ebook_meta_bin = '/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-meta'
+
+        # hardcoded path for pre-v2 calibre
+        if not calibre_ebook_meta_bin and os.path.exists('/Applications/calibre.app/Contents/MacOS/ebook-meta'):
+            calibre_ebook_meta_bin = '/Applications/calibre.app/Contents/MacOS/ebook-meta'
+    else:
+        try:
+            # locate calibre's binaries with shell
+            calibre_ebook_meta_bin = subprocess.check_output('which ebook-meta', shell=True).strip()
+        except subprocess.CalledProcessError:
+            pass
+
+    return calibre_ebook_meta_bin
+
+
+@pytest.fixture(scope='session')
+def client_config(calibre_ebook_meta_bin, user):
     return {
         'config_dir': None,
         'ebook_cache': mock.Mock(),
-        'calibre_ebook_meta_bin': '/usr/bin/ebook-meta',
+        'calibre_ebook_meta_bin': calibre_ebook_meta_bin,
         'ebook_home': None,
         'providers': {},
         'username': user.username,

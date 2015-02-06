@@ -3,8 +3,6 @@ from __future__ import unicode_literals
 
 import contextlib
 import os
-import platform
-import subprocess
 
 from collections import namedtuple
 
@@ -17,47 +15,6 @@ from ..ogreclient.prereqs import setup_ogreclient as func_setup_ogreclient
 from ..ogreclient.prereqs import setup_user_auth as func_setup_user_auth
 from ..ogreclient.prereqs import setup_ebook_home as func_setup_ebook_home
 from ..ogreclient.printer import DummyPrinter
-
-
-@pytest.fixture(scope='session')
-def calibre_ebook_meta_bin():
-    calibre_ebook_meta_bin = None
-
-    if platform.system() == 'Darwin':
-        # hardcoded path
-        if not calibre_ebook_meta_bin and os.path.exists('/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-meta'):
-            calibre_ebook_meta_bin = '/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-meta'
-
-        # hardcoded path for pre-v2 calibre
-        if not calibre_ebook_meta_bin and os.path.exists('/Applications/calibre.app/Contents/MacOS/ebook-meta'):
-            calibre_ebook_meta_bin = '/Applications/calibre.app/Contents/MacOS/ebook-meta'
-    else:
-        try:
-            # locate calibre's binaries with shell
-            calibre_ebook_meta_bin = subprocess.check_output('which ebook-meta', shell=True).strip()
-        except subprocess.CalledProcessError:
-            pass
-
-    return calibre_ebook_meta_bin
-
-
-@pytest.fixture(scope='session')
-def client_config(calibre_ebook_meta_bin):
-    return {
-        'config_dir': None,
-        'ebook_cache': mock.Mock(),
-        'calibre_ebook_meta_bin': calibre_ebook_meta_bin,
-        'providers': {},
-        'ebook_home': None,
-        'username': 'test',
-        'password': 'test',
-        'host': 'localhost:6543',
-        'verbose': False,
-        'quiet': True,
-        'no_drm': True,
-        'debug': True,
-        'skip_cache': True,
-    }
 
 
 @pytest.fixture(scope='function')

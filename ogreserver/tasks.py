@@ -15,39 +15,33 @@ from .models.datastore import DataStore
 
 
 @app.celery.task
-def store_ebook(ebook_id, file_hash, fmt, username):
+def store_ebook(ebook_id, filename, file_hash, fmt, username):
     """
     Store an ebook in the datastore
     """
     with app.app_context():
-        filepath = None
-
         # initialise the DB connection in our fake app context
         setup_db_session(app)
 
         try:
-            # create the datastore & generate a nice filename
+            # create the datastore
             ds = DataStore(app.config, app.logger)
-            filename = ds.generate_filename(file_hash)
 
-            # storage path
-            filepath = os.path.join(app.config['UPLOADED_EBOOKS_DEST'], '{}.{}'.format(file_hash, fmt))
+            # local path of uploaded file
+            filepath = os.path.join(app.config['UPLOADED_EBOOKS_DEST'], os.path.basename(filename))
 
             # store the file into S3
-            if ds.store_ebook(ebook_id, file_hash, filename, filepath, fmt, username):
-                app.logger.info('{} was uploaded'.format(filename))
-                return True
-            else:
-                app.logger.info('{} exists on S3'.format(filename))
-                return False
+            ds.store_ebook(ebook_id, file_hash, filepath, username)
 
         except S3DatastoreError as e:
-            app.logger.error('Failed uploading {} with {}'.format(filename, e))
+            app.logger.error('Failed uploading {} with {}'.format(file_hash, e))
 
         finally:
-            # always delete local file
-            if filepath is not None and os.path.exists(filepath):
-                os.remove(filepath)
+            # always delete local files who share the same hash in their filename
+            # (these are repeat uploads, uniquely named by Flask-Uploads)
+            for fn in os.listdir(app.config['UPLOADED_EBOOKS_DEST']):
+                if fn.startswith(file_hash):
+                    os.remove(os.path.join(app.config['UPLOADED_EBOOKS_DEST'], fn))
 
 
 @app.celery.task

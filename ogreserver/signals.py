@@ -8,8 +8,8 @@ from flask.ext.security.utils import url_for_security
 from .tasks import convert, send_mail, store_ebook
 
 
-def when_store_ebook(sender, ebook_id, file_hash, fmt, username):
-    store_ebook.delay(ebook_id, file_hash, fmt, username)
+def when_store_ebook(sender, ebook_id, filename, file_hash, fmt, username):
+    store_ebook.delay(ebook_id, filename, file_hash, fmt, username)
 
 def when_convert_ebook(sender, ebook_id, version_id, original_filename, dest_fmt):
     convert.delay(ebook_id, version_id, original_filename, dest_fmt)

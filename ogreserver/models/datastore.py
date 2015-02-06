@@ -545,12 +545,15 @@ class DataStore():
         r.table('formats').get(file_hash).update({'dedrm': True}).run()
 
 
-    def store_ebook(self, ebook_id, file_hash, filename, filepath, fmt, username):
+    def store_ebook(self, ebook_id, file_hash, filepath, username):
         """
         Store an ebook on S3
         """
         s3 = connect_s3(self.config)
         bucket = s3.get_bucket(self.config['S3_BUCKET'])
+
+        # generate a nice filename for this ebook
+        filename = self.generate_filename(file_hash)
 
         # create a new storage key
         k = boto.s3.key.Key(bucket)
@@ -591,7 +594,7 @@ class DataStore():
         return True
 
 
-    def generate_filename(self, file_hash, author=None, title=None, format=None):
+    def generate_filename(self, file_hash, author=None, title=None, fmt=None):
         """
         Generate the filename for a book on its way to S3
 
@@ -615,11 +618,11 @@ class DataStore():
             )
             author = ebook_data['author']
             title = ebook_data['title']
-            format = ebook_data['format']
+            fmt = ebook_data['format']
 
-        elif format is None:
+        elif fmt is None:
             # load the file format for this book's hash
-            format = r.table('formats').get(file_hash).pluck('format').run()['format']
+            fmt = r.table('formats').get(file_hash).pluck('format').run()['format']
 
         # transpose unicode for ASCII filenames
         from unidecode import unidecode
@@ -637,7 +640,7 @@ class DataStore():
         # replace double tilde between author & title with double underscore
         authortitle = re.sub('(~|_+)', '_', authortitle)
 
-        return '{}.{}.{}'.format(authortitle, file_hash[0:8], format)
+        return '{}.{}.{}'.format(authortitle, file_hash[0:8], fmt)
 
 
     def get_missing_books(self, username=None, verify_s3=False):

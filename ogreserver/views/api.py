@@ -151,7 +151,7 @@ def upload():
 
     try:
         # write uploaded ebook to disk, named as the hash and filetype
-        app.uploaded_ebooks.save(
+        upload_path = app.uploaded_ebooks.save(
             request.files['ebook'],
             name='{}.{}'.format(
                 request.form.get('file_hash'), request.form.get('format')
@@ -164,6 +164,7 @@ def upload():
     app.signals['store-ebook'].send(
         bp_api,
         ebook_id=request.form.get('ebook_id'),
+        filename=upload_path,
         file_hash=request.form.get('file_hash'),
         fmt=request.form.get('format'),
         username=current_user.username

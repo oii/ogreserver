@@ -8,6 +8,12 @@ include:
   - watchdog
 
 extend:
+  # make supervisorctl accessible to normal user
+  supervisor-config:
+    file.managed:
+      - context:
+          socket_mode: "0303"
+
   gunicorn-config:
     file.managed:
       - context:

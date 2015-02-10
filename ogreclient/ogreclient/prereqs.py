@@ -143,6 +143,10 @@ def dedrm_check(prntr, args, conf):
     # check if we have decrypt capability
     from .dedrm import CAN_DECRYPT
 
+    if conf['platform'] == 'Linux':
+        prntr.p('DeDRM in not supported under Linux')
+        return
+
     if CAN_DECRYPT is False:
         # attempt to download and setup dedrm
         attempted_download = True

@@ -131,7 +131,7 @@ def confirm():
 def to_upload():
     ds = DataStore(app.config, app.logger, app.whoosh)
 
-    # query books missing from S3 and supply back to the client
+    # query books to upload and supply back to the client
     missing_books = ds.get_missing_books(username=current_user.username)
 
     return json.dumps(missing_books)

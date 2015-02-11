@@ -67,14 +67,6 @@ def lb(ebook_id):
 
 
 @manager.command
-def verify_s3():
-    import logging
-    logging.basicConfig(filename="boto.log", level=logging.DEBUG)
-    from ogreserver.models.datastore import DataStore
-    print DataStore.get_missing_books(username="mafro", verify_s3=True)
-
-
-@manager.command
 def create_user(username, password, email, role='user', confirmed=False, test=False):
     """
     Create a new user for OGRE

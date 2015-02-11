@@ -515,13 +515,13 @@ def upload_ebooks(config, prntr, session_key, ebooks_by_filehash, ebooks_to_uplo
     failed_uploads = []
 
     # upload each requested by the server
-    for upload in ebooks_to_upload:
-        ebook_obj = ebooks_by_filehash[upload['file_hash']]
+    for file_hash in ebooks_to_upload:
+        ebook_obj = ebooks_by_filehash[file_hash]
 
         # failed uploads are retried three times;
         # a total fail will raise the last exception
         try:
-            upload_single_book(config['host'], session_key, ebook_obj, upload)
+            upload_single_book(config['host'], session_key, ebook_obj)
 
         except UploadError as e:
             # print failures or save for later
@@ -554,7 +554,7 @@ def upload_ebooks(config, prntr, session_key, ebooks_by_filehash, ebooks_to_uplo
 
 
 @retry(times=3)
-def upload_single_book(host, session_key, ebook_obj, upload_obj):
+def upload_single_book(host, session_key, ebook_obj):
     try:
         with open(ebook_obj.path, "rb") as f:
             # configure for uploads
@@ -565,9 +565,9 @@ def upload_single_book(host, session_key, ebook_obj, upload_obj):
 
             # build the post params
             params = {
-                'ebook_id': upload_obj['ebook_id'],
-                'file_hash': upload_obj['file_hash'],
-                'format': upload_obj['format'],
+                'ebook_id': ebook_obj.ebook_id,
+                'file_hash': ebook_obj.file_hash,
+                'format': ebook_obj.format,
                 'ebook': f,
             }
             req = opener.open(

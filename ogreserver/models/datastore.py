@@ -643,16 +643,10 @@ class DataStore():
         return '{}.{}.{}'.format(authortitle, file_hash[0:8], fmt)
 
 
-    def get_missing_books(self, username=None, verify_s3=False):
+    def get_missing_books(self, username=None):
         """
         Query the DB for books marked as not uploaded
-
-        The verify_s3 flag enables a further check to be run against S3 to ensure 
-        the file is actually there
         """
-        if username is None and verify_s3 is True:
-            raise Exception("Can't verify entire library in one go.")
-
         # query the formats table for missing ebooks
         query = r.table('formats').get_all(False, index='uploaded')
 
@@ -663,31 +657,11 @@ class DataStore():
         if username is not None:
             query = query.filter(lambda d: d['owners'].contains(username))
 
-        cursor = query.run()
+        # return a list of file_hashes
+        cursor = query['file_hash'].run()
 
         # flatten for output
-        output = []
-        for ebook in cursor:
-            output.append({
-                'ebook_id': ebook['ebook_id'],
-                'file_hash': ebook['file_hash'],
-                'format': ebook['format'],
-            })
-
-        if verify_s3 == True:
-            # connect to S3
-            s3 = connect_s3(self.config)
-            bucket = s3.get_bucket(self.config['S3_BUCKET'])
-
-            # verify books are on S3
-            for b in output:
-                # TODO rethink
-                filename = self.generate_filename(b['file_hash'])
-                k = boto.s3.key.Key(bucket, filename)
-                self.set_uploaded(b['file_hash'])
-                # TODO update rs when verify=True
-
-        return output
+        return list(cursor)
 
 
     def log_event(self, user, syncd_books_count, new_books_count):

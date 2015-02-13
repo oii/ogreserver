@@ -94,13 +94,16 @@ def sync(config, prntr):
             prntr.e(e.ebook_obj.path, excp=e)
 
     # 2) remove DRM
-    if config['no_drm'] is False:
-        errord_list = clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash)
+    errord_list = clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash)
 
-        if len(errord_list) > 0:
-            prntr.p('Errors occurred during decryption:')
-            for e in errord_list:
-                prntr.e(e.ebook_obj.path, excp=e)
+    if len(errord_list) > 0:
+        prntr.p('Errors occurred during decryption:')
+        for e in errord_list:
+            # display an error message
+            prntr.e(e.ebook_obj.path, excp=e)
+            # remove the book from the sync data
+            del(ebooks_by_filehash[e.ebook_obj.file_hash])
+            del(ebooks_by_authortitle[e.ebook_obj.authortitle])
 
     prntr.p('Found {} ebooks'.format(len(ebooks_by_authortitle)), success=True)
 
@@ -316,7 +319,11 @@ def clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash):
                 ebooks_by_filehash[new_ebook_obj.file_hash] = new_ebook_obj
                 cleaned += 1
 
-        except CorruptEbookError as e:
+        # record books which failed decryption
+        except DeDrmMissingError as e:
+            errord_list.append(DeDrmMissingError(ebook_obj))
+            continue
+        except (CorruptEbookError, DecryptionFailed) as e:
             errord_list.append(e)
             continue
 
@@ -383,16 +390,14 @@ def remove_drm_from_ebook(config, prntr, ebook_obj):
                 config['ebook_cache'].update_ebook_property(ebook_obj.path, drmfree=False)
 
                 if state == DRM.wrong_key:
-                    raise DecryptionFailed('Incorrect key found for ebook')
+                    raise DecryptionFailed(ebook_obj, 'Incorrect key found for ebook')
                 elif state == DRM.corrupt:
-                    raise DecryptionFailed('Corrupt ebook found')
+                    raise DecryptionFailed(ebook_obj, 'Corrupt ebook found')
                 else:
-                    raise DecryptionFailed('Unknown error in decryption ({})'.format(state))
+                    raise DecryptionFailed(ebook_obj, 'Unknown error in decryption ({})'.format(state))
 
-    except DeDrmMissingError:
-        config['no_drm'] = True
-    except (DecryptionFailed, UnicodeDecodeError) as e:
-        raise CorruptEbookError(ebook_obj, inner_excp=e)
+    except UnicodeDecodeError as e:
+        raise CorruptEbookError(ebook_obj, 'Unicode filename problem', inner_excp=e)
 
     return decrypted_ebook_obj
 

@@ -10,6 +10,17 @@ class OgreWarning(Exception):
     def __init__(self, message=None):
         super(OgreWarning, self).__init__(message)
 
+class BaseEbookError(OgreException):
+    def __init__(self, ebook_obj, message=None, inner_excp=None):
+        self.ebook_obj = ebook_obj
+        super(BaseEbookError, self).__init__(message, inner_excp)
+
+class BaseEbookWarning(OgreWarning):
+    def __init__(self, ebook_obj, message=None):
+        self.ebook_obj = ebook_obj
+        super(BaseEbookWarning, self).__init__(message)
+
+
 class ConfigSetupError(OgreException):
     pass
 
@@ -30,10 +41,6 @@ class NoEbooksError(OgreWarning):
 class SyncError(OgreException):
     pass
 
-class BaseEbookError(OgreException):
-    def __init__(self, ebook_obj, message=None, inner_excp=None):
-        self.ebook_obj = ebook_obj
-        super(BaseEbookError, self).__init__(message, inner_excp)
 
 class UploadError(BaseEbookError):
     pass
@@ -87,11 +94,14 @@ class FailedGettingDefinitionsError(OgreException):
     pass
 
 
-class DeDrmMissingError(OgreException):
+class DeDrmMissingError(BaseEbookWarning):
+    # DeDrmMissing exception must support a missing ebook_obj when raised in
+    # the initialisation of dedrm.py
+    def __init__(self, ebook_obj=None):
+        super(DeDrmMissingError, self).__init__(ebook_obj, message='DeDRM package unavailable!')
+
+class DecryptionFailed(BaseEbookWarning):
     pass
 
-class DecryptionFailed(OgreException):
-    pass
-
-class DecryptionError(OgreException):
+class DecryptionError(BaseEbookWarning):
     pass

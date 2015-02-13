@@ -393,7 +393,7 @@ def remove_drm_from_ebook(config, prntr, ebook_obj):
     except DeDrmMissingError:
         config['no_drm'] = True
     except (DecryptionFailed, UnicodeDecodeError) as e:
-        raise CorruptEbookError(ebook_obj.path, inner_excp=e)
+        raise CorruptEbookError(ebook_obj, inner_excp=e)
 
     return decrypted_ebook_obj
 

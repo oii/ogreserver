@@ -41,14 +41,15 @@ class BaseEbookError(OgreException):
 class UploadError(BaseEbookError):
     pass
 
-class CorruptEbookError(OgreException):
+class CorruptEbookError(BaseEbookError):
     pass
 
-class FailedWritingMetaDataError(OgreException):
+class FailedWritingMetaDataError(BaseEbookError):
     pass
 
-class FailedConfirmError(OgreException):
+class FailedConfirmError(BaseEbookError):
     pass
+
 
 class FailedDebugLogsError(OgreException):
     pass

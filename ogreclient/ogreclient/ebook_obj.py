@@ -130,7 +130,7 @@ class EbookObject:
         out_bytes, err_bytes = proc.communicate()
 
         if err_bytes.find('EPubException') > 0:
-            raise CorruptEbookError(err_bytes)
+            raise CorruptEbookError(self, err_bytes)
 
         # interpret bytes as UTF-8
         extracted = out_bytes.decode('utf-8')
@@ -215,7 +215,7 @@ class EbookObject:
                 continue
 
         if not meta:
-            raise CorruptEbookError('Failed extracting from {}'.format(self.path))
+            raise CorruptEbookError(self, 'Failed extracting from {}'.format(self.path))
 
         return meta
 
@@ -307,17 +307,17 @@ class EbookObject:
                     return new_hash
 
                 elif data == 'fail':
-                    raise FailedConfirmError("Server said 'no'")
+                    raise FailedConfirmError(self, "Server said 'no'")
                 elif data == 'same':
-                    raise FailedConfirmError("Server said 'same'")
+                    raise FailedConfirmError(self, "Server said 'same'")
                 else:
-                    raise FailedConfirmError('Unknown response from server!')
+                    raise FailedConfirmError(self, 'Unknown response from server!')
 
             except subprocess.CalledProcessError as e:
-                raise FailedWritingMetaDataError(str(e))
+                raise FailedWritingMetaDataError(self, str(e))
 
             except (HTTPError, URLError) as e:
-                raise FailedConfirmError(str(e))
+                raise FailedConfirmError(self, str(e))
 
 
     def add_dedrm_tag(self):
@@ -355,4 +355,4 @@ class EbookObject:
                 self.drmfree = True
 
             except subprocess.CalledProcessError as e:
-                raise FailedWritingMetaDataError(str(e))
+                raise FailedWritingMetaDataError(self, str(e))

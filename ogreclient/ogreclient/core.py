@@ -87,8 +87,8 @@ def sync(config, prntr):
 
     if len(errord_list) > 0:
         prntr.p('Errors occurred during scan:')
-        for message, e in errord_list.iteritems():
-            prntr.e('{}'.format(unicode(message)), excp=e)
+        for e in errord_list:
+            prntr.e(e.ebook_obj.path, excp=e)
 
     # 2) remove DRM
     if config['no_drm'] is False:
@@ -96,8 +96,8 @@ def sync(config, prntr):
 
         if len(errord_list) > 0:
             prntr.p('Errors occurred during decryption:')
-            for message, e in errord_list.iteritems():
-                prntr.e('{}'.format(unicode(message)), excp=e)
+            for e in errord_list:
+                prntr.e(e.ebook_obj.path, excp=e)
 
     # 3) send dict of ebooks / md5s to ogreserver
     response = sync_with_server(config, prntr, session_key, ebooks_by_authortitle)
@@ -140,7 +140,7 @@ def stats(config, prntr, ebooks_by_authortitle=None):
             counts[e.format] += 1
 
     # iterate list of exceptions
-    for e in errord_list.values():
+    for e in errord_list:
         if isinstance(e, CorruptEbookError):
             if 'corrupt' not in errors.keys():
                 errors['corrupt'] = 1
@@ -195,7 +195,7 @@ def search_for_ebooks(config, prntr):
     prntr.p('Scanning ebook meta data and checking DRM..')
     ebooks_by_authortitle = {}
     ebooks_by_filehash = {}
-    errord_list = {}
+    errord_list = []
 
     for item in ebooks:
         try:
@@ -223,7 +223,7 @@ def search_for_ebooks(config, prntr):
 
             except CorruptEbookError as e:
                 # record books which failed during search
-                errord_list[ebook_obj.path] = e
+                errord_list.append(e)
 
                 # add book to the cache as a skip
                 ebook_obj.skip = True
@@ -238,13 +238,13 @@ def search_for_ebooks(config, prntr):
         # check for identical filehash (exact duplicate) or duplicated authortitle/format
         if ebook_obj.file_hash in ebooks_by_filehash.keys():
             # warn user on error stack
-            errord_list[ebook_obj.path] = ExactDuplicateEbookError(
-                ebook_obj, ebooks_by_authortitle[ebook_obj.authortitle].path
+            errord_list.append(
+                ExactDuplicateEbookError(ebook_obj, ebooks_by_authortitle[ebook_obj.authortitle].path)
             )
         elif ebook_obj.authortitle in ebooks_by_authortitle.keys() and ebooks_by_authortitle[ebook_obj.authortitle].format == ebook_obj.format:
             # warn user on error stack
-            errord_list[ebook_obj.path] = AuthortitleDuplicateEbookError(
-                ebook_obj, ebooks_by_authortitle[ebook_obj.authortitle].path
+            errord_list.append(
+                AuthortitleDuplicateEbookError(ebook_obj, ebooks_by_authortitle[ebook_obj.authortitle].path)
             )
         else:
             # new ebook, or different format of duplicate ebook found
@@ -277,7 +277,7 @@ def search_for_ebooks(config, prntr):
 
         except EbookIdDuplicateEbookError as e:
             # handle duplicate books with same ebook_id in metadata
-            errord_list[ebook_obj.path] = e
+            errord_list.append(e)
 
         i += 1
         prntr.progressf(num_blocks=i, total_size=len(ebooks))
@@ -291,7 +291,7 @@ def search_for_ebooks(config, prntr):
 
 
 def clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash):
-    errord_list = {}
+    errord_list = []
 
     i = 0
     cleaned = 0
@@ -317,8 +317,7 @@ def clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash):
                 cleaned += 1
 
         except CorruptEbookError as e:
-            # record books which failed due to unicode filename issues
-            errord_list[ebook_obj.path] = e
+            errord_list.append(e)
             continue
 
         if config['verbose'] is False:
@@ -604,10 +603,10 @@ def send_logs(prntr, host, session_key, errord_list):
 
             i = 0
 
-            for filepath in errord_list.keys():
-                filename = os.path.basename(filepath.encode('utf-8'))
+            for e in errord_list:
+                filename = os.path.basename(e.ebook_obj.path.encode('utf-8'))
 
-                with open(filepath, "rb") as f:
+                with open(e.ebook_obj.path, "rb") as f:
                     # post the file contents
                     req = opener.open(
                         'http://{}/api/v1/upload-errord/{}'.format(

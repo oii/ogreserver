@@ -82,6 +82,9 @@ def sync(config, prntr):
     # query the server for current ebook definitions (which file extensions to search for etc)
     config['definitions'] = get_definitions(config, session_key)
 
+    # let the user know something is happening
+    prntr.p('Searching for ebooks..', nonl=True)
+
     # 1) find ebooks in config['ebook_home'] on local machine
     ebooks_by_authortitle, ebooks_by_filehash, errord_list = search_for_ebooks(config, prntr)
 
@@ -98,6 +101,8 @@ def sync(config, prntr):
             prntr.p('Errors occurred during decryption:')
             for e in errord_list:
                 prntr.e(e.ebook_obj.path, excp=e)
+
+    prntr.p('Found {} ebooks'.format(len(ebooks_by_authortitle)), success=True)
 
     # 3) send dict of ebooks / md5s to ogreserver
     response = sync_with_server(config, prntr, session_key, ebooks_by_authortitle)
@@ -165,9 +170,6 @@ def stats(config, prntr, ebooks_by_authortitle=None):
 
 def search_for_ebooks(config, prntr):
     ebooks = []
-
-    # let the user know something is happening
-    prntr.p('Searching for ebooks.. ', nonl=True)
 
     # process ebooks in a directory
     def _process_ebook_dir(root, files):
@@ -281,8 +283,6 @@ def search_for_ebooks(config, prntr):
 
         i += 1
         prntr.progressf(num_blocks=i, total_size=len(ebooks))
-
-    prntr.p('Found {} ebooks'.format(len(ebooks_by_authortitle)), success=True)
 
     if len(ebooks_by_authortitle) == 0:
         return {}, {}, errord_list

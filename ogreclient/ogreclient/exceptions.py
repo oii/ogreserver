@@ -87,3 +87,13 @@ class FailedUploadsQueryError(OgreException):
 
 class FailedGettingDefinitionsError(OgreException):
     pass
+
+
+class DeDrmMissingError(OgreException):
+    pass
+
+class DecryptionFailed(OgreException):
+    pass
+
+class DecryptionError(OgreException):
+    pass

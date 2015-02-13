@@ -14,15 +14,14 @@ from .urllib2_file import newHTTPHandler
 from .ebook_obj import EbookObject
 from .utils import make_temp_directory, retry
 from .printer import CliPrinter
-from .dedrm import decrypt, DRM, DeDrmMissingError, DecryptionFailed
+from .dedrm import decrypt, DRM
 
-from .exceptions import AuthDeniedError, AuthError, NoEbooksError
-from .exceptions import DuplicateEbookBaseError, ExactDuplicateEbookError
-from .exceptions import AuthortitleDuplicateEbookError, EbookIdDuplicateEbookError
-from .exceptions import SyncError, UploadError, CorruptEbookError
-from .exceptions import FailedWritingMetaDataError, FailedConfirmError, FailedDebugLogsError
-from .exceptions import MissingFromCacheError, OgreException, OgreserverDownError
-from .exceptions import FailedUploadsQueryError, FailedGettingDefinitionsError
+from .exceptions import AuthDeniedError, AuthError, NoEbooksError, DuplicateEbookBaseError, \
+        ExactDuplicateEbookError, AuthortitleDuplicateEbookError, EbookIdDuplicateEbookError, \
+        SyncError, UploadError, CorruptEbookError, FailedWritingMetaDataError, \
+        FailedConfirmError, FailedDebugLogsError, MissingFromCacheError, OgreException, \
+        OgreserverDownError, FailedUploadsQueryError, FailedGettingDefinitionsError, \
+        DeDrmMissingError, DecryptionFailed
 
 
 def authenticate(host, username, password):

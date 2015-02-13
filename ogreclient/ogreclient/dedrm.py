@@ -6,7 +6,8 @@ import os
 import subprocess
 import urllib2
 
-from .exceptions import AuthDeniedError, AuthError, OgreException
+from .exceptions import AuthDeniedError, AuthError, DeDrmMissingError, \
+        DecryptionError, DecryptionFailed
 from .utils import capture, enum, make_temp_directory, urlretrieve
 
 try:
@@ -196,13 +197,3 @@ def download_dedrm(host, username, password, prntr, debug=False):
 
     prntr.p('Installed dedrm {}'.format(mod.PLUGIN_VERSION))
     return True
-
-
-class DeDrmMissingError(OgreException):
-    pass
-
-class DecryptionFailed(OgreException):
-    pass
-
-class DecryptionError(OgreException):
-    pass

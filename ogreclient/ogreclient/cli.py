@@ -13,7 +13,7 @@ from .prereqs import setup_ogreclient
 from .printer import CliPrinter, DummyPrinter
 
 from .exceptions import OgreException, ConfigSetupError
-from .exceptions import AuthDeniedError, AuthError, NoEbooksError, NoUploadsError
+from .exceptions import AuthDeniedError, AuthError, NoEbooksError
 from .exceptions import SyncError, UploadError
 
 
@@ -231,8 +231,6 @@ def run_sync(conf, prntr):
         prntr.e('Permission denied. This is a private system.')
     except NoEbooksError:
         prntr.e('No ebooks found. Pass --ebook-home or set $EBOOK_HOME.')
-    except NoUploadsError:
-        prntr.e('Nothing to upload..')
     except Exception as e:
         prntr.e('Something went very wrong.', excp=e)
 

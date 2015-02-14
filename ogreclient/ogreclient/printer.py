@@ -282,7 +282,7 @@ class CliPrinter:
             # immediately when the exception occurs
             _, _, tb = sys.exc_info()
             if tb is not None:
-                msg += '\n{}'.format(traceback.extract_tb(tb))
+                msg += '\n{}'.format(''.join(traceback.format_tb(tb))[:-1])
 
             # the ex.inner_excp from CoreException mechanism provides a way to
             # wrap a lower exception in a meaningful application specific one

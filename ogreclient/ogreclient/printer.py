@@ -75,10 +75,12 @@ class CliPrinter:
     def _get_colour_and_prefix(mode=None, success=None):
         colour = CliPrinter.colours.WHITE
 
-        if mode == CliPrinter.UNKNOWN:
-            colour = CliPrinter.colours.BLUE
-        elif success is True:
-            colour = CliPrinter.colours.GREEN
+        if mode == CliPrinter.ERROR:
+            prefix = 'ERROR'
+            colour = CliPrinter.colours.RED
+        elif mode == CliPrinter.DEBUG:
+            prefix = 'DEBUG'
+            colour = CliPrinter.colours.GREY
 
         if mode == CliPrinter.ERROR:
             prefix = 'ERROR'
@@ -104,6 +106,7 @@ class CliPrinter:
         else:
             self.p(msg, mode, success=False, notime=notime)
 
+
     def p(self, msg, mode=None, notime=False, success=None, extra=None, nonl=False, tabular=False):
         # print a newline if required (this also ends any active progress bars)
         self.print_newline()
@@ -119,7 +122,10 @@ class CliPrinter:
 
         # log all prints to a stack for later use
         if self.log_output is True:
-            self.logs.append('[{: <10}]  {}'.format(prefix, msg))
+            self.logs.append(u'[{: <10}]  {}'.format(prefix, msg))
+
+        if self.start is None:
+            notime = True
 
         # calculate and format elapsed time
         t = self._get_time_elapsed(notime)
@@ -130,7 +136,7 @@ class CliPrinter:
 
         # thread-safe printing to stdout
         with self.lock:
-            out.write('{}[{: <10}]{} {}{}{}{}'.format(
+            out.write(u'{}[{: <10}]{} {}{}{}{}'.format(
                 CliPrinter.colours.YELLOW, prefix, CliPrinter.colours.GREY,
                 t, colour, msg, CliPrinter.colours.END
             ))
@@ -138,13 +144,13 @@ class CliPrinter:
             if type(extra) is list:
                 t = self._get_time_prefix(notime=True)
                 for line in extra:
-                    out.write('\n{}[{: <10}]  {}{}> {}{}'.format(
+                    out.write(u'\n{}[{: <10}]  {}{}> {}{}'.format(
                         CliPrinter.colours.YELLOW, prefix, CliPrinter.colours.WHITE,
                         t, CliPrinter.colours.END, line
                     ))
             elif extra is not None:
                 t = self._get_time_prefix(notime=True)
-                out.write('\n{}[{: <10}]  {}{}> {}{}'.format(
+                out.write(u'\n{}[{: <10}]  {}{}> {}{}'.format(
                     CliPrinter.colours.YELLOW, prefix, CliPrinter.colours.WHITE,
                     t, CliPrinter.colours.END, extra
                 ))
@@ -152,7 +158,7 @@ class CliPrinter:
             if nonl is True:
                 self.line_needs_finishing = True
             else:
-                out.write('\n')
+                out.write(u'\n')
 
             out.flush()
 
@@ -163,12 +169,13 @@ class CliPrinter:
         self.progress_running = True
 
         t = self._get_time_elapsed(notime)
-        sys.stdout.write('\r{}[{: <10}]{} {}{}{}{}'.format(
+        sys.stdout.write(u'\r{}[{: <10}]{} {}{}{}{}'.format(
             CliPrinter.colours.YELLOW, prefix, CliPrinter.colours.GREY, t, colour,
             (amount * self.progressbar_char),
             CliPrinter.colours.END
         ))
         sys.stdout.flush()
+
 
     def progressf(self, num_blocks=None, block_size=1, total_size=None, notime=False):
         if num_blocks is None or total_size is None:
@@ -183,7 +190,7 @@ class CliPrinter:
         progress = progress if progress < 1 else 1
 
         t = self._get_time_elapsed(notime)
-        sys.stdout.write('\r{}[{: <10}]{} {}{}[ {}{} ] {}%{}'.format(
+        sys.stdout.write(u'\r{}[{: <10}]{} {}{}[ {}{} ] {}%{}'.format(
             CliPrinter.colours.YELLOW, prefix, CliPrinter.colours.GREY, t, colour,
             self.progressbar_char * int(progress * self.progressbar_len),
             ' ' * (self.progressbar_len - int(progress * self.progressbar_len)),
@@ -191,6 +198,7 @@ class CliPrinter:
             CliPrinter.colours.END
         ))
         sys.stdout.flush()
+
 
     def _get_time_prefix(self, notime=False):
         if self.notimer is True:
@@ -201,6 +209,7 @@ class CliPrinter:
             return ' ' * 9
         else:
             return ''
+
 
     def _get_time_elapsed(self, notime=False, formatted=True):
         if self.notimer is True or notime is True:
@@ -282,7 +291,7 @@ class CliPrinter:
             # immediately when the exception occurs
             _, _, tb = sys.exc_info()
             if tb is not None:
-                msg += '\n{}'.format(''.join(traceback.format_tb(tb))[:-1])
+                msg += '\n{}'.format(traceback.extract_tb(tb))
 
             # the ex.inner_excp from CoreException mechanism provides a way to
             # wrap a lower exception in a meaningful application specific one
@@ -303,7 +312,7 @@ class CliPrinter:
             if self.line_needs_finishing is True or self.progress_running is True:
                 self.progress_running = False
                 self.line_needs_finishing = False
-                sys.stdout.write('\n')
+                sys.stdout.write(u'\n')
                 sys.stdout.flush()
 
 

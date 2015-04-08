@@ -1,0 +1,13 @@
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "windows7"
+
+  config.vm.guest = :windows
+
+  # Port forward WinRM
+  config.vm.network :forwarded_port, guest: 5985, host: 5985, id: "winrm", auto_correct: true
+
+  # salt shared dir in /tmp
+  config.vm.synced_folder "/tmp", "/tmp/host_machine"
+end

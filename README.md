@@ -1,11 +1,13 @@
 O.G.R.E.
 ========
 
-[![Build Status](https://travis-ci.org/mafrosis/ogre.svg?branch=develop)](https://travis-ci.org/mafrosis/ogre)
-[![Coverage Status](https://coveralls.io/repos/mafrosis/ogre/badge.png)](https://coveralls.io/r/mafrosis/ogre)
-[![Maintainer Status](http://stillmaintained.com/oii/ogre.png)](http://stillmaintained.com/oii/ogre)
-[![Made By Oii](http://img.shields.io/badge/made%20by-oii-blue.svg)](http://github.com/oii/ogre)
-[![BSD License](http://img.shields.io/badge/license-BSD-red.svg)](http://github.com/oii/ogre/blob/master/LICENSE)
+[![Build Status](http://img.shields.io/travis/mafrosis/ogre.svg?style=flat-square&branch=develop)][travis]
+[![Made By Oii](http://img.shields.io/badge/made%20by-oii-blue.svg?style=flat-square)][author]
+[![BSD License](http://img.shields.io/badge/license-BSD-red.svg?style=flat-square)][license]
+
+[travis]: http://travis-ci.org/mafrosis/ogre
+[author]: http://github.com/oii/ogre
+[license]: http://github.com/oii/ogre/blob/master/LICENSE
 
 
 OGRE is an ebook storage and synchronisation service.

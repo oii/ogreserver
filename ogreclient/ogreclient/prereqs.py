@@ -12,7 +12,7 @@ import sys
 from .cache import Cache
 from .dedrm import download_dedrm
 from .definitions import OGRESERVER_HOST
-from .exceptions import ConfigSetupError, NoEbookSourcesFoundError
+from .exceptions import ConfigSetupError, NoEbookSourcesFoundError, DeDrmNotAvailable
 from .providers import PROVIDERS, find_ebook_providers
 
 
@@ -148,6 +148,12 @@ def dedrm_check(prntr, args, conf):
         return
 
     if CAN_DECRYPT is False:
+        if not hasattr(args, 'host'):
+            raise DeDrmNotAvailable((
+                'Host and user auth params are required when dedrm tools unavailable'
+                'Please re-run with --host, --username & --password'
+            ))
+
         # attempt to download and setup dedrm
         attempted_download = True
         installed = download_dedrm(

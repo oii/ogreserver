@@ -64,6 +64,9 @@ class KindlePrereqsError(OgreException):
 class NoEbookSourcesFoundError(OgreException):
     pass
 
+class DeDrmNotAvailable(OgreException):
+    pass
+
 
 class DuplicateEbookBaseError(OgreWarning):
     def __init__(self, kind, ebook_obj, path2):

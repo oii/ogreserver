@@ -90,9 +90,9 @@ def decrypt(filepath, suffix, config_dir, output_dir=None):
         if state == DRM.decrypted:
             try:
                 # find the filename of the newly decrypted ebook
-                decrypted_filename = [
+                decrypted_filename = next((
                     f for f in os.listdir(ebook_convert_path) if '_nodrm' in f
-                ][0]
+                ), None)
 
                 # output_dir as supplied, or current directory
                 if output_dir is not None:

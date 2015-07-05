@@ -61,7 +61,7 @@ def compute_md5(filepath, buf_size=8192):
 def make_temp_directory():
     temp_dir = tempfile.mkdtemp()
     try:
-        yield temp_dir
+        yield unicode(temp_dir)
     except Exception as e:
         raise e
     finally:

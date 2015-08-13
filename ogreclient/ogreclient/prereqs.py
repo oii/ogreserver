@@ -3,13 +3,13 @@ from __future__ import unicode_literals
 
 import codecs
 import getpass
-import json
 import os
 import platform
 import subprocess
 import sys
 
 from .cache import Cache
+from .config import read_config, write_config
 from .dedrm import download_dedrm
 from .definitions import OGRESERVER_HOST
 from .exceptions import ConfigSetupError, NoEbookSourcesFoundError, DeDrmNotAvailable
@@ -19,21 +19,9 @@ from .providers import PROVIDERS, find_ebook_providers
 def setup_ogreclient(args, prntr):
     first_scan_warning = False
 
-    # setup config dir path
-    config_dir = os.path.join(os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config')), 'ogre')
+    conf = read_config()
 
-    # use existing config if available
-    if os.path.exists(config_dir) and os.path.exists(os.path.join(config_dir, 'app.config')):
-        with open(os.path.join(config_dir, 'app.config'), 'r') as f_config:
-            conf = json.loads(f_config.read())
-
-    # create a config directory in $HOME on first run
-    elif not os.path.exists(config_dir) or not os.path.exists(os.path.join(config_dir, 'app.config')):
-        first_scan_warning = True
-
-        if not os.path.exists(config_dir):
-            os.makedirs(config_dir)
-
+    if 'calibre_ebook_meta_bin' not in conf:
         calibre_ebook_meta_bin = None
 
         if platform.system() == 'Darwin':
@@ -44,7 +32,8 @@ def setup_ogreclient(args, prntr):
             # hardcoded path for pre-v2 calibre
             if not calibre_ebook_meta_bin and os.path.exists('/Applications/calibre.app/Contents/MacOS/ebook-meta'):
                 calibre_ebook_meta_bin = '/Applications/calibre.app/Contents/MacOS/ebook-meta'
-        else:
+
+        if not calibre_ebook_meta_bin:
             try:
                 # locate calibre's binaries with shell
                 calibre_ebook_meta_bin = subprocess.check_output('which ebook-meta', shell=True).strip()
@@ -58,9 +47,7 @@ def setup_ogreclient(args, prntr):
             sys.exit(1)
 
         # init the config dict
-        conf = {
-            'calibre_ebook_meta_bin': calibre_ebook_meta_bin
-        }
+        conf['calibre_ebook_meta_bin'] = calibre_ebook_meta_bin
 
     # not all ogreclient commands need auth
     if hasattr(args, 'host'):
@@ -99,18 +86,14 @@ def setup_ogreclient(args, prntr):
             raise NoEbookSourcesFoundError
 
     # write the config file
-    with open(os.path.join(config_dir, 'app.config'), 'w') as f_config:
-        f_config.write(json.dumps(conf))
+    write_config(conf)
 
     if providers_to_ignore:
         # ignore certain providers as determined by --ignore-* params
         conf['providers'] = {n:p for n,p in conf['providers'].items() if n not in providers_to_ignore}
 
-    # return the config directory
-    conf['config_dir'] = config_dir
-
     # setup some ebook cache file paths
-    conf['ebook_cache'] = Cache(conf, os.path.join(config_dir, 'ebook_cache.db'))
+    conf['ebook_cache'] = Cache(conf, os.path.join(conf['config_dir'], 'ebook_cache.db'))
 
     # verify the ogreclient cache; true means it was initialised
     if conf['ebook_cache'].verify_cache(prntr):
@@ -150,8 +133,8 @@ def dedrm_check(prntr, args, conf):
     if CAN_DECRYPT is False:
         if not hasattr(args, 'host'):
             raise DeDrmNotAvailable((
-                'Host and user auth params are required when dedrm tools unavailable'
-                'Please re-run with --host, --username & --password'
+                'DeDRM tools are not yet installed. '
+                'Please re-run with --host, --username & --password parameters to install them.'
             ))
 
         # attempt to download and setup dedrm

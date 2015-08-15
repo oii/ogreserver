@@ -124,11 +124,11 @@ def parse_command_line(conf):
 
     # set ogreserver params which apply to sync & stats
     for p in (psync, pstats):
-        for provider, provider_full_name in PROVIDERS.iteritems():
+        for provider, data in PROVIDERS.iteritems():
             if 'has_{}'.format(provider) in conf:
                 p.add_argument(
                     '--ignore-{}'.format(provider), action='store_true',
-                    help='Ignore ebooks in a local {} install'.format(provider_full_name))
+                    help='Ignore ebooks in a local {} install'.format(data['friendly']))
 
         p.add_argument(
             '--ebook-home', '-H',

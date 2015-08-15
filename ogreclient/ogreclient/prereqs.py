@@ -72,8 +72,9 @@ def setup_ogreclient(args, prntr, conf):
         ebook_home_found, conf['ebook_home'] = setup_ebook_home(prntr, args, conf)
 
         # ignore certain providers as determined by --ignore-* params
-        for provider in PROVIDERS:
-            if vars(args)['ignore_{}'.format(provider)] is True:
+        for provider in PROVIDERS.keys():
+            ignore_str = 'ignore_{}'.format(provider)
+            if ignore_str in vars(args) and vars(args)[ignore_str] is True:
                 providers_to_ignore.append(provider)
 
         # search for ebook-provider directories; modifies config in-place

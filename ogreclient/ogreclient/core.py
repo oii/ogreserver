@@ -14,6 +14,7 @@ from .urllib2_file import newHTTPHandler
 from .ebook_obj import EbookObject
 from .utils import make_temp_directory, retry
 from .printer import CliPrinter
+from .providers import LibProvider
 from .dedrm import decrypt, DRM
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, DuplicateEbookBaseError, \
@@ -184,8 +185,14 @@ def search_for_ebooks(config, prntr):
                     (os.path.join(root, filename), ext[1:])
                 )
 
+    # LibProviders have paths to other locations where books are stored
+    provider_dirs = [
+        provider.libpath for provider in config['providers'].values()
+        if type(provider) is LibProvider
+    ]
+
     # search for ebooks in all provider dirs & ebook_home
-    for provider_dir in config['providers'].values() + [config['ebook_home']]:
+    for provider_dir in provider_dirs + [config['ebook_home']]:
         if config['debug']:
             prntr.p('Searching {}'.format(provider_dir))
 

@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import ConfigParser
 import os
 
-from .providers import PROVIDERS
+from .providers import PROVIDERS, ProviderFactory
 
 
 def _get_config_dir():
@@ -34,12 +34,16 @@ def write_config(conf):
         if provider in conf['providers']:
             cp.add_section(provider)
 
+    # provider specific config
+    if 'kindle' in conf['providers']:
+        cp.set('kindle', 'libpath', conf['providers']['kindle'].libpath)
+
     with open(os.path.join(conf['config_dir'], 'app.config'), 'wb') as f_config:
         cp.write(f_config)
 
 
 def read_config():
-    conf = {'config_dir': _get_config_dir()}
+    conf = {'config_dir': _get_config_dir(), 'providers': {}}
 
     if not os.path.exists(conf['config_dir']):
         os.makedirs(conf['config_dir'])

@@ -7,10 +7,12 @@ import sys
 
 from . import __version__
 
+from .config import read_config
 from .core import sync, stats
 from .ebook_obj import EbookObject
 from .prereqs import setup_ogreclient
 from .printer import CliPrinter, DummyPrinter
+from .providers import PROVIDERS
 
 from .exceptions import OgreException, ConfigSetupError
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError
@@ -22,8 +24,11 @@ def entrypoint():
     prntr = None
 
     try:
+        # quick config load
+        conf = read_config()
+
         # setup and run argparse
-        args = parse_command_line()
+        args = parse_command_line(conf)
 
         # global CLI printer
         if args.quiet is True:
@@ -36,7 +41,7 @@ def entrypoint():
                 prntr.log_output = True
 
         # run some checks and create some config variables
-        conf = setup_ogreclient(args, prntr)
+        conf = setup_ogreclient(args, prntr, conf)
 
         if conf is not None:
             ret = main(conf, args, prntr)
@@ -57,7 +62,7 @@ def entrypoint():
     sys.exit(ret)
 
 
-def parse_command_line():
+def parse_command_line(conf):
     parser = argparse.ArgumentParser(
         description='O.G.R.E. client application'
     )
@@ -119,9 +124,12 @@ def parse_command_line():
 
     # set ogreserver params which apply to sync & stats
     for p in (psync, pstats):
-        p.add_argument(
-            '--ignore-kindle', action='store_true',
-            help='Ignore ebooks in a local Amazon Kindle install')
+        for provider, provider_full_name in PROVIDERS.iteritems():
+            if 'has_{}'.format(provider) in conf:
+                p.add_argument(
+                    '--ignore-{}'.format(provider), action='store_true',
+                    help='Ignore ebooks in a local {} install'.format(provider_full_name))
+
         p.add_argument(
             '--ebook-home', '-H',
             help=('The directory where you keep your ebooks. '

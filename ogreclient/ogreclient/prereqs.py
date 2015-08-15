@@ -9,17 +9,15 @@ import subprocess
 import sys
 
 from .cache import Cache
-from .config import read_config, write_config
+from .config import write_config
 from .dedrm import download_dedrm
 from .definitions import OGRESERVER_HOST
 from .exceptions import ConfigSetupError, NoEbookSourcesFoundError, DeDrmNotAvailable
 from .providers import PROVIDERS, find_ebook_providers
 
 
-def setup_ogreclient(args, prntr):
+def setup_ogreclient(args, prntr, conf):
     first_scan_warning = False
-
-    conf = read_config()
 
     if 'calibre_ebook_meta_bin' not in conf:
         calibre_ebook_meta_bin = None

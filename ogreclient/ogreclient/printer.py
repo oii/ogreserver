@@ -100,9 +100,21 @@ class CliPrinter:
         return colour, prefix
 
 
-    def e(self, msg, mode=ERROR, excp=None, notime=False):
-        if excp is not None:
-            self.p(msg, mode, success=False, notime=notime, extra=self.format_excp(excp, self.debug))
+    def e(self, msg=None, mode=None, excp=None, notime=False):
+        if msg is None and excp is None:
+            raise IllegalArgumentError('You must supply either msg or excp')
+
+        if excp:
+            # format the exception object into printables
+            excp_msg, inner_msg, traceback = self.format_excp(excp, self.debug)
+
+            if not msg:
+                msg = excp_msg
+
+            if self.debug:
+                self.p(msg, mode, success=False, notime=notime, extra=traceback)
+            else:
+                self.p(msg, mode, success=False, notime=notime, extra=inner_msg)
         else:
             self.p(msg, mode, success=False, notime=notime)
 
@@ -284,25 +296,34 @@ class CliPrinter:
 
 
     def format_excp(self, ex, debug=False):
+        """
+        Accepts an exception object and returns a tuple of message, inner_message,
+        if available and a formatted stacktrace
+        """
         msg = '{}: {}'.format(ex.__class__.__name__, ex)
+        inner_msg = ''
+        stacktrace = ''
+
+        if hasattr(ex, 'inner_excp') and isinstance(ex.inner_excp, Exception):
+            inner_msg = unicode(ex.inner_excp)
 
         if debug is True:
             # extract and print the latest exception; which is good for printing
             # immediately when the exception occurs
             _, _, tb = sys.exc_info()
             if tb is not None:
-                msg += '\n{}'.format(traceback.extract_tb(tb))
+                stacktrace += ''.join(traceback.format_tb(tb))[:-1]
 
             # the ex.inner_excp from CoreException mechanism provides a way to
             # wrap a lower exception in a meaningful application specific one
-            if hasattr(ex, 'inner_excp') and ex.inner_excp is not None:
-                msg += '\nInner Exception:\n > {}: {}'.format(
+            if hasattr(ex, 'inner_excp') and isinstance(ex.inner_excp, Exception):
+                stacktrace += '\nInner Exception:\n  {}: {}\n'.format(
                     ex.inner_excp.__class__.__name__, ex.inner_excp
                 )
                 if hasattr(ex, 'inner_traceback') and ex.inner_traceback is not None:
-                    msg += '\n   {}'.format(ex.inner_traceback)
+                    stacktrace += ex.inner_traceback
 
-        return msg
+        return msg, inner_msg, stacktrace
 
     def close(self):
         self.print_newline()
@@ -330,7 +351,11 @@ class DummyPrinter:
         pass
 
 
-class ProgressfArgumentError(Exception):
+class IllegalArgumentError(ValueError):
+    pass
+
+
+class ProgressfArgumentError(IllegalArgumentError):
     def __init__(self):
         super(ProgressfArgumentError, self).__init__(
             'You must supply num_blocks and total_size'
@@ -341,12 +366,11 @@ class CoreException(Exception):
     def __init__(self, message=None, inner_excp=None):
         super(CoreException, self).__init__(message)
         self.inner_excp = inner_excp
-        self.inner_traceback = None
 
-        if self.inner_excp is not None:
-            # extract traceback from inner_excp
-            # this is not guaranteed to work since sys.exc_info()
-            # gets only the _most recent_ exception
+        # extract traceback from inner_excp
+        if inner_excp is not None:
+            # this is not guaranteed to work since sys.exc_info() gets only
+            # the _most recent_ exception
             _, _, tb = sys.exc_info()
             if tb is not None:
-                self.inner_traceback = traceback.extract_tb(tb)
+                self.inner_traceback = ''.join(traceback.format_tb(tb))[:-1]

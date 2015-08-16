@@ -58,7 +58,13 @@ class FailedConfirmError(BaseEbookError):
 class FailedDebugLogsError(OgreException):
     pass
 
-class KindlePrereqsError(OgreException):
+class PrereqsBaseError(OgreException):
+    pass
+
+class KindlePrereqsError(PrereqsBaseError):
+    pass
+
+class ADEPrereqsError(PrereqsBaseError):
     pass
 
 class NoEbookSourcesFoundError(OgreException):

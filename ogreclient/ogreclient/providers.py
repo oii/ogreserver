@@ -9,7 +9,7 @@ import urlparse
 
 from xml.dom import minidom
 
-from .exceptions import KindlePrereqsError
+from .exceptions import KindlePrereqsError, ADEPrereqsError
 from .utils import make_temp_directory
 
 
@@ -38,11 +38,21 @@ class LibProvider(ProviderBase):
             self.libpath = libpath
             self.needs_scan = False
 
+class PathsProvider(ProviderBase):
+    '''
+    A PathsProvider contains a list of direct ebook paths
+    '''
+    paths = None
+
 
 PROVIDERS = {
     'kindle': {
         'friendly': 'Amazon Kindle',
         'class': LibProvider,
+    },
+    'ade': {
+        'friendly': 'Adobe Digital Editions',
+        'class': PathsProvider,
     },
 }
 
@@ -109,3 +119,44 @@ def _handle_kindle_Darwin(prntr, provider):
 
         except KindlePrereqsError as e:
             prntr.e('Failed extracting Kindle setup', excp=e)
+
+
+def _handle_ade_Darwin(prntr, provider):
+    # search for ADE on OSX
+    manifest_path = os.path.expanduser('~/Documents/Digital Editions')
+
+    # check OSX ADE path exists
+    if not os.path.exists(manifest_path):
+        return None
+
+    try:
+        def parse_manifest(path):
+            # parse XML plist file
+            with open(path, 'r') as f:
+                data = f.read()
+
+            # minidom is rubbish; but there's no nextSibling in ElementTree
+            dom = minidom.parseString(data)
+            el = next(iter(dom.getElementsByTagName('dp:content')), None)
+
+            if el is not None:
+                p = urlparse.urlparse(el.getAttribute('href'))
+                return urllib.unquote(
+                    os.path.abspath(os.path.join(p.netloc, p.path))
+                )
+
+        provider.paths = []
+
+        for root, _, files in os.walk(manifest_path):
+            for filename in files:
+                if filename.endswith('.xml'):
+                    path = parse_manifest(os.path.join(root, filename))
+                    if path is not None:
+                        provider.paths.append(
+                            (path, os.path.splitext(path)[1][1:])
+                        )
+
+        prntr.p('Found Adobe Digital Editions ebooks')
+
+    except ADEPrereqsError as e:
+        prntr.e('Failed extracting ADE setup', excp=e)

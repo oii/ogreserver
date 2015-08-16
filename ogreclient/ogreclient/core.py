@@ -14,7 +14,7 @@ from .urllib2_file import newHTTPHandler
 from .ebook_obj import EbookObject
 from .utils import make_temp_directory, retry
 from .printer import CliPrinter
-from .providers import LibProvider
+from .providers import LibProvider, PathsProvider
 from .dedrm import decrypt, DRM
 
 from .exceptions import AuthDeniedError, AuthError, NoEbooksError, DuplicateEbookBaseError, \
@@ -198,6 +198,14 @@ def search_for_ebooks(config, prntr):
 
         for root, _, files in os.walk(provider_dir):
             _process_ebook_dir(root, files)
+
+    # PathsProviders have list of ebook paths already loaded: merge those now
+    provider_ebooks = [
+        provider.paths for provider in config['providers'].values()
+        if type(provider) is PathsProvider
+    ]
+    for l in provider_ebooks:
+        ebooks += l
 
     i = 0
     prntr.p('Discovered {} files'.format(len(ebooks)))

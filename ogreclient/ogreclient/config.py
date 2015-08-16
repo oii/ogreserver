@@ -69,4 +69,13 @@ def read_config():
         if cp.has_section(provider):
             conf['has_{}'.format(provider)] = True
 
+    # provider specific config
+    if cp.has_section('kindle'):
+        try:
+            conf['providers']['kindle'] = ProviderFactory.create(
+                'kindle', libpath=cp.get('kindle', 'libpath')
+            )
+        except ConfigParser.NoOptionError:
+            pass
+
     return conf

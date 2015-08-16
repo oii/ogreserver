@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # vim:fileencoding=utf-8
 from __future__ import (unicode_literals, division, absolute_import,
                         print_function)
@@ -12,25 +12,32 @@ import ssl, socket
 from contextlib import closing
 
 is64bit = platform.architecture()[0] == '64bit'
-url = 'http://status.calibre-ebook.com/dist/linux'+('64' if is64bit else '32')
-signature_url = 'http://calibre-ebook.com/downloads/signatures/%s.sha512'
+url = 'http://code.calibre-ebook.com/dist/linux'+('64' if is64bit else '32')
 url = os.environ.get('CALIBRE_INSTALLER_LOCAL_URL', url)
 py3 = sys.version_info[0] > 2
-enc = getattr(sys.stdout, 'encoding', 'UTF-8') or 'utf-8'
-calibre_version = '{{ version }}'
-upstream_version = signature = None
+enc = getattr(sys.stdout, 'encoding', 'utf-8') or 'utf-8'
+if enc.lower() == 'ascii':
+    enc = 'utf-8'
+calibre_version = signature = None
 urllib = __import__('urllib.request' if py3 else 'urllib', fromlist=1)
+has_ssl_verify = hasattr(ssl, 'PROTOCOL_TLSv1_2') and sys.version_info[:3] > (2, 7, 8)
 
 if py3:
     unicode = str
     raw_input = input
     from urllib.parse import urlparse
     import http.client as httplib
+    encode_for_subprocess = lambda x:x
 else:
+    from future_builtins import map
     from urlparse import urlparse
     import httplib
+    def encode_for_subprocess(x):
+        if isinstance(x, unicode):
+            x = x.encode(enc)
+        return x
 
-class TerminalController:  # {
+class TerminalController:  # {{{
     BOL = ''             #: Move the cursor to the beginning of the line
     UP = ''              #: Move the cursor up one line
     DOWN = ''            #: Move the cursor down one line
@@ -194,9 +201,9 @@ class ProgressBar:
             self.term.UP + self.term.CLEAR_EOL).encode(enc))
             self.cleared = 1
             out.flush()
-# }
+# }}}
 
-def prints(*args, **kwargs):  # {
+def prints(*args, **kwargs):  # {{{
     f = kwargs.get('file', sys.stdout.buffer if py3 else sys.stdout)
     end = kwargs.get('end', b'\n')
     enc = getattr(f, 'encoding', 'utf-8') or 'utf-8'
@@ -211,9 +218,9 @@ def prints(*args, **kwargs):  # {
     f.write(end)
     if py3 and f is sys.stdout.buffer:
         f.flush()
-# }
+# }}}
 
-class Reporter:  # {
+class Reporter:  # {{{
 
     def __init__(self, fname):
         try:
@@ -225,16 +232,16 @@ class Reporter:  # {
     def __call__(self, blocks, block_size, total_size):
         percent = (blocks*block_size)/float(total_size)
         if self.pb is None:
-            pass
+            prints('Downloaded {0:%}'.format(percent))
         else:
             try:
                 self.pb.update(percent)
             except:
                 import traceback
                 traceback.print_exc()
-# }
+# }}}
 
-# Downloading {
+# Downloading {{{
 
 def clean_cache(cache, fname):
     for x in os.listdir(cache):
@@ -291,8 +298,7 @@ def do_download(dest):
     prints('Downloaded %s bytes'%os.path.getsize(dest))
 
 def download_tarball():
-    ext = 'tar.bz2' if calibre_version.startswith('1.') else 'txz'
-    fname = 'calibre-%s-i686.%s'%(calibre_version, ext)
+    fname = 'calibre-%s-i686.%s'%(calibre_version, 'txz')
     if is64bit:
         fname = fname.replace('i686', 'x86_64')
     tdir = tempfile.gettempdir()
@@ -330,9 +336,9 @@ def download_tarball():
                 'Try the download again later.')
         raise SystemExit(1)
     return raw
-# }
+# }}}
 
-# Get tarball signature securely {
+# Get tarball signature securely {{{
 
 def get_proxies(debug=True):
     proxies = urllib.getproxies()
@@ -468,14 +474,11 @@ def match_hostname(cert, hostname):
         raise CertificateError("no appropriate commonName or "
             "subjectAltName fields were found")
 
-if py3:
+if has_ssl_verify:
     class HTTPSConnection(httplib.HTTPSConnection):
 
         def __init__(self, ssl_version, *args, **kwargs):
-            context = kwargs['context'] = ssl.SSLContext(ssl_version)
-            cf = kwargs.pop('cert_file')
-            context.load_verify_locations(cf)
-            context.verify_mode = ssl.CERT_REQUIRED
+            kwargs['context'] = ssl.create_default_context(cafile=kwargs.pop('cert_file'))
             httplib.HTTPSConnection.__init__(self, *args, **kwargs)
 else:
     class HTTPSConnection(httplib.HTTPSConnection):
@@ -546,7 +549,10 @@ def get_https_resource_securely(url, timeout=60, max_redirects=5, ssl_version=No
     server's certificates.
     '''
     if ssl_version is None:
-        ssl_version = ssl.PROTOCOL_TLSv1
+        try:
+            ssl_version = ssl.PROTOCOL_TLSv1_2
+        except AttributeError:
+            ssl_version = ssl.PROTOCOL_TLSv1  # old python
     with tempfile.NamedTemporaryFile(prefix='calibre-ca-cert-') as f:
         f.write(CACERT)
         f.flush()
@@ -591,15 +597,15 @@ def get_https_resource_securely(url, timeout=60, max_redirects=5, ssl_version=No
             if response.status != httplib.OK:
                 raise HTTPError(url, response.status)
             return response.read()
-# }
+# }}}
 
 def extract_tarball(raw, destdir):
-    c = 'j' if raw.startswith(b'BZh') else 'J'
     prints('Extracting application files...')
     with open('/dev/null', 'w') as null:
-        p = subprocess.Popen(['tar', 'x%sof' % c, '-', '-C', destdir], stdout=null, stdin=subprocess.PIPE, close_fds=True,
-            preexec_fn=lambda:
-                        signal.signal(signal.SIGPIPE, signal.SIG_DFL))
+        p = subprocess.Popen(
+            list(map(encode_for_subprocess, ['tar', 'xJof', '-', '-C', destdir])),
+            stdout=null, stdin=subprocess.PIPE, close_fds=True, preexec_fn=lambda:
+            signal.signal(signal.SIGPIPE, signal.SIG_DFL))
         p.stdin.write(raw)
         p.stdin.close()
         if p.wait() != 0:
@@ -607,15 +613,14 @@ def extract_tarball(raw, destdir):
             raise SystemExit(1)
 
 def get_tarball_info():
-    global signature, upstream_version
+    global signature, calibre_version
     print ('Downloading tarball signature securely...')
-    raw = get_https_resource_securely('https://status.calibre-ebook.com/tarball-info/' +
+    raw = get_https_resource_securely('https://code.calibre-ebook.com/tarball-info/' +
                                       ('x86_64' if is64bit else 'i686'))
-    signature, upstream_version = raw.rpartition(b'@')[::2]
+    signature, calibre_version = raw.rpartition(b'@')[::2]
     if not signature or not calibre_version:
         raise ValueError('Failed to get install file signature, invalid signature returned')
-    upstream_version = upstream_version.decode('utf-8')
-    print ('Latest upstream version is {}'.format(upstream_version))
+    calibre_version = calibre_version.decode('utf-8')
 
 
 def download_and_extract(destdir):
@@ -632,7 +637,7 @@ def download_and_extract(destdir):
 def check_version():
     global calibre_version
     if calibre_version == '%version':
-        calibre_version = urllib.urlopen('http://status.calibre-ebook.com/latest').read()
+        calibre_version = urllib.urlopen('http://code.calibre-ebook.com/latest').read()
 
 def main(install_dir=None, isolated=False, bin_dir=None, share_dir=None):
     destdir = os.path.abspath(os.path.expanduser(install_dir or '/opt'))

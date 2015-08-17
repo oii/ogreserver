@@ -1,0 +1,49 @@
+{
+	"variables": {
+		"atlas_name": "mafrosis/ogre-staging",
+		"atlas_token": "{{env `ATLAS_TOKEN`}}",
+		"aws_access_key": "{{env `AWS_ACCESS_KEY`}}",
+		"aws_secret_key": "{{env `AWS_SECRET_KEY`}}",
+		"salt_version": "v2015.5.5",
+		"source_ami": "ami-e31a6594"
+	},
+	"push": {
+		"name": "{{user `atlas_name`}}",
+		"token": "{{user `atlas_token`}}"
+	},
+	"builders": [{
+		"type": "amazon-ebs",
+		"ami_name": "ami-ogre-staging-{{ timestamp }}",
+		"instance_type": "t2.micro",
+		"region": "eu-west-1",
+		"source_ami": "{{user `source_ami`}}",
+		"ssh_username": "admin"
+	}],
+	"provisioners": [{
+		"type": "shell",
+		"inline": "echo 'vagrant' | sudo -S apt-get -y update"
+	},
+	{
+		"type": "shell",
+		"execute_command": "{{.Vars}} sudo -E bash '{{.Path}}'",
+		"environment_vars": [
+			"SALT_VERSION={{user `salt_version`}}"
+		],
+		"scripts": [
+			"packer-scripts/dist-upgrade.sh",
+			"packer-scripts/saltstack.sh"
+		]
+	},
+	{
+		"type": "salt-masterless",
+		"skip_bootstrap": true,
+		"local_state_tree": "salt",
+		"local_pillar_roots": "pillar",
+		"minion_config": "packer-salt-minion.conf"
+	}],
+	"post-processors": [{
+		"type": "atlas",
+		"artifact": "{{user `atlas_name`}}",
+		"artifact_type": "amazon.ami"
+	}]
+}

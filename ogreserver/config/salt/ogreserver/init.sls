@@ -23,7 +23,6 @@ extend:
   app-virtualenv:
     virtualenv.managed:
       - requirements: /srv/{{ pillar['app_directory_name'] }}/ogreserver/config/requirements.txt
-      - pre_releases: true
       - require:
         - pkg: pip-dependencies-extra
 

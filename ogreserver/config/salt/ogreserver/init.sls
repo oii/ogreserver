@@ -1,5 +1,6 @@
 include:
   - app.virtualenv
+  - app.source
   - app.supervisor
   - calibre
   - closure-compiler
@@ -26,6 +27,7 @@ extend:
       - requirements: /srv/{{ pillar['app_directory_name'] }}/ogreserver/config/requirements.txt
       - require:
         - pkg: pip-dependencies-extra
+        - git: git-clone-app
 
   ogreserver-supervisor-service:
     supervisord.running:

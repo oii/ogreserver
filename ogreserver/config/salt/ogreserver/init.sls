@@ -10,6 +10,7 @@ include:
   - nodejs
   - pypiserver
   - rabbitmq
+  - rabbitmq.celerybeat
   - rethinkdb
 
 

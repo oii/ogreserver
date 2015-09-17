@@ -82,15 +82,22 @@ pip-dependencies-extra:
       - libmysqlclient-dev
       - libevent-dev
 
+flask-config-dir:
+  file.directory:
+    - name: /etc/ogre
+    - user: {{ pillar['app_user'] }}
+    - group: {{ pillar['app_user'] }}
+
 flask-config:
   file.managed:
-    - name: /srv/{{ pillar['app_directory_name'] }}/flask.app.conf.py
+    - name: /etc/ogre/flask.app.conf.py
     - source: salt://ogreserver/flask.app.conf.py
     - template: jinja
     - user: {{ pillar['app_user'] }}
     - group: {{ pillar['app_user'] }}
     - require:
       - git: git-clone-app
+      - file: flask-config-dir
     - require_in:
       - service: supervisor
 

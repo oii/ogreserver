@@ -8,7 +8,10 @@ from celery import Celery
 
 from .extensions.celery import queue_configuration, schedule_tasks
 
-flask_conf = os.path.join(os.getcwd(), 'flask.app.conf.py')
+if os.path.exists(os.path.join(os.getcwd(), 'flask.app.conf.py')):
+    flask_conf = os.path.join(os.getcwd(), 'flask.app.conf.py')
+elif os.path.exists('/etc/ogre/flask.app.conf.py'):
+    flask_conf = '/etc/ogre/flask.app.conf.py'
 
 
 def create_app(config=None):

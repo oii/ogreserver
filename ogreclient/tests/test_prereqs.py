@@ -3,31 +3,6 @@ from __future__ import unicode_literals
 
 import platform
 
-from collections import namedtuple
-
-
-def test_setup_ogreclient(setup_ogreclient, tmpdir, mock_os_environ_get, mock_subprocess_check_output):
-    # setup mock for os.environ.get('XDG_CONFIG_HOME')
-    def os_environ_get_side_effect(env_var, default=None):
-        if env_var in 'XDG_CONFIG_HOME':
-            return tmpdir.strpath
-        else:
-            return default
-    mock_os_environ_get.side_effect = os_environ_get_side_effect
-
-    # setup mock for subprocess.check_output()
-    mock_subprocess_check_output.return_value = 'fake-bin-path'
-
-    config = setup_ogreclient(
-        mode='sync', no_drm=True, host='test', ebook_home='param_home',
-        username='param_user', password='param_pass', ignore_kindle=True
-    )
-
-    # ensure user params came back from setup_user_auth()
-    assert config['ebook_home'] == 'param_home'
-    assert config['username'] == 'param_user'
-    assert config['password'] == 'param_pass'
-
 
 def test_setup_user_auth_env(setup_user_auth, mock_os_environ_get, client_config):
     # setup mock for os.environ.get()

@@ -11,7 +11,6 @@ import pytest
 
 from ..ogreclient.core import search_for_ebooks as func_search_for_ebooks
 from ..ogreclient.ebook_obj import EbookObject
-from ..ogreclient.prereqs import setup_ogreclient as func_setup_ogreclient
 from ..ogreclient.prereqs import setup_user_auth as func_setup_user_auth
 from ..ogreclient.prereqs import setup_ebook_home as func_setup_ebook_home
 from ..ogreclient.printer import DummyPrinter
@@ -91,21 +90,6 @@ def search_for_ebooks():
         data, _, errord = func_search_for_ebooks(client_config, prntr=DummyPrinter())
         return data, errord
     return run_search_for_ebooks
-
-
-@pytest.fixture(scope='session')
-def setup_ogreclient():
-    def run_setup_ogreclient(mode, no_drm, host, ebook_home, username, password, ignore_kindle):
-        # setup fake argparse object
-        fakeargs = namedtuple(
-            'fakeargs',
-            ('mode', 'no_drm', 'host', 'ebook_home', 'username', 'password', 'ignore_kindle'),
-        )
-        return func_setup_ogreclient(
-            fakeargs(mode, no_drm, host, ebook_home, username, password, ignore_kindle),
-            prntr=DummyPrinter()
-        )
-    return run_setup_ogreclient
 
 
 @pytest.fixture(scope='session')

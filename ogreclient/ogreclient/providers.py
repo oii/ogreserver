@@ -168,7 +168,7 @@ def _handle_ade_Darwin(prntr, provider):
             for filename in files:
                 if filename.endswith('.xml'):
                     path = parse_manifest(os.path.join(root, filename))
-                    if path is not None:
+                    if path is not None and os.path.exists(path):
                         provider.paths.append(
                             (path, os.path.splitext(path)[1][1:])
                         )

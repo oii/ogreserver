@@ -9,7 +9,7 @@ before_script:
   - curl http://download.rethinkdb.com/apt/pubkey.gpg | sudo apt-key add -
   - echo "deb http://download.rethinkdb.com/apt precise main" | sudo tee -a /etc/apt/sources.list
   - sudo apt-get -q update
-  - sudo apt-get install rethinkdb=1.15.1~0precise
+  - sudo apt-get install rethinkdb=2.1.4~0precise
   - sudo touch /etc/rethinkdb/instances.d/default.conf
   - sudo service rethinkdb restart
   - mysqladmin -u root password 'eggs'

@@ -3,6 +3,7 @@ include:
   - compass.supervisor
   - dev-build.tmux
   - logs
+  - ogreclient
   - s3cmd
   - s3proxy
   - watchdog

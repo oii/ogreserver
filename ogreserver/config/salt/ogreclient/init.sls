@@ -1,11 +1,15 @@
 include:
-  - github
-  - virtualenv-base
+  - virtualenv
 
-app-virtualenv:
+ogreclient-virtualenv:
   virtualenv.managed:
     - name: /home/{{ pillar['app_user'] }}/.virtualenvs/ogreclient
-    - requirements: /srv/ogre/ogreclient/config/requirements.txt
+    - user: {{ pillar['app_user'] }}
+
+ogreclient-install:
+  cmd.run:
+    - name: /home/{{ pillar['app_user'] }}/.virtualenvs/ogreclient/bin/pip install -e .
+    - cwd: /srv/ogre/ogreclient
     - user: {{ pillar['app_user'] }}
     - require:
       - git: git-clone-app

@@ -6,9 +6,6 @@ base:
     - match: grain
     - salt-backports
     - ogreserver
-  'role:ogreclient':
-    - match: grain
-    - ogreclient
 
   'G@role:ogreserver and G@env:prod':
     - match: compound

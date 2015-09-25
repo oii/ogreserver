@@ -1,4 +1,5 @@
 language: python
+cache: pip
 install:
   - pip install -q -r ogreserver/config/requirements.txt --pre
   - pip install -q -r requirements_test.txt
@@ -24,8 +25,10 @@ branches:
     - master
     - develop
 git:
-  submodules: false
+  submodules: true
 env:
   - TRAVIS_CI=true
+notifications:
+  slack: oiii:p6C6lcPAxs6ECumISZ3VLzyG
 after_success:
   - coveralls

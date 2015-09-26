@@ -48,3 +48,17 @@ gevent:
     - user: {{ pillar['app_user'] }}
     - require_in:
       - service: supervisor
+
+# build ogreclient and stick it in the pypiserver cache
+build-ogreclient:
+  cmd.run:
+    - name: python setup.py sdist
+    - cwd: /srv/ogre/ogreclient
+  file.rename:
+    - name: /var/pypiserver-cache/ogreclient-{{ pillar['ogreclient_version'] }}.tar.gz
+    - source: /srv/ogre/ogreclient/dist/ogreclient-{{ pillar['ogreclient_version'] }}.tar.gz
+    - force: true
+    - require:
+      - file: pypiserver-package-dir
+    - watch:
+      - cmd: build-ogreclient

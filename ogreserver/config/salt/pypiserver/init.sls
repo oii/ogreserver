@@ -2,6 +2,7 @@ pypiserver-virtualenv:
   virtualenv.managed:
     - name: /home/{{ pillar['app_user'] }}/.virtualenvs/pypiserver
     - requirements: salt://pypiserver/requirements.txt
+    - use_wheel: true
     - user: {{ pillar['app_user'] }}
     - require:
       - pkg: pip-dependencies

@@ -9,6 +9,3 @@ base:
   'env:prod':
     - match: grain
     - prod_vars
-
-  '*':
-    - github_pky

@@ -112,3 +112,19 @@ ogre-init:
       - file: flask-config
       - mysql_grants: create-mysql-user-perms
       - pip: rethinkdb-python-driver
+
+# build dedrm and stick it in the pypiserver cache
+build-dedrm:
+  cmd.run:
+    - name: python setup.py sdist
+    - cwd: /srv/ogre/dedrm
+    - require:
+      - git: git-clone-app
+  file.rename:
+    - name: /var/pypiserver-cache/dedrm-6.0.7.tar.gz
+    - source: /srv/ogre/dedrm/dist/dedrm-6.0.7.tar.gz
+    - force: true
+    - require:
+      - file: pypiserver-package-dir
+    - watch:
+      - cmd: build-dedrm

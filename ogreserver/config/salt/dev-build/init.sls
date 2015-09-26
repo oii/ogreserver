@@ -81,23 +81,6 @@ extend:
           host_base: localhost:8880
           host_bucket: localhost:8880
 
-
-# build dedrm and stick it in the pypiserver cache
-build-dedrm:
-  cmd.run:
-    - name: python setup.py sdist
-    - cwd: /srv/ogre/dedrm
-    - require:
-      - git: git-clone-app
-  file.rename:
-    - name: /var/pypiserver-cache/dedrm-6.0.7.tar.gz
-    - source: /srv/ogre/dedrm/dist/dedrm-6.0.7.tar.gz
-    - force: true
-    - require:
-      - file: pypiserver-package-dir
-    - watch:
-      - cmd: build-dedrm
-
 # make the logs readable by the login user
 logs-chown:
   file.directory:

@@ -48,8 +48,8 @@ ogre_user_email: test@example.com
 
 
 # server timezone & locale
-timezone: "Australia/Melbourne"
-locale: en_AU
+timezone: "Europe/London"
+locale: en_GB
 
 # get dotfiles from github
 github_username: mafrosis
@@ -70,8 +70,8 @@ pip:
   - virtualenvwrapper
   - ipdb
 
-# set backports to AU in bit.ly/19Nso9M
-deb_mirror_prefix: ftp.au
+# set debian APT mirror (ie, ftp.uk)
+deb_mirror_prefix: ftp.uk
 
 # your github key
 github_key: your-private-key-here

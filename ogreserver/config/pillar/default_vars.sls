@@ -51,9 +51,6 @@ ogre_user_email: test@example.com
 timezone: "Europe/London"
 locale: en_GB
 
-# get dotfiles from github
-github_username: mafrosis
-
 # install zsh and set as default login shell
 shell: zsh
 
@@ -72,6 +69,3 @@ pip:
 
 # set debian APT mirror (ie, ftp.uk)
 deb_mirror_prefix: ftp.uk
-
-# your github key
-github_key: your-private-key-here

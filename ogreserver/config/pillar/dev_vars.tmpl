@@ -1,3 +1,4 @@
+# vim: set ft=sls:
 {% import_yaml "default_vars.sls" as defaults %}
 
 # app_name is used all over to name directories, config files,
@@ -65,9 +66,6 @@ timezone: {{ defaults.timezone }}
 locale: {{ defaults.locale }}
 hostname: ogreserver
 
-# get dotfiles from github
-github_username: {{ defaults.github_username }}
-
 # install zsh and set as default login shell
 shell: {{ defaults.shell }}
 
@@ -83,10 +81,8 @@ pip:
   - {{ name }}
 {% endfor %}
 
-# set backports to AU in bit.ly/19Nso9M
+# set debian APT mirror (ie, ftp.uk)
 deb_mirror_prefix: {{ defaults.deb_mirror_prefix }}
 
-# your github key
-github_key: |
-  -----BEGIN RSA PRIVATE KEY-----
-  -----END RSA PRIVATE KEY-----
+# get dotfiles from github
+github_username: mafrosis

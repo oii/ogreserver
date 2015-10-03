@@ -8,10 +8,10 @@ fi
 
 if [[ ${SALT_VERSION:-} == 'latest' ]]; then
   echo "==> Installing latest Salt version"
-  curl -L http://bootstrap.saltstack.org | sudo sh
+  curl -L http://bootstrap.saltstack.org | bash | grep -v copying | grep -v byte-compiling
 else
   echo "==> Installing Salt version ${SALT_VERSION}"
-  curl -L http://bootstrap.saltstack.org | sudo sh -s -- git "${SALT_VERSION}"
+  curl -L http://bootstrap.saltstack.org | bash -s -- git "${SALT_VERSION}" | grep -v copying | grep -v byte-compiling
 fi
 
 echo "==> Installing pygit2 and git"

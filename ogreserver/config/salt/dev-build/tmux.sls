@@ -2,19 +2,37 @@
 # Extra tmux configuration for dev-builds
 #
 
-# install tmux segments for gunicorn & celeryd state
-{% for app in ('gunicorn', 'celeryd') %}
-tmux-{{ app }}-segment:
+# create tmux-powerline theme, including custom defined segments
+tmux-powerline-theme:
   file.managed:
-    - name: /home/vagrant/tmux-powerline/segments/{{ app }}.sh
-    - source: salt://tmux/pid-segment.tmpl.sh
+    - name: /home/vagrant/tmux-powerline/themes/ogreserver.sh
+    - source: salt://dev-build/tmux-powerline-theme.conf
+    - user: vagrant
+    - group: vagrant
+    - require:
+      - cmd: bootstrap-dotfiles
+
+tmux-powerlinerc-patch:
+  file.replace:
+    - name: /home/vagrant/.tmux-powerlinerc
+    - pattern: ^export TMUX_POWERLINE_THEME="default"
+    - repl: export TMUX_POWERLINE_THEME="ogreserver"
+    - append_if_not_found: true
+    - backup: false
+
+# install tmux segments for gunicorn & celeryd state
+{% for service in ('gunicorn', 'celeryd') %}
+tmux-{{ service }}-segment:
+  file.managed:
+    - name: /home/vagrant/tmux-powerline/segments/{{ service }}.sh
+    - source: salt://dev-build/tmux-pid-segment.sh
     - template: jinja
     - user: vagrant
     - context:
-        component_name: {{ app }}
+        component_name: {{ service }}
+        app_name: ogreserver
     - require:
-      - cmd: dotfiles-install-tmux
-      - git: tmux-powerline-install
+      - cmd: bootstrap-dotfiles
 {% endfor %}
 
 # add tmux init commands to setup environment
@@ -30,4 +48,4 @@ tmux-ogre-init-conf-patch:
     - name: /home/vagrant/.tmux.conf
     - text: "\n# AUTOMATICALLY ADDED TMUX SALT CONFIG\nsource-file ~/.tmux-ogre-init.conf"
     - require:
-      - cmd: dotfiles-install-tmux
+      - cmd: bootstrap-dotfiles

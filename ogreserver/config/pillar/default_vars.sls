@@ -46,6 +46,20 @@ ogre_user_name: dev-user
 ogre_user_pass: password
 ogre_user_email: test@example.com
 
+# watchdog setup for auto-code reloading
+watchdog:
+  gunicorn:
+    pattern: "*.py"
+    command: "kill -HUP $(cat /tmp/gunicorn-ogreserver.pid)"
+    dir: /srv/ogre/ogreserver
+  celeryd:
+    pattern: "*/tasks.py"
+    command: "sudo supervisorctl restart ogreserver:celeryd"
+    dir: /srv/ogre/ogreserver
+  libsass:
+    pattern: "*.scss"
+    command: "sassc -I bower_components/foundation/scss -I sass sass/app.scss stylesheets/app.css && sassc -I bower_components/foundation/scss -I sass sass/normalize.scss stylesheets/normalize.css"
+    dir: /srv/ogre/ogreserver/static
 
 # server timezone & locale
 timezone: "Europe/London"

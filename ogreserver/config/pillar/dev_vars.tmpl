@@ -50,16 +50,7 @@ ogre_user_pass: {{ defaults.ogre_user_pass }}
 ogre_user_email: {{ defaults.ogre_user_email }}
 
 # watchdog setup for auto-code reloading
-watchdog:
-  gunicorn:
-    pattern: "*.py"
-    command: "kill -HUP $(cat /tmp/gunicorn-ogreserver.pid)"
-    dir: /srv/ogre/ogreserver
-  celeryd:
-    pattern: "*/tasks.py"
-    command: "sudo supervisorctl restart ogreserver:celeryd"
-    dir: /srv/ogre/ogreserver
-
+watchdog: {{ defaults.watchdog }}
 
 # server timezone & locale
 timezone: {{ defaults.timezone }}

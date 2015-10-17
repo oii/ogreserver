@@ -23,9 +23,10 @@ from ..exceptions import AuthortitleDuplicateError, AsinDuplicateError
 
 
 class DataStore():
-    def __init__(self, config, logger, whoosh=None):
+    def __init__(self, config, logger, whoosh=None, flask_app=None):
         self.config = config
         self.logger = logger
+        self.flask_app = flask_app
         if whoosh:
             self.search = Search(whoosh, config.get('SEARCH_PAGELEN', 20))
         else:
@@ -228,6 +229,12 @@ class DataStore():
         # update the whoosh text search interface
         if self.search:
             self.search.index_for_search(new_book)
+
+        if self.flask_app:
+            # signal new ebook created (when running in Flask context)
+            self.flask_app.signals['ebook-created'].send(
+                self, ebook_data=new_book
+            )
 
         return ebook_id
 

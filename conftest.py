@@ -37,6 +37,8 @@ def app_config():
         'AWS_ADVERTISING_API_SECRET_KEY': 'its_a_secret',
         'AWS_ADVERTISING_API_ASSOCIATE_TAG': 'its_a_secret',
 
+        'GOODREADS_API_KEY': 'its_a_secret',
+
         'BROKER_URL': 'amqp://dev:dev@localhost:5672/dev',
         'CELERY_DEFAULT_QUEUE': 'testing',
         'CELERY_DEFAULT_EXCHANGE_TYPE': 'direct',

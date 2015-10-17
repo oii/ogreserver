@@ -20,6 +20,9 @@ AWS_ADVERTISING_API_ACCESS_KEY = "{{ pillar.get('aws_advertising_api_access_key'
 AWS_ADVERTISING_API_SECRET_KEY = "{{ pillar.get('aws_advertising_api_secret_key', '') }}"
 AWS_ADVERTISING_API_ASSOCIATE_TAG = "{{ pillar.get('aws_advertising_api_associate_tag', '') }}"
 
+# Goodreads API key
+GOODREADS_API_KEY = "{{ pillar.get('goodreads_api_key', '') }}"
+
 
 # Flask app
 {% if grains['env'] == 'dev' %}

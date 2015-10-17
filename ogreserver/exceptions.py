@@ -60,3 +60,9 @@ class AmazonNoMatchesError(AmazonAPIError):
 
 class AmazonHttpError(AmazonAPIError):
     pass
+
+class GoodreadsAPIError(OgreException):
+    pass
+
+class GoodreadsBookNotFoundError(OgreException):
+    pass

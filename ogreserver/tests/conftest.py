@@ -7,6 +7,7 @@ import pytest
 
 from ..utils import connect_s3
 from ..models.amazon import AmazonAPI
+from ..models.goodreads import GoodreadsAPI
 
 
 @pytest.yield_fixture(scope='function')
@@ -30,6 +31,11 @@ def amazon(app_config, logger):
         app_config.get('AWS_ADVERTISING_API_SECRET_KEY', None),
         app_config.get('AWS_ADVERTISING_API_ASSOCIATE_TAG', None),
     )
+
+
+@pytest.fixture(scope='session')
+def goodreads(app_config, logger):
+    return GoodreadsAPI(logger, app_config.get('GOODREADS_API_KEY', None))
 
 
 @pytest.yield_fixture(scope='function')

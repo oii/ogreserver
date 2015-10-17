@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import collections
+import logging
 import os
 import platform
 import random
@@ -31,6 +32,10 @@ def app_config():
         'TESTING_LOG_PATH': 'ogreserver.log',
 
         'SECRET_KEY': 'its_a_secret',
+
+        'AWS_ADVERTISING_API_ACCESS_KEY': 'its_a_secret',
+        'AWS_ADVERTISING_API_SECRET_KEY': 'its_a_secret',
+        'AWS_ADVERTISING_API_ASSOCIATE_TAG': 'its_a_secret',
 
         'BROKER_URL': 'amqp://dev:dev@localhost:5672/dev',
         'CELERY_DEFAULT_QUEUE': 'testing',
@@ -322,3 +327,11 @@ def client_sync(request):
         sync(config, prntr)
         return prntr.logs
     return run_sync
+
+
+@pytest.fixture(scope='session')
+def logger():
+    logger = logging.getLogger('testing')
+    logger.addHandler(logging.StreamHandler())
+    logger.setLevel(logging.DEBUG)
+    return logger

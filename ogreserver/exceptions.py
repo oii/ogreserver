@@ -44,3 +44,19 @@ class RethinkdbError(OgreException):
 
 class S3DatastoreError(OgreException):
     pass
+
+
+class APIAccessDenied(OgreException):
+    pass
+
+class AmazonAPIError(OgreException):
+    pass
+
+class AmazonItemNotAccessibleError(AmazonAPIError):
+    pass
+
+class AmazonNoMatchesError(AmazonAPIError):
+    pass
+
+class AmazonHttpError(AmazonAPIError):
+    pass

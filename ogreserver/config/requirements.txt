@@ -16,3 +16,6 @@ rethinkdb==2.1.0.post2
 Unidecode==0.04.18
 ftfy==4.0.0
 requests==2.7.0
+bottlenose==0.6.2
+fuzzywuzzy==0.7.0
+python-Levenshtein==0.12.0

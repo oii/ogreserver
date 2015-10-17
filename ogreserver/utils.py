@@ -3,15 +3,20 @@ from __future__ import unicode_literals
 
 import base64
 import contextlib
+import functools
 import hashlib
 import random
+import re
 import shutil
 import string
 import tempfile
+import urllib2
 
 import boto
 import boto.s3
 import boto.s3.connection
+
+from .exceptions import APIAccessDenied
 
 
 def compute_md5(filepath, buf_size=8192):
@@ -101,3 +106,28 @@ def request_wants_json(request):
     return best == 'application/json' and \
         request.accept_mimetypes[best] > \
         request.accept_mimetypes['text/html']
+
+def clean_string(string):
+    '''
+    Clean up strings:
+     - remove any trailing brackets (and their content)
+    '''
+    curly_brackets = re.compile('\(.+?\)')
+    square_brackets = re.compile('\[.+?\]')
+    for regex in (curly_brackets, square_brackets):
+        string = regex.sub('', string)
+    return string.strip()
+
+
+def handle_http_error(excp):
+    def decorator(f):
+        @functools.wraps(f)
+        def wrapped(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except urllib2.HTTPError as e:
+                if e.code == 403:
+                    raise APIAccessDenied(inner_excp=excp())
+                raise excp
+        return wrapped
+    return decorator

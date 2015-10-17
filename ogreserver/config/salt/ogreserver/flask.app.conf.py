@@ -78,6 +78,9 @@ DOWNLOAD_LINK_EXPIRY = 10
 # Default number of results for paging on search listing
 SEARCH_PAGELEN = 20
 
+# Minimum score to assume a match during fuzzywuzzy text comparison (see models/amazon.py)
+AMAZON_FUZZ_THRESHOLD = 50
+
 {% if grains['env'] == 'prod' %}
 # Production logging level
 import logging

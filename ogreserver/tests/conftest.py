@@ -6,6 +6,7 @@ import mock
 import pytest
 
 from ..utils import connect_s3
+from ..models.amazon import AmazonAPI
 
 
 @pytest.yield_fixture(scope='function')
@@ -19,6 +20,16 @@ def s3bucket(app_config):
     for k in bucket.list():
         k.delete()
     s3.delete_bucket(bucket)
+
+
+@pytest.fixture(scope='session')
+def amazon(app_config, logger):
+    return AmazonAPI(
+        logger,
+        app_config.get('AWS_ADVERTISING_API_ACCESS_KEY', None),
+        app_config.get('AWS_ADVERTISING_API_SECRET_KEY', None),
+        app_config.get('AWS_ADVERTISING_API_ASSOCIATE_TAG', None),
+    )
 
 
 @pytest.yield_fixture(scope='function')

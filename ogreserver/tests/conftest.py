@@ -3,7 +3,9 @@ from __future__ import unicode_literals
 
 import boto.exception
 import mock
+import os
 import pytest
+import yaml
 
 from ..utils import connect_s3
 from ..models.amazon import AmazonAPI
@@ -23,7 +25,7 @@ def s3bucket(app_config):
     s3.delete_bucket(bucket)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def amazon(app_config, logger):
     return AmazonAPI(
         logger,
@@ -31,6 +33,12 @@ def amazon(app_config, logger):
         app_config.get('AWS_ADVERTISING_API_SECRET_KEY', None),
         app_config.get('AWS_ADVERTISING_API_ASSOCIATE_TAG', None),
     )
+
+@pytest.yield_fixture(scope='function')
+def mock_amazon():
+    m = mock.patch('ogre.ogreserver.models.amazon.bottlenose.Amazon')
+    yield m.start()
+    m.stop()
 
 
 @pytest.fixture(scope='session')
@@ -64,3 +72,21 @@ def mock_compute_md5(request):
     m = mock.patch('ogre.ogreserver.models.conversion.compute_md5')
     yield m.start()
     m.stop()
+
+
+@pytest.fixture(scope='session')
+def get_data_fixtures():
+    """
+    Load a set data fixtures for a particular test. Fixtures must be stored in:
+        <test_filename>_fixtures/<testname>.yaml
+
+    This YAML file should contain all fixtures for the test.
+    """
+    def get_data_fixture_wrapped(file_path, test_name):
+        fixture_path = os.path.join(
+            '{}_fixtures'.format(file_path[:-3]),
+            '{}.yaml'.format(test_name.split('.')[-1:][0])
+        )
+        with open(fixture_path, 'r') as f:
+            return yaml.load(f.read())
+    return get_data_fixture_wrapped

@@ -1,8 +1,21 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import mock
 
-def test_isbn_search(goodreads):
+
+def test_isbn_search(mock_goodreads, goodreads, get_data_fixtures):
+    side_effects = []
+
+    # load GoodreadsAPI response fixtures
+    for f in get_data_fixtures(__file__, 'test_isbn_search'):
+        m = mock.Mock()
+        m.status_code = 200
+        m.text = f
+        side_effects.append(m)
+
+    mock_goodreads.get.side_effect = side_effects
+
     # search ISBN on goodreads
     gr_data = goodreads.search('0307346609')
     assert gr_data['isbn'] == '0307346609'
@@ -12,7 +25,18 @@ def test_isbn_search(goodreads):
     assert gr_data['authors'][0]['name'] == 'Max Brooks'
 
 
-def test_isbn13_search1(goodreads):
+def test_isbn13_search1(mock_goodreads, goodreads, get_data_fixtures):
+    side_effects = []
+
+    # load GoodreadsAPI response fixtures
+    for f in get_data_fixtures(__file__, 'test_isbn13_search1'):
+        m = mock.Mock()
+        m.status_code = 200
+        m.text = f
+        side_effects.append(m)
+
+    mock_goodreads.get.side_effect = side_effects
+
     # search ISBN13 on goodreads
     gr_data = goodreads.search('9780307346605')
     assert gr_data['isbn'] == '0307346609'
@@ -22,7 +46,18 @@ def test_isbn13_search1(goodreads):
     assert gr_data['authors'][0]['name'] == 'Max Brooks'
 
 
-def test_isbn13_search2(goodreads):
+def test_isbn13_search2(mock_goodreads, goodreads, get_data_fixtures):
+    side_effects = []
+
+    # load GoodreadsAPI response fixtures
+    for f in get_data_fixtures(__file__, 'test_isbn13_search2'):
+        m = mock.Mock()
+        m.status_code = 200
+        m.text = f
+        side_effects.append(m)
+
+    mock_goodreads.get.side_effect = side_effects
+
     # search ISBN13 on goodreads
     gr_data = goodreads.search('9781405525961')
     assert gr_data['isbn'] == '1405525967'
@@ -32,7 +67,18 @@ def test_isbn13_search2(goodreads):
     assert gr_data['authors'][0]['name'] == 'Anthony Ryan'
 
 
-def test_author_title_search(goodreads):
+def test_author_title_search(mock_goodreads, goodreads, get_data_fixtures):
+    side_effects = []
+
+    # load GoodreadsAPI response fixtures
+    for f in get_data_fixtures(__file__, 'test_author_title_search'):
+        m = mock.Mock()
+        m.status_code = 200
+        m.text = f
+        side_effects.append(m)
+
+    mock_goodreads.get.side_effect = side_effects
+
     # search author, title on goodreads
     gr_data = goodreads.search(author='Richard Morgan', title='Altered Carbon (GOLLANCZ S.F.)')
     assert gr_data['isbn'] == '0345457692'

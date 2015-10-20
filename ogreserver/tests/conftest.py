@@ -45,6 +45,12 @@ def mock_amazon():
 def goodreads(app_config, logger):
     return GoodreadsAPI(logger, app_config.get('GOODREADS_API_KEY', None))
 
+@pytest.yield_fixture(scope='function')
+def mock_goodreads():
+    m = mock.patch('ogre.ogreserver.models.goodreads.requests')
+    yield m.start()
+    m.stop()
+
 
 @pytest.yield_fixture(scope='function')
 def mock_subprocess_popen(request):

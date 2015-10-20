@@ -127,9 +127,8 @@ def send_mail(recipient, subject, template, **context):
                 'html': parts['html'],
             }
         )
-        # celery logs on stdout
-        print "'{}' email sent to {}, with id='{}'".format(
+        app.logger.info("'{}' email sent to {}, with id='{}'".format(
             subject,
             recipient,
             resp.json()['id']
-        )
+        ))

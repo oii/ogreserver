@@ -106,7 +106,7 @@ def sync(config, prntr):
             del(ebooks_by_filehash[e.ebook_obj.file_hash])
             del(ebooks_by_authortitle[e.ebook_obj.authortitle])
 
-    prntr.p('Found {} ebooks'.format(len(ebooks_by_authortitle)), success=True)
+    prntr.p('Found {} ebooks total'.format(len(ebooks_by_authortitle)))
 
     # 3) send dict of ebooks / md5s to ogreserver
     response = sync_with_server(config, prntr, session_key, ebooks_by_authortitle)
@@ -212,7 +212,7 @@ def search_for_ebooks(config, prntr):
     if len(ebooks) == 0:
         raise NoEbooksError
 
-    prntr.p('Scanning ebook meta data and checking DRM..')
+    prntr.p('Scanning ebook meta data and decrypting DRM..')
     ebooks_by_authortitle = {}
     ebooks_by_filehash = {}
     errord_list = []
@@ -346,7 +346,7 @@ def clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash):
             i += 1
             prntr.progressf(num_blocks=i, total_size=len(ebooks_by_authortitle))
 
-    if config['verbose'] is False:
+    if config['verbose'] and cleaned > 0:
         prntr.p('Cleaned DRM from {} ebooks'.format(cleaned), success=True)
 
     return errord_list
@@ -371,7 +371,7 @@ def remove_drm_from_ebook(config, prntr, ebook_obj):
 
             elif state == DRM.decrypted:
                 if config['verbose']:
-                    prntr.p('DRM removed from {}'.format(ebook_obj.path), CliPrinter.DEDRM, success=True)
+                    prntr.p('DRM removed from {}'.format(os.path.basename(ebook_obj.path)), CliPrinter.DEDRM, success=True)
 
                 # create new ebook_obj for decrypted ebook
                 decrypted_ebook_obj = EbookObject(config=config, filepath=decrypted_filepath)
@@ -392,7 +392,7 @@ def remove_drm_from_ebook(config, prntr, ebook_obj):
                 shutil.move(decrypted_filepath, decrypted_ebook_obj.path)
 
                 if config['verbose']:
-                    prntr.p('Decrypted book moved to {}'.format(decrypted_ebook_obj.path), CliPrinter.DEDRM, success=True)
+                    prntr.p('Decrypted book moved to {}'.format(decrypted_ebook_obj.path), CliPrinter.DEDRM)
 
                 # add decrypted book to cache
                 config['ebook_cache'].store_ebook(decrypted_ebook_obj)
@@ -488,7 +488,7 @@ def update_local_metadata(config, prntr, session_key, ebooks_by_filehash, ebooks
             prntr.e('Failed saving OGRE_ID in {}'.format(ebook_obj.path), excp=e)
             failed += 1
 
-    if success > 0:
+    if config['verbose'] and success > 0:
         prntr.p('Updated {} ebooks'.format(success), success=True)
     if failed > 0:
         prntr.e('Failed updating {} ebooks'.format(failed))
@@ -540,7 +540,7 @@ def upload_ebooks(config, prntr, session_key, ebooks_by_filehash, ebooks_to_uplo
                 failed_uploads.append(e)
         else:
             if config['verbose'] is True:
-                prntr.p('Uploaded {}'.format(ebook_obj.path), success=True)
+                prntr.p('Uploaded {}'.format(ebook_obj.path))
             success += 1
 
         if config['verbose'] is False:

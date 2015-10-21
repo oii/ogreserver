@@ -1,11 +1,11 @@
 O.G.R.E.
 ========
 
-[![Build Status](http://img.shields.io/travis/mafrosis/ogre.svg?style=flat-square&branch=develop)][travis]
+[![Build Status](http://img.shields.io/travis/oii/ogre.svg?style=flat-square&branch=develop)][travis]
 [![Made By Oii](http://img.shields.io/badge/made%20by-oii-blue.svg?style=flat-square)][author]
 [![BSD License](http://img.shields.io/badge/license-BSD-red.svg?style=flat-square)][license]
 
-[travis]: http://travis-ci.org/mafrosis/ogre
+[travis]: http://travis-ci.org/oii/ogre
 [author]: http://github.com/oii/ogre
 [license]: http://github.com/oii/ogre/blob/master/LICENSE
 

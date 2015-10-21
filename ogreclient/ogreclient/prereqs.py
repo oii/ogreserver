@@ -214,7 +214,7 @@ def setup_ebook_home(prntr, args, conf):
 
     # 3) load settings from saved config
     if ebook_home is None or len(ebook_home) == 0:
-        ebook_home = conf['ebook_home']
+        ebook_home = conf.get('ebook_home', None)
 
     if type(ebook_home) is str:
         # decode ebook_home to unicode according to local fs encoding,

@@ -5,6 +5,8 @@ import os
 import pytest
 import shutil
 
+from ..ogreclient.ogreclient.providers import LibProvider
+
 
 @pytest.mark.integration
 @pytest.mark.requires_calibre
@@ -18,8 +20,11 @@ def test_full_sync(ogreserver, rethinkdb, client_config, client_sync, tmpdir):
             os.path.join(tmpdir.strpath, filename),
         )
 
-    # set ebook home test directory
+    # set ebook home for test
     client_config['ebook_home'] = tmpdir.strpath
+    # .. and create ebook_home LibProvider (since we skip calling setup_ogreclient)
+    ebook_home_provider = LibProvider(libpath=tmpdir.strpath)
+    client_config['providers']['ebook_home'] = ebook_home_provider
 
     # run ogreclient sync
     client_sync(client_config)

@@ -35,7 +35,7 @@ def write_config(conf):
             cp.add_section(provider)
 
     # provider specific config
-    if 'kindle' in conf['providers']:
+    if conf['providers']['kindle']:
         cp.set('kindle', 'libpath', conf['providers']['kindle'].libpath)
 
     with open(os.path.join(conf['config_dir'], 'app.config'), 'wb') as f_config:

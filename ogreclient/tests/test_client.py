@@ -6,6 +6,8 @@ import shutil
 
 import mock
 
+from ..ogreclient.providers import LibProvider
+
 
 def test_search(search_for_ebooks, mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):
     # mock return from Popen().communicate()
@@ -13,10 +15,11 @@ def test_search(search_for_ebooks, mock_subprocess_popen, client_config, ebook_l
     mock_subprocess_popen.return_value.communicate.return_value = (b"Title               : Alice's Adventures in Wonderland\nAuthor(s)           : Lewis Carroll [Carroll, Lewis]\nTags                : Fantasy\nLanguages           : eng\nPublished           : 2008-06-26T14:00:00+00:00\nRights              : Public domain in the USA.\nIdentifiers         : uri:http://www.gutenberg.org/ebooks/11\n", b'')
 
     # setup ebook home for this test
-    client_config['ebook_home'] = tmpdir.strpath
+    ebook_home_provider = LibProvider(libpath=tmpdir.strpath)
+    client_config['providers']['ebook_home'] = ebook_home_provider
 
     # stick Alice in Wonderland into ebook_home
-    shutil.copy(os.path.join(ebook_lib_path, 'pg11.epub'), client_config['ebook_home'])
+    shutil.copy(os.path.join(ebook_lib_path, 'pg11.epub'), tmpdir.strpath)
 
     # search for ebooks
     data, errord = search_for_ebooks(client_config)
@@ -33,11 +36,12 @@ def test_search_ranking(search_for_ebooks, mock_subprocess_popen, client_config,
     mock_subprocess_popen.return_value.communicate.return_value = (b"Title               : Alice's Adventures in Wonderland\nAuthor(s)           : Lewis Carroll [Carroll, Lewis]\nTags                : Fantasy\nLanguages           : eng\nPublished           : 2008-06-26T14:00:00+00:00\nRights              : Public domain in the USA.\nIdentifiers         : uri:http://www.gutenberg.org/ebooks/11\n", b'')
 
     # setup ebook home for this test
-    client_config['ebook_home'] = tmpdir.strpath
+    ebook_home_provider = LibProvider(libpath=tmpdir.strpath)
+    client_config['providers']['ebook_home'] = ebook_home_provider
 
     # stick Alice in Wonderland epub & mobi into ebook_home
     for book in ('pg11.epub', 'pg11.mobi'):
-        shutil.copy(os.path.join(ebook_lib_path, book), client_config['ebook_home'])
+        shutil.copy(os.path.join(ebook_lib_path, book), tmpdir.strpath)
 
     # search for ebooks
     data, errord = search_for_ebooks(client_config)

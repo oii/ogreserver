@@ -175,37 +175,31 @@ def stats(config, prntr, ebooks_by_authortitle=None):
 def search_for_ebooks(config, prntr):
     ebooks = []
 
-    # process ebooks in a directory
-    def _process_ebook_dir(root, files):
-        for filename in files:
-            fn, ext = os.path.splitext(filename)
-            # check file not hidden, is in list of known file suffixes
-            if fn[1:1] != '.' and ext[1:] in config['definitions'].keys():
-                ebooks.append(
-                    (os.path.join(root, filename), ext[1:])
-                )
+    def _process_filename(filename):
+        fn, ext = os.path.splitext(filename)
+        # check file not hidden, is in list of known file suffixes
+        if fn[1:1] != '.' and ext[1:] in config['definitions'].keys():
+            ebooks.append(
+                (os.path.join(root, filename), ext[1:])
+            )
 
-    # LibProviders have paths to other locations where books are stored
-    provider_dirs = [
-        provider.libpath for provider in config['providers'].values()
-        if type(provider) is LibProvider
-    ]
+    for provider in config['providers'].itervalues():
+        # a LibProvider contains a single directory containing ebooks
+        if isinstance(provider, LibProvider):
+            if config['debug']:
+                prntr.p('Searching {} in {}'.format(provider.friendly, provider.libpath))
 
-    # search for ebooks in all provider dirs & ebook_home
-    for provider_dir in provider_dirs + [config['ebook_home']]:
-        if config['debug']:
-            prntr.p('Searching {}'.format(provider_dir))
+            for root, _, files in os.walk(provider.libpath):
+                for filename in files:
+                    _process_filename(filename)
 
-        for root, _, files in os.walk(provider_dir):
-            _process_ebook_dir(root, files)
+        # a PathsProvider contains a list of direct ebook paths
+        elif isinstance(provider, PathsProvider):
+            if config['debug']:
+                prntr.p('Searching {}'.format(provider.friendly))
 
-    # PathsProviders have list of ebook paths already loaded: merge those now
-    provider_ebooks = [
-        provider.paths for provider in config['providers'].values()
-        if type(provider) is PathsProvider
-    ]
-    for l in provider_ebooks:
-        ebooks += l
+            for path in provider.paths:
+                _process_filename(filename)
 
     i = 0
     prntr.p('Discovered {} files'.format(len(ebooks)))

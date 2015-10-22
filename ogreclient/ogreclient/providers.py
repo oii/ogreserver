@@ -10,19 +10,24 @@ import urlparse
 from xml.dom import minidom
 
 from .exceptions import ProviderBaseError, KindleProviderError, ADEProviderError, \
-        ProviderUnavailableBaseWarning, KindleUnavailableWarning, ADEUnavailableWarning
+        ProviderUnavailableBaseWarning, KindleUnavailableWarning, ADEUnavailableWarning, \
+        EbookHomeUnavailableWarning
 from .utils import make_temp_directory
 
 
 class ProviderFactory:
     @classmethod
     def create(cls, *args, **kwargs):
-        return PROVIDERS[args[0]]['class'](**kwargs)
+        provider = PROVIDERS[args[0]]
+        # pass provider friendly name into constructor
+        kwargs.update({'friendly': provider['friendly']})
+        return provider['class'](**kwargs)
 
 class ProviderBase(object):
     needs_scan = True
-    def __init__(self, *args, **kwargs):
-        pass
+    def __init__(self, friendly=None, config=None):
+        self.friendly = friendly
+
 
 class LibProvider(ProviderBase):
     '''
@@ -33,11 +38,20 @@ class LibProvider(ProviderBase):
     '''
     libpath = None
 
-    def __init__(self, libpath=None):
+    def __init__(self, friendly=None, libpath=None, config=None):
+        super(LibProvider, self).__init__(friendly)
+
         # store the supplied path, if it exists
         if libpath and os.path.exists(libpath) is True:
             self.libpath = libpath
             self.needs_scan = False
+
+class EbookHomeProvider(LibProvider):
+    '''
+    A specialised LibsProvider just for $EBOOK_HOME
+    '''
+    def __init__(self, friendly=None, config=None):
+        super(EbookHomeProvider, self).__init__(friendly, libpath=config['ebook_home'])
 
 class PathsProvider(ProviderBase):
     '''
@@ -47,6 +61,10 @@ class PathsProvider(ProviderBase):
 
 
 PROVIDERS = {
+    'home': {
+        'friendly': 'Ebook Home',
+        'class': EbookHomeProvider,
+    },
     'kindle': {
         'friendly': 'Amazon Kindle',
         'class': LibProvider,
@@ -65,39 +83,48 @@ def find_ebook_providers(prntr, conf, ignore=None):
     if 'providers' not in conf:
         conf['providers'] = {}
 
-    for provider in PROVIDERS.keys():
+    for provider_name in PROVIDERS.keys():
         # ignore certain providers as determined by --ignore-* params
-        if ignore and provider in ignore:
+        if ignore and provider_name in ignore:
             continue
 
         # initialise any providers which werent loaded from config
-        if provider not in conf['providers']:
-            conf['providers'][provider] = ProviderFactory.create(provider)
+        if provider_name not in conf['providers']:
+            conf['providers'][provider_name] = ProviderFactory.create(provider_name, config=conf)
+
+        # local variable for provider object
+        provider = conf['providers'][provider_name]
 
         found = False
 
-        if conf['providers'][provider].needs_scan:
-            # call provider functions dynamically by platform
-            func_name = '_handle_{}_{}'.format(provider, conf['platform'])
+        if provider.needs_scan:
+            # call provider handler functions dynamically by platform
+            func_name = '_handle_{}_{}'.format(provider_name, conf['platform'])
             if func_name in globals() and hasattr(globals()[func_name], '__call__'):
                 try:
-                    globals()[func_name](prntr, conf['providers'][provider])
+                    globals()[func_name](prntr, provider)
                     found = True
 
                 except ProviderUnavailableBaseWarning:
                     pass
                 except ProviderBaseError as e:
-                    prntr.e('Failed processing {}'.format(PROVIDERS[provider]['friendly']), excp=e)
+                    prntr.e('Failed processing {}'.format(provider.friendly), excp=e)
             else:
-                prntr.p('{} not supported for {} books. Contact oii.'.format(conf['platform'], provider))
+                prntr.p('{} not supported for {} books. Contact oii.'.format(conf['platform'], provider.friendly))
         else:
             found = True
 
         if found is True:
-            prntr.p('Found {} directory'.format(PROVIDERS[provider]['friendly']))
+            prntr.p('Found {} directory'.format(provider.friendly))
         else:
             # provider is unavailable; remove it from the config
-            conf['providers'][provider] = None
+            conf['providers'][provider_name] = None
+
+
+def _handle_home_Darwin(prntr, provider):
+    # if EBOOK_HOME is not set, just skip
+    if not provider.libpath:
+        raise EbookHomeUnavailableWarning
 
 
 def _handle_kindle_Darwin(prntr, provider):

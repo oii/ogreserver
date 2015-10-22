@@ -83,6 +83,9 @@ class KindleUnavailableWarning(ProviderUnavailableBaseWarning):
 class ADEUnavailableWarning(ProviderUnavailableBaseWarning):
     pass
 
+class EbookHomeUnavailableWarning(ProviderUnavailableBaseWarning):
+    pass
+
 
 class DuplicateEbookBaseError(OgreWarning):
     def __init__(self, kind, ebook_obj, path2):

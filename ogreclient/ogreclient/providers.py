@@ -9,7 +9,8 @@ import urlparse
 
 from xml.dom import minidom
 
-from .exceptions import KindlePrereqsError, ADEPrereqsError
+from .exceptions import ProviderBaseError, KindleProviderError, ADEProviderError, \
+        ProviderUnavailableBaseWarning, KindleUnavailableWarning, ADEUnavailableWarning
 from .utils import make_temp_directory
 
 
@@ -73,13 +74,30 @@ def find_ebook_providers(prntr, conf, ignore=None):
         if provider not in conf['providers']:
             conf['providers'][provider] = ProviderFactory.create(provider)
 
+        found = False
+
         if conf['providers'][provider].needs_scan:
             # call provider functions dynamically by platform
             func_name = '_handle_{}_{}'.format(provider, conf['platform'])
             if func_name in globals() and hasattr(globals()[func_name], '__call__'):
-                globals()[func_name](prntr, conf['providers'][provider])
+                try:
+                    globals()[func_name](prntr, conf['providers'][provider])
+                    found = True
+
+                except ProviderUnavailableBaseWarning:
+                    pass
+                except ProviderBaseError as e:
+                    prntr.e('Failed processing {}'.format(PROVIDERS[provider]['friendly']), excp=e)
             else:
                 prntr.p('{} not supported for {} books. Contact oii.'.format(conf['platform'], provider))
+        else:
+            found = True
+
+        if found is True:
+            prntr.p('Found {} directory'.format(PROVIDERS[provider]['friendly']))
+        else:
+            # provider is unavailable; remove it from the config
+            conf['providers'][provider] = None
 
 
 def _handle_kindle_Darwin(prntr, provider):
@@ -88,7 +106,7 @@ def _handle_kindle_Darwin(prntr, provider):
 
     # check OSX plist file exists
     if not os.path.exists(plist):
-        return None
+        raise KindleUnavailableWarning
 
     # parse plist file and extract Kindle ebooks dir
     with make_temp_directory() as tmpdir:
@@ -114,11 +132,10 @@ def _handle_kindle_Darwin(prntr, provider):
 
             # validate kindle dir
             if os.path.exists(kindle_dir) and os.path.isdir(kindle_dir):
-                prntr.p('Found Amazon Kindle ebooks')
                 provider.libpath = kindle_dir
 
-        except KindlePrereqsError as e:
-            prntr.e('Failed extracting Kindle setup', excp=e)
+        except Exception as e:
+            raise KindleProviderError(inner_excp=e)
 
 
 def _handle_ade_Darwin(prntr, provider):
@@ -127,7 +144,7 @@ def _handle_ade_Darwin(prntr, provider):
 
     # check OSX ADE path exists
     if not os.path.exists(manifest_path):
-        return None
+        raise ADEUnavailableWarning
 
     try:
         def parse_manifest(path):
@@ -156,7 +173,5 @@ def _handle_ade_Darwin(prntr, provider):
                             (path, os.path.splitext(path)[1][1:])
                         )
 
-        prntr.p('Found Adobe Digital Editions ebooks')
-
-    except ADEPrereqsError as e:
-        prntr.e('Failed extracting ADE setup', excp=e)
+    except Exception as e:
+        raise ADEProviderError(inner_excp=e)

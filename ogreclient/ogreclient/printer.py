@@ -108,12 +108,13 @@ class CliPrinter:
             # format the exception object into printables
             excp_msg, inner_msg, traceback = self.format_excp(excp, self.debug)
 
-            if not msg:
-                msg = excp_msg
-
             if self.debug:
-                self.p(msg, mode, success=False, notime=notime, extra=traceback)
+                self.p(excp_msg, mode, success=False, notime=notime, extra=traceback)
             else:
+                # display supplied friendly message, or print exception message
+                if not msg:
+                    msg = excp_msg
+
                 self.p(msg, mode, success=False, notime=notime, extra=inner_msg)
         else:
             self.p(msg, mode, success=False, notime=notime)

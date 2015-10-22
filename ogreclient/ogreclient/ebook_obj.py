@@ -96,7 +96,7 @@ class EbookObject:
 
     def compute_md5(self):
         # calculate MD5 of ebook
-        md5_tup = compute_md5(self.path, buf_size=524288)
+        md5_tup = compute_md5(self.path)
         self.size, self.file_hash = md5_tup[2], md5_tup[0]
         return self.file_hash, self.size
 

@@ -14,7 +14,7 @@ import urllib2
 from .exceptions import OgreException
 
 
-def compute_md5(filepath, buf_size=8192):
+def compute_md5(filepath, buf_size=524288):
     """
     Adapted from boto/utils.py
 

@@ -1,52 +1,132 @@
 {
 	"variables": {
 		"atlas_name": "mafrosis/ogre-staging",
-		"atlas_token": "{{env `ATLAS_TOKEN`}}",
-		"aws_access_key": "{{env `AWS_ACCESS_KEY`}}",
-		"aws_secret_key": "{{env `AWS_SECRET_KEY`}}",
-		"salt_version": "v2015.5.5",
-		"sesame_password": "{{env `SESAME_PASSWORD`}}",
-		"source_ami": "ami-e31a6594"
-	},
-	"push": {
-		"name": "{{user `atlas_name`}}",
-		"token": "{{user `atlas_token`}}"
+		"atlas_token": "{{ env `ATLAS_TOKEN` }}",
+		"headless": "true",
+		"iso": "debian-8.4.0",
+		"git_revision": "dev-{{ timestamp }}",
+		"salt_version": "v2015.8.7",
+		"sesame_password": "{{ env `SESAME_PASSWORD` }}",
+		"source_ami": "ami-e079f893"
 	},
 	"builders": [{
+		"type": "vmware-iso",
+		"boot_command": [
+			"<esc><wait>",
+			"install",
+			" auto",
+			" url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/preseed-jessie.cfg",
+			" debian-installer=en_GB",
+			" locale=en_GB",
+			" keymap=gb",
+			" netcfg/get_hostname=vagrant",
+			" netcfg/get_domain=vm ",
+			"<enter>"
+		],
+		"disk_size": "10000",
+		"guest_os_type": "debian7-64",
+		"headless": "{{ user `headless` }}",
+		"http_directory": ".",
+		"iso_checksum": "92cb8946618e3ed776827e7fcb56e452d993dbf8",
+		"iso_checksum_type": "sha1",
+		"iso_urls": ["../iso/{{ user `iso` }}-amd64-netinst.iso"],
+		"shutdown_command": "echo vagrant| sudo -S shutdown -h now",
+		"ssh_password": "vagrant",
+		"ssh_username": "vagrant",
+		"ssh_wait_timeout": "10000s",
+		"tools_upload_flavor": "linux",
+		"vm_name": "ogredev-local",
+		"vmx_data": {
+			"memsize": "512",
+			"numvcpus": "1"
+		}
+	},{
 		"type": "amazon-ebs",
-		"ami_name": "ami-ogre-staging-{{ timestamp }}",
-		"instance_type": "t2.micro",
+		"ami_name": "ogre-staging-{{ timestamp }}-{{ user `git_revision` }}",
+		"instance_type": "t2.small",
 		"region": "eu-west-1",
-		"source_ami": "{{user `source_ami`}}",
-		"ssh_username": "admin"
+		"source_ami": "{{ user `source_ami` }}",
+		"ssh_username": "admin",
+		"tags": {"app": "ogre", "env": "staging"}
 	}],
 	"provisioners": [{
 		"type": "shell",
-		"inline": "echo 'vagrant' | sudo -S apt-get -y update"
-	},
-	{
+		"override": {
+			"vmware-iso": {
+				"inline": "echo vagrant| sudo -S apt-get -y update"
+			},
+			"amazon-ebs": {
+				"inline": "sudo -E apt-get -y update"
+			}
+		}
+	},{
 		"type": "shell",
-		"execute_command": "{{.Vars}} sudo -E bash '{{.Path}}'",
 		"environment_vars": [
-			"SALT_VERSION={{user `salt_version`}}",
-			"SESAME_PASSWORD={{user `sesame_password`}}"
+			"GIT_REVISION={{ user `git_revision` }}",
+			"INSTALL_VAGRANT_KEY=true",
+			"SALT_VERSION={{ user `salt_version` }}",
+			"SESAME_PASSWORD={{ user `sesame_password` }}"
 		],
-		"scripts": [
-			"packer-scripts/dist-upgrade.sh",
-			"packer-scripts/saltstack.sh",
-			"packer-scripts/pillar-decrypt.sh"
-		]
-	},
-	{
+		"override": {
+			"vmware-iso": {
+				"execute_command": "echo vagrant| {{ .Vars }} sudo -E -S bash '{{ .Path }}'",
+				"scripts": [
+					"../packer-scripts/vagrant.sh",
+					"../packer-scripts/vmware.sh",
+					"../packer-scripts/saltstack.sh",
+					"../packer-scripts/pillar-decrypt.sh"
+				]
+			},
+			"amazon-ebs": {
+				"execute_command": "{{ .Vars }} sudo -E bash '{{ .Path }}'",
+				"scripts": [
+					"../packer-scripts/dist-upgrade.sh",
+					"../packer-scripts/saltstack.sh",
+					"../packer-scripts/pillar-decrypt.sh"
+				]
+			}
+		}
+	},{
+		"type": "shell",
+		"environment_vars": [
+			"GIT_REVISION={{ user `git_revision` }}"
+		],
+		"override": {
+			"vmware-iso": {
+				"inline": "echo vagrant| sudo -E -S salt-call --local grains.setval git_revision $GIT_REVISION"
+			},
+			"amazon-ebs": {
+				"inline": "sudo -E salt-call --local grains.setval git_revision $GIT_REVISION"
+			}
+		}
+	},{
+		"type": "shell",
+		"override": {
+			"vmware-iso": {
+				"inline": "echo vagrant| sudo systemctl disable salt-minion"
+			},
+			"amazon-ebs": {
+				"inline": "sudo -E systemctl disable salt-minion"
+			}
+		}
+	},{
 		"type": "salt-masterless",
 		"skip_bootstrap": true,
-		"local_state_tree": "salt",
-		"local_pillar_roots": "pillar",
+		"local_state_tree": "../../salt",
+		"local_pillar_roots": "../../pillar",
 		"minion_config": "packer-salt-minion.conf"
 	}],
 	"post-processors": [{
+		"keep_input_artifact": false,
+		"output": "box/{{ user `iso` }}-dev-{{ user `git_revision` }}.box",
+		"type": "vagrant",
+		"only": ["vmware-iso"]
+	},
+	{
 		"type": "atlas",
-		"artifact": "{{user `atlas_name`}}",
-		"artifact_type": "amazon.ami"
+		"token": "{{ user `atlas_token` }}",
+		"artifact": "{{ user `atlas_name` }}",
+		"artifact_type": "amazon.ami",
+		"only": ["amazon-ebs"]
 	}]
 }

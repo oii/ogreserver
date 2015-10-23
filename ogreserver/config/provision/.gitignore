@@ -1,3 +1,6 @@
 aws-keys
 terraform.tfvars
 terraform.tfstate.backup
+.terraform/
+iso/
+*/output-vmware-iso/

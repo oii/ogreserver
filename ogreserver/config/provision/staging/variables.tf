@@ -5,5 +5,9 @@ variable "region" {
 	default = "eu-west-1"
 }
 variable "version" {
-	default = "1"
+	default = "latest"
 }
+variable "eip" {
+  default = "eipalloc-919226f4"
+}
+#variable "private_key" {}

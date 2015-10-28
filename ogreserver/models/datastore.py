@@ -210,6 +210,10 @@ class DataStore():
                 'asin': incoming['meta']['asin'] if 'asin' in incoming['meta'] else None,
                 'uri': incoming['meta']['uri'] if 'uri' in incoming['meta'] else None,
                 'raw_tags': incoming['meta']['tags'] if 'tags' in incoming['meta'] else None,
+                'source': {
+                    'title': title,
+                    'author': author
+                }
             },
         }
         ret = r.table('ebooks').insert(new_book).run()

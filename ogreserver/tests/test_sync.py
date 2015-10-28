@@ -310,3 +310,31 @@ def test_sync_dupe_on_isbn(datastore, rethinkdb, user):
     # assert ebook has two versions attached
     ebook = datastore.load_ebook(ebook_id)
     assert len(ebook['versions']) == 2, 'should be 2 versions'
+
+
+def test_meta(datastore, rethinkdb, user):
+    '''
+    Ensure all meta fields are applied to ebook on sync
+    '''
+    ebooks_dict = {
+        "H. C.\u0006Andersen\u0007Andersen's Fairy Tales": {
+            'format': 'epub',
+            'file_hash': 'b889dec9',
+            'size': 139654,
+            'dedrm': False,
+            'meta': {'asin':'eggs', 'isbn':'bacon'},
+        },
+    }
+
+    # create the datastore and run a sync
+    syncd_books = datastore.update_library(ebooks_dict, user)
+
+    # extract ebook_id of syncd book
+    ebook_id = syncd_books.itervalues().next()['ebook_id']
+
+    # assert meta data
+    ebook = datastore.load_ebook(ebook_id)
+    assert ebook['meta']['asin'] == 'eggs', "wasn't stored on first sync"
+    assert ebook['meta']['isbn'] == 'bacon', "wasn't stored on first sync"
+    assert ebook['meta']['source']['author'] == 'H. C. Andersen', "author wasn't stored"
+    assert ebook['meta']['source']['title'] == "Andersen's Fairy Tales", "title wasn't stored"

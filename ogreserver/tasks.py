@@ -10,17 +10,89 @@ import requests
 
 from .extensions.database import setup_db_session
 
-from .exceptions import ConversionFailedError, EbookNotFoundOnS3Error, S3DatastoreError
+from .exceptions import (ConversionFailedError, EbookNotFoundOnS3Error, S3DatastoreError,
+                         AmazonHttpError, RethinkdbError)
+from .models.amazon import AmazonAPI
 from .models.datastore import DataStore
+from .models.goodreads import GoodreadsAPI
 
 
-@app.celery.task
+@app.celery.task(rate_limit='1/s')
 def query_ebook_metadata(ebook_data):
     """
     Set and validate ebook metadata, authors, title etc. by querying external APIs
     """
     with app.app_context():
-        print ebook_data
+        am = AmazonAPI(
+            app.logger,
+            app.config['AWS_ADVERTISING_API_ACCESS_KEY'],
+            app.config['AWS_ADVERTISING_API_SECRET_KEY'],
+            app.config['AWS_ADVERTISING_API_ASSOCIATE_TAG'],
+            match_threshold=app.config['AMAZON_FUZZ_THRESHOLD']
+        )
+
+        try:
+            # query Amazon affiliate API first
+            am_data = am.search(
+                asin=ebook_data['meta']['asin'],
+                author=ebook_data['author'],
+                title=ebook_data['title']
+            )
+            app.logger.debug(am_data)
+        except AmazonHttpError:
+            # retry the current task
+            query_ebook_metadata.retry(
+                countdown=1, max_retries=3, throw=False, **{'ebook_data': ebook_data}
+            )
+            return
+
+        author = title = None
+
+        if am_data:
+            # extract image URL from Amazon data
+            ebook_data['image_url'] = am_data['image_url']
+
+            # store all Amazon data in ebook meta
+            ebook_data['meta']['amazon'] = am_data
+
+            # variables for further Goodreads API call
+            author = am_data['author']
+            title = am_data['title']
+
+        # query Goodreads API
+        gr = GoodreadsAPI(app.logger, app.config['GOODREADS_API_KEY'])
+        gr_data = gr.search(
+            isbn=ebook_data['meta']['isbn'],
+            author=author or ebook_data['author'],
+            title=title or ebook_data['title']
+        )
+        app.logger.debug(gr_data)
+
+        if gr_data:
+            # extract first author from Goodreads
+            try:
+                ebook_data['author'] = gr_data['authors'][0]['name']
+            except Exception:
+                pass
+
+            # import other fields from Goodreads
+            for field in ('title', 'publisher'):
+                try:
+                    ebook_data[field] = gr_data[field]
+                except Exception:
+                    pass
+
+            # store all Goodreads data in ebook meta
+            ebook_data['meta']['goodreads'] = gr_data
+
+        try:
+            # update the datastore
+            ds = DataStore(app.config, app.logger)
+            ds.update_ebook(ebook_data['ebook_id'], ebook_data)
+        except RethinkdbError:
+            app.logger.critical(
+                'Failed updating ebook metadata: {}'.format(ebook_data['ebook_id'])
+            )
 
 
 @app.celery.task

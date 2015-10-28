@@ -308,6 +308,12 @@ def clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash):
     i = 0
     cleaned = 0
 
+    # init OGRE directory in user's ebook dir
+    if not os.path.exists(os.path.join(config['ebook_home'], 'ogre')):
+        os.mkdir(os.path.join(config['ebook_home'], 'ogre'))
+
+    prntr.p('Ebook directory is {}'.format(config['ebook_home']))
+
     for authortitle, ebook_obj in ebooks_by_authortitle.iteritems():
         # skip if book already DRM free or marked skip
         if ebook_obj.drmfree is True or ebook_obj.skip is True:
@@ -374,10 +380,6 @@ def remove_drm_from_ebook(config, prntr, ebook_obj):
                 # add the OGRE DeDRM tag to the decrypted ebook
                 # TODO handle CorruptEbookError via get_metadata
                 decrypted_ebook_obj.add_dedrm_tag()
-
-                # init OGRE directory in user's ebook dir
-                if not os.path.exists(os.path.join(config['ebook_home'], 'ogre')):
-                    os.mkdir(os.path.join(config['ebook_home'], 'ogre'))
 
                 # move decrypted book into ebook library
                 decrypted_ebook_obj.path = os.path.join(

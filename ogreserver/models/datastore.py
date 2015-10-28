@@ -211,6 +211,7 @@ class DataStore():
                 'uri': incoming['meta']['uri'] if 'uri' in incoming['meta'] else None,
                 'raw_tags': incoming['meta']['tags'] if 'tags' in incoming['meta'] else None,
                 'source': {
+                    'provider': incoming['meta']['source'],
                     'title': title,
                     'author': author
                 }

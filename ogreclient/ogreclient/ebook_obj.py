@@ -15,7 +15,7 @@ from .utils import compute_md5, id_generator, make_temp_directory
 
 
 class EbookObject:
-    def __init__(self, config, filepath, file_hash=None, ebook_id=None, size=None, authortitle=None, fmt=None, drmfree=False, skip=False):
+    def __init__(self, config, filepath, file_hash=None, ebook_id=None, size=None, authortitle=None, fmt=None, drmfree=False, skip=False, source=None):
         self.config = config
         self.path = filepath
         self.file_hash = file_hash
@@ -28,7 +28,7 @@ class EbookObject:
         self.format = fmt
         self.drmfree = drmfree
         self.skip = skip
-        self.meta = {}
+        self.meta = {'source': source}
         self.in_cache = False
 
     def __unicode__(self):
@@ -81,7 +81,7 @@ class EbookObject:
             'format': self.format,
             'size': self.size,
             'dedrm': self.drmfree,
-            'meta': self.meta
+            'meta': self.meta,
         }
         if self.ebook_id is not None:
             data['ebook_id'] = self.ebook_id
@@ -103,7 +103,7 @@ class EbookObject:
 
     def get_metadata(self):
         # extract and parse ebook metadata
-        self.meta = self._metadata_extract()
+        self.meta.update(self._metadata_extract())
 
         # delimit fields with non-printable chars
         self.authortitle = '{}\u0006{}\u0007{}'.format(

@@ -12,7 +12,7 @@ def test_sync_duplicate(datastore, rethinkdb, user):
             'file_hash': '38b3fc3a',
             'size': 139654,
             'dedrm': False,
-            'meta': {},
+            'meta': {'source':'test'},
         },
     }
 
@@ -43,7 +43,7 @@ def test_sync_ogre_id(datastore, rethinkdb, user):
             'file_hash': 'b889dec9',
             'size': 139654,
             'dedrm': False,
-            'meta': {},
+            'meta': {'source':'test'},
         },
     }
 
@@ -81,7 +81,7 @@ def test_sync_dupe_on_authortitle(datastore, rethinkdb, user, user2):
             'file_hash': 'd41d8cd9',
             'size': 139654,
             'dedrm': False,
-            'meta': {},
+            'meta': {'source':'test'},
         },
     }
 
@@ -130,7 +130,7 @@ def test_sync_dupe_on_ebookid(datastore, rethinkdb, user, user2):
             'file_hash': 'd41d8cd9',
             'size': 139654,
             'dedrm': False,
-            'meta': {},
+            'meta': {'source':'test'},
         },
     }
 
@@ -184,7 +184,7 @@ def test_sync_dupe_on_original_hash(datastore, rethinkdb, user, user2):
             'file_hash': 'd41d8cd9',
             'size': 139654,
             'dedrm': False,
-            'meta': {},
+            'meta': {'source':'test'},
         },
     }
 
@@ -228,7 +228,7 @@ def test_sync_dupe_on_asin(datastore, rethinkdb, user):
             'file_hash': '38b3fc3a',
             'size': 139654,
             'dedrm': False,
-            'meta': {'asin': 'eggs', 'isbn': 'bacon'},
+            'meta': {'source':'test', 'asin':'eggs', 'isbn':'bacon'},
         },
     }
 
@@ -246,7 +246,7 @@ def test_sync_dupe_on_asin(datastore, rethinkdb, user):
             'file_hash': '058e92c0',
             'size': 139654,
             'dedrm': False,
-            'meta': {'asin': 'eggs'},
+            'meta': {'source':'test', 'asin':'eggs'},
         },
     }
 
@@ -276,7 +276,7 @@ def test_sync_dupe_on_isbn(datastore, rethinkdb, user):
             'file_hash': '38b3fc3a',
             'size': 139654,
             'dedrm': False,
-            'meta': {'asin': 'eggs', 'isbn': 'bacon'},
+            'meta': {'source':'test', 'asin':'eggs', 'isbn':'bacon'},
         },
     }
 
@@ -297,7 +297,7 @@ def test_sync_dupe_on_isbn(datastore, rethinkdb, user):
             'file_hash': 'd41d8cd9',
             'size': 139654,
             'dedrm': False,
-            'meta': {'isbn': 'bacon'},
+            'meta': {'source':'test', 'isbn':'bacon'},
         },
     }
 
@@ -322,7 +322,7 @@ def test_meta(datastore, rethinkdb, user):
             'file_hash': 'b889dec9',
             'size': 139654,
             'dedrm': False,
-            'meta': {'asin':'eggs', 'isbn':'bacon'},
+            'meta': {'source':'test', 'asin':'eggs', 'isbn':'bacon'},
         },
     }
 
@@ -336,5 +336,6 @@ def test_meta(datastore, rethinkdb, user):
     ebook = datastore.load_ebook(ebook_id)
     assert ebook['meta']['asin'] == 'eggs', "wasn't stored on first sync"
     assert ebook['meta']['isbn'] == 'bacon', "wasn't stored on first sync"
+    assert ebook['meta']['source']['provider'] == 'test', "source wasn't stored"
     assert ebook['meta']['source']['author'] == 'H. C. Andersen', "author wasn't stored"
     assert ebook['meta']['source']['title'] == "Andersen's Fairy Tales", "title wasn't stored"

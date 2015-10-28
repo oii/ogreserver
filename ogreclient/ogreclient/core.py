@@ -175,12 +175,12 @@ def stats(config, prntr, ebooks_by_authortitle=None):
 def search_for_ebooks(config, prntr):
     ebooks = []
 
-    def _process_filename(filename):
+    def _process_filename(filename, provider_name):
         fn, ext = os.path.splitext(filename)
         # check file not hidden, is in list of known file suffixes
         if fn[1:1] != '.' and ext[1:] in config['definitions'].keys():
             ebooks.append(
-                (os.path.join(root, filename), ext[1:])
+                (os.path.join(root, filename), ext[1:], provider_name)
             )
 
     for provider in config['providers'].itervalues():
@@ -191,7 +191,7 @@ def search_for_ebooks(config, prntr):
 
             for root, _, files in os.walk(provider.libpath):
                 for filename in files:
-                    _process_filename(filename)
+                    _process_filename(filename, provider.friendly)
 
         # a PathsProvider contains a list of direct ebook paths
         elif isinstance(provider, PathsProvider):
@@ -199,7 +199,7 @@ def search_for_ebooks(config, prntr):
                 prntr.p('Searching {}'.format(provider.friendly))
 
             for path in provider.paths:
-                _process_filename(filename)
+                _process_filename(filename, provider.friendly)
 
     i = 0
     prntr.p('Discovered {} files'.format(len(ebooks)))
@@ -226,13 +226,14 @@ def search_for_ebooks(config, prntr):
                 config=config,
                 filepath=item[0],
                 fmt=item[1],
+                source=item[2],
             )
             # calculate MD5 of ebook
             ebook_obj.compute_md5()
 
             try:
                 # extract ebook metadata and build key; books are stored in a dict
-                # with 'authortitle' as the key in a naive attempt at de-deduplication
+                # with 'authortitle' as the key in a naive attempt at de-duplication
                 ebook_obj.get_metadata()
 
             except CorruptEbookError as e:
@@ -374,7 +375,7 @@ def remove_drm_from_ebook(config, prntr, ebook_obj):
                     prntr.p('DRM removed from {}'.format(os.path.basename(ebook_obj.path)), CliPrinter.DEDRM, success=True)
 
                 # create new ebook_obj for decrypted ebook
-                decrypted_ebook_obj = EbookObject(config=config, filepath=decrypted_filepath)
+                decrypted_ebook_obj = EbookObject(config=config, filepath=decrypted_filepath, source=ebook_obj.meta['source'])
                 decrypted_ebook_obj.compute_md5()
 
                 # add the OGRE DeDRM tag to the decrypted ebook

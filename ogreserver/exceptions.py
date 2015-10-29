@@ -6,6 +6,13 @@ class OgreException(Exception):
         super(OgreException, self).__init__(message)
         self.inner_excp = inner_excp
 
+    def __unicode__(self):
+        return u'{} ({})'.format(self.message, self.inner_excp)
+
+    def __str__(self):
+        return unicode(self).encode('utf8')
+
+
 class DuplicateBaseError(Exception):
     def __init__(self, ebook_id, file_hash):
         super(DuplicateBaseError, self).__init__()

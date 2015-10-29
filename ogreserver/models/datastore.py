@@ -113,9 +113,9 @@ class DataStore():
                         value = ftfy.fix_text(value.strip())
 
                 except Exception as e:
-                    raise BadMetaDataError("Bad meta data on '{}' ({})".format(
-                        authortitle.replace('\u0007', ' ').replace('\u0006', ' '),
-                        incoming['file_hash'][0:7]
+                    raise BadMetaDataError("Bad meta data on {}: {}".format(
+                        incoming['file_hash'][0:7],
+                        authortitle.replace('\u0007', ' ').replace('\u0006', ' ')
                     ), e)
 
                 # recombine firstname, lastname into author
@@ -177,14 +177,14 @@ class DataStore():
 
             except OgreException as e:
                 # log this and report back to client
-                self.logger.info(unicode(e).encode('utf8'))
+                self.logger.info(e)
                 output[incoming['file_hash']]['error'] = unicode(e).encode('utf8')
 
                 # don't update on client for failed books
                 output[incoming['file_hash']]['update'] = False
 
             except Exception as e:
-                self.logger.error(unicode(e).encode('utf8'), exc_info=True)
+                self.logger.error(e, exc_info=True)
 
                 # don't update on client for failed books
                 output[incoming['file_hash']]['update'] = False

@@ -5,6 +5,7 @@
 		"aws_access_key": "{{env `AWS_ACCESS_KEY`}}",
 		"aws_secret_key": "{{env `AWS_SECRET_KEY`}}",
 		"salt_version": "v2015.5.5",
+		"sesame_password": "{{env `SESAME_PASSWORD`}}",
 		"source_ami": "ami-e31a6594"
 	},
 	"push": {
@@ -27,11 +28,13 @@
 		"type": "shell",
 		"execute_command": "{{.Vars}} sudo -E bash '{{.Path}}'",
 		"environment_vars": [
-			"SALT_VERSION={{user `salt_version`}}"
+			"SALT_VERSION={{user `salt_version`}}",
+			"SESAME_PASSWORD={{user `sesame_password`}}"
 		],
 		"scripts": [
 			"packer-scripts/dist-upgrade.sh",
-			"packer-scripts/saltstack.sh"
+			"packer-scripts/saltstack.sh",
+			"packer-scripts/pillar-decrypt.sh"
 		]
 	},
 	{

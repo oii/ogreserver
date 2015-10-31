@@ -325,10 +325,10 @@ def client_sync(request):
 
     prntr = CliPrinter(debug=True, nocolour=True)
     prntr.log_output = True
-    def run_sync(config):
+    def wrapped(config):
         sync(config, prntr)
         return prntr.logs
-    return run_sync
+    return wrapped
 
 
 @pytest.fixture(scope='session')

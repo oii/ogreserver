@@ -88,11 +88,11 @@ def get_data_fixtures():
 
     This YAML file should contain all fixtures for the test.
     """
-    def get_data_fixture_wrapped(file_path, test_name):
+    def wrapped(file_path, test_name):
         fixture_path = os.path.join(
             '{}_fixtures'.format(file_path[:-3]),
             '{}.yaml'.format(test_name.split('.')[-1:][0])
         )
         with open(fixture_path, 'r') as f:
             return yaml.load(f.read())
-    return get_data_fixture_wrapped
+    return wrapped

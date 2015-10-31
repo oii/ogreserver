@@ -23,7 +23,7 @@ def parse_author_method():
 
 @pytest.fixture(scope='function')
 def helper_get_ebook(client_config, ebook_lib_path):
-    def _get_ebook(filename, basepath=None):
+    def wrapped(filename, basepath=None):
         # ebook_obj creation helper
         ebook_obj = EbookObject(
             config=client_config,
@@ -33,7 +33,7 @@ def helper_get_ebook(client_config, ebook_lib_path):
         ebook_obj.get_metadata()
         return ebook_obj
 
-    return _get_ebook
+    return wrapped
 
 
 @pytest.yield_fixture(scope='function')
@@ -87,15 +87,15 @@ def mock_os_mkdir():
 
 @pytest.fixture(scope='session')
 def search_for_ebooks():
-    def run_search_for_ebooks(client_config):
+    def wrapped(client_config):
         data, _, errord = func_search_for_ebooks(client_config, prntr=DummyPrinter())
         return data, errord
-    return run_search_for_ebooks
+    return wrapped
 
 
 @pytest.fixture(scope='session')
 def setup_user_auth():
-    def run_setup_user_auth(client_config):
+    def wrapped(client_config):
         # setup fake argparse object
         fakeargs = namedtuple('fakeargs', ('username', 'password'))
         return func_setup_user_auth(
@@ -103,12 +103,12 @@ def setup_user_auth():
             fakeargs(None, None),
             client_config
         )
-    return run_setup_user_auth
+    return wrapped
 
 
 @pytest.fixture(scope='session')
 def setup_ebook_home():
-    def run_setup_ebook_home(client_config):
+    def wrapped(client_config):
         # setup fake argparse object
         fakeargs = namedtuple('fakeargs', ('ebook_home'))
         _, ebook_home = func_setup_ebook_home(
@@ -117,7 +117,7 @@ def setup_ebook_home():
             client_config
         )
         return ebook_home
-    return run_setup_ebook_home
+    return wrapped
 
 
 @pytest.fixture(scope='session')

@@ -434,9 +434,7 @@ def sync_with_server(config, prntr, session_key, ebooks_by_authortitle):
                 'Ogre-key': session_key
             },
         )
-        resp = urllib2.urlopen(req)
-        data = resp.read()
-
+        data = urllib2.urlopen(req).read()
         response = json.loads(data)
 
     except (HTTPError, URLError) as e:
@@ -501,8 +499,8 @@ def query_for_uploads(config, prntr, session_key):
                 'Ogre-key': session_key
             },
         )
-        resp = urllib2.urlopen(req)
-        return json.loads(resp.read())
+        data = urllib2.urlopen(req).read()
+        return json.loads(data)
 
     except (HTTPError, URLError) as e:
         raise FailedUploadsQueryError(inner_excp=e)
@@ -601,8 +599,7 @@ def send_logs(prntr, host, session_key, errord_list):
                 'Ogre-key': session_key
             },
         )
-        resp = urllib2.urlopen(req)
-        data = resp.read()
+        data = urllib2.urlopen(req).read()
 
         if data != 'ok':
             raise FailedDebugLogsError('Failed storing the logs, please report this.')

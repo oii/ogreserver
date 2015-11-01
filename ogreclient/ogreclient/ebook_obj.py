@@ -46,6 +46,11 @@ class EbookObject:
         return unicode(self).encode('utf-8')
 
 
+    @property
+    def shortpath(self):
+        return self.path[len(self.config['ebook_home'])+1:]
+
+
     @staticmethod
     def deserialize(config, path, cached_obj):
         '''

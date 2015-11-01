@@ -389,7 +389,7 @@ def remove_drm_from_ebook(config, prntr, ebook_obj):
                 shutil.move(decrypted_filepath, decrypted_ebook_obj.path)
 
                 if config['verbose']:
-                    prntr.p('Decrypted book moved to {}'.format(decrypted_ebook_obj.path), CliPrinter.DEDRM)
+                    prntr.p('Decrypted book moved to {}'.format(decrypted_ebook_obj.shortpath), CliPrinter.DEDRM)
 
                 # add decrypted book to cache
                 config['ebook_cache'].store_ebook(decrypted_ebook_obj)
@@ -470,7 +470,7 @@ def update_local_metadata(config, prntr, session_key, ebooks_by_filehash, ebooks
 
             success += 1
             if config['verbose']:
-                prntr.p('Wrote OGRE_ID to {}'.format(ebook_obj.path))
+                prntr.p('Wrote OGRE_ID to {}'.format(ebook_obj.shortpath))
 
             # write to ogreclient cache
             config['ebook_cache'].update_ebook_property(
@@ -480,7 +480,7 @@ def update_local_metadata(config, prntr, session_key, ebooks_by_filehash, ebooks
             )
 
         except (FailedWritingMetaDataError, FailedConfirmError) as e:
-            prntr.e('Failed saving OGRE_ID in {}'.format(ebook_obj.path), excp=e)
+            prntr.e('Failed saving OGRE_ID in {}'.format(ebook_obj.shortpath), excp=e)
             failed += 1
 
     if config['verbose'] and success > 0:
@@ -530,12 +530,12 @@ def upload_ebooks(config, prntr, session_key, ebooks_by_filehash, ebooks_to_uplo
         except UploadError as e:
             # print failures or save for later
             if config['verbose'] is True:
-                prntr.e('Failed uploading {}'.format(ebook_obj.path), excp=e)
+                prntr.e('Failed uploading {}'.format(ebook_obj.shortpath), excp=e)
             else:
                 failed_uploads.append(e)
         else:
             if config['verbose'] is True:
-                prntr.p('Uploaded {}'.format(ebook_obj.path))
+                prntr.p('Uploaded {}'.format(ebook_obj.shortpath))
             success += 1
 
         if config['verbose'] is False:

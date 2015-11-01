@@ -87,7 +87,7 @@ def sync(config, prntr):
     prntr.p('Searching for ebooks..', nonl=True)
 
     # 1) find ebooks in config['ebook_home'] on local machine
-    ebooks_by_authortitle, ebooks_by_filehash, errord_list = search_for_ebooks(config, prntr)
+    ebooks_by_authortitle, ebooks_by_filehash, errord_list, skipped = search_for_ebooks(config, prntr)
 
     if len(errord_list) > 0:
         prntr.p('Errors occurred during scan:')
@@ -106,7 +106,11 @@ def sync(config, prntr):
             del(ebooks_by_filehash[e.ebook_obj.file_hash])
             del(ebooks_by_authortitle[e.ebook_obj.authortitle])
 
-    prntr.p('Found {} ebooks total'.format(len(ebooks_by_authortitle)))
+    # display a friendly count of books found/skipped
+    prntr.p('Found {} ebooks total{}'.format(
+        len(ebooks_by_authortitle) + skipped,
+        ', {} skipped'.format(skipped) if skipped > 0 else ''
+    ))
 
     # 3) send dict of ebooks / md5s to ogreserver
     response = sync_with_server(config, prntr, session_key, ebooks_by_authortitle)
@@ -136,7 +140,7 @@ def sync(config, prntr):
 
 
 def stats(config, prntr, ebooks_by_authortitle=None):
-    ebooks_by_authortitle, ebooks_by_filehash, errord_list = search_for_ebooks(config, prntr)
+    ebooks_by_authortitle, ebooks_by_filehash, errord_list, _ = search_for_ebooks(config, prntr)
 
     counts = {}
     errors = {}
@@ -202,6 +206,7 @@ def search_for_ebooks(config, prntr):
                 _process_filename(filename, provider.friendly)
 
     i = 0
+    skipped = 0
     prntr.p('Discovered {} files'.format(len(ebooks)))
     if len(ebooks) == 0:
         raise NoEbooksError
@@ -246,6 +251,7 @@ def search_for_ebooks(config, prntr):
 
         # skip previously scanned books which are marked skip (DRM'd or duplicates)
         if ebook_obj.skip:
+            skipped += 1
             i += 1
             prntr.progressf(num_blocks=i, total_size=len(ebooks))
             continue
@@ -298,9 +304,9 @@ def search_for_ebooks(config, prntr):
         prntr.progressf(num_blocks=i, total_size=len(ebooks))
 
     if len(ebooks_by_authortitle) == 0:
-        return {}, {}, errord_list
+        return {}, {}, errord_list, skipped
 
-    return ebooks_by_authortitle, ebooks_by_filehash, errord_list
+    return ebooks_by_authortitle, ebooks_by_filehash, errord_list, skipped
 
 
 def clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash):

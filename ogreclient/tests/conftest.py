@@ -88,7 +88,7 @@ def mock_os_mkdir():
 @pytest.fixture(scope='session')
 def search_for_ebooks():
     def wrapped(client_config):
-        data, _, errord = func_search_for_ebooks(client_config, prntr=DummyPrinter())
+        data, _, errord, _ = func_search_for_ebooks(client_config, prntr=DummyPrinter())
         return data, errord
     return wrapped
 

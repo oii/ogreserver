@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 import os
 import shutil
 
-import mock
 import pytest
 
 
@@ -116,7 +115,6 @@ def test_metadata_dedrm(helper_get_ebook, ebook_lib_path, tmpdir):
 @pytest.mark.requires_calibre
 def test_metadata_ogreid_epub(mock_urlopen, helper_get_ebook, ebook_lib_path, tmpdir):
     # mock return from urlopen().read()
-    mock_urlopen.return_value = mock.Mock()
     mock_urlopen.return_value.read.return_value = 'ok'
 
     # stick Alice in Wonderland into a tmpdir
@@ -139,7 +137,6 @@ def test_metadata_ogreid_epub(mock_urlopen, helper_get_ebook, ebook_lib_path, tm
 @pytest.mark.requires_calibre
 def test_metadata_ogreid_mobi(mock_urlopen, helper_get_ebook, ebook_lib_path, tmpdir):
     # mock return from urlopen().read()
-    mock_urlopen.return_value = mock.Mock()
     mock_urlopen.return_value.read.return_value = 'ok'
 
     # stick Alice in Wonderland into a tmpdir
@@ -166,7 +163,6 @@ def test_metadata_ogreid_mobi(mock_urlopen, helper_get_ebook, ebook_lib_path, tm
 @pytest.mark.requires_calibre
 def test_metadata_ogreid_mobi_utf8(mock_urlopen, helper_get_ebook, ebook_lib_path, tmpdir):
     # mock return from urlopen().read()
-    mock_urlopen.return_value = mock.Mock()
     mock_urlopen.return_value.read.return_value = 'ok'
 
     # stick Alice in Wonderland into a tmpdir
@@ -186,3 +182,6 @@ def test_metadata_ogreid_mobi_utf8(mock_urlopen, helper_get_ebook, ebook_lib_pat
     # verify that --tags still has the UTF-8
     ebook_obj.get_metadata()
     assert ebook_obj.meta['tags'] == 'diaëresis'
+
+
+# TODO only call get_metadata in helper_get_ebook if requires_calibre mark is set

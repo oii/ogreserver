@@ -4,14 +4,11 @@ from __future__ import unicode_literals
 import os
 import shutil
 
-import mock
-
 from ..ogreclient.providers import LibProvider
 
 
 def test_search(search_for_ebooks, mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):
     # mock return from Popen().communicate()
-    mock_subprocess_popen.return_value = mock.Mock()
     mock_subprocess_popen.return_value.communicate.return_value = (b"Title               : Alice's Adventures in Wonderland\nAuthor(s)           : Lewis Carroll [Carroll, Lewis]\nTags                : Fantasy\nLanguages           : eng\nPublished           : 2008-06-26T14:00:00+00:00\nRights              : Public domain in the USA.\nIdentifiers         : uri:http://www.gutenberg.org/ebooks/11\n", b'')
 
     # setup ebook home for this test
@@ -32,7 +29,6 @@ def test_search(search_for_ebooks, mock_subprocess_popen, client_config, ebook_l
 
 def test_search_ranking(search_for_ebooks, mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):
     # mock return from Popen().communicate()
-    mock_subprocess_popen.return_value = mock.Mock()
     mock_subprocess_popen.return_value.communicate.return_value = (b"Title               : Alice's Adventures in Wonderland\nAuthor(s)           : Lewis Carroll [Carroll, Lewis]\nTags                : Fantasy\nLanguages           : eng\nPublished           : 2008-06-26T14:00:00+00:00\nRights              : Public domain in the USA.\nIdentifiers         : uri:http://www.gutenberg.org/ebooks/11\n", b'')
 
     # setup ebook home for this test

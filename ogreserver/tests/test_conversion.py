@@ -65,7 +65,6 @@ def test_convert(datastore, user, rethinkdb, s3bucket, conversion, mock_connect_
     })
 
     # mock return from Popen().communicate()
-    mock_subprocess_popen.return_value = mock.Mock()
     mock_subprocess_popen.return_value.communicate.return_value = 'MOBI output written to', ''
     # mock subprocess.check_call
     mock_subprocess_check_call.return_value = None

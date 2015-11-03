@@ -26,8 +26,9 @@ extend:
 
   /etc/supervisor/conf.d/ogreserver.conf:
     file.managed:
-      - context:
+      - defaults:
           purge: true
+          app_user: {{ pillar['app_user'] }}
           loglevel: info
 
   tmux-powerline-theme:

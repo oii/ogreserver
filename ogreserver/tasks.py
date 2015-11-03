@@ -17,7 +17,7 @@ from .models.datastore import DataStore
 from .models.goodreads import GoodreadsAPI
 
 
-@app.celery.task(rate_limit='1/s')
+@app.celery.task(queue='normal', rate_limit='1/s')
 def query_ebook_metadata(ebook_data):
     """
     Set and validate ebook metadata, authors, title etc. by querying external APIs
@@ -95,7 +95,7 @@ def query_ebook_metadata(ebook_data):
             )
 
 
-@app.celery.task
+@app.celery.task(queue='high')
 def store_ebook(ebook_id, filename, file_hash, fmt, username):
     """
     Store an ebook in the datastore
@@ -125,7 +125,7 @@ def store_ebook(ebook_id, filename, file_hash, fmt, username):
                     os.remove(os.path.join(app.config['UPLOADED_EBOOKS_DEST'], fn))
 
 
-@app.celery.task
+@app.celery.task(queue='normal')
 def conversion_search():
     """
     Search for ebooks which are missing key formats epub & mobi
@@ -137,7 +137,7 @@ def conversion_search():
         conversion.search()
 
 
-@app.celery.task(queue="conversion")
+@app.celery.task(queue='low')
 def convert(ebook_id, version_id, original_filename, dest_fmt):
     """
     Convert an ebook to other formats, currently mobi & epub
@@ -161,7 +161,7 @@ def convert(ebook_id, version_id, original_filename, dest_fmt):
             app.logger.debug(e)
 
 
-@app.celery.task
+@app.celery.task(queue='high')
 def send_mail(recipient, subject, template, **context):
     """
     Send an email via Mailgun

@@ -9,19 +9,21 @@ from kombu import Exchange, Queue
 def queue_configuration():
     config = {}
 
-    # Explicit celery exchange/queue setup
+    # explicit celery exchange/queue setup
     config['CELERY_CREATE_MISSING_QUEUES'] = False
 
-    # Setup two different queues
+    # setup two different queues
+    exchange = Exchange('ogreserver', type='direct')
     config['CELERY_QUEUES'] = (
-        Queue('ogreserver', Exchange('ogreserver', type='direct'), routing_key='ogreserver'),
-        Queue('conversion', Exchange('conversion', type='direct'), routing_key='convert'),
+        Queue('low', exchange, routing_key='low'),
+        Queue('normal', exchange, routing_key='normal'),
+        Queue('high', exchange, routing_key='high'),
     )
 
-    # Configure default queue
-    config['CELERY_DEFAULT_QUEUE'] = 'ogreserver'
+    # configure default queue
+    config['CELERY_DEFAULT_QUEUE'] = 'normal'
     config['CELERY_DEFAULT_EXCHANGE'] = 'ogreserver'
-    config['CELERY_DEFAULT_ROUTING_KEY'] = 'ogreserver'
+    config['CELERY_DEFAULT_ROUTING_KEY'] = 'normal'
 
     return config
 

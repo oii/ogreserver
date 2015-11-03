@@ -29,6 +29,14 @@ extend:
         - pkg: pip-dependencies-extra
         - git: git-clone-app
 
+  /etc/supervisor/conf.d/ogreserver.conf:
+    file.managed:
+      - context:
+          workers:
+            high: 0
+            normal: 0
+            low: 1
+
   ogreserver-supervisor-service:
     supervisord.running:
       - require:

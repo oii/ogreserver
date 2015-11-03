@@ -20,10 +20,6 @@ before_script:
   - ./s3proxy --properties s3proxy.conf &
 script:
   - py.test -m 'not requires_calibre'
-branches:
-  only:
-    - master
-    - develop
 git:
   submodules: true
 env:

@@ -10,28 +10,16 @@
 	</div>
 
 	<div class="row info book-info">
-		<p>
-		<strong>Author</strong>: {{ ebook.author }}
-		</p>
-		<p>
-		<strong>Title</strong>: {{ ebook.title }}
-		</p>
-		<p>
-		<strong>Genre</strong>: TODO
-		</p>
-		<p>
-		<strong>Publisher</strong>: {{ ebook.publisher }}
-		</p>
-		<p>
-		<strong>Date</strong>: {{ ebook.publish_date }}
-		</p>
+		<p><strong>Author</strong>: {{ ebook.author }}</p>
+		<p><strong>Title</strong>: {{ ebook.title }}</p>
+		<p><strong>Genre</strong>: TODO</p>
+		<p><strong>Publisher</strong>: {{ ebook.publisher }}</p>
+		<p><strong>Date</strong>: {{ ebook.publish_date }}</p>
 
-		{% for key, value in ebook.meta.items() %}
-		{% if value %}
-		<p>
-		<strong>{{ key|capitalize }}</strong>: {{ value }}
-		</p>
-		{% endif %}
+		{% for key, value in ebook.meta.iteritems() %}
+			{% if value %}
+				<p><strong>{{ key|capitalize }}</strong>: {{ value }}</p>
+			{% endif %}
 		{% endfor %}
 	</div>
 

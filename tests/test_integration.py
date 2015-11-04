@@ -5,7 +5,7 @@ import os
 import pytest
 import shutil
 
-from ..ogreclient.ogreclient.providers import LibProvider
+from ogreclient.ogreclient.providers import LibProvider
 
 
 @pytest.mark.integration

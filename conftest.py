@@ -77,14 +77,14 @@ def flask_app(request, app_config):
         yield None
         return
 
-    from .ogreserver.factory import create_app, make_celery, configure_extensions, \
+    from ogreserver.factory import create_app, make_celery, configure_extensions, \
             register_blueprints, register_signals
-    from .ogreserver.extensions.celery import register_tasks
+    from ogreserver.extensions.celery import register_tasks
 
     app = create_app(app_config)
     app.testing = True
     app.celery = make_celery(app)
-    register_tasks(app, pytest=True)
+    register_tasks(app)
     configure_extensions(app)
     register_blueprints(app)
     register_signals(app)
@@ -119,7 +119,7 @@ def mysqldb(request, flask_app):
         return
 
     import sqlalchemy
-    from .ogreserver.extensions.database import setup_db_session, create_tables
+    from ogreserver.extensions.database import setup_db_session, create_tables
 
     # use raw sqlalchemy for create/drop DB
     engine = sqlalchemy.create_engine('mysql://root:eggs@localhost/mysql')
@@ -160,7 +160,7 @@ def user2(request, mysqldb):
     return _create_user(request, mysqldb)
 
 def _create_user(request, mysqldb):
-    from .ogreserver.models.user import User
+    from ogreserver.models.user import User
 
     # create random username
     username = ''.join(random.choice(string.ascii_lowercase) for n in range(6))
@@ -238,13 +238,13 @@ def rethinkdb(request, rethinkdb_init):
 
 @pytest.fixture(scope='function')
 def datastore(request, flask_app):
-    from .ogreserver.models.datastore import DataStore
+    from ogreserver.models.datastore import DataStore
     return DataStore(flask_app.config, flask_app.logger)
 
 
 @pytest.fixture(scope='function')
 def conversion(request, app_config, datastore, flask_app):
-    from .ogreserver.models.conversion import Conversion
+    from ogreserver.models.conversion import Conversion
     return Conversion(app_config, datastore, flask_app)
 
 
@@ -320,8 +320,8 @@ def client_sync(request):
     if request.config.getoption('--only-client'):
         return
 
-    from .ogreclient.ogreclient.core import sync
-    from .ogreclient.ogreclient.printer import CliPrinter
+    from ogreclient.ogreclient.core import sync
+    from ogreclient.ogreclient.printer import CliPrinter
 
     prntr = CliPrinter(debug=True, nocolour=True)
     prntr.log_output = True

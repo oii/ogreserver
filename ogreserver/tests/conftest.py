@@ -7,9 +7,9 @@ import os
 import pytest
 import yaml
 
-from ..utils import connect_s3
-from ..models.amazon import AmazonAPI
-from ..models.goodreads import GoodreadsAPI
+from ogreserver.utils import connect_s3
+from ogreserver.models.amazon import AmazonAPI
+from ogreserver.models.goodreads import GoodreadsAPI
 
 
 @pytest.yield_fixture(scope='function')
@@ -36,7 +36,7 @@ def amazon(app_config, logger):
 
 @pytest.yield_fixture(scope='function')
 def mock_amazon():
-    m = mock.patch('ogre.ogreserver.models.amazon.bottlenose.Amazon')
+    m = mock.patch('ogreserver.models.amazon.bottlenose.Amazon')
     yield m.start()
     m.stop()
 
@@ -47,35 +47,35 @@ def goodreads(app_config, logger):
 
 @pytest.yield_fixture(scope='function')
 def mock_goodreads():
-    m = mock.patch('ogre.ogreserver.models.goodreads.requests')
+    m = mock.patch('ogreserver.models.goodreads.requests')
     yield m.start()
     m.stop()
 
 
 @pytest.yield_fixture(scope='function')
 def mock_subprocess_popen(request):
-    m = mock.patch('ogre.ogreserver.models.conversion.subprocess.Popen')
+    m = mock.patch('ogreserver.models.conversion.subprocess.Popen')
     yield m.start()
     m.stop()
 
 
 @pytest.yield_fixture(scope='function')
 def mock_subprocess_check_call(request):
-    m = mock.patch('ogre.ogreserver.models.conversion.subprocess.check_call')
+    m = mock.patch('ogreserver.models.conversion.subprocess.check_call')
     yield m.start()
     m.stop()
 
 
 @pytest.yield_fixture(scope='function')
 def mock_connect_s3(request):
-    m = mock.patch('ogre.ogreserver.models.conversion.connect_s3')
+    m = mock.patch('ogreserver.models.conversion.connect_s3')
     yield m.start()
     m.stop()
 
 
 @pytest.yield_fixture(scope='function')
 def mock_compute_md5(request):
-    m = mock.patch('ogre.ogreserver.models.conversion.compute_md5')
+    m = mock.patch('ogreserver.models.conversion.compute_md5')
     yield m.start()
     m.stop()
 

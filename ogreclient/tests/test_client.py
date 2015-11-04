@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import os
 import shutil
 
-from ..ogreclient.providers import LibProvider
+from ogreclient.ogreclient.providers import LibProvider
 
 
 def test_search(search_for_ebooks, mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):

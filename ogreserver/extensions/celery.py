@@ -40,13 +40,7 @@ def schedule_tasks():
     }
 
 
-def register_tasks(flask_app, pytest=False):
+def register_tasks(flask_app):
     with flask_app.app_context():
-        # configure higher level package for pytest
-        if pytest is True:
-            package_dir = 'ogre.ogreserver'
-        else:
-            package_dir = 'ogreserver'
-
         # import celery tasks with Flask app_context
-        importlib.import_module('.tasks', package_dir)
+        importlib.import_module('.tasks', 'ogreserver')

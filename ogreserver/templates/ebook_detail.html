@@ -15,6 +15,7 @@
 		<p><strong>Genre</strong>: TODO</p>
 		<p><strong>Publisher</strong>: {{ ebook.publisher }}</p>
 		<p><strong>Date</strong>: {{ ebook.publish_date }}</p>
+		<p><strong>Origin</strong>: {{ ebook.meta['source']['provider'] }}</p>
 
 		{% for key, value in ebook.meta.iteritems() %}
 			{% if value %}

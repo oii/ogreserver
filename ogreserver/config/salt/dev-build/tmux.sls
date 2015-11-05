@@ -28,6 +28,7 @@ tmux-{{ service }}-segment:
     - source: salt://dev-build/tmux-pid-segment.sh
     - template: jinja
     - user: vagrant
+    - mode: 755
     - context:
         component_name: {{ service }}
         app_name: ogreserver

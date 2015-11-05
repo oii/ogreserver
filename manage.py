@@ -37,7 +37,7 @@ def cleardb():
     if os.path.exists('search.db'):
         import shutil, subprocess
         shutil.rmtree('search.db')
-        subprocess.call('kill -HUP $(cat /tmp/gunicorn-ogreserver.pid)', shell=True)
+        subprocess.call('pkill -HUP gunicorn', shell=True)
     conn.close()
 
 

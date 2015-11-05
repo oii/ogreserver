@@ -50,10 +50,10 @@ ogre_user_email: test@example.com
 watchdog:
   gunicorn:
     pattern: "*.py"
-    command: "kill -HUP $(cat /tmp/gunicorn-ogreserver.pid)"
+    command: "pkill -HUP gunicorn"
     dir: /srv/ogre/ogreserver
   celeryd:
-    pattern: "*/tasks.py"
+    pattern: "*/tasks.py;*models/datastore.py"
     command: "sudo supervisorctl restart ogreserver:celeryd.low ogreserver:celeryd.normal ogreserver:celeryd.high"
     dir: /srv/ogre/ogreserver
   libsass:

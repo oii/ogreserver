@@ -1,12 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import datetime
+
 
 def test_update_book_hash(datastore, rethinkdb, user):
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
-        'author': 'H. C.',
-        'lastname': 'Andersen',
+        'author': 'H. C. Andersen',
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb798'
     }).run()
@@ -115,3 +116,37 @@ def test_get_missing_books_for_user(datastore, user, user2, rethinkdb):
 
     # should be now a single missing book for user2
     assert len(datastore.get_missing_books(username=user2.username)) == 1
+
+
+def test_update_ebook(datastore, rethinkdb, user):
+    '''
+    Test conversion of datetime objects into rql objects
+    '''
+    # create test ebook data directly in rethinkdb
+    ebook_data = {
+        'author': 'H. C. Andersen',
+        'title': "Andersen's Fairy Tales",
+        'ebook_id': 'bcddb798',
+        'meta': {
+            'asin': 'B00KG6MZ2O',
+        }
+    }
+    rethinkdb.table('ebooks').insert(ebook_data).run()
+
+    # create fixture for update
+    data = {
+        'author': 'eggsbacon',
+        'meta': {
+            'asin': 'eggsbacon',
+            'amazon': {
+                'publication_date': datetime.date(2014, 7, 15)
+            }
+        }
+    }
+    datastore.update_ebook('bcddb798', data)
+
+    # retrieve ebook from rethinkdb and assert update
+    obj = datastore.load_ebook(ebook_data['ebook_id'])
+    assert obj['author'] == 'eggsbacon'
+    assert obj['meta']['asin'] == 'eggsbacon'
+    assert type(obj['meta']['amazon']['publication_date']) is datetime.datetime

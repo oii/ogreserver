@@ -14,7 +14,7 @@ import ftfy
 
 from .search import Search
 from .user import User
-from ..utils import connect_s3
+from ..utils import connect_s3, encode_rql_dates
 
 from ..exceptions import OgreException, BadMetaDataError, S3DatastoreError, RethinkdbError
 from ..exceptions import NoFormatAvailableError, SameHashSuppliedOnUpdateError
@@ -287,6 +287,18 @@ class DataStore():
             'ogreid_tagged': ogreid_tagged,
             'dedrm': dedrm,
         }).run()
+        if 'first_error' in ret:
+            raise RethinkdbError(ret['first_error'])
+
+
+    def update_ebook(self, ebook_id, data):
+        """
+        Update a part of an ebook record
+        """
+        # convert datetime objects for rethinkdb
+        encode_rql_dates(data)
+
+        ret = r.table('ebooks').get(ebook_id).update(data).run()
         if 'first_error' in ret:
             raise RethinkdbError(ret['first_error'])
 

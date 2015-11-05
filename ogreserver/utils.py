@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import base64
 import contextlib
+import datetime
 import functools
 import hashlib
 import random
@@ -15,6 +16,8 @@ import urllib2
 import boto
 import boto.s3
 import boto.s3.connection
+
+import rethinkdb as r
 
 from .exceptions import APIAccessDenied
 
@@ -101,11 +104,36 @@ def make_temp_directory():
         shutil.rmtree(temp_dir)
 
 
+def encode_rql_dates(data):
+    '''
+    Convert all datetime.date and datetime.datetime objects to RqlTzinfo objects
+    '''
+    for k,v in data.items():
+        if type(v) is dict:
+            encode_rql_dates(v)
+        elif type(v) is datetime.date or type(v) is datetime.datetime:
+            if type(v) is datetime.date:
+                v = datetime.datetime.combine(v, datetime.time())
+            data[k] = r.iso8601('{}Z'.format(v.isoformat()))
+
+
+def decode_rql_dates(data):
+    '''
+    Convert all RqlTzinfo objects to datetime.datetime objects
+    '''
+    for k,v in data.items():
+        if type(v) is dict:
+            decode_rql_dates(v)
+        elif type(v) is datetime.datetime:
+            data[k] = v.isoformat()
+
+
 def request_wants_json(request):
     best = request.accept_mimetypes.best_match(['application/json', 'text/html'])
     return best == 'application/json' and \
         request.accept_mimetypes[best] > \
         request.accept_mimetypes['text/html']
+
 
 def clean_string(string):
     '''

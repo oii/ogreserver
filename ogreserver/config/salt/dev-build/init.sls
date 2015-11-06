@@ -111,6 +111,8 @@ pytest-install:
     - requirements: /srv/ogre/requirements_test.txt
     - bin_env: /home/vagrant/.virtualenvs/{{ pillar['app_name'] }}
     - user: {{ pillar['app_user'] }}
+    - require:
+      - virtualenv: app-virtualenv
 
 # install ipdb
 ipdb:

@@ -104,6 +104,13 @@ def mock_utils_make_tempdir(request):
     m.stop()
 
 
+@pytest.yield_fixture(scope='function')
+def mock_views_api_open(request):
+    m = mock.patch('ogreserver.views.api.open', mock.mock_open(read_data='API open() data'))
+    yield m.start()
+    m.stop()
+
+
 @pytest.fixture(scope='session')
 def get_data_fixtures():
     """

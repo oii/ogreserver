@@ -239,7 +239,7 @@ class DataStore():
         # create version and initial format
         version_id = self._create_new_version(ebook_id, user.username, incoming)
 
-        # record the original file_hash of the originally supplied ebook
+        # record the file_hash of the originally supplied ebook
         ret = r.table('versions').get(version_id).update({
             'original_filehash': incoming['file_hash']
         }).run()

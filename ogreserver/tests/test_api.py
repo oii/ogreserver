@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 import collections
 import json
 
+from StringIO import StringIO
+
 
 def test_login_ok(flask_app, user):
     '''
@@ -93,3 +95,33 @@ def test_get_definitions_order(flask_app, ogreclient_auth_token):
     # ensure the formats come back in the correct order
     assert defs.keys() == ['mobi', 'pdf', 'azw', 'azw3', 'epub']
     assert [k for k,v in defs.iteritems() if v[0] is True] == ['mobi', 'azw3', 'epub']
+
+
+def test_download_dedrm_tools_endpoint(flask_app, ogreclient_auth_token, mock_views_api_open):
+    '''
+    Test GET to /download-dedrm returns binary data
+    '''
+    client = flask_app.test_client()
+    resp = client.get('/api/v1/download-dedrm', headers={'Ogre-key': ogreclient_auth_token})
+    assert resp.status_code == 200
+    assert resp.data == 'API open() data'
+
+
+def test_upload_endpoint(flask_app, ogreclient_auth_token):
+    '''
+    Test multipart upload to /upload
+    '''
+    client = flask_app.test_client()
+    resp = client.post(
+        '/api/v1/upload',
+        content_type='multipart/form-data',
+        headers={'Ogre-key': ogreclient_auth_token},
+        data={
+            'ebook_id': 'bcddb798',
+            'file_hash': '38b3fc3a',
+            'format': 'epub',
+            'ebook': (StringIO(str('binary content')), 'legit.epub'),
+        }
+    )
+    assert resp.status_code == 200
+    assert json.loads(resp.data)['result'] == 'ok'

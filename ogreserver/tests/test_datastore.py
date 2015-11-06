@@ -139,6 +139,43 @@ def test_get_missing_books_for_user(datastore, user, user2, rethinkdb):
     assert len(datastore.get_missing_books(username=user2.username)) == 1
 
 
+def test_create_new_ebook(datastore, rethinkdb, user, flask_app):
+    '''
+    Test create method for new ebook
+    '''
+    # create test fixture as supplied from ogreserver
+    title = "Andersen's Fairy Tales"
+    author = 'H. C. Andersen'
+    incoming_ebook_data = {
+        'author': 'H. C. Andersen',
+        'title': "Andersen's Fairy Tales",
+        'format': 'epub',
+        'size': 1234,
+        'file_hash': '1am2a3file4hash',
+        'meta': {
+            'asin': 'B00KG6MZ2O',
+            'source': 'TEST',
+            'publication_date': datetime.date(2014, 7, 15),
+        },
+        'dedrm': False,
+    }
+    with flask_app.app_context():
+        # create the book
+        ebook_id = datastore._create_new_ebook(title, author, user, incoming_ebook_data)
+
+        # ensure create signal called
+        assert flask_app.signals['ebook-created'].send.call_count == 1
+
+        # retrieve ebook from rethinkdb and verify
+        obj = datastore.load_ebook(ebook_id)
+        assert obj['author'] == 'H. C. Andersen'
+        assert obj['meta']['asin'] == 'B00KG6MZ2O'
+        assert len(obj['versions']) == 1
+
+        # verify only format's file_hash is stored against version for provenance
+        assert obj['versions'][0]['original_filehash'] == obj['versions'][0]['formats'][0]['file_hash']
+
+
 def test_update_ebook(datastore, rethinkdb, user):
     '''
     Test conversion of datetime objects into rql objects

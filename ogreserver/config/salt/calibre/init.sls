@@ -5,20 +5,15 @@ calibre-install:
     - template: jinja
     - mode: 744
     - context:
-        version: 2.9.0
+        version: 2.43.0
   cmd.wait:
     - name: /opt/calibre-installer.py
     - watch:
       - file: calibre-install
 
-# support packages for ebook-meta
+# required packages for ebook-meta & ebook-convert
 calibre-pkgs:
   pkg.installed:
     - names:
-      - fontconfig
-      - libxt6
-      - libxi6
-      - libxrender1
-      - libxrandr2
-      - libxfixes3
-      - libxcursor1
+      - libltdl7
+      - python-pyqt5

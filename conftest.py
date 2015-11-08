@@ -245,7 +245,7 @@ def datastore(request, flask_app):
 @pytest.fixture(scope='function')
 def conversion(request, app_config, datastore, flask_app):
     from ogreserver.models.conversion import Conversion
-    return Conversion(app_config, datastore, flask_app)
+    return Conversion(app_config, datastore)
 
 
 @pytest.fixture(scope='session')

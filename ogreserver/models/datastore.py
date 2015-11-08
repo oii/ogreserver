@@ -12,21 +12,21 @@ from boto.exception import S3ResponseError
 
 import ftfy
 
+from flask import current_app
+
 from .search import Search
 from .user import User
 from ..utils import connect_s3, encode_rql_dates
 
-from ..exceptions import OgreException, BadMetaDataError, S3DatastoreError, RethinkdbError
-from ..exceptions import NoFormatAvailableError, SameHashSuppliedOnUpdateError
-from ..exceptions import DuplicateBaseError, FileHashDuplicateError
-from ..exceptions import AuthortitleDuplicateError, AsinDuplicateError
+from ..exceptions import OgreException, BadMetaDataError, S3DatastoreError, RethinkdbError, \
+        NoFormatAvailableError, SameHashSuppliedOnUpdateError, DuplicateBaseError, FileHashDuplicateError, \
+        AuthortitleDuplicateError, AsinDuplicateError
 
 
 class DataStore():
-    def __init__(self, config, logger, whoosh=None, flask_app=None):
+    def __init__(self, config, logger, whoosh=None):
         self.config = config
         self.logger = logger
-        self.flask_app = flask_app
         if whoosh:
             self.search = Search(whoosh, config.get('SEARCH_PAGELEN', 20))
         else:
@@ -235,12 +235,8 @@ class DataStore():
         if self.search:
             self.search.index_for_search(new_book)
 
-        if self.flask_app:
-            # signal new ebook created (when running in Flask context)
-            self.flask_app.signals['ebook-created'].send(
-                self, ebook_data=new_book
-            )
-
+        # signal new ebook created (when running in flask context)
+        current_app.signals['ebook-created'].send(self, ebook_data=new_book)
         return ebook_id
 
 

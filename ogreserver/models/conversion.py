@@ -5,15 +5,16 @@ import os
 import shutil
 import subprocess
 
+from flask import current_app
+
 from ..exceptions import ConversionFailedError, EbookNotFoundOnS3Error
 from ..utils import compute_md5, connect_s3, id_generator, make_temp_directory
 
 
 class Conversion:
-    def __init__(self, config, datastore, flask_app):
+    def __init__(self, config, datastore):
         self.config = config
         self.datastore = datastore
-        self.flask_app = flask_app
 
 
     def search(self):
@@ -38,7 +39,7 @@ class Conversion:
                     original_filename = self.datastore.generate_filename(original_filehash)
 
                     # convert source format to required formats
-                    self.flask_app.signals['convert-ebook'].send(
+                    current_app.signals['convert-ebook'].send(
                         self,
                         ebook_id=ebook_id,
                         version_id=version_id,
@@ -114,7 +115,7 @@ class Conversion:
         self.datastore._create_new_format(version_id, md5_tup[0], dest_fmt)
 
         # signal celery to store on S3
-        self.flask_app.signals['store-ebook'].send(
+        current_app.signals['store-ebook'].send(
             self,
             ebook_id=ebook_id,
             file_hash=md5_tup[0],

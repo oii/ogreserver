@@ -133,7 +133,7 @@ def conversion_search():
     with app.app_context():
         # late import to prevent circular import
         from .models.conversion import Conversion
-        conversion = Conversion(app.config, DataStore(app.config, app.logger), flask_app=app)
+        conversion = Conversion(app.config, DataStore(app.config, app.logger))
         conversion.search()
 
 
@@ -145,7 +145,7 @@ def convert(ebook_id, version_id, original_filename, dest_fmt):
     with app.app_context():
         # late import to prevent circular import
         from .models.conversion import Conversion
-        conversion = Conversion(app.config, DataStore(app.config, app.logger), flask_app=app)
+        conversion = Conversion(app.config, DataStore(app.config, app.logger))
 
         try:
             conversion.convert(ebook_id, version_id, original_filename, dest_fmt)

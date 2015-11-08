@@ -41,7 +41,7 @@ def post():
     app.logger.info('CONNECT {}'.format(len(request.json)))
 
     # update the library
-    ds = DataStore(app.config, app.logger, app.whoosh, flask_app=app)
+    ds = DataStore(app.config, app.logger, app.whoosh)
     syncd_books = ds.update_library(request.json, current_user)
 
     # extract the subset of newly supplied books
@@ -129,7 +129,7 @@ def confirm():
 @bp_api.route('/to-upload', methods=['GET'])
 @auth_token_required
 def to_upload():
-    ds = DataStore(app.config, app.logger, app.whoosh, flask_app=app)
+    ds = DataStore(app.config, app.logger, app.whoosh)
 
     # query books to upload and supply back to the client
     missing_books = ds.get_missing_books(username=current_user.username)

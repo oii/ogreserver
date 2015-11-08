@@ -1,10 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from flask import current_app
+
 import mock
 
 
-def test_search(datastore, user, rethinkdb, s3bucket, conversion):
+def test_search(flask_app, datastore, user, rethinkdb, s3bucket, conversion):
     ebook_id = 'bcddb798'
     file_hash = '38b3fc3a'
 
@@ -22,31 +24,32 @@ def test_search(datastore, user, rethinkdb, s3bucket, conversion):
     })
     datastore.set_uploaded(file_hash, user.username)
 
-    # search for books which need converting; this starts convert() tasks
-    conversion.search()
+    with flask_app.app_context():
+        # assert convert-ebook signal call parameters
+        expected_params = [
+            ((conversion,), {
+                'ebook_id': ebook_id,
+                'version_id': version_id,
+                'original_filename': datastore.generate_filename(file_hash),
+                'dest_fmt': 'egg'
+            }),
+            ((conversion,), {
+                'ebook_id': ebook_id,
+                'version_id': version_id,
+                'original_filename': datastore.generate_filename(file_hash),
+                'dest_fmt': 'mobi'
+            }),
+        ]
 
-    # assert convert task was called twice; for mobi & egg formats
-    assert conversion.flask_app.signals['convert-ebook'].send.call_count == 2
+        # search for books which need converting; this starts convert() tasks
+        conversion.search()
 
-    # assert convert-ebook signal call parameters
-    expected_params = [
-        ((conversion,), {
-            'ebook_id': ebook_id,
-            'version_id': version_id,
-            'original_filename': datastore.generate_filename(file_hash),
-            'dest_fmt': 'egg'
-        }),
-        ((conversion,), {
-            'ebook_id': ebook_id,
-            'version_id': version_id,
-            'original_filename': datastore.generate_filename(file_hash),
-            'dest_fmt': 'mobi'
-        }),
-    ]
-    assert conversion.flask_app.signals['convert-ebook'].send.call_args_list == expected_params
+        # assert convert task was called twice; for mobi & egg formats
+        assert current_app.signals['convert-ebook'].send.call_count == 2
+        assert current_app.signals['convert-ebook'].send.call_args_list == expected_params
 
 
-def test_convert(datastore, user, rethinkdb, s3bucket, conversion, mock_connect_s3,
+def test_convert(flask_app, datastore, user, rethinkdb, s3bucket, conversion, mock_connect_s3,
                  mock_compute_md5, mock_subprocess_popen, mock_subprocess_check_call):
     ebook_id = 'bcddb798'
     converted_file_hash = 'new-file-hash'
@@ -88,14 +91,15 @@ def test_convert(datastore, user, rethinkdb, s3bucket, conversion, mock_connect_
     # assert ebook_write_metadata was called
     conversion.ebook_write_metadata.call_count == 1
 
-    # assert celery store task was called
-    conversion.flask_app.signals['store-ebook'].send.assert_called_once_with(
-        conversion,
-        ebook_id='bcddb798',
-        file_hash=converted_file_hash,
-        fmt='mobi',
-        username='ogrebot'
-    )
+    with flask_app.app_context():
+        # assert celery store task was called
+        current_app.signals['store-ebook'].send.assert_called_once_with(
+            conversion,
+            ebook_id='bcddb798',
+            file_hash=converted_file_hash,
+            fmt='mobi',
+            username='ogrebot'
+        )
 
     # verify new format object was created
     format_obj = rethinkdb.table('formats').get(converted_file_hash).run()

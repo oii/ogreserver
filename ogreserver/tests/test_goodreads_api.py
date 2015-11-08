@@ -86,3 +86,24 @@ def test_author_title_search(mock_goodreads, goodreads, get_data_fixtures):
     assert gr_data['title'] == 'Altered Carbon (Takeshi Kovacs, #1)'
     assert len(gr_data['authors']) == 1
     assert gr_data['authors'][0]['name'] == 'Richard K. Morgan'
+
+
+def test_author_title_unicode(mock_goodreads, goodreads, get_data_fixtures):
+    side_effects = []
+
+    # load GoodreadsAPI response fixtures
+    for f in get_data_fixtures(__file__, 'test_author_title_search'):
+        m = mock.Mock()
+        m.status_code = 200
+        m.text = f
+        side_effects.append(m)
+
+    mock_goodreads.get.side_effect = side_effects
+
+    # search author, title on goodreads
+    gr_data = goodreads.search(author='Richard Morgan', title='Altered Carbon (GOLLANCZ S.F.)')
+    assert type(gr_data['isbn']) is unicode
+    assert type(gr_data['isbn13']) is unicode
+    assert type(gr_data['title']) is unicode
+    assert len(gr_data['authors']) == 1
+    assert type(gr_data['authors'][0]['name']) is unicode

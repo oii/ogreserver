@@ -84,3 +84,17 @@ def test_valid_asin_search(mock_amazon, amazon, get_data_fixtures):
     assert am_data['title'] == 'World War Z: An Oral History of the Zombie War'
     assert am_data['image_url'] == 'http://ecx.images-amazon.com/images/I/51ELXqAe9UL.jpg'
     assert am_data['url'] == 'http://www.amazon.com/World-War-Oral-History-Zombie-ebook/dp/B000JMKQX0'
+
+
+def test_author_title_unicode(mock_amazon, amazon, get_data_fixtures):
+    # load AmazonAPI response fixtures
+    fixtures = get_data_fixtures(__file__, 'test_author_title_search2')
+    mock_amazon.return_value.ItemSearch.side_effect = fixtures['mock_amazon_itemsearch']
+    mock_amazon.return_value.ItemLookup.side_effect = fixtures['mock_amazon_itemlookup']
+
+    am_data = amazon.search(author='Richard Morgan', title='Black Man')
+    assert type(am_data['asin']) is unicode
+    assert type(am_data['author']) is unicode
+    assert type(am_data['title']) is unicode
+    assert type(am_data['image_url']) is unicode
+    assert type(am_data['url']) is unicode

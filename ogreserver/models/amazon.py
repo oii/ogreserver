@@ -97,19 +97,29 @@ class AmazonAPI:
         except AttributeError:
             return None
         output['title'] = item.find('{{{}}}Title'.format(self.NS)).text
+
+        # convert everything to unicode
+        for k,v in output.items():
+            if type(v) is str:
+                output[k] = v.decode('utf8')
+
         return output
 
     def _process_image(self, xml):
         items = self._preprocess(xml)
 
         # extract a book cover URL
-        return items.find(
+        image_url = items.find(
             '{{{}}}Item'.format(self.NS)
         ).find(
             '{{{}}}LargeImage'.format(self.NS)
         ).find(
             '{{{}}}URL'.format(self.NS)
         ).text
+
+        if type(image_url) is str:
+            image_url = image_url.decode('utf8')
+        return image_url
 
 
     def _rank_results(self, items, term):

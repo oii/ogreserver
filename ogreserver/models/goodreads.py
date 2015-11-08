@@ -101,6 +101,11 @@ class GoodreadsAPI:
             author_data = self.get_author(author_id)
             output['authors'].append(author_data)
 
+        # convert everything to unicode
+        for k,v in output.items():
+            if type(v) is str:
+                output[k] = v.decode('utf8')
+
         return output
 
 

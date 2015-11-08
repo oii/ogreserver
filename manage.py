@@ -70,6 +70,27 @@ def lb(ebook_id):
 
 
 @manager.command
+def rebuild_metadata(foreground=False):
+    """
+    Reload all metadata from external APIs. Use with caution!
+    """
+    # setup celery for rebuilding meta in background
+    app.celery = make_celery(app)
+    register_tasks(app)
+    register_signals(app)
+
+    from ogreserver.tasks import query_ebook_metadata
+
+    # connect to rethinkdb and run metadata task for all ebooks
+    conn = r.connect('localhost', 28015, db='ogreserver')
+    for ebook_data in r.table('ebooks').run(conn):
+        if foreground:
+            query_ebook_metadata(ebook_data)
+        else:
+            query_ebook_metadata.delay(ebook_data)
+
+
+@manager.command
 def rebuild_index(foreground=False):
     """
     Reindex the entire DB into Whoosh

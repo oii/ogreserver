@@ -289,7 +289,7 @@ def check_pip():
     import pip
 
     pypi = xmlrpclib.ServerProxy('http://pypi.python.org/pypi')
-    for dist in pip.get_installed_distributions():
+    for dist in sorted(pip.get_installed_distributions(), key=lambda k: k.project_name.lower()):
         available = pypi.package_releases(dist.project_name)
         if not available:
             # Try to capitalize pkg name

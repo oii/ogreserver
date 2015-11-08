@@ -37,6 +37,8 @@ def profile_edit(user_id):
     form = ProfileEditForm(request.form, g.user)
     if form.validate_on_submit():
         form.populate_obj(g.user)
+        if g.user.preferred_ebook_format == '-':
+            g.user.preferred_ebook_format = None
         g.user.save()
         redirect('profile')
 

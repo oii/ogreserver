@@ -45,6 +45,7 @@ class User(Base, UserMixin):
     preferred_ebook_format = Column(String(4))
     dont_email_me = Column(Boolean, default=False)
     badges = relationship(UserBadge, backref='user', lazy='dynamic')
+    advanced = Column(Boolean)
 
     active = Column(Boolean)
     confirmed_at = Column(DateTime)

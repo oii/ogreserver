@@ -197,7 +197,7 @@ def test_sync_dupe_on_original_hash(datastore, rethinkdb, user, user2):
     assert data['dupe'] is False, 'book should not be a duplicate'
 
     # update file_hash post-metadata rewrite
-    datastore.update_book_hash('d41d8cd9', '058e92c0')
+    datastore.update_ebook_hash('d41d8cd9', '058e92c0')
 
     # sync with diff user
     syncd_books = datastore.update_library(ebooks_dict, user2)

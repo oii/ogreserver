@@ -165,7 +165,7 @@ class Conversion:
             new_hash = compute_md5(tmp_name)[0]
 
             # update the self.datastore
-            self.datastore.update_book_hash(file_hash, new_hash)
+            self.datastore.update_ebook_hash(file_hash, new_hash)
 
             # move file back into place
             shutil.copy(tmp_name, filepath)

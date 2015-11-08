@@ -118,7 +118,7 @@ def confirm():
     ds = DataStore(app.config, app.logger)
 
     try:
-        if ds.update_book_hash(current_file_hash, updated_file_hash):
+        if ds.update_ebook_hash(current_file_hash, updated_file_hash):
             return 'ok'
         else:
             return 'fail'

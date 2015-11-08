@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import datetime
 
 
-def test_update_book_hash(datastore, rethinkdb, user):
+def test_update_ebook_hash(datastore, rethinkdb, user):
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
         'author': 'H. C. Andersen',
@@ -19,8 +19,8 @@ def test_update_book_hash(datastore, rethinkdb, user):
     })
 
     # md5 is different after ogre_id written to metadata on client
-    ret = datastore.update_book_hash('38b3fc3a', 'egg')
-    assert ret is True, 'update_book_hash() returned false'
+    ret = datastore.update_ebook_hash('38b3fc3a', 'egg')
+    assert ret is True, 'update_ebook_hash() returned false'
 
     format_obj = rethinkdb.table('formats').get('egg').run()
     assert format_obj is not None, 'format should have been updated to MD5 of egg'

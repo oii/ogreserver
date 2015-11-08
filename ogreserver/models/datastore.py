@@ -519,19 +519,27 @@ class DataStore():
         )
 
 
-    def update_book_hash(self, current_file_hash, updated_file_hash):
+    def update_ebook_hash(self, current_file_hash, updated_file_hash):
         """
-        Update a format's entry with a new PK
-        This is called after the OGRE-ID meta data is written into an ebook on the client
+        Update a format with a new filehash (which is the primary key)
+        This is called via the API after the OGRE-ID meta data is written into an ebook on the
+        client, since changing the metadata changes the ebook's filehash
         """
         if current_file_hash == updated_file_hash:
             raise SameHashSuppliedOnUpdateError(current_file_hash)
+
+        # check this filehash has already been processed
+        exists = r.table('formats').get(updated_file_hash).run()
+        if exists:
+            return True
 
         data = r.table('formats').get(current_file_hash).run()
         if data is None:
             self.logger.error('Format {} does not exist'.format(current_file_hash))
             return False
+
         try:
+            # update the ebook format as tagged by the client (insert/delete since changing PK)
             data['file_hash'] = updated_file_hash
             data['ogreid_tagged'] = True
             r.table('formats').insert(data).run()
@@ -545,11 +553,12 @@ class DataStore():
                 exc_info=True
             )
             return False
+
         return True
 
     def get_uploaded(self, file_hash):
         """
-        Mark an ebook as having been uploaded to S3
+        Get all books marked as having been uploaded to S3
         """
         return r.table('formats').get(file_hash)['uploaded'].run()
 

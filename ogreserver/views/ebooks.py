@@ -27,7 +27,7 @@ def listing(terms=None, pagenum=1):
     if terms == '+':
         terms = None
 
-    search = Search(app.whoosh, app.config['SEARCH_PAGELEN'])
+    search = Search(app.whoosh, pagelen=app.config.get('SEARCH_PAGELEN', 20))
 
     if request_wants_json(request):
         # return single page as JSON

@@ -44,8 +44,6 @@ def create_app(config=None):
 
 
 def make_celery(app):
-    # http://flask.pocoo.org/docs/0.10/patterns/celery
-
     # create Celery app object
     celery = Celery(app.import_name, broker=app.config['BROKER_URL'])
 
@@ -54,17 +52,14 @@ def make_celery(app):
     celery.conf.update(queue_configuration())
     celery.conf.update(schedule_tasks())
 
+    # http://flask.pocoo.org/docs/0.10/patterns/celery
     TaskBase = celery.Task
-
     class ContextTask(TaskBase):
         abstract = True
         def __call__(self, *args, **kwargs):
             with app.app_context():
                 return TaskBase.__call__(self, *args, **kwargs)
-
     celery.Task = ContextTask
-
-    # register tasks with celery; see extensions/celery.py
     return celery
 
 

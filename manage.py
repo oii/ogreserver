@@ -70,6 +70,26 @@ def lb(ebook_id):
 
 
 @manager.command
+def rebuild_index(foreground=False):
+    """
+    Reindex the entire DB into Whoosh
+    """
+    # setup celery for rebuilding meta in background
+    app.celery = make_celery(app)
+    register_tasks(app)
+
+    from ogreserver.tasks import index_for_search
+
+    # connect to rethinkdb and run index task for all ebooks
+    conn = r.connect('localhost', 28015, db='ogreserver')
+    for ebook_data in r.table('ebooks').run(conn):
+        if foreground:
+            index_for_search(ebook_data)
+        else:
+            index_for_search.delay(ebook_data)
+
+
+@manager.command
 def create_user(username, password, email, role='user', confirmed=False, test=False):
     """
     Create a new user for OGRE
@@ -125,13 +145,6 @@ def create_user(username, password, email, role='user', confirmed=False, test=Fa
         else:
             print 'User {} already exists'.format(username)
             sys.exit(1)
-
-
-@manager.command
-def rebuild_index():
-    "Reindex the entire DB into Whoosh."
-    # TODO implement
-    pass
 
 
 @manager.command
@@ -225,7 +238,7 @@ def init_ogre(test=False):
 @manager.command
 def set_indexes():
     def create_index(table, name, index=None):
-        conn = r.connect("localhost", 28015, db='ogreserver')
+        conn = r.connect('localhost', 28015, db='ogreserver')
         if name not in r.table(table).index_list().run(conn):
             start = datetime.datetime.now()
             if index is None:

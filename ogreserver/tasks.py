@@ -7,14 +7,19 @@ from flask import current_app as app
 from flask import render_template
 
 import requests
+import whoosh
+
+from celery.task import current
 
 from .extensions.database import setup_db_session
+from .extensions.whoosh import init_whoosh
 
 from .exceptions import (ConversionFailedError, EbookNotFoundOnS3Error, S3DatastoreError,
                          AmazonHttpError, RethinkdbError)
 from .models.amazon import AmazonAPI
 from .models.datastore import DataStore
 from .models.goodreads import GoodreadsAPI
+from .models.search import Search
 
 
 @app.celery.task(queue='normal', rate_limit='1/s')
@@ -92,6 +97,25 @@ def query_ebook_metadata(ebook_data):
         except RethinkdbError:
             app.logger.critical(
                 'Failed updating ebook metadata: {}'.format(ebook_data['ebook_id'])
+            )
+
+
+@app.celery.task(queue='high')
+def index_for_search(ebook_data):
+    """
+    Add ebook to the Whoosh search index
+    """
+    with app.app_context():
+        try:
+            # create search class and index
+            search = Search(init_whoosh(app), pagelen=app.config.get('SEARCH_PAGELEN', 20))
+            search.index_for_search(ebook_data)
+
+        except whoosh.writing.LockError:
+            # if index is unavailable try again in 10 secs
+            current.retry(
+                kwargs={'ebook_data': ebook_data},
+                countdown=10,
             )
 
 

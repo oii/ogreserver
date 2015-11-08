@@ -18,16 +18,12 @@ class Search:
             return
 
         # add info about this book to the search index
-        writer = self.whoosh.writer()
-        try:
-            writer.add_document(
+        with self.whoosh.writer() as writer:
+            writer.update_document(
                 ebook_id=book_data['ebook_id'],
                 author=book_data['author'],
-                title=book_data['title']
+                title=book_data['title'],
             )
-            writer.commit()
-        except Exception as e:
-            self.logger.error(e)
 
 
     def query(self, terms=None, pagenum=1, allpages=False):

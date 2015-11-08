@@ -14,7 +14,6 @@ import ftfy
 
 from flask import current_app
 
-from .search import Search
 from .user import User
 from ..utils import connect_s3, encode_rql_dates
 
@@ -24,13 +23,9 @@ from ..exceptions import OgreException, BadMetaDataError, S3DatastoreError, Reth
 
 
 class DataStore():
-    def __init__(self, config, logger, whoosh=None):
+    def __init__(self, config, logger):
         self.config = config
         self.logger = logger
-        if whoosh:
-            self.search = Search(whoosh, config.get('SEARCH_PAGELEN', 20))
-        else:
-            self.search = None
 
         # connect rethinkdb and make default connection
         r.connect(db=self.config['RETHINKDB_DATABASE']).repl()
@@ -230,10 +225,6 @@ class DataStore():
         }).run()
         if 'first_error' in ret:
             raise RethinkdbError(ret['first_error'])
-
-        # update the whoosh text search interface
-        if self.search:
-            self.search.index_for_search(new_book)
 
         # signal new ebook created (when running in flask context)
         current_app.signals['ebook-created'].send(self, ebook_data=new_book)

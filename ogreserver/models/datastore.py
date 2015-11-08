@@ -298,6 +298,9 @@ class DataStore():
         if 'first_error' in ret:
             raise RethinkdbError(ret['first_error'])
 
+        # signal ebook updated
+        current_app.signals['ebook-updated'].send(self, ebook_id=ebook_id)
+
 
     def append_owner(self, file_hash, username):
         """

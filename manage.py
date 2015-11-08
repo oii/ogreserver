@@ -15,7 +15,7 @@ from sqlalchemy.exc import IntegrityError, ProgrammingError
 import rethinkdb as r
 from rethinkdb.errors import RqlRuntimeError
 
-from ogreserver.factory import create_app, make_celery
+from ogreserver.factory import create_app, make_celery, register_signals
 from ogreserver.extensions.celery import register_tasks
 from ogreserver.extensions.database import setup_db_session, create_tables, setup_roles
 from ogreserver.utils import connect_s3, decode_rql_dates
@@ -98,6 +98,7 @@ def rebuild_index(foreground=False):
     # setup celery for rebuilding meta in background
     app.celery = make_celery(app)
     register_tasks(app)
+    register_signals(app)
 
     from ogreserver.tasks import index_for_search
 
@@ -105,9 +106,9 @@ def rebuild_index(foreground=False):
     conn = r.connect('localhost', 28015, db='ogreserver')
     for ebook_data in r.table('ebooks').run(conn):
         if foreground:
-            index_for_search(ebook_data)
+            index_for_search(ebook_data=ebook_data)
         else:
-            index_for_search.delay(ebook_data)
+            index_for_search.delay(ebook_data=ebook_data)
 
 
 @manager.command

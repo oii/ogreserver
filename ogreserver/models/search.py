@@ -13,16 +13,16 @@ class Search:
         self.pagelen = pagelen
 
 
-    def index_for_search(self, book_data):
+    def index_for_search(self, ebook_data):
         if self.whoosh is None:
             return
 
         # add info about this book to the search index
         with self.whoosh.writer() as writer:
             writer.update_document(
-                ebook_id=book_data['ebook_id'],
-                author=book_data['author'],
-                title=book_data['title'],
+                ebook_id=ebook_data['ebook_id'],
+                author=ebook_data['author'],
+                title=ebook_data['title'],
             )
 
 

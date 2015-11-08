@@ -5,7 +5,7 @@ from flask import current_app as app
 
 from flask.ext.security.utils import url_for_security
 
-from .tasks import convert, query_ebook_metadata, send_mail, store_ebook
+from .tasks import convert, query_ebook_metadata, send_mail, store_ebook, index_for_search
 
 
 def when_store_ebook(sender, ebook_id, filename, file_hash, fmt, username):
@@ -16,6 +16,9 @@ def when_convert_ebook(sender, ebook_id, version_id, original_filename, dest_fmt
 
 def when_ebook_created(sender, ebook_data):
     query_ebook_metadata.delay(ebook_data)
+
+def when_ebook_updated(sender, ebook_id):
+    index_for_search.delay(ebook_id=ebook_id)
 
 
 def when_password_reset(sender, user, **extra):

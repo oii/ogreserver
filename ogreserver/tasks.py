@@ -140,11 +140,17 @@ def image_upload(ebook_data):
 
 
 @app.celery.task(queue='high')
-def index_for_search(ebook_data):
+def index_for_search(ebook_id=None, ebook_data=None):
     """
     Add ebook to the Whoosh search index
     """
     with app.app_context():
+        if ebook_id and not ebook_data:
+            ds = DataStore(app.config, app.logger)
+            ebook_data = ds.load_ebook(ebook_id)
+        elif not ebook_data:
+            raise Exception('index_for_search task called without ebook_id or ebook_data params')
+
         try:
             # create search class and index
             search = Search(init_whoosh(app), pagelen=app.config.get('SEARCH_PAGELEN', 20))
@@ -153,7 +159,7 @@ def index_for_search(ebook_data):
         except whoosh.writing.LockError:
             # if index is unavailable try again in 10 secs
             current.retry(
-                kwargs={'ebook_data': ebook_data},
+                kwargs={'ebook_id': ebook_id, 'ebook_data': ebook_data},
                 countdown=10,
             )
 

@@ -100,7 +100,7 @@ def register_signals(app):
     from blinker import Namespace
     app.signals = Namespace()
 
-    from .signals import when_convert_ebook, when_store_ebook, when_ebook_created
+    from .signals import when_convert_ebook, when_store_ebook, when_ebook_created, when_ebook_updated
 
     # register some application signals to help decouple Flask from Celery
     convert_ebook = app.signals.signal('convert-ebook')
@@ -111,3 +111,6 @@ def register_signals(app):
 
     ebook_created = app.signals.signal('ebook-created')
     ebook_created.connect(when_ebook_created)
+
+    ebook_updated = app.signals.signal('ebook-updated')
+    ebook_updated.connect(when_ebook_updated)

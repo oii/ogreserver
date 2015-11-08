@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import pyaml
+
 from flask import current_app as app
 
-from flask import Blueprint, request, jsonify, redirect, render_template
+from flask import g, Blueprint, request, jsonify, redirect, render_template
 from flask.ext.security.decorators import login_required
 
 from ..models.datastore import DataStore
@@ -43,6 +45,18 @@ def listing(terms=None, pagenum=1):
 def detail(ebook_id):
     ds = DataStore(app.config, app.logger)
     ebook = ds.load_ebook(ebook_id)
+
+    # display original source on ebook detail page
+    ebook['provider'] = ebook['meta']['source']['provider']
+
+    if g.user.advanced:
+        # if user has advanced flag set on their profile,
+        # render extra ebook metadata as YAML so it looks pretty
+        ebook['rawmeta'] = {}
+        for source in ('source', 'amazon', 'goodreads'):
+            if source in ebook['meta']:
+                ebook['rawmeta'][source] = pyaml.dump(ebook['meta'][source]).replace("'", '')
+
     return render_template('ebook_detail.html', ebook=ebook)
 
 

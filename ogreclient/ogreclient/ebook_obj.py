@@ -170,8 +170,7 @@ class EbookObject:
                             del(tags[j])
                     meta['tags'] = ', '.join(tags)
 
-                is_amazon_format = self.config['definitions'][fmt[1:]][1]
-                if is_amazon_format:
+                if fmt[1:] == 'mobi':
                     # extract the ogre_id which may be embedded into the tags field
                     if 'ogre_id' in meta['tags']:
                         tags = meta['tags'].split(', ')
@@ -266,10 +265,9 @@ class EbookObject:
             shutil.copy(self.path, tmp_name)
 
             try:
-                is_amazon_format = self.config['definitions'][fmt[1:]][1]
-                if is_amazon_format:
+                if fmt[1:] == 'mobi':
                     # append ogre's ebook_id to the ebook's comma-separated tags field
-                    # as they don't support --identifier
+                    # as MOBI doesn't support identifiers in metadata
                     if 'tags' in self.meta and self.meta['tags']:
                         new_tags = 'ogre_id={}, {}'.format(ebook_id, self.meta['tags'])
                     else:
@@ -281,7 +279,7 @@ class EbookObject:
                         stderr=subprocess.STDOUT
                     )
                 else:
-                    # write ogre_id to --identifier
+                    # write ogre_id to identifier metadata
                     subprocess.check_output(
                         [self.config['calibre_ebook_meta_bin'], tmp_name, '--identifier', 'ogre_id:{}'.format(ebook_id)],
                         stderr=subprocess.STDOUT

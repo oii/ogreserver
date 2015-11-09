@@ -141,7 +141,7 @@ class Conversion:
             tmp_name = '{}{}'.format(os.path.join(temp_dir, id_generator()), fmt)
             shutil.copy(filepath, tmp_name)
 
-            if fmt[1:] in self.config['MOBI_FORMATS']:
+            if fmt == 'mobi':
                 # append ogre's ebook_id to the ebook's comma-separated tags field
                 if ebook['raw_tags'] is not None and len(ebook['raw_tags']) > 0:
                     new_tags = 'ogre_id={}, {}'.format(ebook['ebook_id'], ebook['raw_tags'])

@@ -51,29 +51,25 @@ UPLOADED_LOGS_DEST = "/srv/{{ pillar['app_directory_name'] }}/logs"
 # Ebook format definitions
 # data structure:
 #  is_valid_format (bool): sync to ogreserver
-#  is_amazon_family (bool): an amazon-family format
 
 import collections
 EBOOK_DEFINITIONS = collections.OrderedDict([
-    ('mobi', [True,True]),
-    ('azw', [True,True]),
-    ('azw3', [True,True]),
-    ('azw4', [True,True]),
-    ('epub', [True,False]),
-    ('azw1', [True,True]),
-    ('tpz', [True,False]),
-    ('pdb', [False,False,]),
-    ('pdf', [False,False,]),
-    ('lit', [False,False,]),
-    ('html', [False,False]),
-    ('zip', [False,False]),
+    ('mobi', [True]),
+    ('azw', [True]),
+    ('azw3', [True]),
+    ('azw4', [True]),
+    ('epub', [True]),
+    ('azw1', [True]),
+    ('tpz', [True]),
+    ('pdb', [False]),
+    ('pdf', [True]),
+    ('lit', [False]),
+    ('html', [False]),
+    ('zip', [False]),
 ])
 
 # Ebook conversion formats; all books will be provided in these formats by OGRE
 EBOOK_FORMATS = ['mobi', 'epub']
-
-# Mobi formats for ebook-metadata in Conversion model
-MOBI_FORMATS = ('mobi', 'azw', 'azw3', 'azw4', 'azw1')
 
 # OGRE download links expire in 10 seconds
 DOWNLOAD_LINK_EXPIRY = 10

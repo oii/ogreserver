@@ -52,11 +52,10 @@ def app_config():
         'S3_BUCKET': 'ogre-testing',
 
         'EBOOK_DEFINITIONS': collections.OrderedDict([
-            ('mobi', [True,True]),
-            ('azw', [True,True]),
-            ('azw3', [True,True]),
-            ('azw4', [True,True]),
-            ('epub', [True,False]),
+            ('mobi', [True]),
+            ('azw', [True]),
+            ('azw3', [True]),
+            ('epub', [True]),
         ]),
 
         'EBOOK_FORMATS': ['egg', 'mobi', 'epub'],

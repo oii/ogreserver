@@ -64,6 +64,14 @@ h2.detail_page {
 	.book-info {
 		p { margin-bottom: 0 }
 	}
+	.book-buttons {
+		.download {
+			img {
+				width: 80px;
+				height: 80px;
+			}
+		}
+	}
 }
 
 .body {

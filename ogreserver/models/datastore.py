@@ -351,16 +351,19 @@ class DataStore():
 
     def find_missing_formats(self, fmt):
         """
-        Search for missing formats by version.
+        Find ebook versions missing supplied format.
 
         Each ebook should have several formats available for download (defined
-        in config['EBOOK_FORMATS']). This method is called by nightly celery
-        task to ensure all relevant formats are available. Objects are returned
-        where $fmt is missing.
+        in config['EBOOK_FORMATS']). This method is called nightly by a celery
+        task to ensure all defined formats are available.
 
+        Objects are returned where supplied fmt is missing (ie, needs creating)
+
+        Params:
+            fmt (str)   Required ebook format that might be missing
         Returns
             version_id: [
-                {format, original_format, file_hash, ebook_id},
+                {format, original_format, file_hash, ebook_id, s3_filename, uploaded},
                 ...
             ]
         """
@@ -375,7 +378,7 @@ class DataStore():
         ).eq_join(
             'version_id', r.table('versions'), index='version_id'
         ).zip().pluck(
-            'format', 'original_format', 'file_hash', 'ebook_id'
+            'format', 'original_format', 'file_hash', 'ebook_id', 's3_filename', 'uploaded'
         ).run()
 
 
@@ -393,6 +396,27 @@ class DataStore():
         Every duplicate found on sync increases a version's popularity
         """
         return (quality * 0.7) + (float(popularity) / User.get_total_users() * 100 * 0.3)
+
+
+    def get_ebook_url(self, ebook_id, version_id=None, fmt=None, user=None):
+        """
+        Generate a download URL for the requested ebook
+        """
+        # calculate the best ebook to return, based on the supplied params
+        file_hash = self._get_best_ebook_filehash(ebook_id, version_id, fmt, user)
+
+        # increase popularity on download
+        self.increment_popularity(file_hash)
+
+        # load the stored s3 filename
+        filename = r.table('formats').get(file_hash)['s3_filename'].run()
+
+        # create an expiring auto-authenticate url for S3
+        s3 = connect_s3(self.config)
+        return s3.generate_url(self.config['DOWNLOAD_LINK_EXPIRY'], 'GET',
+            bucket=self.config['S3_BUCKET'],
+            key=filename
+        )
 
 
     def _get_ebook_filehash(self, ebook_id, version_id=None, fmt=None, user=None):
@@ -481,31 +505,6 @@ class DataStore():
         r.table('versions').get(version_id).update({'ranking': ranking}).run()
 
 
-    def get_ebook_url(self, ebook_id, version_id=None, fmt=None, user=None):
-        """
-        Generate a download URL for the requested ebook
-        """
-        file_hash = self._get_ebook_filehash(
-            ebook_id,
-            version_id=version_id,
-            fmt=fmt,
-            user=user
-        )
-
-        # generate the filename - which is the key on S3
-        filename = self.generate_filename(file_hash)
-
-        # increase popularity on download
-        self.increment_popularity(file_hash)
-
-        # create an expiring auto-authenticate url for S3
-        s3 = connect_s3(self.config)
-        return s3.generate_url(self.config['DOWNLOAD_LINK_EXPIRY'], 'GET',
-            bucket=self.config['S3_BUCKET'],
-            key=filename
-        )
-
-
     def update_ebook_hash(self, current_file_hash, updated_file_hash):
         """
         Update a format with a new filehash (which is the primary key)
@@ -549,13 +548,14 @@ class DataStore():
         """
         return r.table('formats').get(file_hash)['uploaded'].run()
 
-    def set_uploaded(self, file_hash, username, isit=True):
+    def set_uploaded(self, file_hash, username, filename, isit=True):
         """
         Mark an ebook as having been uploaded to S3
         """
         r.table('formats').get(file_hash).update({
             'uploaded': isit,
-            'uploaded_by': username
+            'uploaded_by': username,
+            's3_filename': filename,
         }).run()
 
     def set_dedrm_flag(self, file_hash):
@@ -584,7 +584,7 @@ class DataStore():
             metadata = k._get_remote_metadata()
             if 'x-amz-meta-ogre-key' in metadata and metadata['x-amz-meta-ogre-key'] == ebook_id:
                 # if already exists, abort and flag as uploaded
-                self.set_uploaded(file_hash, username)
+                self.set_uploaded(file_hash, username, filename)
                 return False
 
         # calculate uploaded file md5
@@ -606,7 +606,7 @@ class DataStore():
                 self.logger.info('UPLOADED {}'.format(filename))
 
                 # mark ebook as stored
-                self.set_uploaded(file_hash, username)
+                self.set_uploaded(file_hash, username, filename)
 
             except S3ResponseError as e:
                 raise S3DatastoreError("Upload failed checksum 2", inner_excp=e)

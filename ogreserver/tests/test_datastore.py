@@ -86,7 +86,7 @@ def test_get_missing_books_for_user(datastore, user, user2, rethinkdb):
     })
     # add another format and mark uploaded=True
     datastore._create_new_format(version_id, '9da4f3ba', 'mobi', username=user.username)
-    datastore.set_uploaded('9da4f3ba', user.username)
+    datastore.set_uploaded('9da4f3ba', user.username, filename='egg.pub')
 
     # should be a single missing book for user
     assert len(datastore.get_missing_books(username=user.username)) == 1
@@ -103,7 +103,7 @@ def test_get_missing_books_for_user(datastore, user, user2, rethinkdb):
     assert len(datastore.get_missing_books(username=user.username)) == 2
 
     # mark book uploaded
-    datastore.set_uploaded('06bc5351', user.username)
+    datastore.set_uploaded('06bc5351', user.username, filename='egg.pub')
 
     # should be a single missing book for user
     assert len(datastore.get_missing_books(username=user.username)) == 1

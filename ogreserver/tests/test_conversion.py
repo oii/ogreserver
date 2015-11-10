@@ -22,29 +22,29 @@ def test_search(flask_app, datastore, user, rethinkdb, s3bucket, conversion):
         'size': 1234,
         'dedrm': False,
     })
-    datastore.set_uploaded(file_hash, user.username)
+    datastore.set_uploaded(file_hash, user.username, filename='egg.pub')
 
     with flask_app.app_context():
-        # assert convert-ebook signal call parameters
+        # setup a fixture for expected call params to convert-ebook signal
         expected_params = [
             ((conversion,), {
                 'ebook_id': ebook_id,
                 'version_id': version_id,
-                'original_filename': datastore.generate_filename(file_hash),
+                'original_filename': 'egg.pub',
                 'dest_fmt': 'egg'
             }),
             ((conversion,), {
                 'ebook_id': ebook_id,
                 'version_id': version_id,
-                'original_filename': datastore.generate_filename(file_hash),
+                'original_filename': 'egg.pub',
                 'dest_fmt': 'mobi'
             }),
         ]
 
-        # search for books which need converting; this starts convert() tasks
+        # search for books which need converting; this sends convert signals
         conversion.search()
 
-        # assert convert task was called twice; for mobi & egg formats
+        # assert convert signal was sent twice, once for each missing format
         assert current_app.signals['convert-ebook'].send.call_count == 2
         assert current_app.signals['convert-ebook'].send.call_args_list == expected_params
 
@@ -66,6 +66,7 @@ def test_convert(flask_app, datastore, user, rethinkdb, s3bucket, conversion, mo
         'size': 1234,
         'dedrm': False,
     })
+    datastore.set_uploaded('38b3fc3a', user.username, filename='egg.pub')
 
     # mock return from Popen().communicate()
     mock_subprocess_popen.return_value.communicate.return_value = 'MOBI output written to', ''
@@ -78,12 +79,7 @@ def test_convert(flask_app, datastore, user, rethinkdb, s3bucket, conversion, mo
     conversion.ebook_write_metadata = mock.MagicMock(name='method')
 
     # convert books; this starts store_ebook() tasks
-    conversion.convert(
-        'bcddb798',
-        'fake-version-id',
-        datastore.generate_filename('38b3fc3a'),
-        'mobi'
-    )
+    conversion.convert('bcddb798', 'fake-version-id', 'egg.pub', 'mobi')
 
     # assert connect_s3 was called
     mock_connect_s3.call_count == 1

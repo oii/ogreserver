@@ -65,6 +65,13 @@ def mock_compute_md5(request):
     m.stop()
 
 
+@pytest.yield_fixture(scope='function')
+def mock_shutil_move(request):
+    m = mock.patch('ogreserver.models.conversion.shutil.move')
+    yield m.start()
+    m.stop()
+
+
 @pytest.fixture(scope='session')
 def get_data_fixtures():
     """

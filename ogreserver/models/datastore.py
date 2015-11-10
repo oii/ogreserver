@@ -575,6 +575,8 @@ class DataStore():
         # generate a nice filename for this ebook
         filename = self._generate_filename(file_hash)
 
+        self.logger.debug('Generated filename {} for {}'.format(filename, file_hash))
+
         # create a new storage key
         k = boto.s3.key.Key(bucket)
         k.key = filename

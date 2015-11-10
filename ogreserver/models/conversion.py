@@ -49,84 +49,68 @@ class Conversion:
         """
         Convert an ebook to both mobi & epub based on which is missing
 
-        ebook_id (int):             Ebook's PK
+        ebook_id (str):             Ebook's PK
         version_id (str):           PK of this version
         original_filename (str):    Filename on S3 of source book uploaded to OGRE
         dest_fmt (str):             Target format to convert to
         """
-        # generate a temp filename for the output ebook
-        output_filename = os.path.join(
-            self.config['UPLOADED_EBOOKS_DEST'], '{}.{}'.format(
-                id_generator(), dest_fmt
+        with make_temp_directory() as temp_dir:
+            # generate a temp filename for the output ebook
+            temp_filepath = os.path.join(temp_dir, '{}.{}'.format(id_generator(), dest_fmt))
+
+            # download the original book from S3
+            s3 = connect_s3(self.datastore.config)
+            bucket = s3.get_bucket(self.config['S3_BUCKET'])
+            k = bucket.get_key(original_filename)
+            if k is None:
+                raise EbookNotFoundOnS3Error
+
+            original_filename = os.path.join(temp_dir, original_filename)
+            k.get_contents_to_filename(original_filename)
+
+            # call ebook-convert, ENV is inherited from celery worker process (see supervisord conf)
+            proc = subprocess.Popen(
+                ['/usr/bin/env', '/usr/bin/ebook-convert', original_filename, temp_filepath],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
             )
-        )
+            out, err = proc.communicate()
 
-        # ensure directory exists
-        if not os.path.exists(self.config['UPLOADED_EBOOKS_DEST']):
-            os.makedirs(self.config['UPLOADED_EBOOKS_DEST'])
+            if len(err) > 0:
+                raise ConversionFailedError(err)
+            elif '{} output written to'.format(dest_fmt.upper()) not in out:
+                raise ConversionFailedError(out)
 
-        # download the original book from S3
-        s3 = connect_s3(self.datastore.config)
-        bucket = s3.get_bucket(self.config['S3_BUCKET'])
-        k = bucket.get_key(original_filename)
-        if k is None:
-            raise EbookNotFoundOnS3Error
-        original_filename = os.path.join(
-            self.config['UPLOADED_EBOOKS_DEST'], original_filename
-        )
-        k.get_contents_to_filename(original_filename)
+            # write metdata to ebook
+            file_hash = self._ebook_write_metadata(ebook_id, temp_filepath, dest_fmt)
 
-        # call ebook-convert, ENV is inherited from celery worker process (see supervisord conf)
-        proc = subprocess.Popen(
-            ['/usr/bin/env', '/usr/bin/ebook-convert', original_filename, output_filename],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        out, err = proc.communicate()
+            # move converted ebook to uploads dir, where celery task can push it to S3
+            dest_path = os.path.join(self.config['UPLOADED_EBOOKS_DEST'], '{}.{}'.format(file_hash, dest_fmt))
 
-        if len(err) > 0:
-            raise ConversionFailedError(err)
-        elif '{} output written to'.format(dest_fmt.upper()) not in out:
-            raise ConversionFailedError(out)
-
-        # calculate file hash of newly created book
-        md5_tup = compute_md5(output_filename)
-
-        # write metdata to ebook
-        self.ebook_write_metadata(ebook_id, md5_tup[0], output_filename, dest_fmt)
-
-        try:
-            # move newly decrypted book to its final filename; the new file hash
-            subprocess.check_call("mv '{}' '{}'".format(
-                output_filename,
-                os.path.join(
-                    self.config['UPLOADED_EBOOKS_DEST'],
-                    '{}.{}'.format(md5_tup[0], dest_fmt)
-                ),
-                shell=True
-            ))
-        except subprocess.CalledProcessError as e:
-            raise ConversionFailedError(inner_excp=e)
+            try:
+                shutil.move(temp_filepath, dest_path)
+            except subprocess.CalledProcessError as e:
+                raise ConversionFailedError(inner_excp=e)
 
         # add newly created format to datastore
-        self.datastore._create_new_format(version_id, md5_tup[0], dest_fmt)
+        self.datastore._create_new_format(version_id, file_hash, dest_fmt)
 
         # signal celery to store on S3
         current_app.signals['store-ebook'].send(
             self,
             ebook_id=ebook_id,
-            file_hash=md5_tup[0],
+            filename=dest_path,
+            file_hash=file_hash,
             fmt=dest_fmt,
             username='ogrebot'
         )
 
 
-    def ebook_write_metadata(self, ebook_id, file_hash, filepath, fmt):
+    def _ebook_write_metadata(self, ebook_id, filepath, fmt):
         """
         Write metadata to a file from the OGRE DB
 
-        ebook_id (int):         Ebook's PK
-        file_hash (str):        File's hash
+        ebook_id (uuid):        Ebook's PK
         filepath (str):         Path to the file
         fmt (str):              File format
         """
@@ -161,9 +145,6 @@ class Conversion:
 
             # calculate new MD5 after updating metadata
             new_hash = compute_md5(tmp_name)[0]
-
-            # update the self.datastore
-            self.datastore.update_ebook_hash(file_hash, new_hash)
 
             # move file back into place
             shutil.copy(tmp_name, filepath)

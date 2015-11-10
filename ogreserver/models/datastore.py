@@ -398,7 +398,7 @@ class DataStore():
         return (quality * 0.7) + (float(popularity) / User.get_total_users() * 100 * 0.3)
 
 
-    def get_ebook_url(self, ebook_id, version_id=None, fmt=None, user=None):
+    def get_ebook_download_url(self, ebook_id, version_id=None, fmt=None, user=None):
         """
         Generate a download URL for the requested ebook
         """
@@ -419,7 +419,7 @@ class DataStore():
         )
 
 
-    def _get_ebook_filehash(self, ebook_id, version_id=None, fmt=None, user=None):
+    def _get_best_ebook_filehash(self, ebook_id, version_id=None, fmt=None, user=None):
         """
         Get the file_hash for most appropriate format based on supplied params
 
@@ -573,7 +573,7 @@ class DataStore():
         bucket = s3.get_bucket(self.config['S3_BUCKET'])
 
         # generate a nice filename for this ebook
-        filename = self.generate_filename(file_hash)
+        filename = self._generate_filename(file_hash)
 
         # create a new storage key
         k = boto.s3.key.Key(bucket)
@@ -614,7 +614,7 @@ class DataStore():
         return True
 
 
-    def generate_filename(self, file_hash, author=None, title=None, fmt=None):
+    def _generate_filename(self, file_hash, author=None, title=None, fmt=None):
         """
         Generate the filename for a book on its way to S3
 

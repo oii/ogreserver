@@ -66,4 +66,4 @@ def detail(ebook_id):
 @login_required
 def download(ebook_id, version_id=None, fmt=None):
     ds = DataStore(app.config, app.logger)
-    return redirect(ds.get_ebook_url(ebook_id, version_id=version_id, fmt=fmt))
+    return redirect(ds.get_ebook_download_url(ebook_id, version_id=version_id, fmt=fmt))

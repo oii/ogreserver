@@ -6,7 +6,7 @@ from ogreserver.exceptions import NoFormatAvailableError
 import pytest
 
 
-def test_get_ebook_filehash_specific_format(datastore, user, rethinkdb):
+def test_get_best_ebook_filehash_specific_format(datastore, user, rethinkdb):
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
         'author': 'H. C. Andersen',
@@ -25,7 +25,7 @@ def test_get_ebook_filehash_specific_format(datastore, user, rethinkdb):
     # mark single format as uploaded
     rethinkdb.table('formats').get('38b3fc3a').update({'uploaded': True}).run()
 
-    file_hash = datastore._get_ebook_filehash(
+    file_hash = datastore._get_best_ebook_filehash(
         'bcddb7988cf91f7025dd778ca49ecf9f',
         version_id=version_id,
         fmt='epub'
@@ -35,7 +35,7 @@ def test_get_ebook_filehash_specific_format(datastore, user, rethinkdb):
     assert file_hash == '38b3fc3a'
 
 
-def test_get_ebook_filehash_none_uploaded(datastore, user, rethinkdb):
+def test_get_best_ebook_filehash_none_uploaded(datastore, user, rethinkdb):
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
         'author': 'H. C. Andersen',
@@ -53,14 +53,14 @@ def test_get_ebook_filehash_none_uploaded(datastore, user, rethinkdb):
 
     # assert exception since no formats are marked as 'uploaded'
     with pytest.raises(NoFormatAvailableError):
-        datastore._get_ebook_filehash(
+        datastore._get_best_ebook_filehash(
             'bcddb7988cf91f7025dd778ca49ecf9f',
             version_id=version_id,
             fmt='epub'
         )
 
 
-def test_get_ebook_filehash_user_preferred_format(datastore, user, rethinkdb):
+def test_get_best_ebook_filehash_user_preferred_format(datastore, user, rethinkdb):
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
         'author': 'H. C. Andersen',
@@ -89,7 +89,7 @@ def test_get_ebook_filehash_user_preferred_format(datastore, user, rethinkdb):
     }).run()
 
     # test user.preferred_ebook_format == 'mobi'
-    file_hash = datastore._get_ebook_filehash(
+    file_hash = datastore._get_best_ebook_filehash(
         'bcddb7988cf91f7025dd778ca49ecf9f',
         version_id=version_id,
         user=user
@@ -99,7 +99,7 @@ def test_get_ebook_filehash_user_preferred_format(datastore, user, rethinkdb):
     assert file_hash == 'f7025dd7'
 
 
-def test_get_ebook_filehash_OGRE_preferred_format(datastore, user, rethinkdb):
+def test_get_best_ebook_filehash_OGRE_preferred_format(datastore, user, rethinkdb):
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
         'author': 'H. C. Andersen',
@@ -128,7 +128,7 @@ def test_get_ebook_filehash_OGRE_preferred_format(datastore, user, rethinkdb):
     }).run()
 
     # test OGRE's EBOOK_FORMATS config supplies 'egg' top
-    file_hash = datastore._get_ebook_filehash(
+    file_hash = datastore._get_best_ebook_filehash(
         'bcddb7988cf91f7025dd778ca49ecf9f',
         version_id=version_id
     )
@@ -137,7 +137,7 @@ def test_get_ebook_filehash_OGRE_preferred_format(datastore, user, rethinkdb):
     assert file_hash == '38b3fc3a'
 
 
-def test_get_ebook_filehash_uploaded(datastore, user, rethinkdb):
+def test_get_best_ebook_filehash_uploaded(datastore, user, rethinkdb):
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
         'author': 'H. C. Andersen',
@@ -163,7 +163,7 @@ def test_get_ebook_filehash_uploaded(datastore, user, rethinkdb):
     }).run()
 
     # test get file_hash for format where uploaded is True
-    file_hash = datastore._get_ebook_filehash(
+    file_hash = datastore._get_best_ebook_filehash(
         'bcddb7988cf91f7025dd778ca49ecf9f',
         version_id=version_id
     )

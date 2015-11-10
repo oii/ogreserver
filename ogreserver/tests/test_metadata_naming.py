@@ -8,12 +8,12 @@ import pytest
 def test_generate_filename(datastore):
     # ensure exception raised on non-unicode string passed
     with pytest.raises(UnicodeWarning):
-        filename = datastore.generate_filename(
+        filename = datastore._generate_filename(
             '38b3fc3aa7fe67e76f0d8b248e62b940',
             author=str('H. C.'),
         )
 
-    filename = datastore.generate_filename(
+    filename = datastore._generate_filename(
         '38b3fc3aa7fe67e76f0d8b248e62b940',
         author='H. C. Andersen',
         title="Andersen's Fairy Tales",
@@ -21,7 +21,7 @@ def test_generate_filename(datastore):
     )
     assert filename == 'H_C_Andersen__Andersens_Fairy_Tales.38b3fc3a.epub'
 
-    filename = datastore.generate_filename(
+    filename = datastore._generate_filename(
         '38b3fc3aa7fe67e76f0d8b248e62b940',
         author='H. C. (Hans Christian) Andersen',
         title="Andersen's Fairy Tales",
@@ -32,7 +32,7 @@ def test_generate_filename(datastore):
 
 def test_generate_filename_transpose(datastore):
     # test unicode transcode
-    filename = datastore.generate_filename(
+    filename = datastore._generate_filename(
         '38b3fc3aa7fe67e76f0d8b248e62b940',
         author='Emily Brontë',
         title='Wuthering Heights',
@@ -57,11 +57,11 @@ def test_generate_filename_with_db_load(datastore, rethinkdb, user):
     })
 
     # test filename generate when supplying only an MD5
-    filename = datastore.generate_filename('38b3fc3aa7fe67e76f0d8b248e62b940')
+    filename = datastore._generate_filename('38b3fc3aa7fe67e76f0d8b248e62b940')
     assert filename == 'H_C_Andersen__Andersens_Fairy_Tales.38b3fc3a.epub'
 
     # test filename generate with everything except format
-    filename = datastore.generate_filename(
+    filename = datastore._generate_filename(
         '38b3fc3aa7fe67e76f0d8b248e62b940',
         author='H. C. Andersen',
         title="Andersen's Fairy Tales"

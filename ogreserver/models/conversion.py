@@ -119,7 +119,7 @@ class Conversion:
 
         with make_temp_directory() as temp_dir:
             # copy the ebook to a temp file
-            tmp_name = '{}{}'.format(os.path.join(temp_dir, id_generator()), fmt)
+            tmp_name = '{}.{}'.format(os.path.join(temp_dir, id_generator()), fmt)
             shutil.copy(filepath, tmp_name)
 
             if fmt == 'mobi':

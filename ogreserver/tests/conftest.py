@@ -52,6 +52,13 @@ def mock_subprocess_check_call(request):
 
 
 @pytest.yield_fixture(scope='function')
+def mock_subprocess_check_output(request):
+    m = mock.patch('ogreserver.models.conversion.subprocess.check_output')
+    yield m.start()
+    m.stop()
+
+
+@pytest.yield_fixture(scope='function')
 def mock_connect_s3(request):
     m = mock.patch('ogreserver.models.conversion.connect_s3')
     yield m.start()
@@ -68,6 +75,13 @@ def mock_compute_md5(request):
 @pytest.yield_fixture(scope='function')
 def mock_shutil_move(request):
     m = mock.patch('ogreserver.models.conversion.shutil.move')
+    yield m.start()
+    m.stop()
+
+
+@pytest.yield_fixture(scope='function')
+def mock_shutil_copy(request):
+    m = mock.patch('ogreserver.models.conversion.shutil.copy')
     yield m.start()
     m.stop()
 

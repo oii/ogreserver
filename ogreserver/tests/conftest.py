@@ -72,6 +72,13 @@ def mock_shutil_move(request):
     m.stop()
 
 
+@pytest.yield_fixture(scope='function')
+def mock_utils_make_tempdir(request):
+    m = mock.patch('ogreserver.models.conversion.make_temp_directory')
+    yield m.start()
+    m.stop()
+
+
 @pytest.fixture(scope='session')
 def get_data_fixtures():
     """

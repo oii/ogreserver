@@ -6,7 +6,7 @@ from flask import current_app
 import mock
 
 
-def test_search(flask_app, datastore, user, rethinkdb, s3bucket, conversion):
+def test_search(flask_app, datastore, user, rethinkdb, conversion):
     ebook_id = 'bcddb798'
     file_hash = '38b3fc3a'
 
@@ -49,7 +49,7 @@ def test_search(flask_app, datastore, user, rethinkdb, s3bucket, conversion):
         assert current_app.signals['convert-ebook'].send.call_args_list == expected_params
 
 
-def test_convert(flask_app, datastore, user, rethinkdb, s3bucket, conversion, mock_connect_s3,
+def test_convert(flask_app, datastore, user, rethinkdb, conversion, mock_connect_s3,
                  mock_compute_md5, mock_subprocess_popen, mock_subprocess_check_call):
     ebook_id = 'bcddb798'
     converted_file_hash = 'new-file-hash'

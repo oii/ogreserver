@@ -11,9 +11,12 @@ import string
 import subprocess
 import threading
 
+import boto.exception
 import mock
 import pytest
 import virtualenvapi.manage
+
+from ogreserver.utils import connect_s3
 
 
 def pytest_addoption(parser):
@@ -336,3 +339,16 @@ def logger():
     logger.addHandler(logging.StreamHandler())
     logger.setLevel(logging.DEBUG)
     return logger
+
+
+@pytest.yield_fixture(scope='function')
+def s3bucket(app_config):
+    s3 = connect_s3(app_config)
+    try:
+        bucket = s3.create_bucket(app_config['S3_BUCKET'])
+    except boto.exception.S3CreateError:
+        bucket = s3.get_bucket(app_config['S3_BUCKET'])
+    yield bucket
+    for k in bucket.list():
+        k.delete()
+    s3.delete_bucket(bucket)

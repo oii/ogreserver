@@ -69,7 +69,7 @@ EBOOK_DEFINITIONS = collections.OrderedDict([
 ])
 
 # Ebook conversion formats; all books will be provided in these formats by OGRE
-EBOOK_FORMATS = ['mobi', 'epub']
+EBOOK_FORMATS = ['azw3', 'epub']
 
 # OGRE download links expire in 10 seconds
 DOWNLOAD_LINK_EXPIRY = 10

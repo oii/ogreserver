@@ -349,7 +349,7 @@ class DataStore():
             return self.load_ebook(ebook_id)
 
 
-    def find_missing_formats(self, fmt):
+    def find_missing_formats(self, fmt, limit=None):
         """
         Find ebook versions missing supplied format.
 
@@ -361,13 +361,14 @@ class DataStore():
 
         Params:
             fmt (str)   Required ebook format that might be missing
+            limit (int) Limit number of results returned
         Returns
             version_id: [
                 {format, original_format, file_hash, ebook_id, s3_filename, uploaded},
                 ...
             ]
         """
-        return r.table('formats').group(
+        q = r.table('formats').group(
             index='version_id'
         ).filter(
             lambda row: r.table('formats').filter(
@@ -379,7 +380,10 @@ class DataStore():
             'version_id', r.table('versions'), index='version_id'
         ).zip().pluck(
             'format', 'original_format', 'file_hash', 'ebook_id', 's3_filename', 'uploaded'
-        ).run()
+        )
+        if limit:
+            q = q.limit(limit)
+        return q.run()
 
 
     @staticmethod

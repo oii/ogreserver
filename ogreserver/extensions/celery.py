@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
+import datetime
 import importlib
 
-from celery.schedules import crontab
 from kombu import Exchange, Queue
 
 
@@ -34,7 +34,7 @@ def schedule_tasks():
         'CELERYBEAT_SCHEDULE': {
             'conversion': {
                 'task': 'ogreserver.tasks.conversion_search',
-                'schedule': crontab(hour=9, minute=1)
+                'schedule': datetime.timedelta(minutes=30)
             },
         }
     }

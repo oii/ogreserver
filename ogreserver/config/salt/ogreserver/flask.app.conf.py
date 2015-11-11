@@ -77,6 +77,9 @@ DOWNLOAD_LINK_EXPIRY = 10
 # Default number of results for paging on search listing
 SEARCH_PAGELEN = 20
 
+# Number of books to convert to epub/azw3 every thirty minutes
+NUM_EBOOKS_FOR_CONVERT = 5
+
 # Minimum score to assume a match during fuzzywuzzy text comparison (see models/amazon.py)
 AMAZON_FUZZ_THRESHOLD = 50
 

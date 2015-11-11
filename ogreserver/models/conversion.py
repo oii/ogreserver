@@ -17,13 +17,13 @@ class Conversion:
         self.datastore = datastore
 
 
-    def search(self):
+    def search(self, limit=None):
         """
         Search for ebooks which are missing the key formats epub & mobi
         """
         for dest_fmt in self.config['EBOOK_FORMATS']:
             # load all ebook versions which are missing the passed ebook format
-            versions = self.datastore.find_missing_formats(dest_fmt)
+            versions = self.datastore.find_missing_formats(dest_fmt, limit=None)
 
             for version_id, formats in versions.iteritems():
                 # ebook_id & original format are same for all formats

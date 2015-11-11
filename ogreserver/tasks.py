@@ -158,7 +158,7 @@ def conversion_search():
         # late import to prevent circular import
         from .models.conversion import Conversion
         conversion = Conversion(app.config, DataStore(app.config, app.logger))
-        conversion.search()
+        conversion.search(app.config['NUM_EBOOKS_FOR_CONVERT'])
 
 
 @app.celery.task(queue='low')

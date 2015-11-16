@@ -10,6 +10,7 @@ import mock
 import pytest
 
 from ogreclient.ogreclient.core import search_for_ebooks as func_search_for_ebooks
+from ogreclient.ogreclient.core import get_definitions as func_get_definitions
 from ogreclient.ogreclient.ebook_obj import EbookObject
 from ogreclient.ogreclient.prereqs import setup_user_auth as func_setup_user_auth
 from ogreclient.ogreclient.prereqs import setup_ebook_home as func_setup_ebook_home
@@ -83,6 +84,13 @@ def mock_os_mkdir():
     m = mock.patch('ogreclient.ogreclient.prereqs.os.mkdir')
     yield m.start()
     m.stop()
+
+
+@pytest.fixture(scope='function')
+def get_definitions(client_config):
+    def wrapped():
+        return func_get_definitions(client_config, None)
+    return wrapped
 
 
 @pytest.fixture(scope='session')

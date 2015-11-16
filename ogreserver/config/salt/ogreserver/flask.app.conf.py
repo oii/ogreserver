@@ -51,21 +51,24 @@ UPLOADED_LOGS_DEST = "/srv/{{ pillar['app_directory_name'] }}/logs"
 # Ebook format definitions
 # data structure:
 #  is_valid_format (bool): sync to ogreserver
+#  is_non_fiction (bool): a PDF-like non-fiction only format
 
 import collections
+FormatConfig = collections.namedtuple('FormatConfig', ('is_valid_format', 'is_non_fiction'))
+
 EBOOK_DEFINITIONS = collections.OrderedDict([
-    ('mobi', [True]),
-    ('azw', [True]),
-    ('azw3', [True]),
-    ('azw4', [True]),
-    ('epub', [True]),
-    ('azw1', [True]),
-    ('tpz', [True]),
-    ('pdb', [False]),
-    ('pdf', [True]),
-    ('lit', [False]),
-    ('html', [False]),
-    ('zip', [False]),
+    ('mobi', FormatConfig(True, False)),
+    ('azw', FormatConfig(True, False)),
+    ('azw3', FormatConfig(True, False)),
+    ('azw4', FormatConfig(True, True)),
+    ('epub', FormatConfig(True, False)),
+    ('azw1', FormatConfig(True, False)),
+    ('tpz', FormatConfig(True, False)),
+    ('pdb', FormatConfig(False, False)),
+    ('pdf', FormatConfig(True, True)),
+    ('lit', FormatConfig(False, False)),
+    ('html', FormatConfig(False, False)),
+    ('zip', FormatConfig(False, False)),
 ])
 
 # Ebook conversion formats; all books will be provided in these formats by OGRE

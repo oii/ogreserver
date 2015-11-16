@@ -62,6 +62,9 @@ def authenticate(host, username, password):
 
 
 def get_definitions(config, session_key):
+    # namedtuple used for definition entries
+    FormatConfig = collections.namedtuple('FormatConfig', ('is_valid_format', 'is_non_fiction'))
+
     try:
         # retrieve the ebook format definitions
         req = urllib2.Request(
@@ -74,10 +77,10 @@ def get_definitions(config, session_key):
 
         # convert list of lists result into OrderedDict
         return collections.OrderedDict(
-            [(v[0], (v[1],)) for v in json.loads(f.read())]
+            [(v[0], FormatConfig(v[1], v[2])) for v in json.loads(f.read())]
         )
 
-    except Exception as e:
+    except (HTTPError, URLError) as e:
         raise FailedGettingDefinitionsError(inner_excp=e)
 
 
@@ -331,8 +334,8 @@ def clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash):
         if ebook_obj.drmfree is True or ebook_obj.skip is True:
             continue
 
-        # only attempt decrypt on ebooks which are defined as is_valid_format
-        if config['definitions'][ebook_obj.format][0] is False:
+        # only attempt decrypt on ebooks which are defined as a valid format
+        if config['definitions'][ebook_obj.format].is_valid_format is False:
             continue
 
         try:

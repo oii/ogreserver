@@ -200,6 +200,7 @@ class DataStore():
             'comments': [],
             'publisher': incoming['meta']['publisher'] if 'publisher' in incoming['meta'] else None,
             'publish_date': incoming['meta']['publish_date'] if 'publish_date' in incoming['meta'] else None,
+            'is_fiction': self.is_fiction(incoming['format']),
             'meta': {
                 'isbn': incoming['meta']['isbn'] if 'isbn' in incoming['meta'] else None,
                 'asin': incoming['meta']['asin'] if 'asin' in incoming['meta'] else None,
@@ -259,7 +260,7 @@ class DataStore():
             incoming['file_hash'],
             incoming['format'],
             username=username,
-            dedrm=incoming['dedrm']
+            dedrm=incoming['dedrm'],
         )
         return ret['generated_keys'][0]
 
@@ -272,11 +273,18 @@ class DataStore():
             'owners': [username if username is not None else 'ogrebot'],
             'uploaded_by': None,
             'uploaded': False,
+            'is_fiction': self.is_fiction(fmt),
             'ogreid_tagged': ogreid_tagged,
             'dedrm': dedrm,
         }).run()
         if 'first_error' in ret:
             raise RethinkdbError(ret['first_error'])
+
+
+    def is_fiction(self, fmt):
+        return fmt in [
+            k for k,v in self.config['EBOOK_DEFINITIONS'].iteritems() if v.is_non_fiction is False
+        ]
 
 
     def update_ebook(self, ebook_id, data):

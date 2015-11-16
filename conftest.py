@@ -29,6 +29,7 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope='session')
 def app_config():
+    FormatConfig = collections.namedtuple('FormatConfig', ('is_valid_format', 'is_non_fiction'))
     return {
         'DEBUG': True,
         'BETA': False,
@@ -56,11 +57,11 @@ def app_config():
         'S3_BUCKET': 'ogre-testing',
 
         'EBOOK_DEFINITIONS': collections.OrderedDict([
-            ('mobi', [True]),
-            ('pdf', [False]),
-            ('azw', [False]),
-            ('azw3', [True]),
-            ('epub', [True]),
+            ('mobi', FormatConfig(True, False)),
+            ('pdf', FormatConfig(False, True)),
+            ('azw', FormatConfig(False, True)),
+            ('azw3', FormatConfig(True, False)),
+            ('epub', FormatConfig(True, False)),
         ]),
 
         'EBOOK_FORMATS': ['egg', 'mobi', 'epub'],

@@ -26,7 +26,10 @@ def get_definitions():
     Return the current ebook format definitions to the client
     '''
     # convert to a list of lists, since JSON doesn't do ordered dicts
-    defs = [[k, v[0]] for k,v in app.config['EBOOK_DEFINITIONS'].iteritems()]
+    defs = [
+        [k, v.is_valid_format, v.is_non_fiction]
+        for k,v in app.config['EBOOK_DEFINITIONS'].iteritems()
+    ]
 
     # return a Response object rather than using jsonify, to enable the use of top-level lists
     # in the JSON response - see http://flask.pocoo.org/docs/0.10/security/#json-security

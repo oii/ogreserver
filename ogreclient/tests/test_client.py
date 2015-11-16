@@ -1,10 +1,26 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import collections
 import os
 import shutil
 
 from ogreclient.ogreclient.providers import LibProvider
+
+
+def test_get_definitions(mock_urlopen, get_definitions, client_config):
+    # /definitions endpoint returns json of app's EBOOK_DEFINITIONS config
+    mock_urlopen.return_value.read.return_value = '[["mobi", true, false], ["pdf", false, true], ["azw", false, true], ["azw3", true, false], ["epub", true, false]]'
+
+    defs = get_definitions()
+
+    assert type(defs) is collections.OrderedDict
+
+    # ensure mobi is primary format, azw3 is second
+    assert defs.keys()[0] == 'mobi'
+    assert defs['mobi'].is_valid_format is True
+    assert defs.keys()[1] == 'pdf'
+    assert defs['pdf'].is_valid_format is False
 
 
 def test_search(search_for_ebooks, mock_subprocess_popen, client_config, ebook_lib_path, tmpdir):

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from __future__ import division
 
+import collections
 import json
 import os
 import shutil
@@ -70,7 +71,11 @@ def get_definitions(config, session_key):
             },
         )
         f = urllib2.urlopen(req)
-        return json.loads(f.read())
+
+        # convert list of lists result into OrderedDict
+        return collections.OrderedDict(
+            [(v[0], (v[1],)) for v in json.loads(f.read())]
+        )
 
     except Exception as e:
         raise FailedGettingDefinitionsError(inner_excp=e)

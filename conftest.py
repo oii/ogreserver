@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import collections
+import json
 import logging
 import os
 import platform
@@ -56,7 +57,8 @@ def app_config():
 
         'EBOOK_DEFINITIONS': collections.OrderedDict([
             ('mobi', [True]),
-            ('azw', [True]),
+            ('pdf', [False]),
+            ('azw', [False]),
             ('azw3', [True]),
             ('epub', [True]),
         ]),
@@ -70,6 +72,11 @@ def app_config():
         'UPLOADED_LOGS_DEST': 'logs',
 
         'RETHINKDB_DATABASE': 'test',
+
+        'SECURITY_PASSWORD_HASH': str('pbkdf2_sha256'),
+        'SECURITY_PASSWORD_SALT': 'test',
+        'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Ogre-Key',
+        'SECURITY_USER_IDENTITY_ATTRIBUTES': ['email', 'username'],
     }
 
 
@@ -172,6 +179,17 @@ def _create_user(request, mysqldb):
     mysqldb.add(user)
     mysqldb.commit()
     return user
+
+
+@pytest.fixture(scope='session')
+def ogreclient_auth_token(flask_app, user):
+    client = flask_app.test_client()
+    result = client.post(
+        '/login',
+        data=json.dumps({'email': user.email, 'password': user.username}),
+        content_type='application/json'
+    )
+    return json.loads(result.data)['response']['user']['authentication_token']
 
 
 @pytest.yield_fixture(scope='session')

@@ -359,7 +359,7 @@ class DataStore():
 
     def find_missing_formats(self, fmt, limit=None):
         """
-        Find ebook versions missing supplied format.
+        Find ebook versions missing supplied format. Ignores non-fiction ebooks.
 
         Each ebook should have several formats available for download (defined
         in config['EBOOK_FORMATS']). This method is called nightly by a celery
@@ -376,9 +376,7 @@ class DataStore():
                 ...
             ]
         """
-        q = r.table('formats').group(
-            index='version_id'
-        ).filter(
+        q = r.table('formats').group(index='version_id').filter({'is_fiction': True}).filter(
             lambda row: r.table('formats').filter(
                 {'format': fmt}
             )['version_id'].contains(
@@ -401,7 +399,7 @@ class DataStore():
 
         The quality % score and the popularity score are ratioed together 70:30
         Since popularity is a scalar and can grow indefinitely, it's divided by
-         the number of total system users
+        the number of total system users
 
         Popularity is set to 10 when a newly decrypted ebook is added to OGRE
         Every download increases a version's popularity

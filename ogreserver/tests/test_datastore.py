@@ -43,13 +43,34 @@ def test_find_formats(datastore, user, rethinkdb):
         'dedrm': False,
     })
 
-    versions = datastore.find_missing_formats('mobi')
-    assert len(versions) == 1
+    data = datastore.find_missing_formats('mobi')
+    assert len(data) == 1
+
+
+def test_find_formats_non_fiction(datastore, user, rethinkdb):
+    '''
+    Ensure that non-fiction books are ignored by find_missing_formats
+    '''
+    # create test ebook data directly in rethinkdb
+    rethinkdb.table('ebooks').insert({
+        'author': 'Non-fiction',
+        'title': 'Test PDF',
+        'ebook_id': 'bcddb798'
+    }).run()
+    datastore._create_new_version('bcddb798', user.username, {
+        'format': 'pdf',
+        'file_hash': '38b3fc3a',
+        'size': 1234,
+        'dedrm': False,
+    })
+
+    data = datastore.find_missing_formats('mobi')
+    assert len(data) == 0
 
 
 def test_find_formats_none(datastore, user, rethinkdb):
     '''
-    Ensure no formats missing when both epub & mobi are available
+    Ensure no formats missing when epub/mobi both already exist
     '''
     # create test ebook data directly in rethinkdb
     rethinkdb.table('ebooks').insert({
@@ -65,10 +86,10 @@ def test_find_formats_none(datastore, user, rethinkdb):
     })
     datastore._create_new_format(version_id, '9da4f3ba', 'mobi')
 
-    versions = datastore.find_missing_formats('epub')
-    assert len(versions) == 0
-    versions = datastore.find_missing_formats('mobi')
-    assert len(versions) == 0
+    data = datastore.find_missing_formats('epub')
+    assert len(data) == 0
+    data = datastore.find_missing_formats('mobi')
+    assert len(data) == 0
 
 
 def test_get_missing_books_for_user(datastore, user, user2, rethinkdb):

@@ -423,9 +423,8 @@ class DataStore():
 
         # create an expiring auto-authenticate url for S3
         s3 = connect_s3(self.config)
-        return s3.generate_url(self.config['DOWNLOAD_LINK_EXPIRY'], 'GET',
-            bucket=self.config['S3_BUCKET'],
-            key=filename
+        return s3.generate_url(
+            self.config['DOWNLOAD_LINK_EXPIRY'], 'GET', bucket=self.config['S3_BUCKET'], key=filename
         )
 
 
@@ -599,29 +598,22 @@ class DataStore():
                 self.set_uploaded(file_hash, username, filename)
                 return False
 
-        # calculate uploaded file md5
-        f = open(filepath, "rb")
-        md5_tup = k.compute_md5(f)
-        f.close()
+        try:
+            # push file to S3
+            k.set_contents_from_filename(
+                filepath,
+                headers={'x-amz-meta-ogre-key': ebook_id},
+                md5=(file_hash,0)
+            )
+            self.logger.info('UPLOADED {}'.format(filename))
 
-        # error check uploaded file
-        if file_hash != md5_tup[0]:
-            raise S3DatastoreError("Upload failed checksum 1")
-        else:
-            try:
-                # push file to S3
-                k.set_contents_from_filename(
-                    filepath,
-                    headers={'x-amz-meta-ogre-key': ebook_id},
-                    md5=md5_tup
-                )
-                self.logger.info('UPLOADED {}'.format(filename))
+            # mark ebook as stored
+            self.set_uploaded(file_hash, username, filename)
 
-                # mark ebook as stored
-                self.set_uploaded(file_hash, username, filename)
-
-            except S3ResponseError as e:
-                raise S3DatastoreError("Upload failed checksum 2", inner_excp=e)
+        except S3ResponseError as e:
+            raise S3DatastoreError(
+                'S3 upload checksum failed! {}'.format(file_hash), inner_excp=e
+            )
 
         return True
 

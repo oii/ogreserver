@@ -2,14 +2,18 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import os
+import urllib
 
 from flask import current_app as app
 from flask import render_template
 
+import boto
 import requests
 import whoosh
 
 from celery.task import current
+
+from boto.exception import S3ResponseError
 
 from .extensions.database import setup_db_session
 from .extensions.whoosh import init_whoosh
@@ -20,6 +24,7 @@ from .models.amazon import AmazonAPI
 from .models.datastore import DataStore
 from .models.goodreads import GoodreadsAPI
 from .models.search import Search
+from .utils import make_temp_directory, connect_s3
 
 
 @app.celery.task(queue='normal', rate_limit='1/s')
@@ -54,15 +59,15 @@ def query_ebook_metadata(ebook_data):
         author = title = None
 
         if am_data:
-            # extract image URL from Amazon data
-            ebook_data['image_url'] = am_data['image_url']
-
             # store all Amazon data in ebook meta
             ebook_data['meta']['amazon'] = am_data
 
             # variables for further Goodreads API call
             author = am_data['author']
             title = am_data['title']
+
+            # start task to upload Amazon image to S3
+            image_upload.delay(ebook_data)
 
         # query Goodreads API
         gr = GoodreadsAPI(app.logger, app.config['GOODREADS_API_KEY'])
@@ -98,6 +103,40 @@ def query_ebook_metadata(ebook_data):
             app.logger.critical(
                 'Failed updating ebook metadata: {}'.format(ebook_data['ebook_id'])
             )
+
+
+@app.celery.task(queue='low')
+def image_upload(ebook_data):
+    """
+    Upload book image to S3
+    """
+    with app.app_context():
+        # fetch remote image into temp directory
+        with make_temp_directory() as tmpdir:
+            try:
+                res = urllib.urlretrieve(
+                    ebook_data['meta']['amazon']['image_url'],
+                    os.path.join(tmpdir, 'image_file')
+                )
+            except Exception as e:
+                app.logger.error('Failed retrieving image {}: {}'.format(
+                    ebook_data['meta']['amazon']['image_url'], e
+                ))
+                return
+
+            # generate new S3 filename
+            filename = '{}-0.jpg'.format(ebook_data['ebook_id'])
+
+            try:
+                # upload to S3
+                s3 = connect_s3(app.config)
+                bucket = s3.get_bucket(app.config['STATIC_S3_BUCKET'])
+                k = boto.s3.key.Key(bucket)
+                k.key = filename
+                k.set_contents_from_filename(res[0])
+            except S3ResponseError as e:
+                app.logger.error('Error uploading to S3: {}'.format(e))
+                return
 
 
 @app.celery.task(queue='high')

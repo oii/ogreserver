@@ -49,6 +49,13 @@ def detail(ebook_id):
     # display original source on ebook detail page
     ebook['provider'] = ebook['meta']['source']['provider']
 
+    # absolute URL to ebook cover image
+    ebook['image_url'] = '{}/{}/{}-0.jpg'.format(
+        app.config['STATIC_BASE_URL'],
+        app.config['STATIC_S3_BUCKET'],
+        ebook['ebook_id']
+    )
+
     if g.user.advanced:
         # if user has advanced flag set on their profile,
         # render extra ebook metadata as YAML so it looks pretty

@@ -14,6 +14,7 @@ AWS_ACCESS_KEY = "{{ pillar.get('aws_access_key', '') }}"
 AWS_SECRET_KEY = "{{ pillar.get('aws_secret_key', '') }}"
 AWS_REGION = "{{ pillar.get('aws_region', '') }}"
 EBOOK_S3_BUCKET = "ogre-ebooks-{{ grains['env'] }}-{{ pillar.get('aws_region', 'local') }}"
+STATIC_S3_BUCKET = "ogre-static-{{ grains['env'] }}-{{ pillar.get('aws_region', 'local') }}"
 
 # AWS Advertising API config
 AWS_ADVERTISING_API_ACCESS_KEY = "{{ pillar.get('aws_advertising_api_access_key', '') }}"

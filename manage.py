@@ -181,10 +181,13 @@ def init_ogre(test=False):
     s3 = connect_s3(app.config)
 
     # check bucket already exists
-    aws_setup = False
+    aws_setup1 = aws_setup2 = False
     for b in s3.get_all_buckets():
         if b.name == app.config['EBOOK_S3_BUCKET']:
-            aws_setup = True
+            aws_setup1 = True
+        elif b.name == app.config['STATIC_S3_BUCKET']:
+            aws_setup2 = True
+    aws_setup = aws_setup1 & aws_setup2
 
     # check mysql DB created
     try:
@@ -224,13 +227,13 @@ def init_ogre(test=False):
             register_tasks(app)
             setup_roles(app)
 
-        if aws_setup is False:
+        for bucket in (app.config['EBOOK_S3_BUCKET'], app.config['STATIC_S3_BUCKET']):
             try:
                 if not app.config['DEBUG']:
-                    s3.create_bucket(app.config['EBOOK_S3_BUCKET'], location=app.config['AWS_REGION'])
+                    s3.create_bucket(bucket, location=app.config['AWS_REGION'])
                     print 'Created S3 bucket in {}'.format(app.config['AWS_REGION'])
                 else:
-                    s3.create_bucket(app.config['EBOOK_S3_BUCKET'])
+                    s3.create_bucket(bucket)
                     print 'Created S3 bucket'
 
             except boto.exception.S3ResponseError as e:
@@ -240,6 +243,8 @@ def init_ogre(test=False):
                 if e.error_code == 'BucketAlreadyExists':
                     sys.stderr.write('Bucket name already in use! ({})\n'.format(e.error_message))
                     sys.exit(1)
+                elif e.error_code == 'BucketAlreadyOwnedByYou':
+                    pass
                 else:
                     raise e
 

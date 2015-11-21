@@ -7,6 +7,7 @@ from flask import current_app as app
 
 from flask import g, Blueprint, request, jsonify, redirect, render_template
 from flask.ext.security.decorators import login_required
+from werkzeug.exceptions import abort
 
 from ..models.datastore import DataStore
 from ..models.search import Search
@@ -45,6 +46,9 @@ def listing(terms=None, pagenum=1):
 def detail(ebook_id):
     ds = DataStore(app.config, app.logger)
     ebook = ds.load_ebook(ebook_id)
+
+    if ebook is None:
+        abort(404)
 
     # display original source on ebook detail page
     ebook['provider'] = ebook['meta']['source']['provider']

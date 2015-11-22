@@ -84,8 +84,8 @@ def connect_s3(config):
         # connect to AWS
         return boto.s3.connect_to_region(
             config['AWS_REGION'],
-            aws_access_key_id=config['AWS_ACCESS_KEY'],
-            aws_secret_access_key=config['AWS_SECRET_KEY']
+            aws_access_key_id=config['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key=config['AWS_SECRET_ACCESS_KEY']
         )
 
 

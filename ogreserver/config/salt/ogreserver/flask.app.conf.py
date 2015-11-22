@@ -10,8 +10,8 @@ CELERY_TIMEZONE = '{{ pillar['timezone'] }}'
 
 
 # AWS config
-AWS_ACCESS_KEY = "{{ pillar.get('aws_access_key', '') }}"
-AWS_SECRET_KEY = "{{ pillar.get('aws_secret_key', '') }}"
+AWS_ACCESS_KEY_ID = "{{ pillar.get('aws_access_key', '') }}"
+AWS_SECRET_ACCESS_KEY = "{{ pillar.get('aws_secret_key', '') }}"
 AWS_REGION = "{{ pillar.get('aws_region', '') }}"
 EBOOK_S3_BUCKET = "ogre-ebooks-{{ grains['env'] }}-{{ pillar.get('aws_region', 'local') }}"
 STATIC_S3_BUCKET = "ogre-static-{{ grains['env'] }}-{{ pillar.get('aws_region', 'local') }}"

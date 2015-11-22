@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import os
 
 from whoosh.index import create_in, open_dir
-from whoosh.fields import Schema, TEXT
+from whoosh.fields import Schema, ID, TEXT
 
 
 def init_whoosh(app):
@@ -12,9 +12,8 @@ def init_whoosh(app):
     else:
         os.makedirs(app.config['WHOOSH_BASE'])
         schema = Schema(
-            ebook_id=TEXT(stored=True),
+            ebook_id=ID(stored=True, unique=True),
             author=TEXT(stored=True),
-            title=TEXT(stored=True)
-        #    content=TEXT TODO extract and index all book content!
+            title=TEXT(stored=True),
         )
         return create_in(app.config['WHOOSH_BASE'], schema)

@@ -28,8 +28,10 @@ GOODREADS_API_KEY = "{{ pillar.get('goodreads_api_key', '') }}"
 # Flask app
 {% if grains['env'] == 'dev' %}
 DEBUG = True
+STATIC_BASE_URL = "http://{{ grains['ip4_interfaces']['eth0'][0] }}:8880"
 {% else %}
 DEBUG = False
+STATIC_BASE_URL = "https://s3.amazonaws.com"
 {% endif %}
 BETA = True
 

@@ -9,7 +9,15 @@
 
 <div class="row">
 
-	<div class="large-10 columns info book-info">
+	{% if ebook.image_url %}
+
+		<div class="large-4 columns">
+			<img src="{{ ebook.image_url }}" class="cover" alt="Book cover" />
+		</div>
+
+	{% endif %}
+
+	<div class="large-8 columns book-info book-buttons">
 		<p><strong>Author</strong>: {{ ebook.author }}</p>
 		<p><strong>Title</strong>: {{ ebook.title }}</p>
 		<p><strong>Genre</strong>: TODO</p>
@@ -22,22 +30,18 @@
 				<p><strong>{{ key|capitalize }}</strong>: {{ value }}</p>
 			{% endif %}
 		{% endfor %}
+
+		<fieldset>
+		<legend>Download</legend>
+
+		{% for fmt in ebook.versions[0].formats %}
+			<a href="/download/{{ ebook.ebook_id }}/{{ ebook.versions[0].version_id }}/{{ fmt.format }}" class="download">
+				<img src="{{ url_for("core.static", filename="images/{}-icon.png".format(fmt.format)) }}" />
+			</a>
+		{% endfor %}
+
+		</fieldset>
 	</div>
-
-</div>
-
-<div class="row book-buttons">
-
-	<fieldset>
-	<legend>Download</legend>
-
-	{% for fmt in ebook.versions[0].formats %}
-		<a href="/download/{{ ebook.ebook_id }}/{{ ebook.versions[0].version_id }}/{{ fmt.format }}" class="download">
-			<img src="{{ url_for("core.static", filename="images/{}-icon.png".format(fmt.format)) }}" />
-		</a>
-	{% endfor %}
-
-	</fieldset>
 
 </div>
 

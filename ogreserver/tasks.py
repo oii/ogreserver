@@ -91,6 +91,11 @@ def query_ebook_metadata(ebook_data):
                     ebook_data[field] = gr_data[field]
                 except Exception:
                     pass
+            for field in ('num_pages', 'isbn', 'isbn13', 'average_rating'):
+                try:
+                    ebook_data['meta'][field] = gr_data[field]
+                except Exception:
+                    pass
 
             # store all Goodreads data in ebook meta
             ebook_data['meta']['goodreads'] = gr_data

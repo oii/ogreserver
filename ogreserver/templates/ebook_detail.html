@@ -20,16 +20,37 @@
 	<div class="large-8 columns book-info book-buttons">
 		<p><strong>Author</strong>: {{ ebook.author }}</p>
 		<p><strong>Title</strong>: {{ ebook.title }}</p>
+		<p><strong>Origin</strong>: {{ ebook.provider }}</p>
 		<p><strong>Genre</strong>: TODO</p>
 		<p><strong>Publisher</strong>: {{ ebook.publisher }}</p>
-		<p><strong>Date</strong>: {{ ebook.publish_date }}</p>
-		<p><strong>Origin</strong>: {{ ebook.provider }}</p>
 
-		{% for key, value in ebook.meta.iteritems() %}
-			{% if value %}
-				<p><strong>{{ key|capitalize }}</strong>: {{ value }}</p>
+		{% if ebook.meta.goodreads and ebook.meta.goodreads.average_rating %}
+		<p><strong>Goodreads Rating</strong>: {{ ebook.meta.goodreads.average_rating }}</p>
+		{% endif %}
+
+		{% if ebook.meta.goodreads and ebook.meta.goodreads.num_pages %}
+		<p><strong>Number of pages</strong>: {{ ebook.meta.goodreads.num_pages }}</p>
+		{% endif %}
+
+		<p><strong>Date</strong>: {{ ebook.publish_date }}</p>
+
+		{% if ebook.meta.goodreads and (ebook.meta.goodreads.isbn13 or ebook.meta.goodreads.isbn) %}
+		<p>
+			<strong>ISBN</strong>:
+			{% if ebook.meta.goodreads.isbn13 %}
+				{{ ebook.meta.goodreads.isbn13 }}
+				{% if ebook.meta.goodreads.isbn %}
+					({{ ebook.meta.goodreads.isbn }})
+				{% endif %}
+			{% else %}
+				{{ ebook.meta.goodreads.isbn }}
 			{% endif %}
-		{% endfor %}
+		</p>
+		{% endif %}
+
+		{% if ebook.meta.amazon and ebook.meta.amazon.asin %}
+		<p><strong>ASIN</strong>: {{ ebook.meta.amazon.asin }}</p>
+		{% endif %}
 
 		<fieldset>
 		<legend>Download</legend>

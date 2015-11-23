@@ -32,7 +32,7 @@
 		<p><strong>Number of pages</strong>: {{ ebook.meta.goodreads.num_pages }}</p>
 		{% endif %}
 
-		<p><strong>Date</strong>: {{ ebook.publish_date }}</p>
+		<p><strong>Date</strong>: {{ ebook.publish_date|date }}</p>
 
 		{% if ebook.meta.goodreads and (ebook.meta.goodreads.isbn13 or ebook.meta.goodreads.isbn) %}
 		<p>

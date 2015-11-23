@@ -10,6 +10,7 @@ from rethinkdb.errors import RqlRuntimeError
 import boto
 from boto.exception import S3ResponseError
 
+import dateutil.parser
 import ftfy
 
 from flask import current_app
@@ -191,6 +192,10 @@ class DataStore():
         # generate the ebook_id from the author and title
         ebook_id = unicode(hashlib.md5(("~".join((author, title))).encode('UTF-8')).hexdigest())
 
+        # parse dates
+        if 'publish_date' in incoming['meta']:
+            incoming['publish_date'] = dateutil.parser.parse(incoming['meta']['publish_date']).date()
+
         # create this as a new book
         new_book = {
             'ebook_id': ebook_id,
@@ -199,7 +204,7 @@ class DataStore():
             'rating': None,
             'comments': [],
             'publisher': incoming['meta']['publisher'] if 'publisher' in incoming['meta'] else None,
-            'publish_date': incoming['meta']['publish_date'] if 'publish_date' in incoming['meta'] else None,
+            'publish_date': incoming['publish_date'] if 'publish_date' in incoming else None,
             'is_fiction': self.is_fiction(incoming['format']),
             'meta': {
                 'isbn': incoming['meta']['isbn'] if 'isbn' in incoming['meta'] else None,
@@ -213,6 +218,7 @@ class DataStore():
                 }
             },
         }
+        encode_rql_dates(new_book)
         ret = r.table('ebooks').insert(new_book).run()
         if 'first_error' in ret:
             raise RethinkdbError(ret['first_error'])

@@ -81,6 +81,10 @@ def configure_extensions(app):
     from flaskext.markdown import Markdown
     Markdown(app, extensions=['footnotes'])
 
+    # setup Flask-Markdown
+    from .extensions.jinja import init_jinja
+    init_jinja(app)
+
 
 def register_blueprints(app):
     # import view blueprints and register with the Flask app

@@ -1,8 +1,10 @@
 {% macro search(s='') -%}
 <form action="{{ url_for('ebooks.listing') }}" method="post">
-	<dl>
-		<dd><input type="text" name="s" value="{{ s }}" /></dd>
-		<dd><input type="submit" value="Search" class="button" /></dd>
-	</dl>
+	<div class="large-10 columns">
+		<input type="text" name="s" value="{{ s }}" />
+	</div>
+	<div class="large-2 columns">
+		<input type="submit" value="Search" class="search button small" />
+	</div>
 </form>
 {%- endmacro %}

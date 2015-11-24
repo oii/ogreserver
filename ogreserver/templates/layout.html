@@ -48,14 +48,8 @@
 				</div>
 			</div>
 			<div class="row">
-				<form action="{{ url_for('ebooks.listing') }}" method="post">
-					<div class="large-10 columns">
-						<input type="text" name="s" value="{{ s }}" />
-					</div>
-					<div class="large-2 columns">
-						<input type="submit" value="Search" class="search button small" />
-					</div>
-				</form>
+				{% import "macros.html" as macros %}
+				{{ macros.search() }}
 			</div>
 		</header>
 

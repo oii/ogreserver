@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import urllib
+
 import pyaml
 
 from flask import current_app as app
@@ -23,7 +25,7 @@ bp_ebooks = Blueprint('ebooks', __name__)
 def listing(terms=None, pagenum=1):
     # redirect search POST onto a nice GET url
     if request.method == 'POST':
-        return redirect('/list/{}'.format(request.form['s']), code=303)
+        return redirect('/list/{}'.format(urllib.quote_plus(request.form['s'])), code=303)
 
     # map single plus char onto an empty search
     if terms == '+':

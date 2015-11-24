@@ -37,7 +37,7 @@ def listing(terms=None, pagenum=1):
     else:
         # return all pages upto pagenum as HTML
         rs = search.query(terms, pagenum=pagenum, allpages=True)
-        return render_template('list.html', ebooks=rs)
+        return render_template('list.html', ebooks=rs, terms=terms)
 
 
 @bp_ebooks.route('/ebook/<ebook_id>/')

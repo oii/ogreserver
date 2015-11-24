@@ -14,8 +14,8 @@ from ..models.user import User
 bp_user = Blueprint('user', __name__)
 
 
-@bp_user.route('/profile')
-@bp_user.route('/profile/<int:user_id>')
+@bp_user.route('/profile/')
+@bp_user.route('/profile/<int:user_id>/')
 @login_required
 def profile(user_id=None):
     # display the current user, or load another user
@@ -27,7 +27,7 @@ def profile(user_id=None):
     return render_template('profile.html', user=user, stats=user.get_stats())
 
 
-@bp_user.route('/profile/<int:user_id>/edit', methods=['GET', 'POST'])
+@bp_user.route('/profile/<int:user_id>/edit/', methods=['GET', 'POST'])
 @login_required
 def profile_edit(user_id):
     # users can only edit their own profiles (except superuser)

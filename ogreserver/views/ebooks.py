@@ -16,10 +16,9 @@ from ..utils import request_wants_json
 bp_ebooks = Blueprint('ebooks', __name__)
 
 
-@bp_ebooks.route('/list', methods=['GET', 'POST'])
-@bp_ebooks.route('/list/<terms>')
+@bp_ebooks.route('/list/', methods=['GET', 'POST'])
 @bp_ebooks.route('/list/<terms>/')
-@bp_ebooks.route('/list/<terms>/<int:pagenum>')
+@bp_ebooks.route('/list/<terms>/<int:pagenum>/')
 @login_required
 def listing(terms=None, pagenum=1):
     # redirect search POST onto a nice GET url
@@ -41,7 +40,7 @@ def listing(terms=None, pagenum=1):
         return render_template('list.html', ebooks=rs)
 
 
-@bp_ebooks.route('/ebook/<ebook_id>')
+@bp_ebooks.route('/ebook/<ebook_id>/')
 @login_required
 def detail(ebook_id):
     ds = DataStore(app.config, app.logger)
@@ -71,9 +70,9 @@ def detail(ebook_id):
     return render_template('ebook_detail.html', ebook=ebook)
 
 
-@bp_ebooks.route('/download/<ebook_id>', defaults={'version_id': None, 'fmt': None})
-@bp_ebooks.route('/download/<ebook_id>/<version_id>', defaults={'fmt': None})
-@bp_ebooks.route('/download/<ebook_id>/<version_id>/<fmt>')
+@bp_ebooks.route('/download/<ebook_id>/', defaults={'version_id': None, 'fmt': None})
+@bp_ebooks.route('/download/<ebook_id>/<version_id>/', defaults={'fmt': None})
+@bp_ebooks.route('/download/<ebook_id>/<version_id>/<fmt>/')
 @login_required
 def download(ebook_id, version_id=None, fmt=None):
     ds = DataStore(app.config, app.logger)

@@ -22,8 +22,8 @@ TEMPLATE_MD_END = (
     '{% endblock %}'
 )
 
-@bp_docs.route("/docs")
-@bp_docs.route("/docs/<path:doco>")
+@bp_docs.route('/docs/')
+@bp_docs.route('/docs/<path:doco>/')
 @login_required
 def docs(doco=None):
     if doco is None:

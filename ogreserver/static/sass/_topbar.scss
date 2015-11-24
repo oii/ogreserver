@@ -11,13 +11,13 @@
     @include box-shadow(-4px 0px 8px -2px rgba(0, 0, 0, 0.1));
   }
   li a:not(.button):hover {
-    background: $blue-darkest !important;
+    background: $blue-dark !important;
     color:$hover-color !important;
     @include transition(.25s);
   }
   .divider {
-    border-bottom: solid 1px $blue-darkest !important;
-    border-right: solid 1px $blue-darkest !important;
+    border-bottom: solid 1px $blue-dark !important;
+    border-right: solid 1px $blue-dark !important;
     border-top:solid 0px transparent;
   }
   .dropdown li.title h5 a:hover,

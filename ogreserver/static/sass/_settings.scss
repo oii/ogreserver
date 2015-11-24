@@ -17,29 +17,24 @@
 //
 
 // Colours from paletton.com, using base color $blue
-$blue-lighter:	#72B0D9;
 $blue-light:	#4995C7;
 $blue:			#2980b9;
-$blue-dark:		#096EB0;
-$blue-darker:	#07507F;
-$blue-darkest:	#022F4C;
+$blue-dark:		#022F4C;
 
-$green-lighter:	#6FDFA9;
-$green-light:	#44D08C;
-$green:			#22C476;
-$green-dark:	#00BC62;
-$green-darker:	#008A48;
+$green-lighter:	#CDDFD6;
+$green-light:	#9CBFAD;
+$green:			#70A288;
+$green-dark:	#4A8869;
+$green-darker:	#2E704E;
 
-$orange-lighter:#FFC67F;
 $orange-light:	#FFB353;
-$orange:		#FFA22C;
+$orange:		#D5896F;
 $orange-dark:	#FF8E00;
 $orange-darker:	#C76F00;
 
-$red-light:		#FFDE7F;
 $red-lighter:	#FFD253;
+$red-light:		#FFDE7F;
 $red:			#FFC82C;
-$red-dark:		#FFBC00;
 $red-darker:	#C79300;
 
 // FLAT-UI greys
@@ -65,7 +60,7 @@ $success-color: $green;
 //
 
 // We use these to control header font styles
-$header-font-color: $blue-darkest;
+$header-font-color: $blue-dark;
 
 // We use these to style the <hr> element
 $hr-border-width: 2px;
@@ -138,14 +133,14 @@ $crumb-slash-color: $green;
 
 // We use these to set the background colors for parts of Clearing.
 $clearing-bg: $wet-asphalt;
-$clearing-carousel-bg: $blue-darkest;
+$clearing-carousel-bg: $blue-dark;
 
 //
 // Joyride Variables
 //
 
 // Controlling default Joyride styles
-$joyride-tip-bg: $blue-darkest;
+$joyride-tip-bg: $blue-dark;
 
 //
 // Pagination Variables
@@ -195,7 +190,7 @@ $table-border-size: 2px;
 $table-border-color: $clouds;
 
 // These control the table head styles
-$table-head-font-color: $blue-darkest;
+$table-head-font-color: $blue-dark;
 
 // These control the row padding and font styles
 $table-row-font-color: $wet-asphalt;
@@ -213,7 +208,7 @@ $thumb-box-shadow-hover: 0 0 6px 1px rgba($primary-color,0.8);
 //
 // Tooltip Variables
 //
-$tooltip-bg: $blue-darkest;
+$tooltip-bg: $blue-dark;
 
 //
 // TOP BAR

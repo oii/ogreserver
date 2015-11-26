@@ -3,44 +3,44 @@
 
 <input id="total-pagecount" type="hidden" value="{{ ebooks['pagecount'] }}" />
 
-<ul id="ebook-listing">
+	<ul id="ebook-listing" class="no-bullet">
 
-{% for b in ebooks['results'] %}
+	{% for b in ebooks['results'] %}
 
-<li class="ebook">
-	<div class="panel radius">
-		<div class="firstsection">
-			<a class="title" href="/ebook/{{b.ebook_id}}">{{b.author}} - {{b.title}}</a>
-			<span class="info">
-				<span class="rating">{{b.rating}}</span>
-			</span>
-		</div>
-		<div class="secondsection">
-			<ul class="formats">
-				{# for f in b.formats %}
-				<li>
-					<a href="/download/{{b.sdb_key}}/{{f}}">{{f}}</a>
-					{% if not loop.last %},&nbsp;{% endif %}
-				</li>
-				{% endfor #}
-			</ul>
-			<ul class="users">
-				{# for u in b.users %}
+	<li class="ebook">
+		<div class="callout radius">
+			<div class="firstsection">
+				<a class="title" href="/ebook/{{b.ebook_id}}">{{b.author}} - {{b.title}}</a>
+				<span class="info">
+					<span class="rating">{{b.rating}}</span>
+				</span>
+			</div>
+			<div class="secondsection">
+				<ul class="formats" class="no-bullet">
+					{# for f in b.formats %}
 					<li>
-						<a href="/search?user={{u}}">{{u}}</a>
+						<a href="/download/{{b.sdb_key}}/{{f}}">{{f}}</a>
 						{% if not loop.last %},&nbsp;{% endif %}
 					</li>
-				</li>
-				{% endfor #}
-			</ul>
+					{% endfor #}
+				</ul>
+				<ul class="users" class="no-bullet">
+					{# for u in b.users %}
+						<li>
+							<a href="/search?user={{u}}">{{u}}</a>
+							{% if not loop.last %},&nbsp;{% endif %}
+						</li>
+					</li>
+					{% endfor #}
+				</ul>
+			</div>
 		</div>
-	</div>
-</li>
+	</li>
 
-{% endfor %}
+	{% endfor %}
 
-</ul>
+	</ul>
 
-<p id='loading-message'>Loading..</p>
+	<p id='loading-message'>Loading..</p>
 
 {% endblock %}

@@ -1,10 +1,30 @@
 {% macro search(s='') -%}
-<form action="{{ url_for('ebooks.listing') }}" method="post">
-	<div class="large-10 columns">
-		<input type="text" name="s" value="{{ s }}" />
+<div class="row">
+	<div class="large-2 column">
+		&nbsp;
 	</div>
-	<div class="large-2 columns">
-		<input type="submit" value="Search" class="search button small" />
+	<div class="large-8 column">
+		<h5>Search for a book</h5>
+	</div>
+	<div class="large-2 column">
+		&nbsp;
+	</div>
+</div>
+
+<form action="{{ url_for('ebooks.listing') }}" method="post">
+	<div class="row">
+		<div class="large-2 column">
+			&nbsp;
+		</div>
+		<div class="large-7 column search-wrapper">
+			<input type="text" name="s" value="{{ s }}" />
+		</div>
+		<div class="large-1 column">
+			<input type="submit" value="Search" class="search button small float-right" />
+		</div>
+		<div class="large-2 column">
+			&nbsp;
+		</div>
 	</div>
 </form>
 {%- endmacro %}

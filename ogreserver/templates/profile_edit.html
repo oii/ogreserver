@@ -1,11 +1,17 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<h2 id='username'>{{ user.username }}</h2>
+<div class="large-2 column">
+	&nbsp;
+</div>
 
-{% for error in form.errors %}<p class="error">{{ form.errors[error][0] }}</p>{% endfor %}
+<div class="large-8 column">
 
-<div class="large-9 columns">
+	<div class="row">
+		<h2 class="detail_page">{{ user.username }}</h2>
+	</div>
+
+	{% for error in form.errors %}<p class="error">{{ form.errors[error][0] }}</p>{% endfor %}
 
 	<div class="row">
 		<fieldset>
@@ -31,6 +37,10 @@
 		</fieldset>
 	</div>
 
+</div>
+
+<div class="large-2 column">
+	&nbsp;
 </div>
 
 {% endblock %}

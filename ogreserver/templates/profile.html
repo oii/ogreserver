@@ -1,9 +1,15 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<h2 class='detail_page'>{{ user.username }}</h2>
+<div class="large-2 column">
+	&nbsp;
+</div>
 
-<div class="large-9 columns">
+<div class="large-8 column">
+
+	<div class="row">
+		<h2 class="detail_page">{{ user.username }}</h2>
+	</div>
 
 	<div class="row">
 		{% if g.user.id == user.id %}
@@ -24,23 +30,21 @@
 		<fieldset>
 		<legend>Stats</legend>
 
-		<table>
-		<tr>
-			<th>Number of syncs from ogreclient</th>
-			<td>{{ stats.total_syncs }}</td>
-		<tr>
-		</tr>
-			<th>Number of ebook uploads</th>
-			<td>{{ stats.total_uploads }}</td>
-		<tr>
-		</tr>
-			<th>Number of DRM cleaned ebooks</th>
-			<td>{{ stats.total_dedrm }}</td>
-		</tr>
-		</table>
+		<p>Number of syncs from ogreclient</p>
+		<div class="stat">{{ stats.total_syncs }}</div>
+
+		<p>Number of ebook uploads</p>
+		<div class="stat">{{ stats.total_uploads }}</div>
+
+		<p>Number of DRM cleaned ebooks</p>
+		<div class="stat">{{ stats.total_dedrm }}</div>
 		</fieldset>
 	</div>
 
+</div>
+
+<div class="large-2 column">
+	&nbsp;
 </div>
 
 {% endblock %}

@@ -1,7 +1,9 @@
 {% extends "layout.html" %}
 {% block body %}
 
-<h2 class="detail_page">{{ ebook.author }} - {{ ebook.title }}</h2>
+<div class="row">
+	<h2 class="detail_page">{{ ebook.author }} - {{ ebook.title }}</h2>
+</div>
 
 <div class="row">
 	{# <a href="{{ url_for("ebooks.edit", ebook_id=ebook.ebook_id) }}">edit ebook metadata</a> #}
@@ -11,13 +13,13 @@
 
 	{% if ebook.image_url %}
 
-		<div class="large-4 columns">
+		<div class="large-4 column">
 			<img src="{{ ebook.image_url }}" class="cover" alt="Book cover" />
 		</div>
 
 	{% endif %}
 
-	<div class="large-8 columns book-info book-buttons">
+	<div class="large-8 column book-info book-buttons">
 		<p><strong>Author</strong>: {{ ebook.author }}</p>
 		<p><strong>Title</strong>: {{ ebook.title }}</p>
 		<p><strong>Origin</strong>: {{ ebook.provider }}</p>

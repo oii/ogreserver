@@ -1,0 +1,1 @@
+../bower_components/jquery-infinite-scroll-helper/jquery.infinite-scroll-helper.js

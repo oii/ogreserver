@@ -69,6 +69,11 @@ extend:
       - require_in:
         - supervisord: watchdog-service
 
+  static-asset-compile:
+    cmd.run:
+      - require:
+        - cmd: closure-compiler
+
   ogre-init:
     cmd.run:
       - require:

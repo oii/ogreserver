@@ -80,16 +80,16 @@ bower-ogreserver-install:
     - require:
       - git: git-clone-app
 
-# compile sass to css
-sass-compile:
+# compile JS and SASS
+static-asset-compile:
   cmd.run:
-    - name: sassc -I bower_components/foundation/scss -I sass sass/app.scss stylesheets/app.css && sassc -I bower_components/foundation/scss -I sass sass/normalize.scss stylesheets/normalize.css
-    - cwd: /srv/ogre/ogreserver/static
+    - name: make dev
+    - cwd: /srv/ogre
     - user: {{ pillar['app_user'] }}
     - require:
       - git: git-clone-app
       - cmd: bower-ogreserver-install
-    - unless: test -d /srv/{{ pillar['app_directory_name'] }}/ogreserver/static/stylesheets/app.css
+    - unless: test -d /srv/{{ pillar['app_directory_name'] }}/ogreserver/static/dist
 
 
 pip-dependencies-extra:

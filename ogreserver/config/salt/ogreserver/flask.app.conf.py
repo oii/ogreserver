@@ -35,6 +35,9 @@ STATIC_BASE_URL = "https://s3.amazonaws.com"
 {% endif %}
 BETA = True
 
+# Static asset directory for Flask
+STATIC_DIR = "static/dist"
+
 # Flask-WTF
 SECRET_KEY = "{{ pillar['flask_secret'] }}"
 

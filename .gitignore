@@ -9,6 +9,7 @@ OGRE_DRM_Tools*.zip
 search.db
 .sass-cache
 ogreserver/static/stylesheets
+ogreserver/static/dist
 .cache
 static/docs
 bower_components

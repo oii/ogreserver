@@ -19,6 +19,9 @@ extend:
           upstream_gzip: true
   {% endfor %}
 
+  static-asset-compile:
+    cmd.run:
+      - name: make prod
 
 # install SSL certificate
 /etc/ssl/ogre.oii.yt.crt:
@@ -32,15 +35,6 @@ extend:
     - contents_pillar: ssl:key
     - require_in:
       - service: nginx
-
-# compress js to gzip
-javascript-compile:
-  cmd.run:
-    - name: closure-compiler --output-format gzip app.js
-    - cwd: /srv/{{ pillar['app_directory_name'] }}/ogreserver/static/js
-    - user: {{ pillar['app_user'] }}
-    - require:
-      - git: git-clone-app
 
 gevent:
   pip.installed:

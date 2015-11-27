@@ -56,10 +56,18 @@ watchdog:
     pattern: "*/tasks.py;*models/datastore.py"
     command: "sudo supervisorctl restart ogreserver:celeryd.low ogreserver:celeryd.normal ogreserver:celeryd.high"
     dir: /srv/ogre/ogreserver
-  libsass:
+  sass:
     pattern: "*.scss"
-    command: "sassc -I bower_components/foundation/scss -I sass sass/app.scss stylesheets/app.css && sassc -I bower_components/foundation/scss -I sass sass/normalize.scss stylesheets/normalize.css"
-    dir: /srv/ogre/ogreserver/static
+    command: "cd /srv/ogre && make sass_dev"
+    dir: /srv/ogre/ogreserver/static/sass
+  js:
+    pattern: "*.js"
+    command: "cd /srv/ogre && make js_dev"
+    dir: /srv/ogre/ogreserver/static/js
+  image:
+    pattern: "*.*"
+    command: "cd /srv/ogre && make images"
+    dir: /srv/ogre/ogreserver/static/images
 
 # server timezone & locale
 timezone: "Europe/London"

@@ -14,9 +14,28 @@ elif os.path.exists('/etc/ogre/flask.app.conf.py'):
     flask_conf = '/etc/ogre/flask.app.conf.py'
 
 
+class StaticFolderFlask(Flask):
+    '''
+    Make Flask's static_folder option configurable via flask.app.conf.py
+    '''
+    @property
+    def static_folder(self):
+        '''
+        Return configured STATIC_DIR or Flask default of "static"
+        '''
+        if self.config.get('STATIC_DIR') is not None:
+            return os.path.join(self.root_path, self.config.get('STATIC_DIR'))
+        else:
+            return 'static'
+
+    @static_folder.setter
+    def static_folder(self, value):
+        pass
+
+
 def create_app(config=None):
     # instantiate Flask application
-    app = Flask(__name__)
+    app = StaticFolderFlask(__name__)
 
     if config is not None and type(config) is dict:
         app.config.update(config)

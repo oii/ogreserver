@@ -60,7 +60,7 @@ class Conversion:
 
             # download the original book from S3
             s3 = connect_s3(self.datastore.config)
-            bucket = s3.get_bucket(self.config['S3_BUCKET'])
+            bucket = s3.get_bucket(self.config['EBOOK_S3_BUCKET'])
             k = bucket.get_key(original_filename)
             if k is None:
                 raise EbookNotFoundOnS3Error

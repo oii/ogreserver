@@ -183,7 +183,7 @@ def init_ogre(test=False):
     # check bucket already exists
     aws_setup = False
     for b in s3.get_all_buckets():
-        if b.name == app.config['S3_BUCKET']:
+        if b.name == app.config['EBOOK_S3_BUCKET']:
             aws_setup = True
 
     # check mysql DB created
@@ -227,10 +227,10 @@ def init_ogre(test=False):
         if aws_setup is False:
             try:
                 if not app.config['DEBUG']:
-                    s3.create_bucket(app.config['S3_BUCKET'], location=app.config['AWS_REGION'])
+                    s3.create_bucket(app.config['EBOOK_S3_BUCKET'], location=app.config['AWS_REGION'])
                     print 'Created S3 bucket in {}'.format(app.config['AWS_REGION'])
                 else:
-                    s3.create_bucket(app.config['S3_BUCKET'])
+                    s3.create_bucket(app.config['EBOOK_S3_BUCKET'])
                     print 'Created S3 bucket'
 
             except boto.exception.S3ResponseError as e:
@@ -299,7 +299,7 @@ def show_s3(test=False):
 
     # connect to S3
     s3 = connect_s3(config)
-    bucket = s3.get_bucket(config['S3_BUCKET'])
+    bucket = s3.get_bucket(config['EBOOK_S3_BUCKET'])
     for item in bucket.list():
         print item
 

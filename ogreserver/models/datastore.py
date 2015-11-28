@@ -424,7 +424,7 @@ class DataStore():
         # create an expiring auto-authenticate url for S3
         s3 = connect_s3(self.config)
         return s3.generate_url(
-            self.config['DOWNLOAD_LINK_EXPIRY'], 'GET', bucket=self.config['S3_BUCKET'], key=filename
+            self.config['DOWNLOAD_LINK_EXPIRY'], 'GET', bucket=self.config['EBOOK_S3_BUCKET'], key=filename
         )
 
 
@@ -579,7 +579,7 @@ class DataStore():
         Store an ebook on S3
         """
         s3 = connect_s3(self.config)
-        bucket = s3.get_bucket(self.config['S3_BUCKET'])
+        bucket = s3.get_bucket(self.config['EBOOK_S3_BUCKET'])
 
         # generate a nice filename for this ebook
         filename = self._generate_filename(file_hash)

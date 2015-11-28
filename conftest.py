@@ -54,7 +54,7 @@ def app_config():
 
         'AWS_ACCESS_KEY': '',
         'AWS_SECRET_KEY': '',
-        'S3_BUCKET': 'ogre-testing',
+        'EBOOK_S3_BUCKET': 'ogre-testing',
 
         'EBOOK_DEFINITIONS': collections.OrderedDict([
             ('mobi', FormatConfig(True, False)),
@@ -364,9 +364,9 @@ def logger():
 def s3bucket(app_config):
     s3 = connect_s3(app_config)
     try:
-        bucket = s3.create_bucket(app_config['S3_BUCKET'])
+        bucket = s3.create_bucket(app_config['EBOOK_S3_BUCKET'])
     except boto.exception.S3CreateError:
-        bucket = s3.get_bucket(app_config['S3_BUCKET'])
+        bucket = s3.get_bucket(app_config['EBOOK_S3_BUCKET'])
     yield bucket
     for k in bucket.list():
         k.delete()

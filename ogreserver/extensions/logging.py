@@ -6,7 +6,7 @@ import logging
 def init_logging(app):
     # set logging level for production
     if app.debug is False:
-        app.logger.setLevel(app.config['LOGGING_LEVEL'])
+        app.logger.setLevel(app.config.get('LOGGING_LEVEL', logging.ERROR))
 
     # setup the log format
     app.debug_log_format = '%(asctime)s [%(levelname)s] in %(module)s %(message)s'

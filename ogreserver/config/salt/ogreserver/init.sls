@@ -61,7 +61,7 @@ extend:
 bower:
   npm.installed:
     - require:
-      - cmd: npm-install
+      - pkg: nodejs
 
 bower-ogreserver-install:
   cmd.run:

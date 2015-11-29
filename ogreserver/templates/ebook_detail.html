@@ -58,7 +58,7 @@
 		<legend>Download</legend>
 
 		{% for fmt in ebook.versions[0].formats %}
-			<a href="/download/{{ ebook.ebook_id }}/{{ ebook.versions[0].version_id }}/{{ fmt.format }}" class="download">
+			<a href="{{ url_for('ebooks.download', ebook_id=ebook.ebook_id, version_id=ebook.versions[0].version_id, fmt=fmt.format) }}" class="download">
 				<img src="{{ url_for("core.static", filename="images/{}-icon.png".format(fmt.format)) }}" />
 			</a>
 		{% endfor %}
@@ -87,7 +87,7 @@
 			<tr>
 				<td>
 					{% for fmt in ebook.version.formats %}
-						<a href="/download/{{ ebook.ebook_id }}/{{ ebook.version.version_id }}/{{ fmt.format }}" class="download">
+						<a href="{{ url_for('ebooks.download', ebook_id=ebook.ebook_id, version_id=ebook.versions[0].version_id, fmt=fmt.format) }}" class="download">
 							<img src="{{ url_for("core.static", filename="images/{}-icon.png".format(fmt.format)) }}" />
 						</a>
 					{% endfor %}

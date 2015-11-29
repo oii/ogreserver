@@ -24,13 +24,13 @@
 					{% for field in form %}
 					{% if field.name != 'csrf_token' %}
 					<dt>{{ field.label }}</dt>
-					<dd>{{ field() }}</dd>
+					<dd>{{ field }}</dd>
 					{% endif %}
 					{% endfor %}
 
 					<dd>
 						<input type="submit" value="Save" class="button primary-dark" />
-						<a href="/profile" class="button secondary">Cancel</a>
+						<a href="{{ url_for('user.profile') }}" class="button secondary">Cancel</a>
 					</dd>
 				</dl>
 			</form>

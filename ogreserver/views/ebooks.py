@@ -7,7 +7,7 @@ import pyaml
 
 from flask import current_app as app
 
-from flask import g, Blueprint, request, jsonify, redirect, render_template
+from flask import g, Blueprint, request, jsonify, redirect, render_template, url_for
 from flask.ext.security.decorators import login_required
 from werkzeug.exceptions import abort
 
@@ -19,13 +19,18 @@ bp_ebooks = Blueprint('ebooks', __name__)
 
 
 @bp_ebooks.route('/list/', methods=['GET', 'POST'])
-@bp_ebooks.route('/list/<terms>/')
+@bp_ebooks.route('/list/<terms>/', endpoint='search')
 @bp_ebooks.route('/list/<terms>/<int:pagenum>/')
 @login_required
 def listing(terms=None, pagenum=1):
-    # redirect search POST onto a nice GET url
     if request.method == 'POST':
-        return redirect('/list/{}'.format(urllib.quote_plus(request.form['s'])), code=303)
+        if not request.form['s']:
+            url = url_for('.listing')
+        else:
+            url = url_for('.search', terms=urllib.quote_plus(request.form['s']))
+
+        # redirect search POST onto a nice GET url
+        return redirect(url, code=303)
 
     # map single plus char onto an empty search
     if terms == '+':

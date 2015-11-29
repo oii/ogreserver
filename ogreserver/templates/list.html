@@ -10,7 +10,7 @@
 	<li class="ebook">
 		<div class="callout radius">
 			<div class="firstsection">
-				<a class="title" href="/ebook/{{b.ebook_id}}">{{b.author}} - {{b.title}}</a>
+				<a class="title" href="{{ url_for('ebooks.detail', ebook_id=b.ebook_id) }}">{{b.author}} - {{b.title}}</a>
 				<span class="info">
 					<span class="rating">{{b.rating}}</span>
 				</span>
@@ -41,6 +41,6 @@
 
 	</ul>
 
-	<p id='loading-message'>Loading..</p>
+	<p id="loading-message">Loading..</p>
 
 {% endblock %}

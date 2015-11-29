@@ -77,6 +77,14 @@ def detail(ebook_id):
     return render_template('ebook_detail.html', ebook=ebook)
 
 
+@bp_ebooks.route('/ebook/<ebook_id>/curated/<int:state>')
+@login_required
+def set_curated(ebook_id, state):
+    ds = DataStore(app.config, app.logger)
+    ds.set_curated(ebook_id, state)
+    return redirect(url_for('.detail', ebook_id=ebook_id))
+
+
 @bp_ebooks.route('/download/<ebook_id>/', defaults={'version_id': None, 'fmt': None})
 @bp_ebooks.route('/download/<ebook_id>/<version_id>/', defaults={'fmt': None})
 @bp_ebooks.route('/download/<ebook_id>/<version_id>/<fmt>/')

@@ -196,6 +196,14 @@ class DataStore():
         if 'publish_date' in incoming['meta']:
             incoming['publish_date'] = dateutil.parser.parse(incoming['meta']['publish_date']).date()
 
+        def _init_curated(provider):
+            if provider == 'Amazon Kindle':
+                return 1
+            elif provider == 'Adobe Digital Editions':
+                return 1
+            else:
+                return 0
+
         # create this as a new book
         new_book = {
             'ebook_id': ebook_id,
@@ -206,6 +214,7 @@ class DataStore():
             'publisher': incoming['meta']['publisher'] if 'publisher' in incoming['meta'] else None,
             'publish_date': incoming['publish_date'] if 'publish_date' in incoming else None,
             'is_fiction': self.is_fiction(incoming['format']),
+            'is_curated': _init_curated(incoming['meta']['source']),
             'meta': {
                 'isbn': incoming['meta']['isbn'] if 'isbn' in incoming['meta'] else None,
                 'asin': incoming['meta']['asin'] if 'asin' in incoming['meta'] else None,
@@ -344,6 +353,10 @@ class DataStore():
                 raise e
 
         return ebook
+
+
+    def set_curated(self, ebook_id, state):
+        r.table('ebooks').get(ebook_id).update({'curated': state}).run()
 
 
     def load_ebook_by_file_hash(self, file_hash, match=False):

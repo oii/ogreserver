@@ -54,6 +54,19 @@
 		<p><strong>ASIN</strong>: {{ ebook.meta.amazon.asin }}</p>
 		{% endif %}
 
+		<div class="curated">
+		{% if ebook.is_curated == 1 %}
+		<a href="{{ url_for('ebooks.set_curated', ebook_id=ebook.ebook_id, state=0) }}" class="button small success">
+			<img src="{{ url_for('core.static', filename='images/ogrew-22c476.png') }}" width="32" height="32" />
+			Oii Curated
+		</a>
+		{% else %}
+		<a href="{{ url_for('ebooks.set_curated', ebook_id=ebook.ebook_id, state=1) }}" class="button small warning">
+			Not Curated
+		</a>
+		{% endif %}
+		</div>
+
 		<fieldset>
 		<legend>Download</legend>
 

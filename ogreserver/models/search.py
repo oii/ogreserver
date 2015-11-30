@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import math
 
 from whoosh.query import Every
-from whoosh.qparser import MultifieldParser, OrGroup
+from whoosh.qparser import MultifieldParser, OrGroup, FuzzyTermPlugin
 
 
 class Search:
@@ -37,9 +37,21 @@ class Search:
             # default to list all authors
             query = Every('author')
         else:
-            # create a search by author and then title
+            # create a search by author and title
             qp = MultifieldParser(['author', 'title'], self.whoosh.schema, group=OrGroup)
-            query = qp.parse(terms)
+
+            # fuzzy query only if wildcard not present
+            if '*' not in terms:
+                qp.add_plugin(FuzzyTermPlugin())
+
+                # setup search terms for fuzzy match
+                fuzzy_terms = []
+                for w in terms.split():
+                    fuzzy_terms.append('{}~'.format(w))
+                s = ' '.join(fuzzy_terms)
+
+            # parse the search terms
+            query = qp.parse(s)
 
         output = []
         pagecount = None

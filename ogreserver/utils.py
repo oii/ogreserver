@@ -4,22 +4,18 @@ from __future__ import unicode_literals
 import base64
 import contextlib
 import datetime
-import functools
 import hashlib
 import random
 import re
 import shutil
 import string
 import tempfile
-import urllib2
 
 import boto
 import boto.s3
 import boto.s3.connection
 
 import rethinkdb as r
-
-from .exceptions import APIAccessDenied
 
 
 def compute_md5(filepath, buf_size=8192):
@@ -60,7 +56,6 @@ def compute_md5(filepath, buf_size=8192):
         file_size = fp.tell()
         fp.seek(0)
         return (hex_md5, base64md5, file_size)
-    
     finally:
         fp.close()
 
@@ -145,17 +140,3 @@ def clean_string(string):
     for regex in (curly_brackets, square_brackets):
         string = regex.sub('', string)
     return string.strip()
-
-
-def handle_http_error(excp):
-    def decorator(f):
-        @functools.wraps(f)
-        def wrapped(*args, **kwargs):
-            try:
-                return f(*args, **kwargs)
-            except urllib2.HTTPError as e:
-                if e.code == 403:
-                    raise APIAccessDenied(inner_excp=excp())
-                raise excp
-        return wrapped
-    return decorator

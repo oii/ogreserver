@@ -7,9 +7,10 @@ import xml.etree.cElementTree as ET
 from fuzzywuzzy import process as fuzz
 from fuzzywuzzy.fuzz import token_set_ratio
 
+from ..decorators import handle_http_error
 from ..exceptions import AmazonAPIError, AmazonItemNotAccessibleError, \
         AmazonNoMatchesError, AmazonHttpError
-from ..utils import clean_string, handle_http_error
+from ..utils import clean_string
 
 
 class AmazonAPI:

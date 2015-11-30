@@ -6,8 +6,9 @@ import datetime
 import requests
 import xml.etree.cElementTree as ET
 
+from ..decorators import handle_http_error
 from ..exceptions import GoodreadsAPIError, GoodreadsBookNotFoundError
-from ..utils import clean_string, handle_http_error
+from ..utils import clean_string
 
 
 class GoodreadsAPI:

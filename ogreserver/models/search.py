@@ -26,14 +26,14 @@ class Search:
             )
 
 
-    def query(self, terms=None, pagenum=1, allpages=False):
-        """
+    def query(self, s=None, pagenum=1, allpages=False):
+        '''
         Search for books using whoosh, or return first page from all
-        """
+        '''
         if self.whoosh is None:
             return
 
-        if terms is None:
+        if not s:
             # default to list all authors
             query = Every('author')
         else:
@@ -41,32 +41,30 @@ class Search:
             qp = MultifieldParser(['author', 'title'], self.whoosh.schema, group=OrGroup)
 
             # fuzzy query only if wildcard not present
-            if '*' not in terms:
+            if '*' not in s:
                 qp.add_plugin(FuzzyTermPlugin())
 
                 # setup search terms for fuzzy match
                 fuzzy_terms = []
-                for w in terms.split():
+                for w in s.split():
                     fuzzy_terms.append('{}~'.format(w))
                 s = ' '.join(fuzzy_terms)
 
             # parse the search terms
             query = qp.parse(s)
 
-        output = []
-        pagecount = None
+        with self.whoosh.searcher() as searcher:
+            pagecount = None
 
-        with self.whoosh.searcher() as s:
             if allpages:
                 # special search returning all pages upto pagenum
-                results = s.search(query, limit=(self.pagelen * pagenum))
+                results = searcher.search(query, limit=(self.pagelen * pagenum))
             else:
                 # paginated search for specific page, or to feed infinite scroll
-                results = s.search_page(query, int(pagenum), pagelen=self.pagelen)
+                results = searcher.search_page(query, int(pagenum), pagelen=self.pagelen)
                 pagecount = results.pagecount
 
-            for item in results:
-                output.append(item.fields())
+            output = [item.fields() for item in results]
 
             if pagecount is None:
                 pagecount = int(math.ceil(float(len(output)) / self.pagelen))

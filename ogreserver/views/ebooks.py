@@ -1,50 +1,39 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import urllib
-
 import pyaml
 
 from flask import current_app as app
 
-from flask import g, Blueprint, request, jsonify, redirect, render_template, url_for
+from flask import g, Blueprint, request, jsonify, redirect, url_for
 from flask.ext.security.decorators import login_required
 from werkzeug.exceptions import abort
 
+from ..forms.search import SearchForm
 from ..models.datastore import DataStore
 from ..models.search import Search
-from ..utils import request_wants_json
+from ..utils import render_template, request_wants_json
 
 bp_ebooks = Blueprint('ebooks', __name__)
 
 
 @bp_ebooks.route('/list/', methods=['GET', 'POST'])
-@bp_ebooks.route('/list/<terms>/', endpoint='search')
-@bp_ebooks.route('/list/<terms>/<int:pagenum>/')
+@bp_ebooks.route('/list/<int:pagenum>/')
 @login_required
-def listing(terms=None, pagenum=1):
-    if request.method == 'POST':
-        if not request.form['s']:
-            url = url_for('.listing')
-        else:
-            url = url_for('.search', terms=urllib.quote_plus(request.form['s']))
-
-        # redirect search POST onto a nice GET url
-        return redirect(url, code=303)
-
-    # map single plus char onto an empty search
-    if terms == '+':
-        terms = None
+def listing(pagenum=1):
+    search_form = SearchForm(request.args)
+    search_form.data['pagenum'] = pagenum
 
     search = Search(app.whoosh, pagelen=app.config.get('SEARCH_PAGELEN', 20))
 
     if request_wants_json(request):
         # return single page as JSON
-        return jsonify(search.query(terms, pagenum=pagenum))
+        return jsonify(search.query(**search_form.data))
     else:
         # return all pages upto pagenum as HTML
-        rs = search.query(terms, pagenum=pagenum, allpages=True)
-        return render_template('list.html', ebooks=rs, terms=terms)
+        search_form.data['allpages'] = True
+        rs = search.query(**search_form.data)
+        return render_template('list.html', ebooks=rs, search_form=search_form)
 
 
 @bp_ebooks.route('/ebook/<ebook_id>/')

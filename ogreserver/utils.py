@@ -17,6 +17,10 @@ import boto.s3.connection
 
 import rethinkdb as r
 
+from flask import render_template as flask_render_template
+
+from .forms.search import SearchForm
+
 
 def compute_md5(filepath, buf_size=8192):
     """
@@ -140,3 +144,12 @@ def clean_string(string):
     for regex in (curly_brackets, square_brackets):
         string = regex.sub('', string)
     return string.strip()
+
+
+def render_template(template, **context):
+    '''
+    Wrap Flask's render_template() function to add SearchForm() to every rendered template
+    '''
+    if 'search_form' not in context:
+        context['search_form'] = SearchForm(csrf_enabled=False)
+    return flask_render_template(template, **context)

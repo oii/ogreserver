@@ -16,23 +16,12 @@
 				</span>
 			</div>
 			<div class="secondsection">
-				<ul class="formats" class="no-bullet">
-					{# for f in b.formats %}
-					<li>
-						<a href="/download/{{b.sdb_key}}/{{f}}">{{f}}</a>
-						{% if not loop.last %},&nbsp;{% endif %}
-					</li>
-					{% endfor #}
-				</ul>
-				<ul class="users" class="no-bullet">
-					{# for u in b.users %}
-						<li>
-							<a href="/search?user={{u}}">{{u}}</a>
-							{% if not loop.last %},&nbsp;{% endif %}
-						</li>
-					</li>
-					{% endfor #}
-				</ul>
+				{% if b.is_curated %}
+					<span class="label success">Curated</span>
+				{% else %}
+					<span class="label warning">Not curated!</span>
+				{% endif %}
+				<span class="label primary">{% if not b.is_fiction %}Non-{% endif %}Fiction</span>
 			</div>
 		</div>
 	</li>

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import math
 
-from whoosh.query import Every
+from whoosh.query import Every, And, Term
 from whoosh.qparser import MultifieldParser, OrGroup, FuzzyTermPlugin
 
 
@@ -23,10 +23,12 @@ class Search:
                 ebook_id=ebook_data['ebook_id'],
                 author=ebook_data['author'],
                 title=ebook_data['title'],
+                is_curated=ebook_data['is_curated'],
+                is_fiction=ebook_data['is_fiction'],
             )
 
 
-    def query(self, s=None, pagenum=1, allpages=False):
+    def query(self, s=None, is_curated=True, is_fiction=True, pagenum=1, allpages=False):
         '''
         Search for books using whoosh, or return first page from all
         '''
@@ -53,15 +55,23 @@ class Search:
             # parse the search terms
             query = qp.parse(s)
 
+        # only filter is_fiction / is_curated when true
+        filters = []
+        if is_curated is True:
+            filters.append(Term('is_curated', is_curated))
+        if is_fiction is True:
+            filters.append(Term('is_fiction', is_fiction))
+        qfilter = And(filters)
+
         with self.whoosh.searcher() as searcher:
             pagecount = None
 
             if allpages:
                 # special search returning all pages upto pagenum
-                results = searcher.search(query, limit=(self.pagelen * pagenum))
+                results = searcher.search(query, filter=qfilter, limit=(self.pagelen * pagenum))
             else:
                 # paginated search for specific page, or to feed infinite scroll
-                results = searcher.search_page(query, int(pagenum), pagelen=self.pagelen)
+                results = searcher.search_page(query, int(pagenum), filter=qfilter, pagelen=self.pagelen)
                 pagecount = results.pagecount
 
             output = [item.fields() for item in results]

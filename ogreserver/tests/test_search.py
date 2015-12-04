@@ -70,3 +70,35 @@ def test_search_keyword_wildcard(search):
     # check double wildcard
     result = search.query('*bin*')
     assert len(result['results']) == 1
+
+
+def test_search_filters(search):
+    search.index_for_search({
+        'ebook_id': 'ebad135',
+        'author': 'Eggbert Robinson',
+        'title': 'Deluded Visions of Bacon',
+        'is_curated': True,
+        'is_fiction': True,
+    })
+    search.index_for_search({
+        'ebook_id': 'c630bca',
+        'author': 'Barry Eggleston',
+        'title': 'Day of the Pig',
+        'is_curated': False,
+        'is_fiction': True,
+    })
+    search.index_for_search({
+        'ebook_id': 'aef61e6',
+        'author': 'Eggerston Benzo',
+        'title': 'If Pigs Could Fly',
+        'is_curated': False,
+        'is_fiction': True,
+    })
+
+    # all books match egg*, but by default we only return is_curated=True
+    result = search.query('egg*')
+    assert len(result['results']) == 1
+
+    # when filter is_curated=False applied, we return all books matching query
+    result = search.query('egg*', is_curated=False)
+    assert len(result['results']) == 3

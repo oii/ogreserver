@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import os
 
 from whoosh.index import create_in, open_dir
-from whoosh.fields import Schema, ID, TEXT
+from whoosh.fields import Schema, ID, TEXT, BOOLEAN
 
 
 def init_whoosh(app):
@@ -15,5 +15,7 @@ def init_whoosh(app):
             ebook_id=ID(stored=True, unique=True),
             author=TEXT(stored=True),
             title=TEXT(stored=True),
+            is_curated=BOOLEAN(stored=True),
+            is_fiction=BOOLEAN(stored=True),
         )
         return create_in(app.config['WHOOSH_BASE'], schema)

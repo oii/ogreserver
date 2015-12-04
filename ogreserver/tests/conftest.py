@@ -6,8 +6,19 @@ import os
 import pytest
 import yaml
 
+import whoosh
+
 from ogreserver.models.amazon import AmazonAPI
 from ogreserver.models.goodreads import GoodreadsAPI
+from ogreserver.models.search import Search
+
+
+@pytest.yield_fixture(scope='function')
+def search(flask_app):
+    search = Search(flask_app.whoosh, pagelen=100)
+    yield search
+    with flask_app.whoosh.writer() as writer:
+        writer.mergetype = whoosh.writing.CLEAR
 
 
 @pytest.fixture(scope='function')

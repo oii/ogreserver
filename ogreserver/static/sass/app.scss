@@ -28,14 +28,38 @@
 
 header {
 	background: url(images/marquee-stars.svg) #074e68;
-	background-size: cover;
+	background-size: cover 100%;
 	padding: 22px 0;
-	h5 {
+	h5, label, a, a:visited {
 		font-weight: 300;
 		color: white;
 	}
+	a:hover {
+		color: $anchor-color-hover;
+	}
 	dl, dd, input.button {
 		margin: 0;
+	}
+
+	#advanced-form {
+		overflow: hidden;
+		transition: height .3s linear;
+		a {
+			display: block;
+			width: 40%;
+			margin-bottom: 0.4em;
+		}
+		label {
+			display: inline;
+			margin-right: 20px;
+		}
+	}
+	.advanced-closed {
+		height: 20px;
+	}
+	.advanced-open {
+		height: 86px;
+		a { border-bottom: solid 1px #bbb; }
 	}
 }
 

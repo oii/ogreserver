@@ -6,6 +6,6 @@ base:
   'env:dev':
     - match: grain
     - dev_vars
-  'env:prod':
-    - match: grain
+  'G@env:prod or G@env:staging':
+    - match: compound
     - prod_vars

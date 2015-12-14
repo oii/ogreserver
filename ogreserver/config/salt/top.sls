@@ -7,7 +7,7 @@ base:
     - salt-backports
     - ogreserver
 
-  'G@role:ogreserver and G@env:prod':
+  'G@role:ogreserver and ( G@env:prod or G@env:staging )':
     - match: compound
     - nginx.config
     - ogreserver.prod

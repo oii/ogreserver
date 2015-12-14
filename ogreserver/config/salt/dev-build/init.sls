@@ -8,6 +8,7 @@ include:
   - s3proxy
   - watchdog
 
+
 extend:
   # make supervisorctl accessible to normal user
   supervisor-config:

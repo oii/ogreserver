@@ -1,6 +1,7 @@
 include:
   - closure-compiler.local
   - dev-build.tmux
+  - github
   - libsass
   - logs
   - ogreclient

@@ -4,7 +4,6 @@ include:
   - app.supervisor
   - calibre
   - closure-compiler
-  - github
   - gunicorn
   - libsass
   - mysql

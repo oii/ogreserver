@@ -5,7 +5,6 @@ include:
   - libsass
   - logs
   - ogreclient
-  - s3cmd
   - s3proxy
   - watchdog
 
@@ -80,14 +79,6 @@ extend:
     cmd.run:
       - require:
         - supervisord: s3proxy-supervisor-service
-
-  s3cfg:
-    file.managed:
-      - context:
-          access_key: local-identity
-          secret_key: local-credential
-          host_base: localhost:8880
-          host_bucket: localhost:8880
 
 # make the logs readable by the login user
 logs-chown:

@@ -1,0 +1,63 @@
+#!/bin/bash
+
+# Ogreclient install script for OSX and linux
+
+function install_homebrew {
+  echo '==> Installing Homebrew'
+  if ! command -v brew >/dev/null 2>&1; then
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+  fi
+}
+
+# optionally install into a virtualenv
+if [[ $1 == --venv ]]; then
+  if [[ ! -z $2 ]]; then
+    VENV=$2
+  else
+    VENV=ogreclient
+  fi
+else
+  VENV=''
+fi
+
+if [[ $(uname) =~ (.*)Darwin(.*) ]]; then
+  install_homebrew
+
+  if ! command pip &>/dev/null; then
+    echo '==> Installing/Updating Python'
+    brew install python --with-frameworks
+  fi
+
+  if [[ ! -z $VENV ]]; then
+    # create a venv if it does not exist
+    if [[ ! -d "$HOME/.virtualenvs/$VENV/bin" ]]; then
+      echo '==> Installing virtualenv:'
+      pip install virtualenv
+      echo '==> Creating a virtualenv:'
+      mkdir ~/.virtualenvs
+      virtualenv ~/.virtualenvs/$VENV
+    fi
+
+    # shellcheck source=/dev/null
+    source ~/.virtualenvs/$VENV/bin/activate
+  fi
+
+  echo '==> Upgrading pip:'
+  pip install -U pip
+
+  echo '==> Installing ogreclient:'
+  pip install \
+    --extra-index-url http://ogre-staging.oii.yt:8233/simple \
+    --trusted-host ogre-staging.oii.yt \
+    ogreclient
+
+
+elif [[ $(uname) =~ (.*)Debian(.*) ]]; then
+  echo 'Not implemented for Debian'
+  exit 1
+
+elif [[ $(uname) =~ (.*)Ubuntu(.*) ]]; then
+  echo 'Not implemented for Ubuntu'
+  exit 1
+
+fi

@@ -1,5 +1,6 @@
 include:
   - ogreserver
+  - newrelic
 
 
 extend:
@@ -22,6 +23,13 @@ extend:
   static-asset-compile:
     cmd.run:
       - name: make prod
+
+  ogreserver-supervisor-service:
+    supervisord.running:
+      - require:
+        - cmd: rabbitmq-server-running
+        - file: newrelic-config
+
 
 # install SSL certificate
 /etc/ssl/ogre.oii.yt.crt:

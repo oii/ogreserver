@@ -55,7 +55,6 @@ extend:
           port: 8233
           runas: {{ pillar['app_user'] }}
 
-
 # install bower.io for Foundation 5
 bower:
   npm.installed:

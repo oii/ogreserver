@@ -84,7 +84,7 @@ $global-weight-normal: normal;
 $global-weight-bold: bold;
 $global-radius: 2px;
 $global-text-direction: ltr;
-$rem-base: 16px;
+$global-font-size: 16px;
 
 // 2. Breakpoints
 // --------------
@@ -277,7 +277,7 @@ $form-label-color: $black;
 $form-label-font-size: rem-calc(14);
 $form-label-font-weight: $global-weight-normal;
 $form-label-line-height: 1.8;
-$select-background: #fafafa;
+$select-background: white;
 $select-triangle-color: #333;
 $select-radius: $global-radius;
 $input-color: $dark-gray;
@@ -308,6 +308,7 @@ $label-radius: $global-radius;
 // -----------------
 
 $dropdownmenu-arrows: true;
+$dropdownmenu-arrow-color: $anchor-color;
 $dropdownmenu-min-width: 200px;
 $dropdownmenu-background: $white;
 $dropdown-border: 1px solid $medium-gray;
@@ -353,5 +354,5 @@ $thumbnail-radius: $global-radius;
 
 $topbar-padding: 0.5rem;
 $topbar-background: $grey333;
-$topbar-link-color: $success-color;
+$topbar-title-spacing: 1rem;
 $topbar-input-width: 200px;

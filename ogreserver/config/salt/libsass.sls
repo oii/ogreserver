@@ -1,12 +1,16 @@
+{% set sass_version = pillar.get('sass_version', '3.3.6') %}
+
 libsass-src:
   git.latest:
     - name: https://github.com/sass/libsass.git
+    - rev: {{ sass_version }}
     - target: /tmp/libsass
     - unless: test -f /usr/local/bin/sassc
 
 sassc:
   git.latest:
     - name: https://github.com/sass/sassc.git
+    - rev: {{ sass_version }}
     - target: /tmp/sassc
     - unless: test -f /usr/local/bin/sassc
   cmd.wait:

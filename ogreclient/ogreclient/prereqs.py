@@ -12,7 +12,8 @@ from .cache import Cache
 from .config import write_config
 from .dedrm import download_dedrm
 from .definitions import OGRESERVER_HOST
-from .exceptions import ConfigSetupError, NoEbookSourcesFoundError, DeDrmNotAvailable
+from .exceptions import ConfigSetupError, NoEbookSourcesFoundError, DeDrmNotAvailable, \
+        EbookHomeMissingError
 from .providers import PROVIDERS, find_ebook_providers
 
 
@@ -65,6 +66,9 @@ def setup_ogreclient(args, prntr, conf):
 
     if args.mode in ('sync', 'stats'):
         ebook_home_found, conf['ebook_home'] = setup_ebook_home(prntr, args, conf)
+
+        if not os.path.exists(conf['ebook_home']):
+            raise EbookHomeMissingError("Path specified in EBOOK_HOME doesn't exist!")
 
         # ignore certain providers as determined by --ignore-* params
         for provider in PROVIDERS.keys():

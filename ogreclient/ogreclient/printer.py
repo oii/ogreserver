@@ -114,8 +114,10 @@ class CliPrinter:
                 # display supplied friendly message, or print exception message
                 if not msg:
                     msg = excp_msg
+                else:
+                    extra = str(excp)
 
-                self.p(msg, mode, success=False, notime=notime, extra=inner_msg)
+                self.p(msg, mode, success=False, notime=notime, extra=extra or inner_msg)
         else:
             self.p(msg, mode, success=False, notime=notime)
 

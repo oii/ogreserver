@@ -64,6 +64,9 @@ class NoEbookSourcesFoundError(OgreException):
 class DeDrmNotAvailable(OgreException):
     pass
 
+class EbookHomeMissingError(OgreException):
+    pass
+
 
 class ProviderBaseError(OgreException):
     pass

@@ -88,6 +88,15 @@ def parse_command_line(conf):
         '--skip-cache', action='store_true',
         help='Ignore the local cache; useful for debugging')
 
+
+    # setup parser for init command
+    pinit = subparsers.add_parser('init',
+        parents=[parent_parser],
+        help='Initialise your OGRE client install (contacts OGRE server)',
+    )
+    pinit.set_defaults(mode='init')
+
+
     # setup parser for sync command
     psync = subparsers.add_parser('sync',
         parents=[parent_parser],
@@ -95,17 +104,18 @@ def parse_command_line(conf):
     )
     psync.set_defaults(mode='sync')
 
-    psync.add_argument(
-        '--host',
-        help='Override the default server host of oii.ogre.yt')
-    psync.add_argument(
-        '--username', '-u',
-        help=('Your O.G.R.E. username. '
-              'You can also set the environment variable $EBOOK_USER'))
-    psync.add_argument(
-        '--password', '-p',
-        help=('Your O.G.R.E. password. '
-              'You can also set the environment variable $EBOOK_PASS'))
+    for p in (psync, pinit):
+        p.add_argument(
+            '--host',
+            help='Override the default server host of oii.ogre.yt')
+        p.add_argument(
+            '--username', '-u',
+            help=('Your O.G.R.E. username. '
+                  'You can also set the environment variable $EBOOK_USER'))
+        p.add_argument(
+            '--password', '-p',
+            help=('Your O.G.R.E. password. '
+                  'You can also set the environment variable $EBOOK_PASS'))
 
     psync.add_argument(
         '--no-drm', action='store_true',
@@ -177,6 +187,8 @@ def main(conf, args, prntr):
         'verbose': True if args.debug is True else args.verbose,
         'quiet': args.quiet,
     })
+
+    ret = None
 
     if args.mode == 'info':
         # display metadata from a single book

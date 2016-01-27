@@ -65,7 +65,7 @@ def setup_ogreclient(args, prntr, conf):
     # return the user's OS
     conf['platform'] = platform.system()
 
-    if args.mode in ('sync', 'stats'):
+    if args.mode in ('init', 'sync', 'stats'):
         ebook_home_found, conf['ebook_home'] = setup_ebook_home(prntr, args, conf)
 
         if not os.path.exists(conf['ebook_home']):
@@ -84,7 +84,7 @@ def setup_ogreclient(args, prntr, conf):
         if ebook_home_found is False and not conf['providers']:
             raise NoEbookSourcesFoundError
 
-    if args.mode in ('sync'):
+    if args.mode in ('sync', 'init'):
         # authenticate user and generate session API key
         connection = authenticate(conf['host'], conf['username'], conf['password'])
 
@@ -120,7 +120,7 @@ def setup_ogreclient(args, prntr, conf):
         # supply a default username during stats queries
         conf['username'] = 'oc'
 
-    if first_scan_warning is True:
+    if args.mode != 'init' and first_scan_warning is True:
         prntr.p('Please note that metadata/DRM scanning means the first run of ogreclient '
                 'will be much slower than subsequent runs.')
 
@@ -226,8 +226,13 @@ def setup_ebook_home(prntr, args, conf):
      - saved values in ogre config
      - automatically created in $HOME
     """
-    # 1) load CLI parameters
-    ebook_home = args.ebook_home
+    ebook_home = None
+
+    # 1) load CLI parameters (if available)
+    try:
+        ebook_home = args.ebook_home
+    except AttributeError:
+        pass
 
     # 2) load ENV vars
     if ebook_home is None:

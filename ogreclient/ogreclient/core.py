@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from __future__ import division
 
-import collections
 import json
 import os
 import shutil
@@ -12,8 +11,9 @@ import urllib2
 from urllib2 import HTTPError, URLError
 from .urllib2_file import newHTTPHandler
 
+from .config import write_config
 from .ebook_obj import EbookObject
-from .utils import make_temp_directory, retry
+from .utils import deserialize_defs, make_temp_directory, retry
 from .printer import CliPrinter
 from .providers import LibProvider, PathsProvider
 from .dedrm import decrypt, DRM
@@ -62,9 +62,6 @@ def authenticate(host, username, password):
 
 
 def get_definitions(config, session_key):
-    # namedtuple used for definition entries
-    FormatConfig = collections.namedtuple('FormatConfig', ('is_valid_format', 'is_non_fiction'))
-
     try:
         # retrieve the ebook format definitions
         req = urllib2.Request(
@@ -76,9 +73,7 @@ def get_definitions(config, session_key):
         f = urllib2.urlopen(req)
 
         # convert list of lists result into OrderedDict
-        return collections.OrderedDict(
-            [(v[0], FormatConfig(v[1], v[2])) for v in json.loads(f.read())]
-        )
+        return deserialize_defs(json.loads(f.read()))
 
     except (HTTPError, URLError) as e:
         raise FailedGettingDefinitionsError(inner_excp=e)
@@ -90,6 +85,9 @@ def sync(config, prntr):
 
     # query the server for current ebook definitions (which file extensions to search for etc)
     config['definitions'] = get_definitions(config, session_key)
+
+    # write latest definitions to config store
+    write_config(config)
 
     # let the user know something is happening
     prntr.p('Searching for ebooks..', nonl=True)

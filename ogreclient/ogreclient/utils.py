@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
 
 import base64
+import collections
 import contextlib
 import functools
 import hashlib
+import json
 import random
 import shutil
 import string
@@ -157,3 +159,18 @@ def urlretrieve(urllib2_request, filepath, reporthook=None, chunk_size=4096):
 
     # return downloaded length
     return len(data)
+
+
+def serialize_defs(definitions):
+    return json.dumps([
+        [k, v.is_valid_format, v.is_non_fiction]
+        for k,v in definitions.iteritems()
+    ])
+
+def deserialize_defs(data):
+    # namedtuple used for definition entries
+    FormatConfig = collections.namedtuple('FormatConfig', ('is_valid_format', 'is_non_fiction'))
+
+    return collections.OrderedDict(
+        [(v[0], FormatConfig(v[1], v[2])) for v in data]
+    )

@@ -2,9 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import ConfigParser
+import json
 import os
 
 from .providers import PROVIDERS, ProviderFactory
+from .utils import serialize_defs, deserialize_defs
 
 
 def _get_config_dir():
@@ -38,6 +40,11 @@ def write_config(conf):
     # provider specific config
     if conf['providers']['kindle']:
         cp.set('kindle', 'libpath', conf['providers']['kindle'].libpath)
+
+    # store ebook scan definitions
+    if 'definitions' in conf:
+        cp.add_section('definitions')
+        cp.set('definitions', 'definitions', serialize_defs(conf['definitions']))
 
     with open(os.path.join(conf['config_dir'], 'app.config'), 'wb') as f_config:
         cp.write(f_config)
@@ -81,5 +88,10 @@ def read_config():
             )
         except ConfigParser.NoOptionError:
             pass
+
+    # load ebook scan definitions
+    conf['definitions'] = deserialize_defs(
+        json.loads(cp.get('definitions', 'definitions'))
+    )
 
     return conf

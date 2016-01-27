@@ -21,13 +21,14 @@ def write_config(conf):
         cp.set('config', 'calibre_ebook_meta_bin', conf['calibre_ebook_meta_bin'])
 
     # ogreserver specific section
-    cp.add_section('ogreserver')
-    if 'host' in conf:
-        cp.set('ogreserver', 'host', conf['host'])
-    if 'username' in conf:
-        cp.set('ogreserver', 'username', conf['username'])
-    if 'password' in conf:
-        cp.set('ogreserver', 'password', conf['password'])
+    if 'host' in conf or 'username' in conf or 'password' in conf:
+        cp.add_section('ogreserver')
+        if 'host' in conf:
+            cp.set('ogreserver', 'host', conf['host'])
+        if 'username' in conf:
+            cp.set('ogreserver', 'username', conf['username'])
+        if 'password' in conf:
+            cp.set('ogreserver', 'password', conf['password'])
 
     # create sections for each provider
     for provider in PROVIDERS.keys():
@@ -60,9 +61,12 @@ def read_config():
         return conf
 
     conf['calibre_ebook_meta_bin'] = cp.get('config', 'calibre_ebook_meta_bin')
-    conf['host'] = cp.get('ogreserver', 'host')
-    conf['username'] = cp.get('ogreserver', 'username')
-    conf['password'] = cp.get('ogreserver', 'password')
+    try:
+        conf['host'] = cp.get('ogreserver', 'host')
+        conf['username'] = cp.get('ogreserver', 'username')
+        conf['password'] = cp.get('ogreserver', 'password')
+    except ConfigParser.NoSectionError:
+        pass
 
     # extract which providers are already known (used for CLI options)
     for provider in PROVIDERS.keys():

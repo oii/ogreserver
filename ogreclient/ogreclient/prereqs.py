@@ -49,12 +49,7 @@ def setup_ogreclient(args, prntr, conf):
 
     # not all ogreclient commands need auth
     if hasattr(args, 'host'):
-        # setup user auth perms, with this order of precedence:
-        #  - CLI params
-        #  - ENV vars
-        #  - saved values in ogre config
-        #  - CLI readline interface
-        # output is written directly into conf var
+        # setup user auth creds
         conf['username'], conf['password'] = setup_user_auth(prntr, args, conf)
 
         # set default hostname
@@ -165,6 +160,13 @@ def dedrm_check(prntr, args, conf):
 
 
 def setup_user_auth(prntr, args, conf):
+    """
+    Setup user auth credentials, values sourced in this order of precedence:
+     - CLI params
+     - ENV vars
+     - saved values in ogre config
+     - CLI readline interface
+    """
     # 1) load CLI parameters
     username = args.username
     password = args.password
@@ -205,6 +207,13 @@ def setup_user_auth(prntr, args, conf):
 
 
 def setup_ebook_home(prntr, args, conf):
+    """
+    Setup user's ebook home, config being set with this order of precedence:
+     - CLI params
+     - ENV vars
+     - saved values in ogre config
+     - automatically created in $HOME
+    """
     # 1) load CLI parameters
     ebook_home = args.ebook_home
 

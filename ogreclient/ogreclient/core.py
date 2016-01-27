@@ -11,7 +11,6 @@ import urllib2
 from urllib2 import HTTPError, URLError
 from .urllib2_file import newHTTPHandler
 
-from .config import write_config
 from .ebook_obj import EbookObject
 from .utils import deserialize_defs, make_temp_directory, retry
 from .printer import CliPrinter
@@ -82,12 +81,6 @@ def get_definitions(config, session_key):
 def sync(config, prntr):
     # authenticate user and generate session API key
     session_key = authenticate(config['host'], config['username'], config['password'])
-
-    # query the server for current ebook definitions (which file extensions to search for etc)
-    config['definitions'] = get_definitions(config, session_key)
-
-    # write latest definitions to config store
-    write_config(config)
 
     # let the user know something is happening
     prntr.p('Searching for ebooks..', nonl=True)

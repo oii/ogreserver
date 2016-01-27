@@ -10,6 +10,7 @@ import sys
 
 from .cache import Cache
 from .config import write_config
+from .core import authenticate, get_definitions
 from .dedrm import download_dedrm
 from .definitions import OGRESERVER_HOST
 from .exceptions import ConfigSetupError, NoEbookSourcesFoundError, DeDrmNotAvailable, \
@@ -82,6 +83,13 @@ def setup_ogreclient(args, prntr, conf):
         # hard error if no ebook provider dirs found
         if ebook_home_found is False and not conf['providers']:
             raise NoEbookSourcesFoundError
+
+    if args.mode in ('sync'):
+        # authenticate user and generate session API key
+        connection = authenticate(conf['host'], conf['username'], conf['password'])
+
+        # query the server for current ebook definitions (which file extensions to search for etc)
+        conf['definitions'] = get_definitions(conf, connection)
 
     # write the config file
     write_config(conf)

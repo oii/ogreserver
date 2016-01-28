@@ -3,12 +3,12 @@ from __future__ import unicode_literals
 
 import importlib
 import os
+import requests
 import subprocess
-import urllib2
 
 from .exceptions import AuthDeniedError, AuthError, DeDrmMissingError, \
         DecryptionError, DecryptionFailed
-from .utils import capture, enum, make_temp_directory, urlretrieve
+from .utils import capture, enum, make_temp_directory
 
 try:
     # import DeDRM libs, capturing anything that's shat out on STDOUT
@@ -173,13 +173,25 @@ def download_dedrm(host, username, password, prntr, debug=False):
     prntr.p('Downloading..')
 
     # download the tarball
-    req = urllib2.Request(
-        url='http://{}/api/v1/download-dedrm'.format(host),
-        headers={
-            'Ogre-key': session_key
-        },
+    resp = requests.get(
+        'http://{}/api/v1/download-dedrm'.format(host),
+        headers={'Ogre-key': session_key},
+        stream=True
     )
-    urlretrieve(req, '/tmp/dedrm.tar.gz', prntr.progressf)
+    length = resp.headers.get('Content-length')
+    prntr.progressf(num_blocks=0, total_size=length)
+
+    # stream to file and report progress
+    with open('/tmp/dedrm.tar.gz', 'wb') as f:
+        i = 0
+        for data in resp.iter_content(chunk_size=4096):
+            i += 1
+            prntr.progressf(num_blocks=i, block_size=4096, total_size=length)
+            f.write(data)
+
+    # end progress bar
+    prntr.progressf(num_blocks=i+1, block_size=4096, total_size=length)
+    prntr.close()
 
     try:
         # install DRM tools

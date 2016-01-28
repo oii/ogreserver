@@ -18,10 +18,9 @@ packages = [
     'ogreclient',
 ]
 
-#requires = [
-#    open('requirements.txt').read()
-#]
-requires = []
+requires = [
+    'requests'
+]
 
 if sys.version_info < (2, 7):
     requires += ['argparse']

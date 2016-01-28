@@ -113,7 +113,7 @@ def setup_ogreclient(args, prntr, conf):
         else:
             dedrm_check(prntr, args, conf)
 
-    elif args.mode == 'dedrm':
+    elif args.mode == 'init':
         dedrm_check(prntr, args, conf)
 
     if args.mode == 'stats' and 'username' not in conf:

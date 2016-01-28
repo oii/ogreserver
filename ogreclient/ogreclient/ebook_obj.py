@@ -301,17 +301,17 @@ class EbookObject:
                     },
                 )
                 resp = urllib2.urlopen(req)
-                data = resp.read()
+                data = json.loads(resp.read())
 
-                if data == 'ok':
+                if data['result'] == 'ok':
                     # move file back into place
                     shutil.copy(tmp_name, self.path)
                     self.file_hash = new_hash
                     return new_hash
 
-                elif data == 'fail':
+                elif data['result'] == 'fail':
                     raise FailedConfirmError(self, "Server said 'no'")
-                elif data == 'same':
+                elif data['result'] == 'same':
                     raise FailedConfirmError(self, "Server said 'same'")
                 else:
                     raise FailedConfirmError(self, 'Unknown response from server!')

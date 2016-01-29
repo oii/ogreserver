@@ -504,8 +504,9 @@ def query_for_uploads(config, prntr, session_key):
                 'Ogre-key': session_key
             },
         )
-        data = urllib2.urlopen(req).read()
-        return json.loads(data)
+        response = urllib2.urlopen(req).read()
+        data = json.loads(response)
+        return data['result']
 
     except (HTTPError, URLError) as e:
         raise FailedUploadsQueryError(inner_excp=e)
@@ -598,15 +599,16 @@ def send_logs(prntr, host, session_key, errord_list):
         # post all logs to ogreserver
         req = urllib2.Request(
             url='http://{}/api/v1/post-logs'.format(host),
-            data=log_data,
+            data=json.dumps({'raw_logs':log_data}),
             headers={
                 'Content-type': 'application/json',
                 'Ogre-key': session_key
             },
         )
-        data = urllib2.urlopen(req).read()
+        resp = urllib2.urlopen(req).read()
+        data = json.loads(resp)
 
-        if data != 'ok':
+        if data['result'] != 'ok':
             raise FailedDebugLogsError('Failed storing the logs, please report this.')
         else:
             prntr.p('Uploaded logs to OGRE')

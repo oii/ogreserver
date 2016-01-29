@@ -7,7 +7,7 @@ import json
 import os
 
 from flask import current_app as app
-from flask import Blueprint, request, make_response, Response, abort
+from flask import Blueprint, jsonify, request, make_response, Response, abort
 from flask.ext.security import current_user
 from flask.ext.security.decorators import auth_token_required
 from flask.ext.uploads import UploadNotAllowed
@@ -47,12 +47,14 @@ def download_dedrm():
 @bp_api.route('/post', methods=['POST'])
 @auth_token_required
 def post():
+    data = request.get_json()
+
     # stats log the upload
-    app.logger.info('CONNECT {}'.format(len(request.json)))
+    app.logger.info('CONNECT {}'.format(len(data)))
 
     # update the library
     ds = DataStore(app.config, app.logger)
-    syncd_books = ds.update_library(request.json, current_user)
+    syncd_books = ds.update_library(data, current_user)
 
     # extract the subset of newly supplied books
     new_books = [item for key, item in syncd_books.items() if item['new'] is True]
@@ -68,7 +70,7 @@ def post():
     app.logger.info('NEW {}'.format(len(new_books)))
 
     # store sync events
-    ds.log_event(current_user, len(request.json), len(new_books))
+    ds.log_event(current_user, len(data), len(new_books))
 
     # handle badge and reputation changes
     r = Reputation(current_user)
@@ -98,11 +100,13 @@ def post_logs():
     if not os.path.exists(os.path.dirname(log_file_path)):
         os.mkdir(os.path.dirname(log_file_path))
 
+    data = request.get_json()
+
     # write request body to file
     with codecs.open(log_file_path, 'w', 'utf-8') as f:
-        f.write('{}\n'.format(request.data.decode('utf-8')))
+        f.write(data['raw_logs'].decode('utf-8'))
 
-    return 'ok'
+    return jsonify(result='ok')
 
 
 @bp_api.route('/upload-errord/<filename>', methods=['POST'])
@@ -115,25 +119,27 @@ def upload_errord(filename):
     )
 
     app.uploaded_logs.save(request.files['ebook'], name=filename)
-    return 'ok'
+    return jsonify(result='ok')
 
 
 @bp_api.route('/confirm', methods=['POST'])
 @auth_token_required
 def confirm():
+    data = request.get_json()
+
     # update a file's md5 hash
-    current_file_hash = request.json['file_hash']
-    updated_file_hash = request.json['new_hash']
+    current_file_hash = data['file_hash']
+    updated_file_hash = data['new_hash']
 
     ds = DataStore(app.config, app.logger)
 
     try:
         if ds.update_ebook_hash(current_file_hash, updated_file_hash):
-            return 'ok'
+            return jsonify(result='ok')
         else:
-            return 'fail'
+            return jsonify(result='fail')
     except SameHashSuppliedOnUpdateError:
-        return 'same'
+        return jsonify(result='same')
 
 
 @bp_api.route('/to-upload', methods=['GET'])
@@ -144,16 +150,14 @@ def to_upload():
     # query books to upload and supply back to the client
     missing_books = ds.get_missing_books(username=current_user.username)
 
-    return json.dumps(missing_books)
+    return jsonify(result=missing_books)
 
 
 @bp_api.route('/upload', methods=['POST'])
 @auth_token_required
 def upload():
-    # stats log the upload
-    app.logger.info('UPLOADED 1')
-
-    app.logger.debug('{} {} {}'.format(
+    # log the upload
+    app.logger.debug('UPLOAD {} {} {}'.format(
         current_user.username,
         request.form.get('ebook_id'),
         request.files['ebook'].content_length
@@ -179,4 +183,4 @@ def upload():
         fmt=request.form.get('format'),
         username=current_user.username
     )
-    return 'ok'
+    return jsonify(result='ok')

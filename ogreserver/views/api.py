@@ -109,13 +109,13 @@ def post_logs():
     return jsonify(result='ok')
 
 
-@bp_api.route('/upload-errord/<filename>', methods=['POST'])
+@bp_api.route('/upload-errord', methods=['POST'])
 @auth_token_required
-def upload_errord(filename):
+def upload_errord():
     filename = '{}.{}.{}'.format(
         current_user.username,
         datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
-        filename,
+        request.form.get('filename'),
     )
 
     app.uploaded_logs.save(request.files['ebook'], name=filename)

@@ -86,19 +86,19 @@ def sync(config, prntr):
     prntr.p('Searching for ebooks..', nonl=True)
 
     # 1) find ebooks in config['ebook_home'] on local machine
-    ebooks_by_authortitle, ebooks_by_filehash, errord_list, skipped = search_for_ebooks(config, prntr)
+    ebooks_by_authortitle, ebooks_by_filehash, search_errord, skipped = search_for_ebooks(config, prntr)
 
-    if len(errord_list) > 0:
+    if search_errord:
         prntr.p('Errors occurred during scan:')
-        for e in errord_list:
+        for e in search_errord:
             prntr.e(e.ebook_obj.path, excp=e)
 
     # 2) remove DRM
-    errord_list = clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash)
+    decrypt_errord = clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash)
 
-    if len(errord_list) > 0:
+    if decrypt_errord:
         prntr.p('Errors occurred during decryption:')
-        for e in errord_list:
+        for e in decrypt_errord:
             # display an error message
             prntr.e(e.ebook_obj.path, excp=e)
             # remove the book from the sync data
@@ -126,14 +126,14 @@ def sync(config, prntr):
     upload_ebooks(config, prntr, session_key, ebooks_by_filehash, ebooks_to_upload)
 
     # 7) display/send errors
-    errord_list = [err for err in errord_list if isinstance(err, OgreException)]
+    all_errord = [err for err in search_errord+decrypt_errord if isinstance(err, OgreException)]
 
-    if errord_list:
+    if all_errord:
         if not config['debug']:
             prntr.e('Finished with errors. Re-run with --debug to send logs to OGRE')
         else:
             # send a log of all events, and upload bad books
-            send_logs(prntr, config['host'], session_key, errord_list)
+            send_logs(prntr, config['host'], session_key, all_errord)
     else:
         prntr.p('Finished, nothing further to do.')
 

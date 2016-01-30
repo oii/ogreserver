@@ -294,7 +294,7 @@ class EbookObject:
                 try:
                     # ping ogreserver with the book's new hash
                     data = connection.request(
-                        'api/v1/confirm',
+                        'confirm',
                         data={
                             'file_hash': self.file_hash,
                             'new_hash': new_hash

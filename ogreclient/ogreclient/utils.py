@@ -50,15 +50,15 @@ class OgreConnection(object):
 
         return True
 
-    def _init_request(self, url):
+    def _init_request(self, endpoint):
         # build correct URL to ogreserver
-        url = 'http://{}/{}'.format(self.host, url)
+        url = 'http://{}/api/v1/{}'.format(self.host, endpoint)
         headers = {'Ogre-key': self.session_key}
         return url, headers
 
-    def download(self, url):
+    def download(self, endpoint):
         # setup URL and request headers
-        url, headers = self._init_request(url)
+        url, headers = self._init_request(endpoint)
 
         try:
             # start request with streamed response
@@ -73,9 +73,9 @@ class OgreConnection(object):
 
         return resp, resp.headers.get('Content-length')
 
-    def upload(self, url, ebook_obj, data=None):
+    def upload(self, endpoint, ebook_obj, data=None):
         # setup URL and request headers
-        url, headers = self._init_request(url)
+        url, headers = self._init_request(endpoint)
 
         # create file part of multipart POST
         files = {
@@ -96,9 +96,9 @@ class OgreConnection(object):
         # JSON response as usual
         return resp.json()
 
-    def request(self, url, data=None):
+    def request(self, endpoint, data=None):
         # setup URL and request headers
-        url, headers = self._init_request(url)
+        url, headers = self._init_request(endpoint)
 
         try:
             if data is not None:

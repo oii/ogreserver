@@ -165,7 +165,7 @@ def download_dedrm(config, prntr, debug=False):
 
     try:
         # start download
-        resp, length = connection.download('api/v1/download-dedrm')
+        resp, length = connection.download('download-dedrm')
     except RequestError as e:
         raise DeDrmNotAvailable('Failed getting DeDRM package', inner_excp=e)
 

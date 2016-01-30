@@ -21,7 +21,7 @@ from .exceptions import RequestError, NoEbooksError, DuplicateEbookBaseError, \
 def get_definitions(connection):
     try:
         # retrieve the ebook format definitions
-        data = connection.request('api/v1/definitions')
+        data = connection.request('definitions')
 
         # convert list of lists result into OrderedDict
         return deserialize_defs(data)
@@ -382,7 +382,7 @@ def sync_with_server(config, prntr, connection, ebooks_by_authortitle):
 
     try:
         # post json dict of ebook data
-        data = connection.request('api/v1/post', data=ebooks_for_sync)
+        data = connection.request('post', data=ebooks_for_sync)
 
     except RequestError as e:
         raise SyncError(inner_excp=e)
@@ -439,7 +439,7 @@ def update_local_metadata(config, prntr, connection, ebooks_by_filehash, ebooks_
 def query_for_uploads(config, prntr, connection):
     try:
         # query ogreserver for books to upload
-        data = connection.request('api/v1/to-upload')
+        data = connection.request('to-upload')
         return data['result']
 
     except RequestError as e:
@@ -501,7 +501,7 @@ def upload_ebooks(config, prntr, connection, ebooks_by_filehash, ebooks_to_uploa
 def upload_single_book(connection, ebook_obj):
     try:
         connection.upload(
-            'api/v1/upload',
+            'upload',
             ebook_obj,
             data={
                 'ebook_id': ebook_obj.ebook_id,
@@ -522,7 +522,7 @@ def send_logs(prntr, connection, errord_list):
         log_data = '\n'.join(prntr.logs).encode('utf-8')
 
         # post all logs to ogreserver
-        data = connection.request('api/v1/post-logs', data={'raw_logs':log_data})
+        data = connection.request('post-logs', data={'raw_logs':log_data})
 
         if data['result'] != 'ok':
             raise FailedDebugLogsError('Failed storing the logs, please report this.')
@@ -536,7 +536,7 @@ def send_logs(prntr, connection, errord_list):
 
             for e in errord_list:
                 connection.upload(
-                    'api/v1/upload-errord',
+                    'upload-errord',
                     e.ebook_obj,
                     data={
                         'filename': os.path.basename(e.ebook_obj.path.encode('utf-8'))

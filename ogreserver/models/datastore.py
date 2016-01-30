@@ -196,6 +196,10 @@ class DataStore():
         if 'publish_date' in incoming['meta']:
             incoming['publish_date'] = dateutil.parser.parse(incoming['meta']['publish_date']).date()
 
+            # handle year >= 1400 for RethinkDB (only comes up on bad dates)
+            if incoming['publish_date'].year < 1400:
+                del(incoming['publish_date'])
+
         def _init_curated(provider):
             if provider == 'Amazon Kindle':
                 return 1

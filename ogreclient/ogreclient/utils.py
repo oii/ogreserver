@@ -25,15 +25,28 @@ class OgreConnection(object):
     def __init__(self, conf):
         self.host = conf['host']
 
+        # SSL support
+        if conf['use_ssl']:
+            self.protocol = 'https'
+        else:
+            self.protocol = 'http'
+
+        self.ignore_ssl_errors = conf.get('ignore_ssl_errors', False)
+
+        # hide SSL warnings barfed from urllib3
+        if self.ignore_ssl_errors:
+            requests.packages.urllib3.disable_warnings()
+
     def login(self, username, password):
         try:
             # authenticate the user
             resp = requests.post(
-                'http://{}/login'.format(self.host),
+                '{}://{}/login'.format(self.protocol, self.host),
                 json={
                     'email': username,
                     'password': password
-                }
+                },
+                verify=not self.ignore_ssl_errors
             )
             data = resp.json()
         except ConnectionError as e:
@@ -52,7 +65,7 @@ class OgreConnection(object):
 
     def _init_request(self, endpoint):
         # build correct URL to ogreserver
-        url = 'http://{}/api/v1/{}'.format(self.host, endpoint)
+        url = '{}://{}/api/v1/{}'.format(self.protocol, self.host, endpoint)
         headers = {'Ogre-key': self.session_key}
         return url, headers
 
@@ -62,7 +75,9 @@ class OgreConnection(object):
 
         try:
             # start request with streamed response
-            resp = requests.get(url, headers=headers, stream=True)
+            resp = requests.get(
+                url, headers=headers, stream=True, verify=not self.ignore_ssl_errors
+            )
 
         except (Timeout, ConnectionError) as e:
             raise OgreserverDownError(inner_excp=e)
@@ -84,7 +99,9 @@ class OgreConnection(object):
 
         try:
             # upload some files and data as multipart
-            resp = requests.post(url, headers=headers, data=data, files=files)
+            resp = requests.post(
+                url, headers=headers, data=data, files=files, verify=not self.ignore_ssl_errors
+            )
 
         except (Timeout, ConnectionError) as e:
             raise OgreserverDownError(inner_excp=e)
@@ -103,10 +120,14 @@ class OgreConnection(object):
         try:
             if data is not None:
                 # POST with JSON body
-                resp = requests.post(url, headers=headers, json=data)
+                resp = requests.post(
+                    url, headers=headers, json=data, verify=not self.ignore_ssl_errors
+                )
             else:
                 # GET
-                resp = requests.get(url, headers=headers)
+                resp = requests.get(
+                    url, headers=headers, verify=not self.ignore_ssl_errors
+                )
 
         except (Timeout, ConnectionError) as e:
             raise OgreserverDownError(inner_excp=e)

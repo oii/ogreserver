@@ -5,6 +5,7 @@ import codecs
 import getpass
 import os
 import platform
+import socket
 import subprocess
 import sys
 
@@ -58,8 +59,27 @@ def setup_ogreclient(args, prntr, conf):
         # set default hostname
         if args.host is not None:
             conf['host'] = args.host
+
+            try:
+                # strip port off host if included
+                if ':' in args.host:
+                    hostname = args.host.split(':')[0]
+                else:
+                    hostname = args.host
+
+                # no SSL for IP addresses
+                socket.inet_aton(hostname)
+                conf['use_ssl'] = False
+            except socket.error:
+                conf['use_ssl'] = True
+
+            # if --host supplied CLI, ignore SSL errors on connect
+            conf['ignore_ssl_errors'] = True
         else:
+            # production config
             conf['host'] = OGRESERVER_HOST
+            conf['use_ssl'] = True
+            conf['ignore_ssl_errors'] = False
 
     providers_to_ignore = []
 

@@ -315,6 +315,7 @@ def client_config(flask_app, calibre_ebook_meta_bin, user):
         'no_drm': True,
         'debug': True,
         'skip_cache': True,
+        'use_ssl': False,
     }
 
 

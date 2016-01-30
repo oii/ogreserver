@@ -166,10 +166,7 @@ def upload():
     try:
         # write uploaded ebook to disk, named as the hash and filetype
         upload_path = app.uploaded_ebooks.save(
-            request.files['ebook'],
-            name='{}.{}'.format(
-                request.form.get('file_hash'), request.form.get('format')
-            )
+            request.files['ebook'], name=request.files['ebook'].filename
         )
     except UploadNotAllowed:
         abort(415)

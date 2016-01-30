@@ -113,9 +113,9 @@ def test_metadata_dedrm(helper_get_ebook, ebook_lib_path, tmpdir):
 
 
 @pytest.mark.requires_calibre
-def test_metadata_ogreid_epub(mock_urlopen, helper_get_ebook, ebook_lib_path, tmpdir):
+def test_metadata_ogreid_epub(mock_connection, helper_get_ebook, ebook_lib_path, tmpdir):
     # mock return from urlopen().read()
-    mock_urlopen.return_value.read.return_value = 'ok'
+    mock_connection.request.return_value = {'result': 'ok'}
 
     # stick Alice in Wonderland into a tmpdir
     shutil.copy(os.path.join(ebook_lib_path, 'pg11.epub'), tmpdir.strpath)
@@ -125,7 +125,7 @@ def test_metadata_ogreid_epub(mock_urlopen, helper_get_ebook, ebook_lib_path, tm
     # add ogre_id to test epub
     ebook_obj.add_ogre_id_tag(
         ebook_id='egg',
-        session_key='thisisnotakey',
+        connection=mock_connection,
     )
 
     # verify that ogre_id is on the epub
@@ -135,9 +135,9 @@ def test_metadata_ogreid_epub(mock_urlopen, helper_get_ebook, ebook_lib_path, tm
 
 
 @pytest.mark.requires_calibre
-def test_metadata_ogreid_mobi(mock_urlopen, helper_get_ebook, ebook_lib_path, tmpdir):
+def test_metadata_ogreid_mobi(mock_connection, helper_get_ebook, ebook_lib_path, tmpdir):
     # mock return from urlopen().read()
-    mock_urlopen.return_value.read.return_value = 'ok'
+    mock_connection.request.return_value = {'result': 'ok'}
 
     # stick Alice in Wonderland into a tmpdir
     shutil.copy(os.path.join(ebook_lib_path, 'pg11.mobi'), tmpdir.strpath)
@@ -150,7 +150,7 @@ def test_metadata_ogreid_mobi(mock_urlopen, helper_get_ebook, ebook_lib_path, tm
     # add ogre_id to test mobi
     ebook_obj.add_ogre_id_tag(
         ebook_id='egg',
-        session_key='thisisnotakey',
+        connection=mock_connection,
     )
 
     # verify that ogre_id is on the mobi
@@ -161,9 +161,9 @@ def test_metadata_ogreid_mobi(mock_urlopen, helper_get_ebook, ebook_lib_path, tm
 
 
 @pytest.mark.requires_calibre
-def test_metadata_ogreid_mobi_utf8(mock_urlopen, helper_get_ebook, ebook_lib_path, tmpdir):
+def test_metadata_ogreid_mobi_utf8(mock_connection, helper_get_ebook, ebook_lib_path, tmpdir):
     # mock return from urlopen().read()
-    mock_urlopen.return_value.read.return_value = 'ok'
+    mock_connection.request.return_value = {'result': 'ok'}
 
     # stick Alice in Wonderland into a tmpdir
     shutil.copy(os.path.join(ebook_lib_path, 'pg11.mobi'), tmpdir.strpath)
@@ -176,7 +176,7 @@ def test_metadata_ogreid_mobi_utf8(mock_urlopen, helper_get_ebook, ebook_lib_pat
     # mobi books add ogre_id it --tags
     ebook_obj.add_ogre_id_tag(
         ebook_id='egg',
-        session_key='thisisnotakey',
+        connection=mock_connection,
     )
 
     # verify that --tags still has the UTF-8

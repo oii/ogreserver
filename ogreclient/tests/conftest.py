@@ -38,8 +38,8 @@ def helper_get_ebook(client_config, ebook_lib_path):
 
 
 @pytest.yield_fixture(scope='function')
-def mock_urlopen():
-    m = mock.patch('ogreclient.ogreclient.core.urllib2.urlopen')
+def mock_connection():
+    m = mock.patch('ogreclient.ogreclient.utils.OgreConnection')
     yield m.start()
     m.stop()
 
@@ -87,9 +87,9 @@ def mock_os_mkdir():
 
 
 @pytest.fixture(scope='function')
-def get_definitions(client_config):
-    def wrapped():
-        return func_get_definitions(client_config, None)
+def get_definitions():
+    def wrapped(connection):
+        return func_get_definitions(connection)
     return wrapped
 
 

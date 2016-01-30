@@ -3,12 +3,11 @@ from __future__ import unicode_literals
 
 import importlib
 import os
-import requests
 import subprocess
 
-from .exceptions import AuthDeniedError, AuthError, DeDrmMissingError, \
+from .exceptions import RequestError, DeDrmNotAvailable, DeDrmMissingError, \
         DecryptionError, DecryptionFailed
-from .utils import capture, enum, make_temp_directory
+from .utils import capture, enum, make_temp_directory, OgreConnection
 
 try:
     # import DeDRM libs, capturing anything that's shat out on STDOUT
@@ -154,31 +153,23 @@ def init_keys(config_dir, ignore_check=False):
     return msgs
 
 
-def download_dedrm(host, username, password, prntr, debug=False):
-    prntr.p('Downloading latest DRM tools from {}'.format(host))
+def download_dedrm(config, prntr, debug=False):
+    prntr.p('Downloading latest DRM tools from {}'.format(config['host']))
 
-    try:
-        from .core import authenticate
-        # authenticate with ogreserver to get DRM tools
-        session_key = authenticate(host, username, password)
-
-    except (AuthError, AuthDeniedError) as e:
-        prntr.e('Permission denied. This is a private system.', excp=e if debug else None)
-        return None
-    except Exception as e:
-        prntr.e("Couldn't get DRM tools", excp=e)
-        return False
+    # authenticate with ogreserver to get DRM tools
+    connection = OgreConnection(config)
+    connection.login(config['username'], config['password'])
 
     prntr.p('Authenticated with Ogreserver')
     prntr.p('Downloading..')
 
-    # download the tarball
-    resp = requests.get(
-        'http://{}/api/v1/download-dedrm'.format(host),
-        headers={'Ogre-key': session_key},
-        stream=True
-    )
-    length = resp.headers.get('Content-length')
+    try:
+        # start download
+        resp, length = connection.download('api/v1/download-dedrm')
+    except RequestError as e:
+        raise DeDrmNotAvailable('Failed getting DeDRM package', inner_excp=e)
+
+    # start progress bar
     prntr.progressf(num_blocks=0, total_size=length)
 
     # stream to file and report progress

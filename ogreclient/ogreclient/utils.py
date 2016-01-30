@@ -11,9 +11,112 @@ import shutil
 import string
 import sys
 import tempfile
-import urllib2
 
-from .exceptions import OgreException
+import requests
+from requests.exceptions import ConnectionError, Timeout
+
+from .exceptions import OgreException, RequestError, AuthError, AuthDeniedError, \
+        OgreserverDownError
+
+
+class OgreConnection(object):
+    session_key = None
+
+    def __init__(self, conf):
+        self.host = conf['host']
+
+    def login(self, username, password):
+        try:
+            # authenticate the user
+            resp = requests.post(
+                'http://{}/login'.format(self.host),
+                json={
+                    'email': username,
+                    'password': password
+                }
+            )
+            data = resp.json()
+        except ConnectionError as e:
+            raise OgreserverDownError(inner_excp=e)
+
+        # bad login
+        if resp.status_code == 403 or data['meta']['code'] >= 400 and data['meta']['code'] < 500:
+            raise AuthDeniedError
+
+        try:
+            self.session_key = data['response']['user']['authentication_token']
+        except KeyError as e:
+            raise AuthError(inner_excp=e)
+
+        return True
+
+    def _init_request(self, url):
+        # build correct URL to ogreserver
+        url = 'http://{}/{}'.format(self.host, url)
+        headers = {'Ogre-key': self.session_key}
+        return url, headers
+
+    def download(self, url):
+        # setup URL and request headers
+        url, headers = self._init_request(url)
+
+        try:
+            # start request with streamed response
+            resp = requests.get(url, headers=headers, stream=True)
+
+        except (Timeout, ConnectionError) as e:
+            raise OgreserverDownError(inner_excp=e)
+
+        # error handle this bitch
+        if resp.status_code != 200:
+            raise RequestError(resp.status_code)
+
+        return resp, resp.headers.get('Content-length')
+
+    def upload(self, url, ebook_obj, data=None):
+        # setup URL and request headers
+        url, headers = self._init_request(url)
+
+        # create file part of multipart POST
+        files = {
+            'ebook': (ebook_obj.safe_name, open(ebook_obj.path, 'rb'))
+        }
+
+        try:
+            # upload some files and data as multipart
+            resp = requests.post(url, headers=headers, data=data, files=files)
+
+        except (Timeout, ConnectionError) as e:
+            raise OgreserverDownError(inner_excp=e)
+
+        # error handle this bitch
+        if resp.status_code != 200:
+            raise RequestError(resp.status_code)
+
+        # JSON response as usual
+        return resp.json()
+
+    def request(self, url, data=None):
+        # setup URL and request headers
+        url, headers = self._init_request(url)
+
+        try:
+            if data is not None:
+                # POST with JSON body
+                resp = requests.post(url, headers=headers, json=data)
+            else:
+                # GET
+                resp = requests.get(url, headers=headers)
+
+        except (Timeout, ConnectionError) as e:
+            raise OgreserverDownError(inner_excp=e)
+
+        # error handle this bitch
+        if resp.status_code != 200:
+            raise RequestError(resp.status_code)
+
+        # replies are always JSON
+        return resp.json()
 
 
 def compute_md5(filepath, buf_size=524288):

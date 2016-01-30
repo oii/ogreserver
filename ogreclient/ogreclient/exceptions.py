@@ -21,18 +21,36 @@ class BaseEbookWarning(OgreWarning):
         super(BaseEbookWarning, self).__init__(message)
 
 
+class RequestError(OgreException):
+    def __init__(self, message=None, status_code=None, inner_excp=None):
+        if message:
+            super(RequestError, self).__init__(message, inner_excp=inner_excp)
+        elif status_code:
+            super(RequestError, self).__init__('Code: {}'.format(status_code), inner_excp=inner_excp)
+        else:
+            super(RequestError, self).__init__(inner_excp=inner_excp)
+
+class AuthDeniedError(RequestError):
+    def __init__(self):
+        super(AuthDeniedError, self).__init__(
+            message='Access denied. This is a private system.'
+        )
+
+class AuthError(RequestError):
+    def __init__(self, inner_excp=None):
+        super(AuthError, self).__init__(
+            message='Authentication error', inner_excp=inner_excp
+        )
+
+class OgreserverDownError(RequestError):
+    def __init__(self, inner_excp=None):
+        super(OgreserverDownError, self).__init__(
+            message='Please try again later :(', inner_excp=inner_excp
+        )
+
+
 class ConfigSetupError(OgreException):
     pass
-
-class AuthDeniedError(OgreException):
-    pass
-
-class AuthError(OgreException):
-    pass
-
-class OgreserverDownError(OgreException):
-    def __init__(self):
-        super(OgreserverDownError, self).__init__('Please try again later :(')
 
 class NoEbooksError(OgreWarning):
     def __init__(self):

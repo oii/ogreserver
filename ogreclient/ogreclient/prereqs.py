@@ -10,12 +10,13 @@ import sys
 
 from .cache import Cache
 from .config import write_config
-from .core import authenticate, get_definitions
+from .core import get_definitions
 from .dedrm import download_dedrm
 from .definitions import OGRESERVER_HOST
 from .exceptions import ConfigSetupError, NoEbookSourcesFoundError, DeDrmNotAvailable, \
         EbookHomeMissingError
 from .providers import PROVIDERS, find_ebook_providers
+from .utils import OgreConnection
 
 
 def setup_ogreclient(args, prntr, conf):
@@ -86,10 +87,11 @@ def setup_ogreclient(args, prntr, conf):
 
     if args.mode in ('sync', 'init'):
         # authenticate user and generate session API key
-        connection = authenticate(conf['host'], conf['username'], conf['password'])
+        connection = OgreConnection(conf)
+        connection.login(conf['username'], conf['password'])
 
         # query the server for current ebook definitions (which file extensions to search for etc)
-        conf['definitions'] = get_definitions(conf, connection)
+        conf['definitions'] = get_definitions(connection)
 
     # write the config file
     write_config(conf)
@@ -145,9 +147,7 @@ def dedrm_check(prntr, args, conf):
 
         # attempt to download and setup dedrm
         attempted_download = True
-        installed = download_dedrm(
-            args.host, conf['username'], conf['password'], prntr, debug=args.debug
-        )
+        installed = download_dedrm(conf, prntr, debug=args.debug)
 
         if installed is None:
             # auth failed contacting ogreserver

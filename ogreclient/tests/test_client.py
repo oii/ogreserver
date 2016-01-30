@@ -8,11 +8,16 @@ import shutil
 from ogreclient.ogreclient.providers import LibProvider
 
 
-def test_get_definitions(mock_urlopen, get_definitions, client_config):
+def test_get_definitions(mock_connection, get_definitions, client_config):
     # /definitions endpoint returns json of app's EBOOK_DEFINITIONS config
-    mock_urlopen.return_value.read.return_value = '[["mobi", true, false], ["pdf", false, true], ["azw", false, true], ["azw3", true, false], ["epub", true, false]]'
-
-    defs = get_definitions()
+    mock_connection.request.return_value = [
+        ['mobi', True, False],
+        ['pdf', False, True],
+        ['azw', False, True],
+        ['azw3', True, False],
+        ['epub', True, False]
+    ]
+    defs = get_definitions(mock_connection)
 
     assert type(defs) is collections.OrderedDict
 

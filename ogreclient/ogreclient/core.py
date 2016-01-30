@@ -2,85 +2,38 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from __future__ import division
 
-import json
 import os
 import shutil
 
-import urllib
-import urllib2
-from urllib2 import HTTPError, URLError
-from .urllib2_file import newHTTPHandler
-
 from .ebook_obj import EbookObject
-from .utils import deserialize_defs, make_temp_directory, retry
+from .utils import OgreConnection, deserialize_defs, make_temp_directory, retry
 from .printer import CliPrinter
 from .providers import LibProvider, PathsProvider
 from .dedrm import decrypt, DRM
 
-from .exceptions import AuthDeniedError, AuthError, NoEbooksError, DuplicateEbookBaseError, \
+from .exceptions import RequestError, NoEbooksError, DuplicateEbookBaseError, \
         ExactDuplicateEbookError, AuthortitleDuplicateEbookError, EbookIdDuplicateEbookError, \
         SyncError, UploadError, CorruptEbookError, FailedWritingMetaDataError, \
         FailedConfirmError, FailedDebugLogsError, MissingFromCacheError, OgreException, \
-        OgreserverDownError, FailedUploadsQueryError, FailedGettingDefinitionsError, \
-        DeDrmMissingError, DecryptionFailed
+        FailedUploadsQueryError, FailedGettingDefinitionsError, DeDrmMissingError, DecryptionFailed
 
 
-def authenticate(host, username, password):
-    try:
-        # authenticate the user; retrieve an session_key for subsequent requests
-        req = urllib2.Request(
-            url='http://{}/login'.format(host),
-            data=json.dumps({
-                'email': username,
-                'password': password
-            }),
-            headers={
-                'Content-type': 'application/json'
-            }
-        )
-        f = urllib2.urlopen(req)
-        data = json.loads(f.read())
-
-        if data['meta']['code'] == 200:
-            return data['response']['user']['authentication_token']
-        else:
-            raise AuthError(json.dumps(data))
-
-    except KeyError as e:
-        raise AuthError(inner_excp=e)
-    except HTTPError as e:
-        if e.getcode() == 403:
-            raise AuthDeniedError
-        else:
-            raise AuthError(inner_excp=e)
-    except URLError as e:
-        if 'Connection refused' in str(e):
-            raise OgreserverDownError
-        else:
-            raise AuthError(inner_excp=e)
-
-
-def get_definitions(config, session_key):
+def get_definitions(connection):
     try:
         # retrieve the ebook format definitions
-        req = urllib2.Request(
-            url='http://{}/api/v1/definitions'.format(config['host']),
-            headers={
-                'Ogre-key': session_key
-            },
-        )
-        f = urllib2.urlopen(req)
+        data = connection.request('api/v1/definitions')
 
         # convert list of lists result into OrderedDict
-        return deserialize_defs(json.loads(f.read()))
+        return deserialize_defs(data)
 
-    except (HTTPError, URLError) as e:
+    except RequestError as e:
         raise FailedGettingDefinitionsError(inner_excp=e)
 
 
 def sync(config, prntr):
     # authenticate user and generate session API key
-    session_key = authenticate(config['host'], config['username'], config['password'])
+    connection = OgreConnection(config)
+    connection.login(config['username'], config['password'])
 
     # let the user know something is happening
     prntr.p('Searching for ebooks..', nonl=True)
@@ -112,18 +65,18 @@ def sync(config, prntr):
     ))
 
     # 3) send dict of ebooks / md5s to ogreserver
-    response = sync_with_server(config, prntr, session_key, ebooks_by_authortitle)
+    response = sync_with_server(config, prntr, connection, ebooks_by_authortitle)
 
     prntr.p('Come on sucker, lick my battery')
 
     # 4) set ogre_id in metadata of each sync'd ebook
-    update_local_metadata(config, prntr, session_key, ebooks_by_filehash, response['to_update'])
+    update_local_metadata(config, prntr, connection, ebooks_by_filehash, response['to_update'])
 
     # 5) query the set of books to upload
-    ebooks_to_upload = query_for_uploads(config, prntr, session_key)
+    ebooks_to_upload = query_for_uploads(config, prntr, connection)
 
     # 6) upload the ebooks requested by ogreserver
-    upload_ebooks(config, prntr, session_key, ebooks_by_filehash, ebooks_to_upload)
+    upload_ebooks(config, prntr, connection, ebooks_by_filehash, ebooks_to_upload)
 
     # 7) display/send errors
     all_errord = [err for err in search_errord+decrypt_errord if isinstance(err, OgreException)]
@@ -133,7 +86,7 @@ def sync(config, prntr):
             prntr.e('Finished with errors. Re-run with --debug to send logs to OGRE')
         else:
             # send a log of all events, and upload bad books
-            send_logs(prntr, config['host'], session_key, all_errord)
+            send_logs(prntr, connection, all_errord)
     else:
         prntr.p('Finished, nothing further to do.')
 
@@ -419,7 +372,7 @@ def remove_drm_from_ebook(config, prntr, ebook_obj):
     return decrypted_ebook_obj
 
 
-def sync_with_server(config, prntr, session_key, ebooks_by_authortitle):
+def sync_with_server(config, prntr, connection, ebooks_by_authortitle):
     # serialize ebooks to dictionary for sending to ogreserver
     ebooks_for_sync = {}
     for authortitle, ebook_obj in ebooks_by_authortitle.iteritems():
@@ -429,36 +382,25 @@ def sync_with_server(config, prntr, session_key, ebooks_by_authortitle):
 
     try:
         # post json dict of ebook data
-        req = urllib2.Request(
-            url='http://{}/api/v1/post'.format(
-                config['host']
-            ),
-            data=json.dumps(ebooks_for_sync),
-            headers={
-                'Content-type': 'application/json',
-                'Ogre-key': session_key
-            },
-        )
-        data = urllib2.urlopen(req).read()
-        response = json.loads(data)
+        data = connection.request('api/v1/post', data=ebooks_for_sync)
 
-    except (HTTPError, URLError) as e:
+    except RequestError as e:
         raise SyncError(inner_excp=e)
 
     # display server messages
-    for msg in response['messages']:
+    for msg in data['messages']:
         if len(msg) == 2:
             prntr.p('{} {}'.format(msg[0], msg[1]), CliPrinter.RESPONSE)
         else:
             prntr.p(msg, CliPrinter.RESPONSE)
 
-    for msg in response['errors']:
+    for msg in data['errors']:
         prntr.e(msg, CliPrinter.RESPONSE)
 
-    return response
+    return data
 
 
-def update_local_metadata(config, prntr, session_key, ebooks_by_filehash, ebooks_to_update):
+def update_local_metadata(config, prntr, connection, ebooks_by_filehash, ebooks_to_update):
     success, failed = 0, 0
 
     # update any books with ogre_id supplied from ogreserver
@@ -467,7 +409,7 @@ def update_local_metadata(config, prntr, session_key, ebooks_by_filehash, ebooks
 
         try:
             # update the metadata on the ebook, and communicate that to ogreserver
-            new_file_hash = ebook_obj.add_ogre_id_tag(item['ebook_id'], session_key)
+            new_file_hash = ebook_obj.add_ogre_id_tag(item['ebook_id'], connection)
 
             # update the global dict with the new file_hash
             del(ebooks_by_filehash[file_hash])
@@ -494,25 +436,17 @@ def update_local_metadata(config, prntr, session_key, ebooks_by_filehash, ebooks
         prntr.e('Failed updating {} ebooks'.format(failed))
 
 
-def query_for_uploads(config, prntr, session_key):
+def query_for_uploads(config, prntr, connection):
     try:
         # query ogreserver for books to upload
-        req = urllib2.Request(
-            url='http://{}/api/v1/to-upload'.format(config['host']),
-            headers={
-                'Content-type': 'application/json',
-                'Ogre-key': session_key
-            },
-        )
-        response = urllib2.urlopen(req).read()
-        data = json.loads(response)
+        data = connection.request('api/v1/to-upload')
         return data['result']
 
-    except (HTTPError, URLError) as e:
+    except RequestError as e:
         raise FailedUploadsQueryError(inner_excp=e)
 
 
-def upload_ebooks(config, prntr, session_key, ebooks_by_filehash, ebooks_to_upload):
+def upload_ebooks(config, prntr, connection, ebooks_by_filehash, ebooks_to_upload):
     if len(ebooks_to_upload) == 0:
         return
 
@@ -531,7 +465,7 @@ def upload_ebooks(config, prntr, session_key, ebooks_by_filehash, ebooks_to_uplo
         # failed uploads are retried three times;
         # a total fail will raise the last exception
         try:
-            upload_single_book(config['host'], session_key, ebook_obj)
+            upload_single_book(connection, ebook_obj)
 
         except UploadError as e:
             # print failures or save for later
@@ -564,49 +498,31 @@ def upload_ebooks(config, prntr, session_key, ebooks_by_filehash, ebooks_to_uplo
 
 
 @retry(times=3)
-def upload_single_book(host, session_key, ebook_obj):
+def upload_single_book(connection, ebook_obj):
     try:
-        with open(ebook_obj.path, "rb") as f:
-            # configure for uploads
-            opener = urllib2.build_opener(newHTTPHandler())
-            opener.addheaders = [
-                ('Ogre-key', session_key)
-            ]
-
-            # build the post params
-            params = {
+        connection.upload(
+            'api/v1/upload',
+            ebook_obj,
+            data={
                 'ebook_id': ebook_obj.ebook_id,
                 'file_hash': ebook_obj.file_hash,
                 'format': ebook_obj.format,
-                'ebook': f,
-            }
-            req = opener.open(
-                'http://{}/api/v1/upload'.format(host), params
-            )
-            if req.code != 200:
-                raise UploadError(ebook_obj)
+            },
+        )
 
-    except (HTTPError, URLError) as e:
+    except RequestError as e:
         raise UploadError(ebook_obj, inner_excp=e)
     except IOError as e:
         raise UploadError(ebook_obj, inner_excp=e)
 
 
-def send_logs(prntr, host, session_key, errord_list):
+def send_logs(prntr, connection, errord_list):
     try:
+        # concat all stored log data
         log_data = '\n'.join(prntr.logs).encode('utf-8')
 
         # post all logs to ogreserver
-        req = urllib2.Request(
-            url='http://{}/api/v1/post-logs'.format(host),
-            data=json.dumps({'raw_logs':log_data}),
-            headers={
-                'Content-type': 'application/json',
-                'Ogre-key': session_key
-            },
-        )
-        resp = urllib2.urlopen(req).read()
-        data = json.loads(resp)
+        data = connection.request('api/v1/post-logs', data={'raw_logs':log_data})
 
         if data['result'] != 'ok':
             raise FailedDebugLogsError('Failed storing the logs, please report this.')
@@ -616,31 +532,19 @@ def send_logs(prntr, host, session_key, errord_list):
         # upload all books which failed
         if errord_list:
             prntr.p('Uploaded failed books to OGRE for debug..')
-
-            opener = urllib2.build_opener(newHTTPHandler())
-            opener.addheaders = [
-                ('Ogre-key', session_key)
-            ]
-
             i = 0
 
             for e in errord_list:
-                filename = os.path.basename(e.ebook_obj.path.encode('utf-8'))
-
-                with open(e.ebook_obj.path, "rb") as f:
-                    # post the file contents
-                    req = opener.open(
-                        'http://{}/api/v1/upload-errord/{}'.format(
-                            host,
-                            urllib.quote_plus(filename),
-                        ),
-                        {'ebook': f},
-                    )
-                    # ignore failures here
-                    req.read()
+                connection.upload(
+                    'api/v1/upload-errord',
+                    e.ebook_obj,
+                    data={
+                        'filename': os.path.basename(e.ebook_obj.path.encode('utf-8'))
+                    },
+                )
 
                 i += 1
                 prntr.progressf(num_blocks=i, total_size=len(errord_list))
 
-    except (HTTPError, URLError) as e:
+    except RequestError as e:
         raise FailedDebugLogsError(inner_excp=e)

@@ -7,10 +7,9 @@ import shutil
 import subprocess
 import sys
 
-import urllib2
 from urllib2 import HTTPError, URLError
 
-from .exceptions import CorruptEbookError, FailedWritingMetaDataError, FailedConfirmError
+from .exceptions import RequestError, CorruptEbookError, FailedWritingMetaDataError, FailedConfirmError
 from .utils import compute_md5, id_generator, make_temp_directory
 
 
@@ -49,6 +48,10 @@ class EbookObject:
     @property
     def shortpath(self):
         return self.path[len(self.config['ebook_home'])+1:]
+
+    @property
+    def safe_name(self):
+        return '{}.{}'.format(self.file_hash, self.format)
 
 
     @staticmethod
@@ -253,7 +256,7 @@ class EbookObject:
         return firstname, lastname
 
 
-    def add_ogre_id_tag(self, ebook_id, session_key):
+    def add_ogre_id_tag(self, ebook_id, connection):
         self.ebook_id = ebook_id
 
         # ebook file format
@@ -288,20 +291,17 @@ class EbookObject:
                 # calculate new MD5 after updating metadata
                 new_hash = compute_md5(tmp_name)[0]
 
-                # ping ogreserver with the book's new hash
-                req = urllib2.Request(
-                    url='http://{}/api/v1/confirm'.format(self.config['host']),
-                    data=json.dumps({
-                        'file_hash': self.file_hash,
-                        'new_hash': new_hash
-                    }),
-                    headers={
-                        'Content-type': 'application/json',
-                        'Ogre-key': session_key
-                    },
-                )
-                resp = urllib2.urlopen(req)
-                data = json.loads(resp.read())
+                try:
+                    # ping ogreserver with the book's new hash
+                    data = connection.request(
+                        'api/v1/confirm',
+                        data={
+                            'file_hash': self.file_hash,
+                            'new_hash': new_hash
+                        }
+                    )
+                except RequestError as e:
+                    raise FailedConfirmError(self, inner_excp=e)
 
                 if data['result'] == 'ok':
                     # move file back into place

@@ -468,11 +468,8 @@ def upload_ebooks(config, prntr, connection, ebooks_by_filehash, ebooks_to_uploa
             upload_single_book(connection, ebook_obj)
 
         except UploadError as e:
-            # print failures or save for later
-            if config['verbose'] is True:
-                prntr.e('Failed uploading {}'.format(ebook_obj.shortpath), excp=e)
-            else:
-                failed_uploads.append(e)
+            # record failures for later
+            failed_uploads.append(e)
         else:
             if config['verbose'] is True:
                 prntr.p('Uploaded {}'.format(ebook_obj.shortpath))

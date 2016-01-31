@@ -82,7 +82,7 @@ def app_config():
 
 
 @pytest.yield_fixture(scope='session')
-def flask_app(request, app_config):
+def _flask_app(request, app_config):
     if request.config.getoption('--only-client'):
         yield None
         return
@@ -98,22 +98,27 @@ def flask_app(request, app_config):
     configure_extensions(app)
     register_blueprints(app)
     register_signals(app)
-    # mock all signals attached to the Flask app
-    for name in app.signals.keys():
-        app.signals[name] = mock.Mock()
     yield app
     if os.path.exists(app_config['WHOOSH_BASE']):
         shutil.rmtree(app_config['WHOOSH_BASE'])
 
 
+@pytest.yield_fixture(scope='function')
+def flask_app(request, _flask_app):
+    # mock all signals attached to the Flask app
+    for name in _flask_app.signals.keys():
+        _flask_app.signals[name] = mock.Mock()
+    yield _flask_app
+
+
 @pytest.fixture(scope='session')
-def ogreserver(request, flask_app):
+def ogreserver(request, _flask_app):
     if request.config.getoption('--only-client'):
         return
 
     from wsgiref.simple_server import make_server
 
-    server = make_server('', 6543, flask_app)
+    server = make_server('', 6543, _flask_app)
     app_thread = threading.Thread(target=server.serve_forever)
     app_thread.start()
     def fin():
@@ -123,7 +128,7 @@ def ogreserver(request, flask_app):
 
 
 @pytest.yield_fixture(scope='session')
-def mysqldb(request, flask_app):
+def mysqldb(request, _flask_app):
     if request.config.getoption('--only-client'):
         yield None
         return
@@ -145,10 +150,10 @@ def mysqldb(request, flask_app):
     run_query('drop database if exists test')
     run_query('create database test')
 
-    with flask_app.test_request_context():
+    with _flask_app.test_request_context():
         # init app tables into test database
-        create_tables(flask_app)
-        db_session = setup_db_session(flask_app)
+        create_tables(_flask_app)
+        db_session = setup_db_session(_flask_app)
         yield db_session
 
     # cleanup the test mysql db
@@ -183,8 +188,8 @@ def _create_user(request, mysqldb):
 
 
 @pytest.fixture(scope='session')
-def ogreclient_auth_token(flask_app, user):
-    client = flask_app.test_client()
+def ogreclient_auth_token(_flask_app, user):
+    client = _flask_app.test_client()
     result = client.post(
         '/login',
         data=json.dumps({'email': user.email, 'password': user.username}),
@@ -194,7 +199,7 @@ def ogreclient_auth_token(flask_app, user):
 
 
 @pytest.yield_fixture(scope='session')
-def rethinkdb_init(request):
+def _rethinkdb(request):
     if request.config.getoption('--only-client'):
         yield None
         return
@@ -250,11 +255,11 @@ def rethinkdb_init(request):
 
 
 @pytest.fixture(scope='function')
-def rethinkdb(request, rethinkdb_init):
-    rethinkdb_init.db('test').table('ebooks').delete().run()
-    rethinkdb_init.db('test').table('versions').delete().run()
-    rethinkdb_init.db('test').table('formats').delete().run()
-    return rethinkdb_init
+def rethinkdb(request, _rethinkdb):
+    _rethinkdb.db('test').table('ebooks').delete().run()
+    _rethinkdb.db('test').table('versions').delete().run()
+    _rethinkdb.db('test').table('formats').delete().run()
+    return _rethinkdb
 
 
 @pytest.fixture(scope='function')

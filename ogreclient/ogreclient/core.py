@@ -91,7 +91,7 @@ def sync(config, prntr):
         prntr.p('Finished, nothing further to do.')
 
 
-def stats(config, prntr, ebooks_by_authortitle=None):
+def scan_and_show_stats(config, prntr):
     ebooks_by_authortitle, ebooks_by_filehash, errord_list, _ = scan_for_ebooks(config, prntr)
 
     counts = {}

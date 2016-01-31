@@ -86,7 +86,7 @@ def setup_ogreclient(args, prntr, conf):
     # return the user's OS
     conf['platform'] = platform.system()
 
-    if args.mode in ('init', 'sync', 'stats'):
+    if args.mode in ('init', 'sync', 'stats', 'scan'):
         ebook_home_found, conf['ebook_home'] = setup_ebook_home(prntr, args, conf)
 
         if not os.path.exists(conf['ebook_home']):

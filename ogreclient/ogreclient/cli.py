@@ -8,7 +8,7 @@ import sys
 from . import __version__
 
 from .config import read_config
-from .core import sync, stats
+from .core import scan_and_show_stats, sync
 from .ebook_obj import EbookObject
 from .prereqs import setup_ogreclient
 from .printer import CliPrinter, DummyPrinter
@@ -125,20 +125,21 @@ def parse_command_line(conf):
         help="Dry run the sync; don't actually upload anything to the server")
 
 
-    # setup parser for stats command
-    pstats = subparsers.add_parser('stats',
+    # setup parser for scan command
+    pscan = subparsers.add_parser('scan',
         parents=[parent_parser],
-        help='View stats on your ebook library',
+        help='Scan your computer for ebooks and see some statistics',
     )
-    pstats.set_defaults(mode='stats')
+    pscan.set_defaults(mode='scan')
 
-    # set ogreserver params which apply to sync & stats
-    for p in (psync, pstats):
+
+    # set ogreserver params which apply to sync & scan
+    for p in (psync, pscan):
         for provider, data in PROVIDERS.iteritems():
             if 'has_{}'.format(provider) in conf:
                 p.add_argument(
                     '--ignore-{}'.format(provider), action='store_true',
-                    help='Ignore ebooks in a local {} install'.format(data['friendly']))
+                    help='Ignore ebooks in {}'.format(data['friendly']))
 
         p.add_argument(
             '--ebook-home', '-H',
@@ -198,9 +199,9 @@ def main(conf, args, prntr):
         # decrypt a single book
         ret = dedrm_single_ebook(conf, prntr, args.inputfile, args.output_dir)
 
-    elif args.mode == 'stats':
-        # calculate and display library stats
-        ret = stats(conf, prntr)
+    elif args.mode == 'scan':
+        # scan for books and display library stats
+        ret = run_scan(conf, prntr)
 
     elif args.mode == 'sync':
         # run ogreclient
@@ -236,6 +237,21 @@ def display_info(conf, prntr, filepath):
     ebook_obj = EbookObject(filepath)
     ebook_obj.get_metadata(conf)
     prntr.p('Book meta', extra=ebook_obj.meta)
+
+
+def run_scan(conf, prntr):
+    ret = False
+
+    try:
+        ret = scan_and_show_stats(conf, prntr)
+
+    # print messages on error
+    except NoEbooksError:
+        prntr.e('No ebooks found. Pass --ebook-home or set $EBOOK_HOME.')
+    except Exception as e:
+        prntr.e('Something went very wrong.', excp=e)
+
+    return ret
 
 
 def run_sync(conf, prntr):

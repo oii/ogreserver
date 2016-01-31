@@ -98,7 +98,7 @@ def setup_ogreclient(args, prntr, conf):
             if ignore_str in vars(args) and vars(args)[ignore_str] is True:
                 providers_to_ignore.append(provider)
 
-        # search for ebook-provider directories; modifies config in-place
+        # scan for ebook-provider directories; modifies config in-place
         find_ebook_providers(prntr, conf, ignore=providers_to_ignore)
 
         # hard error if no ebook provider dirs found
@@ -110,7 +110,7 @@ def setup_ogreclient(args, prntr, conf):
         connection = OgreConnection(conf)
         connection.login(conf['username'], conf['password'])
 
-        # query the server for current ebook definitions (which file extensions to search for etc)
+        # query the server for current ebook definitions (which file extensions to scan for etc)
         conf['definitions'] = get_definitions(connection)
 
     # write the config file

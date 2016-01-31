@@ -36,14 +36,14 @@ def sync(config, prntr):
     connection.login(config['username'], config['password'])
 
     # let the user know something is happening
-    prntr.p('Searching for ebooks..', nonl=True)
+    prntr.p('Scanning for ebooks..', nonl=True)
 
     # 1) find ebooks in config['ebook_home'] on local machine
-    ebooks_by_authortitle, ebooks_by_filehash, search_errord, skipped = search_for_ebooks(config, prntr)
+    ebooks_by_authortitle, ebooks_by_filehash, scan_errord, skipped = scan_for_ebooks(config, prntr)
 
-    if search_errord:
+    if scan_errord:
         prntr.p('Errors occurred during scan:')
-        for e in search_errord:
+        for e in scan_errord:
             prntr.e(e.ebook_obj.path, excp=e)
 
     # 2) remove DRM
@@ -79,7 +79,7 @@ def sync(config, prntr):
     upload_ebooks(config, prntr, connection, ebooks_by_filehash, ebooks_to_upload)
 
     # 7) display/send errors
-    all_errord = [err for err in search_errord+decrypt_errord if isinstance(err, OgreException)]
+    all_errord = [err for err in scan_errord+decrypt_errord if isinstance(err, OgreException)]
 
     if all_errord:
         if not config['debug']:
@@ -92,7 +92,7 @@ def sync(config, prntr):
 
 
 def stats(config, prntr, ebooks_by_authortitle=None):
-    ebooks_by_authortitle, ebooks_by_filehash, errord_list, _ = search_for_ebooks(config, prntr)
+    ebooks_by_authortitle, ebooks_by_filehash, errord_list, _ = scan_for_ebooks(config, prntr)
 
     counts = {}
     errors = {}
@@ -128,7 +128,7 @@ def stats(config, prntr, ebooks_by_authortitle=None):
     prntr.p(output, CliPrinter.STATS, tabular=True, notime=True)
 
 
-def search_for_ebooks(config, prntr):
+def scan_for_ebooks(config, prntr):
     ebooks = []
 
     def _process_filename(filename, provider_name):
@@ -143,7 +143,7 @@ def search_for_ebooks(config, prntr):
         # a LibProvider contains a single directory containing ebooks
         if isinstance(provider, LibProvider):
             if config['debug']:
-                prntr.p('Searching {} in {}'.format(provider.friendly, provider.libpath))
+                prntr.p('Scanning {} in {}'.format(provider.friendly, provider.libpath))
 
             for root, _, files in os.walk(provider.libpath):
                 for filename in files:
@@ -152,7 +152,7 @@ def search_for_ebooks(config, prntr):
         # a PathsProvider contains a list of direct ebook paths
         elif isinstance(provider, PathsProvider):
             if config['debug']:
-                prntr.p('Searching {}'.format(provider.friendly))
+                prntr.p('Scanning {}'.format(provider.friendly))
 
             for path in provider.paths:
                 _process_filename(filename, provider.friendly)
@@ -194,7 +194,7 @@ def search_for_ebooks(config, prntr):
                 ebook_obj.get_metadata()
 
             except CorruptEbookError as e:
-                # record books which failed during search
+                # record books which failed during scan
                 errord_list.append(e)
 
                 # add book to the cache as a skip

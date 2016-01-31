@@ -9,7 +9,7 @@ from collections import namedtuple
 import mock
 import pytest
 
-from ogreclient.ogreclient.core import search_for_ebooks as func_search_for_ebooks
+from ogreclient.ogreclient.core import scan_for_ebooks as func_scan_for_ebooks
 from ogreclient.ogreclient.core import get_definitions as func_get_definitions
 from ogreclient.ogreclient.ebook_obj import EbookObject
 from ogreclient.ogreclient.prereqs import setup_user_auth as func_setup_user_auth
@@ -96,7 +96,7 @@ def get_definitions():
 @pytest.fixture(scope='session')
 def search_for_ebooks():
     def wrapped(client_config):
-        data, _, errord, _ = func_search_for_ebooks(client_config, prntr=DummyPrinter())
+        data, _, errord, _ = func_scan_for_ebooks(client_config, prntr=DummyPrinter())
         return data, errord
     return wrapped
 

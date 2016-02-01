@@ -138,10 +138,10 @@ class EbookObject:
         out_bytes, err_bytes = proc.communicate()
 
         if err_bytes.find('EPubException') > 0:
-            raise CorruptEbookError(self, err_bytes)
+            raise CorruptEbookError(self, err_bytes.decode('utf8'))
 
         # interpret bytes as UTF-8
-        extracted = out_bytes.decode('utf-8')
+        extracted = out_bytes.decode('utf8')
 
         # initialize all the metadata we attempt to extract
         meta = {}

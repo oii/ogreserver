@@ -74,10 +74,13 @@ class Conversion:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            out, err = proc.communicate()
 
-            if len(err) > 0:
-                raise ConversionFailedError(err)
+            # get raw bytes and interpret and UTF8
+            out_bytes, err_bytes = proc.communicate()
+            out = out_bytes.decode('utf8')
+
+            if len(err_bytes) > 0:
+                raise ConversionFailedError(err_bytes.decode('utf8'))
             elif '{} output written to'.format(dest_fmt.upper()) not in out:
                 raise ConversionFailedError(out)
 

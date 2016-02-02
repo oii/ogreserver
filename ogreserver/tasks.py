@@ -123,6 +123,10 @@ def image_upload(ebook_data):
                     ebook_data['meta']['amazon']['image_url'],
                     os.path.join(tmpdir, 'image_file')
                 )
+            except KeyError:
+                app.logger.error('No image available: {}'.format(
+                    ebook_data['meta']['amazon']['image_url']
+                ))
             except Exception as e:
                 app.logger.error('Failed retrieving image {}: {}'.format(
                     ebook_data['meta']['amazon']['image_url'], e

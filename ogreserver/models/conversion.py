@@ -122,33 +122,43 @@ class Conversion:
 
         with make_temp_directory() as temp_dir:
             # copy the ebook to a temp file
-            tmp_name = '{}.{}'.format(os.path.join(temp_dir, id_generator()), fmt)
-            shutil.copy(filepath, tmp_name)
+            temp_file_path = '{}.{}'.format(os.path.join(temp_dir, id_generator()), fmt)
+            shutil.copy(filepath, temp_file_path)
 
-            if fmt == 'mobi':
-                # append ogre's ebook_id to the ebook's comma-separated tags field
-                if ebook['raw_tags'] is not None and len(ebook['raw_tags']) > 0:
-                    new_tags = 'ogre_id={}, {}'.format(ebook['ebook_id'], ebook['raw_tags'])
-                else:
-                    new_tags = 'ogre_id={}'.format(ebook['ebook_id'])
-
-                # write ogre_id to --tags
-                subprocess.check_output(
-                    '/usr/bin/ebook-meta {} --tags {}'.format(tmp_name, new_tags),
-                    stderr=subprocess.STDOUT,
-                    shell=True
-                )
+            # write the OGRE id into the ebook's metadata
+            if fmt == 'epub':
+                Conversion._write_metadata_identifier(ebook, temp_file_path)
             else:
-                # write ogre_id to --identifier
-                subprocess.check_output(
-                    '/usr/bin/ebook-meta {} --identifier ogre_id:{}'.format(tmp_name, ebook_id),
-                    stderr=subprocess.STDOUT,
-                    shell=True
-                )
+                Conversion._write_metadata_tags(ebook, temp_file_path)
 
             # calculate new MD5 after updating metadata
-            new_hash = compute_md5(tmp_name)[0]
+            new_hash = compute_md5(temp_file_path)[0]
 
             # move file back into place
-            shutil.copy(tmp_name, filepath)
+            shutil.copy(temp_file_path, filepath)
             return new_hash
+
+    @staticmethod
+    def _write_metadata_tags(ebook, temp_file_path):
+        # append ogre's ebook_id to the ebook's comma-separated tags field
+        # as Amazon formats don't support identifiers in metadata
+        if ebook['raw_tags'] is not None and len(ebook['raw_tags']) > 0:
+            new_tags = 'ogre_id={}, {}'.format(ebook['ebook_id'], ebook['raw_tags'])
+        else:
+            new_tags = 'ogre_id={}'.format(ebook['ebook_id'])
+
+        # write ogre_id to --tags
+        subprocess.check_output(
+            '/usr/bin/ebook-meta {} --tags {}'.format(temp_file_path, new_tags),
+            stderr=subprocess.STDOUT,
+            shell=True
+        )
+
+    @staticmethod
+    def _write_metadata_identifier(ebook, temp_file_path):
+        # write ogre_id to identifier metadata
+        subprocess.check_output(
+            '/usr/bin/ebook-meta {} --identifier ogre_id:{}'.format(temp_file_path, ebook['ebook_id']),
+            stderr=subprocess.STDOUT,
+            shell=True
+        )

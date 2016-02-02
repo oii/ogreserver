@@ -173,15 +173,15 @@ class EbookObject:
                             del(tags[j])
                     meta['tags'] = ', '.join(tags)
 
-                if fmt[1:] == 'mobi':
-                    # extract the ogre_id which may be embedded into the tags field
-                    if 'ogre_id' in meta['tags']:
-                        tags = meta['tags'].split(', ')
-                        for j in reversed(xrange(len(tags))):
-                            if 'ogre_id' in tags[j]:
-                                self.ebook_id = tags[j][8:]
-                                del(tags[j])
-                        meta['tags'] = ', '.join(tags)
+                # extract the ogre_id which may be embedded into the tags field
+                if 'ogre_id' in meta['tags']:
+                    tags = meta['tags'].split(', ')
+                    for j in reversed(xrange(len(tags))):
+                        if 'ogre_id' in tags[j]:
+                            meta['ebook_id'] = tags[j][8:].strip()
+                            self.ebook_id = meta['ebook_id']
+                            del(tags[j])
+                    meta['tags'] = ', '.join(tags)
                 continue
 
             if 'Author' in line:
@@ -210,7 +210,8 @@ class EbookObject:
                         meta['epubbud'] = ident[7:].strip()
                         continue
                     if ident.startswith('ogre_id'):
-                        self.ebook_id = ident[8:].strip()
+                        meta['ebook_id'] = ident[8:].strip()
+                        self.ebook_id = meta['ebook_id']
 
                 # clean up mixed ASIN tags
                 if 'mobi-asin' in meta.keys() and 'asin' not in meta.keys():
@@ -264,32 +265,18 @@ class EbookObject:
 
         with make_temp_directory() as temp_dir:
             # copy the ebook to a temp file
-            tmp_name = '{}{}'.format(os.path.join(temp_dir, id_generator()), fmt)
-            shutil.copy(self.path, tmp_name)
+            temp_file_path = '{}{}'.format(os.path.join(temp_dir, id_generator()), fmt)
+            shutil.copy(self.path, temp_file_path)
 
             try:
-                if fmt[1:] == 'mobi':
-                    # append ogre's ebook_id to the ebook's comma-separated tags field
-                    # as MOBI doesn't support identifiers in metadata
-                    if 'tags' in self.meta and self.meta['tags']:
-                        new_tags = 'ogre_id={}, {}'.format(ebook_id, self.meta['tags'])
-                    else:
-                        new_tags = 'ogre_id={}'.format(ebook_id)
-
-                    # write ogre_id to --tags
-                    subprocess.check_output(
-                        [self.config['calibre_ebook_meta_bin'], tmp_name, '--tags', new_tags],
-                        stderr=subprocess.STDOUT
-                    )
+                # write the OGRE id into the ebook's metadata
+                if fmt[1:] == 'epub':
+                    self._write_metadata_identifier(temp_file_path)
                 else:
-                    # write ogre_id to identifier metadata
-                    subprocess.check_output(
-                        [self.config['calibre_ebook_meta_bin'], tmp_name, '--identifier', 'ogre_id:{}'.format(ebook_id)],
-                        stderr=subprocess.STDOUT
-                    )
+                    self._write_metadata_tags(temp_file_path)
 
                 # calculate new MD5 after updating metadata
-                new_hash = compute_md5(tmp_name)[0]
+                new_hash = compute_md5(temp_file_path)[0]
 
                 try:
                     # ping ogreserver with the book's new hash
@@ -305,7 +292,7 @@ class EbookObject:
 
                 if data['result'] == 'ok':
                     # move file back into place
-                    shutil.copy(tmp_name, self.path)
+                    shutil.copy(temp_file_path, self.path)
                     self.file_hash = new_hash
                     return new_hash
 
@@ -321,6 +308,34 @@ class EbookObject:
 
             except (HTTPError, URLError) as e:
                 raise FailedConfirmError(self, str(e))
+
+
+    def _write_metadata_tags(self, temp_file_path):
+        # append ogre's ebook_id to the ebook's comma-separated tags field
+        # as Amazon formats don't support identifiers in metadata
+        if 'tags' in self.meta and self.meta['tags']:
+            new_tags = 'ogre_id={}, {}'.format(self.ebook_id, self.meta['tags'])
+        else:
+            new_tags = 'ogre_id={}'.format(self.ebook_id)
+
+        # write ogre_id to --tags
+        subprocess.check_output(
+            [self.config['calibre_ebook_meta_bin'], temp_file_path, '--tags', new_tags],
+            stderr=subprocess.STDOUT
+        )
+
+
+    def _write_metadata_identifier(self, temp_file_path):
+        # write ogre_id to identifier metadata
+        subprocess.check_output(
+            [
+                self.config['calibre_ebook_meta_bin'],
+                temp_file_path,
+                '--identifier',
+                'ogre_id:{}'.format(self.ebook_id)
+            ],
+            stderr=subprocess.STDOUT
+        )
 
 
     def add_dedrm_tag(self):

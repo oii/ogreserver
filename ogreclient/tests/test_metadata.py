@@ -124,14 +124,14 @@ def test_metadata_ogreid_epub(mock_connection, helper_get_ebook, ebook_lib_path,
 
     # add ogre_id to test epub
     ebook_obj.add_ogre_id_tag(
-        ebook_id='egg',
+        ebook_id='ëgg',
         connection=mock_connection,
     )
 
     # verify that ogre_id is on the epub
-    ebook_obj.get_metadata()
-    assert 'uri' in ebook_obj.meta.keys()
-    assert ebook_obj.ebook_id == 'egg'
+    metadata = ebook_obj._metadata_extract()
+    assert metadata.get('ebook_id') == 'ëgg'
+    assert 'ogre_id' not in metadata.get('tags')
 
 
 @pytest.mark.requires_calibre
@@ -149,39 +149,12 @@ def test_metadata_ogreid_mobi(mock_connection, helper_get_ebook, ebook_lib_path,
 
     # add ogre_id to test mobi
     ebook_obj.add_ogre_id_tag(
-        ebook_id='egg',
+        ebook_id='ëgg',
         connection=mock_connection,
     )
 
     # verify that ogre_id is on the mobi
-    ebook_obj.get_metadata()
-    assert ebook_obj.ebook_id == 'egg'
-    assert ebook_obj.meta['tags'] == 'Fantasy'
-    assert 'ogre_id' not in ebook_obj.meta['tags']
-
-
-@pytest.mark.requires_calibre
-def test_metadata_ogreid_mobi_utf8(mock_connection, helper_get_ebook, ebook_lib_path, tmpdir):
-    # mock return from urlopen().read()
-    mock_connection.request.return_value = {'result': 'ok'}
-
-    # stick Alice in Wonderland into a tmpdir
-    shutil.copy(os.path.join(ebook_lib_path, 'pg11.mobi'), tmpdir.strpath)
-
-    ebook_obj = helper_get_ebook('pg11.mobi', basepath=tmpdir.strpath)
-
-    # test tags field
-    ebook_obj.meta['tags'] = 'diaëresis'
-
-    # mobi books add ogre_id it --tags
-    ebook_obj.add_ogre_id_tag(
-        ebook_id='egg',
-        connection=mock_connection,
-    )
-
-    # verify that --tags still has the UTF-8
-    ebook_obj.get_metadata()
-    assert ebook_obj.meta['tags'] == 'diaëresis'
-
-
-# TODO only call get_metadata in helper_get_ebook if requires_calibre mark is set
+    metadata = ebook_obj._metadata_extract()
+    assert metadata.get('ebook_id') == 'ëgg'
+    assert metadata.get('tags') == 'Fantasy'
+    assert 'ogre_id' not in metadata.get('tags')

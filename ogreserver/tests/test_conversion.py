@@ -126,6 +126,44 @@ def test_write_ebook_meta_epub(conversion, mock_compute_md5, mock_subprocess_che
     assert '--identifier ogre_id:nosefleas' in mock_subprocess_check_output.call_args[0][0]
 
 
+def test_write_ebook_meta_azw3(conversion, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
+    # mock compute_md5 to return preset file hash
+    mock_compute_md5.return_value = ('eggsbacon', None)
+
+    # mock out datastore entirely
+    conversion.datastore = mock.Mock()
+    conversion.datastore.load_ebook.return_value = {
+        'raw_tags': None,
+        'ebook_id': 'nosefleas',
+    }
+
+    # ensure correct file_hash returned
+    assert conversion._ebook_write_metadata('nosefleas', 'fake.azw3', 'azw3') == 'eggsbacon'
+
+    # ensure --tags was called with ogre_id
+    assert '--tags ogre_id=nosefleas' in mock_subprocess_check_output.call_args[0][0]
+    assert 'tagged=' not in mock_subprocess_check_output.call_args[0][0]
+
+
+def test_write_ebook_meta_pdf(conversion, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
+    # mock compute_md5 to return preset file hash
+    mock_compute_md5.return_value = ('eggsbacon', None)
+
+    # mock out datastore entirely
+    conversion.datastore = mock.Mock()
+    conversion.datastore.load_ebook.return_value = {
+        'raw_tags': None,
+        'ebook_id': 'nosefleas',
+    }
+
+    # ensure correct file_hash returned
+    assert conversion._ebook_write_metadata('nosefleas', 'fake.pdf', 'pdf') == 'eggsbacon'
+
+    # ensure --tags was called with ogre_id
+    assert '--tags ogre_id=nosefleas' in mock_subprocess_check_output.call_args[0][0]
+    assert 'tagged=' not in mock_subprocess_check_output.call_args[0][0]
+
+
 def test_write_ebook_meta_mobi(conversion, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
     # mock compute_md5 to return preset file hash
     mock_compute_md5.return_value = ('eggsbacon', None)

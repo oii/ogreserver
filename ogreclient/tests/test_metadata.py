@@ -158,3 +158,55 @@ def test_metadata_ogreid_mobi(mock_connection, helper_get_ebook, ebook_lib_path,
     assert metadata.get('ebook_id') == 'ëgg'
     assert metadata.get('tags') == 'Fantasy'
     assert 'ogre_id' not in metadata.get('tags')
+
+
+@pytest.mark.requires_calibre
+def test_metadata_ogreid_pdf(mock_connection, helper_get_ebook, ebook_lib_path, tmpdir):
+    # mock return from urlopen().read()
+    mock_connection.request.return_value = {'result': 'ok'}
+
+    # stick Alice in Wonderland into a tmpdir
+    shutil.copy(os.path.join(ebook_lib_path, 'pg11.pdf'), tmpdir.strpath)
+
+    ebook_obj = helper_get_ebook('pg11.pdf', basepath=tmpdir.strpath)
+
+    # test tags field
+    ebook_obj.meta['tags'] = 'Fantasy'
+
+    # add ogre_id to test pdf
+    ebook_obj.add_ogre_id_tag(
+        ebook_id='ëgg',
+        connection=mock_connection,
+    )
+
+    # verify that ogre_id is on the pdf
+    metadata = ebook_obj._metadata_extract()
+    assert metadata.get('ebook_id') == 'ëgg'
+    assert metadata.get('tags') == 'Fantasy'
+    assert 'ogre_id' not in metadata.get('tags')
+
+
+@pytest.mark.requires_calibre
+def test_metadata_ogreid_azw3(mock_connection, helper_get_ebook, ebook_lib_path, tmpdir):
+    # mock return from urlopen().read()
+    mock_connection.request.return_value = {'result': 'ok'}
+
+    # stick Alice in Wonderland into a tmpdir
+    shutil.copy(os.path.join(ebook_lib_path, 'pg11.azw3'), tmpdir.strpath)
+
+    ebook_obj = helper_get_ebook('pg11.azw3', basepath=tmpdir.strpath)
+
+    # test tags field
+    ebook_obj.meta['tags'] = 'Fantasy'
+
+    # add ogre_id to test azw3
+    ebook_obj.add_ogre_id_tag(
+        ebook_id='ëgg',
+        connection=mock_connection,
+    )
+
+    # verify that ogre_id is on the azw3
+    metadata = ebook_obj._metadata_extract()
+    assert metadata.get('ebook_id') == 'ëgg'
+    assert metadata.get('tags') == 'Fantasy'
+    assert 'ogre_id' not in metadata.get('tags')

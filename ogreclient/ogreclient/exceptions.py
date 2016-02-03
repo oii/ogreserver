@@ -30,7 +30,7 @@ class RequestError(OgreException):
         else:
             super(RequestError, self).__init__(inner_excp=inner_excp)
 
-class AuthDeniedError(RequestError):
+class AuthDeniedError(OgreWarning):
     def __init__(self):
         super(AuthDeniedError, self).__init__(
             message='Access denied. This is a private system.'

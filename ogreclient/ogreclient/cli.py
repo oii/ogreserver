@@ -14,9 +14,8 @@ from .prereqs import setup_ogreclient
 from .printer import CliPrinter, DummyPrinter
 from .providers import PROVIDERS
 
-from .exceptions import OgreException, ConfigSetupError
-from .exceptions import AuthDeniedError, AuthError, NoEbooksError
-from .exceptions import SyncError, UploadError
+from .exceptions import OgreException, OgreWarning, ConfigSetupError, \
+        AuthDeniedError, AuthError, NoEbooksError, SyncError, UploadError
 
 
 def entrypoint():
@@ -48,6 +47,9 @@ def entrypoint():
 
     except ConfigSetupError as e:
         prntr.e('Failed setting up ogreclient', excp=e)
+    except OgreWarning as e:
+        prntr.e(e)
+        ret = 1
     except OgreException as e:
         prntr.e('An exception occurred in ogreclient', excp=e)
         ret = 1

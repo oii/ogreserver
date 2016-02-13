@@ -341,16 +341,16 @@ class CliPrinter:
 
 
 class DummyPrinter:
-    def e(self, msg, prefix=None, excp=None, notime=False):
+    def e(self, *args, **kwargs):
         pass
 
-    def p(self, msg, prefix=None, notime=False, success=None, extra=None, nonl=False):
+    def p(self, *args, **kwargs):
         pass
 
-    def progressi(self, amount, prefix=None):
+    def progressi(self, *args, **kwargs):
         pass
 
-    def progressf(self, num_blocks=None, block_size=None, total_size=None):
+    def progressf(self, *args, **kwargs):
         pass
 
 

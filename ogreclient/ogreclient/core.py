@@ -7,7 +7,6 @@ import shutil
 
 from .ebook_obj import EbookObject
 from .utils import OgreConnection, deserialize_defs, make_temp_directory, retry
-from .printer import CliPrinter
 from .providers import LibProvider, PathsProvider
 from .dedrm import decrypt, DRM
 
@@ -36,7 +35,7 @@ def sync(config, prntr):
     connection.login(config['username'], config['password'])
 
     # let the user know something is happening
-    prntr.p('Scanning for ebooks..', nonl=True)
+    prntr.p('Scanning for ebooks..', nonl=True, bold=True)
 
     # 1) find ebooks in config['ebook_home'] on local machine
     ebooks_by_authortitle, ebooks_by_filehash, scan_errord, skipped = scan_for_ebooks(config, prntr)
@@ -62,12 +61,12 @@ def sync(config, prntr):
     prntr.p('Found {} ebooks total{}'.format(
         len(ebooks_by_authortitle) + skipped,
         ', {} skipped'.format(skipped) if skipped > 0 else ''
-    ))
+    ), bold=True)
 
     # 3) send dict of ebooks / md5s to ogreserver
     response = sync_with_server(config, prntr, connection, ebooks_by_authortitle)
 
-    prntr.p('Come on sucker, lick my battery')
+    prntr.p('Come on sucker, lick my battery', bold=True)
 
     # 4) set ogre_id in metadata of each sync'd ebook
     update_local_metadata(config, prntr, connection, ebooks_by_filehash, response['to_update'])
@@ -87,8 +86,6 @@ def sync(config, prntr):
         else:
             # send a log of all events, and upload bad books
             send_logs(prntr, connection, all_errord)
-    else:
-        prntr.p('Finished, nothing further to do.')
 
 
 def scan_and_show_stats(config, prntr):
@@ -125,7 +122,7 @@ def scan_and_show_stats(config, prntr):
     output += [(k,v) for k,v in errors.iteritems()]
 
     # print table
-    prntr.p(output, CliPrinter.STATS, tabular=True, notime=True)
+    prntr.p(output, tabular=True, notime=True)
 
 
 def scan_for_ebooks(config, prntr):
@@ -159,7 +156,7 @@ def scan_for_ebooks(config, prntr):
 
     i = 0
     skipped = 0
-    prntr.p('Discovered {} files'.format(len(ebooks)))
+    prntr.p('Discovered {} files'.format(len(ebooks)), bold=True)
     if len(ebooks) == 0:
         raise NoEbooksError
 
@@ -330,7 +327,7 @@ def remove_drm_from_ebook(config, prntr, ebook_obj):
 
             elif state == DRM.decrypted:
                 if config['verbose']:
-                    prntr.p('DRM removed from {}'.format(os.path.basename(ebook_obj.path)), CliPrinter.DEDRM, success=True)
+                    prntr.p('DRM removed from {}'.format(os.path.basename(ebook_obj.path)), bold=True)
 
                 # create new ebook_obj for decrypted ebook
                 decrypted_ebook_obj = EbookObject(config=config, filepath=decrypted_filepath, source=ebook_obj.meta['source'])
@@ -347,7 +344,7 @@ def remove_drm_from_ebook(config, prntr, ebook_obj):
                 shutil.move(decrypted_filepath, decrypted_ebook_obj.path)
 
                 if config['verbose']:
-                    prntr.p('Decrypted book moved to {}'.format(decrypted_ebook_obj.shortpath), CliPrinter.DEDRM)
+                    prntr.p('Decrypted book moved to {}'.format(decrypted_ebook_obj.shortpath), success=True)
 
                 # add decrypted book to cache
                 config['ebook_cache'].store_ebook(decrypted_ebook_obj)
@@ -390,12 +387,12 @@ def sync_with_server(config, prntr, connection, ebooks_by_authortitle):
     # display server messages
     for msg in data['messages']:
         if len(msg) == 2:
-            prntr.p('{} {}'.format(msg[0], msg[1]), CliPrinter.RESPONSE)
+            prntr.p('{} {}'.format(msg[0], msg[1]))
         else:
-            prntr.p(msg, CliPrinter.RESPONSE)
+            prntr.p(msg)
 
     for msg in data['errors']:
-        prntr.e(msg, CliPrinter.RESPONSE)
+        prntr.e(msg)
 
     return data
 
@@ -453,7 +450,7 @@ def upload_ebooks(config, prntr, connection, ebooks_by_filehash, ebooks_to_uploa
     # grammatically correct messages are nice
     plural = 's' if len(ebooks_to_upload) > 1 else ''
 
-    prntr.p('Uploading {} file{}. Go make a brew.'.format(len(ebooks_to_upload), plural))
+    prntr.p('Uploading {} file{}. Go make a brew.'.format(len(ebooks_to_upload), plural), bold=True)
 
     success, i = 0, 0
     failed_uploads = []

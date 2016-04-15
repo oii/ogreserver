@@ -28,6 +28,12 @@ if [[ $(uname) =~ (.*)Darwin(.*) ]]; then
     brew install python --with-frameworks
   fi
 
+  if ! command ebook-meta &>/dev/null; then
+    echo '==> Installing Calibre'
+    brew tap caskroom/cask
+    brew cask install calibre
+  fi
+
   if [[ ! -z $VENV ]]; then
     # create a venv if it does not exist
     if [[ ! -d "$HOME/.virtualenvs/$VENV/bin" ]]; then

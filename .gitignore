@@ -33,3 +33,10 @@ celerybeat-schedule
 celerybeat.pid
 
 tests/ebooks/DRM.azw
+
+ogreclient/.Python
+ogreclient/bin/
+ogreclient/include/
+ogreclient/lib/
+ogreclient/pip-selfcheck.json
+ogreclient/share/

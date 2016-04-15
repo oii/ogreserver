@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import fileinput
 import fnmatch
+import glob
 import os
 
 from flask import Blueprint, abort, render_template_string
@@ -70,7 +71,12 @@ def docs_listing():
 def view_doc(doco):
     # render a single doc page
     if not os.path.exists('ogreserver/docs/{}.md'.format(doco)):
-        abort(404)
+        # error handle links missing the numbered prefix
+        results = glob.glob('ogreserver/docs/*{}.md'.format(doco))
+        if results:
+            doco = os.path.basename(results[0][:-3])
+        else:
+            abort(404)
 
     content = []
     in_header = True

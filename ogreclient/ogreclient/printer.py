@@ -155,6 +155,11 @@ class CliPrinter:
                 t, colour, msg, CliPrinter.colours.END
             ))
 
+            # handle multi-line extra text, display it nicely
+            if extra is not None and isinstance(extra, basestring):
+                if '\n' in extra:
+                    extra = extra.split('\n')
+
             if type(extra) is list:
                 for line in extra:
                     out.write('\n{}> {}{}'.format(

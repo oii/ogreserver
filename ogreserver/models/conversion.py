@@ -142,8 +142,8 @@ class Conversion:
     def _write_metadata_tags(ebook, temp_file_path):
         # append ogre's ebook_id to the ebook's comma-separated tags field
         # as Amazon formats don't support identifiers in metadata
-        if ebook['raw_tags'] is not None and len(ebook['raw_tags']) > 0:
-            new_tags = 'ogre_id={}, {}'.format(ebook['ebook_id'], ebook['raw_tags'])
+        if ebook['meta']['raw_tags'] is not None and len(ebook['meta']['raw_tags']) > 0:
+            new_tags = 'ogre_id={}, {}'.format(ebook['ebook_id'], ebook['meta']['raw_tags'])
         else:
             new_tags = 'ogre_id={}'.format(ebook['ebook_id'])
 

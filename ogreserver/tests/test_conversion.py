@@ -115,8 +115,8 @@ def test_write_ebook_meta_epub(conversion, mock_compute_md5, mock_subprocess_che
     # mock out datastore entirely
     conversion.datastore = mock.Mock()
     conversion.datastore.load_ebook.return_value = {
-        'raw_tags': None,
         'ebook_id': 'nosefleas',
+        'meta': {'raw_tags': None},
     }
 
     # ensure correct file_hash returned
@@ -133,8 +133,8 @@ def test_write_ebook_meta_azw3(conversion, mock_compute_md5, mock_subprocess_che
     # mock out datastore entirely
     conversion.datastore = mock.Mock()
     conversion.datastore.load_ebook.return_value = {
-        'raw_tags': None,
         'ebook_id': 'nosefleas',
+        'meta': {'raw_tags': None},
     }
 
     # ensure correct file_hash returned
@@ -152,8 +152,8 @@ def test_write_ebook_meta_pdf(conversion, mock_compute_md5, mock_subprocess_chec
     # mock out datastore entirely
     conversion.datastore = mock.Mock()
     conversion.datastore.load_ebook.return_value = {
-        'raw_tags': None,
         'ebook_id': 'nosefleas',
+        'meta': {'raw_tags': None},
     }
 
     # ensure correct file_hash returned
@@ -171,8 +171,8 @@ def test_write_ebook_meta_mobi(conversion, mock_compute_md5, mock_subprocess_che
     # mock out datastore entirely
     conversion.datastore = mock.Mock()
     conversion.datastore.load_ebook.return_value = {
-        'raw_tags': None,
         'ebook_id': 'nosefleas',
+        'meta': {'raw_tags': None},
     }
 
     # ensure correct file_hash returned
@@ -190,8 +190,8 @@ def test_write_ebook_meta_mobi_with_tags(conversion, mock_compute_md5, mock_subp
     # mock out datastore entirely
     conversion.datastore = mock.Mock()
     conversion.datastore.load_ebook.return_value = {
-        'raw_tags': 'tagged=bacon',
         'ebook_id': 'nosefleas',
+        'meta': {'raw_tags': 'tagged=bacon'},
     }
 
     # ensure correct file_hash returned

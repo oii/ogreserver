@@ -170,18 +170,25 @@ def download_dedrm(config, prntr, debug=False):
         raise DeDrmNotAvailable('Failed getting DeDRM package', inner_excp=e)
 
     # start progress bar
-    prntr.progressf(num_blocks=0, total_size=length)
+    if length is None:
+        prntr.progressi()
+    else:
+        prntr.progressf(num_blocks=0, total_size=length)
+        i = 0
 
     # stream to file and report progress
     with open('/tmp/dedrm.tar.gz', 'wb') as f:
-        i = 0
         for data in resp.iter_content(chunk_size=4096):
-            i += 1
-            prntr.progressf(num_blocks=i, block_size=4096, total_size=length)
             f.write(data)
 
+            # display progress
+            if length is None:
+                prntr.progressi()
+            else:
+                i += 1
+                prntr.progressf(num_blocks=i, block_size=4096, total_size=length)
+
     # end progress bar
-    prntr.progressf(num_blocks=i+1, block_size=4096, total_size=length)
     prntr.close()
 
     try:

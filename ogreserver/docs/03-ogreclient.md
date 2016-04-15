@@ -6,14 +6,14 @@ Summary: Using the O.G.R.E. client and how it interacts with the service
 
 ### Intro
 
-The `ogreclient` command line tool is what you lovely people use to decrypt and share your ebooks with O.G.R.E.
+The `ogreclient` command line tool is what you lovely people use to decrypt and share your ebooks with the OGRE community.
 
 
 ### OSX Installation
 
-Open Terminal.app, and run this command:
+Open Terminal.app, and run this oneliner command:
 
-    curl https://raw.github.com/oii/ogre/ogreclient/install/osx | sudo bash
+    curl -L ogre.oii.yt/install | bash && ogre init
 
 Which will execute the following steps:
 

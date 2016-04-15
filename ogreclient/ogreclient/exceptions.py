@@ -45,7 +45,7 @@ class AuthError(RequestError):
 class OgreserverDownError(RequestError):
     def __init__(self, inner_excp=None):
         super(OgreserverDownError, self).__init__(
-            message='Please try again later :(', inner_excp=inner_excp
+            message='Ogreserver is currently unavailable! Please try again later :(', inner_excp=inner_excp
         )
 
 

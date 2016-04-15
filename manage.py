@@ -25,6 +25,17 @@ manager = Manager(app)
 
 
 @manager.command
+def convert():
+    from ogreserver.models.datastore import DataStore
+    from ogreserver.models.conversion import Conversion
+    app.celery = make_celery(app)
+    register_tasks(app)
+    register_signals(app)
+    conversion = Conversion(app.config, DataStore(app.config, app.logger))
+    conversion.search()
+
+
+@manager.command
 def cleardb():
     if app.debug is False:
         print 'You cannot run cleardb when not in DEBUG!!'

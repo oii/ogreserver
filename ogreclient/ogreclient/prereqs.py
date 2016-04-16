@@ -282,6 +282,8 @@ def setup_ebook_home(prntr, args, conf):
 
         # create OGRE ebook_home for the user :)
         if not os.path.exists(ebook_home):
+            if not os.path.exists(os.path.join(home_dir, 'Documents')):
+                os.mkdir(os.path.join(home_dir, 'Documents'))
             os.mkdir(ebook_home)
             prntr.p('Decrypted ebooks will be put into {}'.format(ebook_home))
     else:

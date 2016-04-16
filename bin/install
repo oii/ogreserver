@@ -1,6 +1,9 @@
-#!/bin/bash
-
+#! /bin/bash -e
+#
 # Ogreclient install script for OSX and linux
+#
+
+trap "echo Exited!; exit;" SIGINT SIGTERM
 
 function install_homebrew {
   echo '==> Installing Homebrew'

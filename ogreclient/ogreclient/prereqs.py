@@ -193,7 +193,7 @@ def dedrm_check(prntr, args, conf):
 
 def setup_user_auth(prntr, args, conf):
     """
-    Setup user auth credentials, values sourced in this order of precedence:
+    Setup user auth credentials, sourced in this order:
      - CLI params
      - ENV vars
      - saved values in ogre config
@@ -210,13 +210,13 @@ def setup_user_auth(prntr, args, conf):
         password = os.environ.get('EBOOK_PASS')
 
     # 3) load settings from saved config
-    if username is None or len(username) == 0:
-        username = conf['username']
-    if password is None or len(password) == 0:
-        password = conf['password']
+    if not username:
+        username = conf.get('username')
+    if not password:
+        password = conf.get('password')
 
     # 4.1) load username via readline
-    if username is None or len(username) == 0:
+    if not username:
         prntr.p("Please enter your O.G.R.E. username, or press enter to use '{}':".format(getpass.getuser()))
         ri = raw_input()
         if len(ri) > 0:
@@ -225,11 +225,11 @@ def setup_user_auth(prntr, args, conf):
             username = getpass.getuser()
 
         # final username verification
-        if username is None or len(username) == 0:
+        if not username:
             raise ConfigSetupError('O.G.R.E. username not supplied')
 
     # 4.2) load password via readline
-    if password is None or len(password) == 0:
+    if not password:
         prntr.p('Please enter your password, or press enter to exit:')
         password = getpass.getpass()
         if len(password) == 0:

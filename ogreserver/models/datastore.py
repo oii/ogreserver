@@ -415,7 +415,7 @@ class DataStore():
         )
         if limit:
             q = q.limit(limit)
-        return q.run()
+        return list(q.run())
 
 
     @staticmethod

@@ -18,7 +18,7 @@ pyaml==15.8.2
 python-dateutil==2.5.2
 python-Levenshtein==0.12.0
 requests==2.9.1
-rethinkdb==2.2.0.post3
+rethinkdb==2.3.0
 SQLAlchemy==1.0.12
 Unidecode==0.04.19
 whoosh==2.7.0

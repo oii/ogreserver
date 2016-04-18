@@ -129,10 +129,17 @@ def _handle_home_Darwin(prntr, provider):
 
 def _handle_kindle_Darwin(prntr, provider):
     # search for Kindle on OSX
-    plist = os.path.expanduser('~/Library/Containers/com.amazon.Kindle/Data/Library/Preferences/com.amazon.Kindle.plist')
+    plist1 = os.path.expanduser('~/Library/Containers/com.amazon.Kindle/Data/Library/Preferences/com.amazon.Kindle.plist')
+    plist2 = os.path.expanduser('~/Library/Preferences/com.amazon.Kindle.plist')
 
     # check OSX plist file exists
-    if not os.path.exists(plist):
+    plist = None
+    for l in (plist1, plist2):
+        if os.path.exists(l):
+            plist = l
+            break
+
+    if plist is None:
         raise KindleUnavailableWarning
 
     # parse plist file and extract Kindle ebooks dir

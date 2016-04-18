@@ -60,6 +60,11 @@ if [[ $(uname) =~ (.*)Darwin(.*) ]]; then
     --trusted-host ogre-staging.oii.yt \
     ogreclient
 
+  if [[ -z $(system_profiler SPApplicationsDataType | awk '/Kindle.app/ {print $2}') ]]; then
+    echo '==> Kindle for Mac is missing:'
+    brew cask install kindle
+    echo 'You will need to open Kindle for Mac and download all the books'
+  fi
 
 elif [[ $(uname) =~ (.*)Debian(.*) ]]; then
   echo 'Not implemented for Debian'

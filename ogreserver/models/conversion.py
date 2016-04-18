@@ -22,10 +22,10 @@ class Conversion:
         Search for ebooks which are missing the key formats epub & mobi
         """
         for dest_fmt in self.config['EBOOK_FORMATS']:
-            # load all ebook versions which are missing the passed ebook format
-            versions = self.datastore.find_missing_formats(dest_fmt, limit=None)
+            # load all ebook format entries which need converting to dest_fmt
+            formats = self.datastore.find_missing_formats(dest_fmt, limit=None)
 
-            for version_id, formats in versions.iteritems():
+            for f in formats:
                 # ebook_id & original format are same for all formats
                 ebook_id = formats[0]['ebook_id']
                 original_format = formats[0]['original_format']
@@ -39,7 +39,7 @@ class Conversion:
                     current_app.signals['convert-ebook'].send(
                         self,
                         ebook_id=ebook_id,
-                        version_id=version_id,
+                        version_id=f['version_id'],
                         original_filename=original_format['s3_filename'],
                         dest_fmt=dest_fmt
                     )

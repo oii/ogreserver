@@ -402,7 +402,7 @@ class DataStore():
                 ...
             ]
         """
-        q = r.table('formats').group(index='version_id').filter({'is_fiction': True}).filter(
+        q = r.table('formats').filter({'is_fiction': True}).filter(
             lambda row: r.table('formats').filter(
                 {'format': fmt}
             )['version_id'].contains(
@@ -411,7 +411,7 @@ class DataStore():
         ).eq_join(
             'version_id', r.table('versions'), index='version_id'
         ).zip().pluck(
-            'format', 'original_format', 'file_hash', 'ebook_id', 's3_filename', 'uploaded'
+            'version_id', 'format', 'original_format', 'file_hash', 'ebook_id', 's3_filename', 'uploaded'
         )
         if limit:
             q = q.limit(limit)

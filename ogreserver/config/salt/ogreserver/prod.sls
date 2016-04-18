@@ -1,4 +1,5 @@
 include:
+  - hostname
   - ogreserver
   - newrelic
   - nginx.acme-ssl

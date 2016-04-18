@@ -1,8 +1,7 @@
 language: python
 cache: pip
 install:
-  - pip install -q -r ogreserver/config/requirements.txt --pre
-  - pip install -q -r requirements_test.txt
+  - pip install -q -r ogreserver/config/requirements.txt -r ogreserver/config/requirements-dev.txt
   - cd ogreclient && python setup.py install && cd ..
 python:
   - '2.7'

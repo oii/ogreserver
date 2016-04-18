@@ -94,16 +94,10 @@ logs-chown:
       - supervisord: ogreserver-supervisor-service
 
 # install pytest
-pytest-install:
+requirements-dev-install:
   pip.installed:
-    - requirements: /srv/ogre/requirements_test.txt
+    - requirements: /srv/ogre/ogreserver/config/requirements-dev.txt
     - bin_env: /home/vagrant/.virtualenvs/{{ pillar['app_name'] }}
     - user: {{ pillar['app_user'] }}
     - require:
       - virtualenv: app-virtualenv
-
-# install ipdb
-ipdb:
-  pip.installed:
-    - bin_env: /home/vagrant/.virtualenvs/{{ pillar['app_name'] }}
-    - user: {{ pillar['app_user'] }}

@@ -1,11 +1,11 @@
 -e git://github.com/oii/flask-markdown.git@9059a634fa642022819d0c5ef6915879bafb95a5#egg=Flask_Markdown-master
+-e git://github.com/mafrosis/flask-security.git@4e52181#egg=Flask-Security-no-reset-email
 Babel==2.3.3
 boto==2.39.0
 bottlenose==0.6.3
 celery==3.1.23
 Flask==0.10.1
 Flask-Script==0.6.7
-Flask-Security==1.7.5
 Flask-Uploads==0.2.0
 Flask-WTF==0.12
 ftfy==4.1.1

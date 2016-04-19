@@ -24,7 +24,7 @@ def when_ebook_updated(sender, ebook_id):
 def when_password_reset(sender, user, **extra):
     send_mail.delay(
         recipient=user.email,
-        subject=app.config['EMAIL_SUBJECT_PASSWORD_NOTICE'],
+        subject=app.config['SECURITY_EMAIL_SUBJECT_PASSWORD_NOTICE'],
         template='reset_notice',
         user=user
     )
@@ -34,7 +34,7 @@ def when_password_changed(sender, user, **extra):
 
     send_mail.delay(
         recipient=user.email,
-        subject=app.config['EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE'],
+        subject=app.config['SECURITY_EMAIL_SUBJECT_PASSWORD_CHANGE_NOTICE'],
         template='change_notice',
         user=user,
         forgot_link=forgot_link
@@ -56,7 +56,7 @@ def when_confirm_instructions_sent(sender, token, user, **extra):
 
     send_mail.delay(
         recipient=user.email,
-        subject=app.config['EMAIL_SUBJECT_CONFIRM'],
+        subject=app.config['SECURITY_EMAIL_SUBJECT_CONFIRM'],
         template='confirmation_instructions',
         user=user,
         confirmation_link=confirmation_link

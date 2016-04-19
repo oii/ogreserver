@@ -88,7 +88,7 @@ resource "aws_instance" "ogre-staging" {
     Name = "ogre-staging"
   }
 
-  user_data = "#!/bin/bash\n/usr/local/bin/acmetool --batch reconcile && systemctl restart nginx"
+  user_data = "#cloud-config\npreserve_hostname: true\nruncmd:\n - /usr/local/bin/acmetool --batch reconcile\n - systemctl restart nginx"
 
   # associate EIP to the EC2 instance
   provisioner "local-exec" {

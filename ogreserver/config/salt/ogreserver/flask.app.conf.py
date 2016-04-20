@@ -113,6 +113,8 @@ SECURITY_LOGIN_SALT = 'login-{}'.format(SECRET_KEY)
 SECURITY_CHANGE_SALT = 'change-{}'.format(SECRET_KEY)
 SECURITY_REMEMBER_SALT = 'remember-{}'.format(SECRET_KEY)
 
+# Email sender
+SECURITY_EMAIL_SENDER = 'ogre@mafro.net'
 
 # Confirmation emails and password reset
 SECURITY_CONFIRM_EMAIL_WITHIN = '7 days'

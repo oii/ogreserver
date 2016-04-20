@@ -7,11 +7,7 @@ from flask import Flask
 from celery import Celery
 
 from .extensions.celery import queue_configuration, schedule_tasks
-
-if os.path.exists(os.path.join(os.getcwd(), 'flask.app.conf.py')):
-    flask_conf = os.path.join(os.getcwd(), 'flask.app.conf.py')
-elif os.path.exists('/etc/ogre/flask.app.conf.py'):
-    flask_conf = '/etc/ogre/flask.app.conf.py'
+from .extensions.config import init_config
 
 
 class StaticFolderFlask(Flask):
@@ -37,13 +33,8 @@ def create_app(config=None):
     # instantiate Flask application
     app = StaticFolderFlask(__name__)
 
-    if config is not None and type(config) is dict:
-        app.config.update(config)
-    else:
-        try:
-            app.config.from_pyfile(flask_conf)
-        except IOError:
-            raise Exception('Missing application config! No file at {}'.format(flask_conf))
+    # load config from param/filesystem/env
+    init_config(app, config=config)
 
     def setup_db_before_request():
         # setup DB connection for each request via Flask.before_request()

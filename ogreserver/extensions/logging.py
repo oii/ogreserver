@@ -4,8 +4,10 @@ import logging
 
 
 def init_logging(app):
-    # set logging level for production
-    if app.debug is False:
+    if app.config['DEBUG'] is True:
+        app.logger.setLevel(logging.DEBUG)
+    else:
+        # set logging level for production
         app.logger.setLevel(app.config.get('LOGGING_LEVEL', logging.ERROR))
 
     # setup the log format

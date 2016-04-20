@@ -5,9 +5,14 @@
 
 trap "echo Exited!; exit;" SIGINT SIGTERM
 
+red=$(tput setaf 1)
+green=$(tput setaf 2)
+white=$(tput setaf 7)
+reset=$(tput sgr0)
+
 function install_homebrew {
-  echo '==> Installing Homebrew'
   if ! command -v brew >/dev/null 2>&1; then
+    echo "${white}==> Installing Homebrew${reset}"
     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
   fi
 }
@@ -27,12 +32,12 @@ if [[ $(uname) =~ (.*)Darwin(.*) ]]; then
   install_homebrew
 
   if ! command pip &>/dev/null; then
-    echo '==> Installing/Updating Python'
+    echo "${white}==> Installing/Updating Python${reset}"
     brew install python --with-frameworks
   fi
 
   if ! command ebook-meta &>/dev/null; then
-    echo '==> Installing Calibre'
+    echo "${white}==> Installing Calibre${reset}"
     brew tap caskroom/cask
     brew cask install calibre
   fi
@@ -40,9 +45,9 @@ if [[ $(uname) =~ (.*)Darwin(.*) ]]; then
   if [[ ! -z $VENV ]]; then
     # create a venv if it does not exist
     if [[ ! -d "$HOME/.virtualenvs/$VENV/bin" ]]; then
-      echo '==> Installing virtualenv:'
+      echo "${white}==> Installing virtualenv:${reset}"
       pip install virtualenv
-      echo '==> Creating a virtualenv:'
+      echo "${white}==> Creating a virtualenv:${reset}"
       mkdir ~/.virtualenvs
       virtualenv ~/.virtualenvs/$VENV
     fi
@@ -51,27 +56,30 @@ if [[ $(uname) =~ (.*)Darwin(.*) ]]; then
     source ~/.virtualenvs/$VENV/bin/activate
   fi
 
-  echo '==> Upgrading pip:'
+  echo "${white}==> Upgrading pip:${reset}"
   pip install -U pip
 
-  echo '==> Installing ogreclient:'
+  echo "${white}==> Installing ogreclient:${reset}"
   pip install \
     --extra-index-url http://ogre-staging.oii.yt:8233/simple \
     --trusted-host ogre-staging.oii.yt \
     ogreclient
 
   if [[ -z $(system_profiler SPApplicationsDataType | awk '/Kindle.app/ {print $2}') ]]; then
-    echo '==> Kindle for Mac is missing:'
+    echo "${white}==> Kindle for Mac is missing:${reset}"
     brew cask install kindle
-    echo 'You will need to open Kindle for Mac and download all the books'
   fi
 
+  echo "${green}==> Ogreclient install complete${reset}"
+  echo ''
+  echo 'You will need to open Kindle for Mac and download all the books'
+
 elif [[ $(uname) =~ (.*)Debian(.*) ]]; then
-  echo 'Not implemented for Debian'
+  echo "${red}Not implemented for Debian${reset}"
   exit 1
 
 elif [[ $(uname) =~ (.*)Ubuntu(.*) ]]; then
-  echo 'Not implemented for Ubuntu'
+  echo "${red}Not implemented for Ubuntu${reset}"
   exit 1
 
 fi

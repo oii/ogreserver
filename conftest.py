@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import collections
+import datetime
 import json
 import logging
 import os
@@ -181,6 +182,7 @@ def _create_user(request, mysqldb):
     username = ''.join(random.choice(string.ascii_lowercase) for n in range(6))
     # create user in auth DB
     user = User(username, password=username, email='{}@example.com'.format(username), active=True, roles=[])
+    user.confirmed_at = datetime.datetime.utcnow()
     user.preferred_ebook_format = 'mobi'
     mysqldb.add(user)
     mysqldb.commit()

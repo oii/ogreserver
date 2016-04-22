@@ -142,7 +142,9 @@ def image_upload(ebook_data):
                 bucket = s3.get_bucket(app.config['STATIC_S3_BUCKET'])
                 k = boto.s3.key.Key(bucket)
                 k.key = filename
-                k.set_contents_from_filename(res[0])
+                k.content_type = 'image/jpeg'
+                k.set_contents_from_filename(res[0], policy='public-read')
+
             except S3ResponseError as e:
                 app.logger.error('Error uploading to S3: {}'.format(e))
                 return

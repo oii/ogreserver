@@ -34,9 +34,9 @@ class ExtendedLoginForm(LoginForm):
 
 
 class SQLAlchemyDatastore(Datastore):
-    def __init__(self, app):
-        self.app = app
-
+    """
+    SQLAlchemyDatastore implementation which doesn't use Flask-SQLAlchemy
+    """
     def commit(self):
         g.db_session.commit()
 
@@ -50,11 +50,12 @@ class SQLAlchemyDatastore(Datastore):
 
 class OgreUserDatastore(SQLAlchemyDatastore, UserDatastore):
     """
-    A SQLAlchemy datastore implementation for Flask-Security that assumes the
-    use of the Flask-SQLAlchemy extension.
+    A SQLAlchemy datastore implementation for Flask-Security.
+
+    This was copied from the Flask-Security source and modified to inherit from
+    own our SQLAlchemyDatastore which doesn't use Flask-SQLAlchemy
     """
     def __init__(self, app, user_model, role_model):
-        SQLAlchemyDatastore.__init__(self, app)
         UserDatastore.__init__(self, user_model, role_model)
 
     def get_user(self, identifier):

@@ -31,7 +31,7 @@ DEBUG = True
 STATIC_BASE_URL = "http://{{ grains['ip4_interfaces']['eth0'][0] }}:8880"
 {% else %}
 DEBUG = False
-STATIC_BASE_URL = "https://s3.amazonaws.com"
+STATIC_BASE_URL = "https://s3-eu-west-1.amazonaws.com"
 {% endif %}
 BETA = True
 

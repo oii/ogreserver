@@ -600,7 +600,7 @@ class DataStore():
         r.table('formats').get(file_hash).update({'dedrm': True}).run()
 
 
-    def store_ebook(self, ebook_id, file_hash, filepath, username):
+    def store_ebook(self, ebook_id, file_hash, filepath, username, content_type=None):
         """
         Store an ebook on S3
         """
@@ -615,6 +615,7 @@ class DataStore():
         # create a new storage key
         k = boto.s3.key.Key(bucket)
         k.key = filename
+        k.content_type = content_type
 
         # check if our file is already up on S3
         if k.exists() is True:

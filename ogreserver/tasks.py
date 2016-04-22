@@ -191,8 +191,13 @@ def store_ebook(ebook_id, filename, file_hash, fmt, username):
             # local path of uploaded file
             filepath = os.path.join(app.config['UPLOADED_EBOOKS_DEST'], os.path.basename(filename))
 
+            # determine ebook file content type
+            content_type = None
+            if fmt in app.config['EBOOK_CONTENT_TYPES']:
+                content_type = app.config['EBOOK_CONTENT_TYPES'][fmt]
+
             # store the file into S3
-            ds.store_ebook(ebook_id, file_hash, filepath, username)
+            ds.store_ebook(ebook_id, file_hash, filepath, username, content_type)
 
         except S3DatastoreError as e:
             app.logger.error('Failed uploading {} with {}'.format(file_hash, e))

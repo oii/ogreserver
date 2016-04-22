@@ -80,6 +80,12 @@ EBOOK_DEFINITIONS = collections.OrderedDict([
 # Ebook conversion formats; all books will be provided in these formats by OGRE
 EBOOK_FORMATS = ['azw3', 'epub']
 
+# Set the correct content-type on S3
+EBOOK_CONTENT_TYPES = {
+    'azw3': 'application/vnd.amazon.ebook',
+    'epub': 'application/epub+zip',
+}
+
 # OGRE download links expire in 10 seconds
 DOWNLOAD_LINK_EXPIRY = 10
 

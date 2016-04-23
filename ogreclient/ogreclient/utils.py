@@ -48,6 +48,10 @@ class OgreConnection(object):
                 },
                 verify=not self.ignore_ssl_errors
             )
+            # 502 in prod means Flask app is down
+            if resp.status_code == 502:
+                raise OgreserverDownError
+
             data = resp.json()
         except ConnectionError as e:
             raise OgreserverDownError(inner_excp=e)

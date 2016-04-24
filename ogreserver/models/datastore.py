@@ -198,9 +198,14 @@ class DataStore():
         return author, title
 
 
-    def _create_new_ebook(self, title, author, user, incoming):
+    @staticmethod
+    def _generate_ebook_id(author, title):
         # generate the ebook_id from the author and title
-        ebook_id = unicode(hashlib.md5(("~".join((author, title))).encode('UTF-8')).hexdigest())
+        return unicode(hashlib.md5(("~".join((author, title))).encode('utf8')).hexdigest())
+
+
+    def _create_new_ebook(self, title, author, user, incoming):
+        ebook_id = DataStore._generate_ebook_id(author, title)
 
         # parse dates
         if 'publish_date' in incoming['meta']:

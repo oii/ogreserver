@@ -256,13 +256,6 @@ class DataStore():
         # create version and initial format
         version_id = self._create_new_version(ebook_id, user.username, incoming)
 
-        # record the file_hash of the originally supplied ebook
-        ret = r.table('versions').get(version_id).update({
-            'original_filehash': incoming['file_hash']
-        }).run()
-        if 'first_error' in ret:
-            raise RethinkdbError(ret['first_error'])
-
         # signal new ebook created (when running in flask context)
         current_app.signals['ebook-created'].send(self, ebook_data=new_book)
         return ebook_id
@@ -290,15 +283,25 @@ class DataStore():
         if 'first_error' in ret:
             raise RethinkdbError(ret['first_error'])
 
+        version_id = ret['generated_keys'][0]
+
         # create a new format
         self._create_new_format(
-            ret['generated_keys'][0],
+            version_id,
             incoming['file_hash'],
             incoming['format'],
             username=username,
             dedrm=incoming['dedrm'],
         )
-        return ret['generated_keys'][0]
+
+        # record the file_hash of the originally supplied ebook
+        ret = r.table('versions').get(version_id).update({
+            'original_filehash': incoming['file_hash']
+        }).run()
+        if 'first_error' in ret:
+            raise RethinkdbError(ret['first_error'])
+
+        return version_id
 
 
     def _create_new_format(self, version_id, file_hash, fmt, username=None, dedrm=None, ogreid_tagged=False):

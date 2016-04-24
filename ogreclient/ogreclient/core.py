@@ -264,10 +264,6 @@ def clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash):
     i = 0
     cleaned = 0
 
-    # init OGRE directory in user's ebook dir
-    if not os.path.exists(os.path.join(config['ebook_home'], 'ogre')):
-        os.mkdir(os.path.join(config['ebook_home'], 'ogre'))
-
     prntr.p('Ebook directory is {}'.format(config['ebook_home']))
 
     for authortitle, ebook_obj in ebooks_by_authortitle.iteritems():
@@ -342,7 +338,7 @@ def remove_drm_from_ebook(config, prntr, ebook_obj):
 
                 # move decrypted book into ebook library
                 decrypted_ebook_obj.path = os.path.join(
-                    config['ebook_home'], 'ogre', os.path.basename(decrypted_filepath)
+                    config['ebook_home'], os.path.basename(decrypted_filepath)
                 )
                 shutil.move(decrypted_filepath, decrypted_ebook_obj.path)
 
@@ -461,6 +457,9 @@ def upload_ebooks(config, prntr, connection, ebooks_by_filehash, ebooks_to_uploa
     # upload each requested by the server
     for file_hash in ebooks_to_upload:
         ebook_obj = ebooks_by_filehash[file_hash]
+
+        # TODO progress bar the uploads
+        # https://gitlab.com/sigmavirus24/toolbelt/blob/master/examples/monitor/progress_bar.py
 
         # failed uploads are retried three times;
         # a total fail will raise the last exception

@@ -330,12 +330,15 @@ def remove_drm_from_ebook(config, prntr, ebook_obj):
                     prntr.p('DRM removed from {}'.format(os.path.basename(ebook_obj.path)), bold=True)
 
                 # create new ebook_obj for decrypted ebook
-                decrypted_ebook_obj = EbookObject(config=config, filepath=decrypted_filepath, source=ebook_obj.meta['source'])
-                decrypted_ebook_obj.compute_md5()
+                decrypted_ebook_obj = EbookObject(
+                    config=config,
+                    filepath=decrypted_filepath,
+                    source=ebook_obj.meta['source']
+                )
 
                 # add the OGRE DeDRM tag to the decrypted ebook
-                # TODO handle CorruptEbookError via get_metadata
                 decrypted_ebook_obj.add_dedrm_tag()
+                decrypted_ebook_obj.compute_md5()
 
                 # move decrypted book into ebook library
                 decrypted_ebook_obj.path = os.path.join(

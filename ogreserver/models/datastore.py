@@ -45,6 +45,11 @@ class DataStore():
                 # build output to return to client
                 output[incoming['file_hash']] = {'new': False, 'update': False, 'dupe': False}
 
+                # parse and cleanup incoming text
+                author, title = DataStore._parse_and_sanitize(
+                    authortitle, incoming['meta'], file_hash=incoming['file_hash'][0:7]
+                )
+
                 existing_ebook = None
 
                 try:
@@ -55,9 +60,11 @@ class DataStore():
                     del(incoming['ebook_id'])
 
                 except KeyError as e:
+                    # verify if this ebook_id already exists in the DB, but is not on the incoming ebook
+                    existing_ebook = self.load_ebook(DataStore._generate_ebook_id(author, title))
+
                     # tell client to set ogre_id on this ebook
                     output[incoming['file_hash']]['update'] = True
-
 
                 # check if this exact file has been uploaded before
                 if r.table('formats').get(incoming['file_hash']).run():
@@ -96,11 +103,6 @@ class DataStore():
                     # these are treated as new versions of an existing ebook
                     if 'isbn' in incoming['meta']:
                         existing_ebook = next(r.table('ebooks').get_all(incoming['meta']['isbn'], index='isbn').run(), None)
-
-                # parse and cleanup incoming text
-                author, title = DataStore._parse_and_sanitize(
-                    authortitle, incoming['meta'], file_hash=incoming['file_hash'][0:7]
-                )
 
                 if not existing_ebook:
                     # check for author/title duplicates

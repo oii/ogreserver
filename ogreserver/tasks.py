@@ -62,6 +62,9 @@ def query_ebook_metadata(ebook_data):
             # store all Amazon data in ebook meta
             ebook_data['meta']['amazon'] = am_data
 
+            # copy ASIN into top-level ebook meta
+            ebook_data['meta']['asin'] = am_data['asin']
+
             # variables for further Goodreads API call
             author = am_data['author']
             title = am_data['title']

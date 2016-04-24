@@ -83,18 +83,19 @@ class DataStore():
                             original_ebook['file_hash']
                         )
 
-                # check for ASIN duplicates
-                # the assumption is that ASIN dupes are the same book from the Amazon store
-                # they will ALWAYS have different file_hashes due to decryption of every file
-                if 'asin' in incoming['meta']:
-                    existing_ebook = next(r.table('ebooks').get_all(incoming['meta']['asin'], index='asin').run(), None)
-                    if existing_ebook is not None:
-                        raise AsinDuplicateError(existing_ebook['ebook_id'])
+                if existing_ebook is None:
+                    # check for ASIN duplicates
+                    # the assumption is that ASIN dupes are the same book from the Amazon store
+                    # they will ALWAYS have different file_hashes due to decryption of every file
+                    if 'asin' in incoming['meta']:
+                        existing_ebook = next(r.table('ebooks').get_all(incoming['meta']['asin'], index='asin').run(), None)
+                        if existing_ebook is not None:
+                            raise AsinDuplicateError(existing_ebook['ebook_id'])
 
-                # check for ISBN duplicates
-                # these are treated as new versions of an existing ebook
-                if 'isbn' in incoming['meta']:
-                    existing_ebook = next(r.table('ebooks').get_all(incoming['meta']['isbn'], index='isbn').run(), None)
+                    # check for ISBN duplicates
+                    # these are treated as new versions of an existing ebook
+                    if 'isbn' in incoming['meta']:
+                        existing_ebook = next(r.table('ebooks').get_all(incoming['meta']['isbn'], index='isbn').run(), None)
 
                 try:
                     # derive author and title from the key

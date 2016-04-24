@@ -97,27 +97,10 @@ class DataStore():
                     if 'isbn' in incoming['meta']:
                         existing_ebook = next(r.table('ebooks').get_all(incoming['meta']['isbn'], index='isbn').run(), None)
 
-                try:
-                    # derive author and title from the key
-                    author, title = authortitle.split('\u0007')
-                    firstname, lastname = author.split('\u0006')
-
-                    # sanitize incoming text
-                    for value in (title, firstname, lastname):
-                        value = ftfy.fix_text(value.strip())
-
-                    for _, value in incoming['meta'].iteritems():
-                        value = ftfy.fix_text(value.strip())
-
-                except Exception as e:
-                    raise BadMetaDataError("Bad meta data on {}: {}".format(
-                        incoming['file_hash'][0:7],
-                        authortitle.replace('\u0007', ' ').replace('\u0006', ' ')
-                    ), e)
-
-                # recombine firstname, lastname into author
-                author = '{} {}'.format(firstname, lastname)
-
+                # parse and cleanup incoming text
+                author, title = DataStore._parse_and_sanitize(
+                    authortitle, incoming['meta'], file_hash=incoming['file_hash'][0:7]
+                )
 
                 if not existing_ebook:
                     # check for author/title duplicates
@@ -187,6 +170,32 @@ class DataStore():
                 output[incoming['file_hash']]['update'] = False
 
         return output
+
+
+    @staticmethod
+    def _parse_and_sanitize(authortitle, metadata, file_hash=None):
+        try:
+            # derive author and title from the key
+            author, title = authortitle.split('\u0007')
+            firstname, lastname = author.split('\u0006')
+
+            # sanitize incoming text
+            title = ftfy.fix_text(title.strip())
+            firstname = ftfy.fix_text(firstname.strip())
+            lastname = ftfy.fix_text(lastname.strip())
+
+            for k, v in metadata.iteritems():
+                metadata[k] = ftfy.fix_text(v.strip())
+
+        except Exception as e:
+            raise BadMetaDataError("Bad meta data on {}: {}".format(
+                file_hash,
+                authortitle.replace('\u0007', ' ').replace('\u0006', ' ')
+            ), e)
+
+        # recombine firstname, lastname into author
+        author = '{} {}'.format(firstname, lastname)
+        return author, title
 
 
     def _create_new_ebook(self, title, author, user, incoming):

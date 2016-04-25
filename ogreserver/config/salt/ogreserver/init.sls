@@ -127,6 +127,12 @@ ogre-init:
       - mysql_grants: create-mysql-user-perms
       - pip: rethinkdb-python-driver
 
+clone-dedrm:
+  git.latest:
+    - name: https://github.com/oii/DeDRM_tools.git
+    - rev: ogre
+    - target: /srv/ogre/dedrm
+
 # build dedrm and stick it in the pypiserver cache
 build-dedrm:
   cmd.run:
@@ -134,6 +140,7 @@ build-dedrm:
     - cwd: /srv/ogre/dedrm
     - require:
       - git: git-clone-app
+      - git: clone-dedrm
   file.rename:
     - name: /var/pypiserver-cache/dedrm-6.0.7.tar.gz
     - source: /srv/ogre/dedrm/dist/dedrm-6.0.7.tar.gz

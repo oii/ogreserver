@@ -142,8 +142,8 @@ build-dedrm:
       - git: git-clone-app
       - git: clone-dedrm
   file.rename:
-    - name: /var/pypiserver-cache/dedrm-6.0.7.tar.gz
-    - source: /srv/ogre/dedrm/dist/dedrm-6.0.7.tar.gz
+    - name: /var/pypiserver-cache/dedrm-{{ pillar['dedrm_version'] }}.tar.gz
+    - source: /srv/ogre/dedrm/dist/dedrm-{{ pillar['dedrm_version'] }}.tar.gz
     - force: true
     - require:
       - file: pypiserver-package-dir

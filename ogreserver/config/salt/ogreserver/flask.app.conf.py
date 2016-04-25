@@ -86,6 +86,9 @@ EBOOK_CONTENT_TYPES = {
     'epub': 'application/epub+zip',
 }
 
+# Version of DeDRM tools
+DEDRM_VERSION = '{{ pillar['dedrm_version'] }}'
+
 # OGRE download links expire in 10 seconds
 DOWNLOAD_LINK_EXPIRY = 10
 

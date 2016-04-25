@@ -56,6 +56,7 @@ def app_config():
         'AWS_ACCESS_KEY': '',
         'AWS_SECRET_KEY': '',
         'EBOOK_S3_BUCKET': 'ogre-testing',
+        'DEDRM_VERSION': '0.0.1',
 
         'EBOOK_DEFINITIONS': collections.OrderedDict([
             ('mobi', FormatConfig(True, False)),

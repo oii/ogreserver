@@ -40,7 +40,7 @@ def get_definitions():
 @auth_token_required
 def download_dedrm():
     # supply the latest DRM tools to the client
-    with open('/var/pypiserver-cache/dedrm-6.0.7.tar.gz', 'r') as f:
+    with open('/var/pypiserver-cache/dedrm-{}.tar.gz'.format(app.config['DEDRM_VERSION']), 'r') as f:
         return make_response(f.read())
 
 

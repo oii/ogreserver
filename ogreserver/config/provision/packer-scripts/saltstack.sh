@@ -15,10 +15,10 @@ else
 fi
 
 echo '==> Installing git, pip and pygit2'
-apt-get install -y git python-pip build-essential cmake python-dev python-cffi libffi-dev libssl-dev
+apt-get install -y git python-pip build-essential cmake python-dev libffi-dev libssl-dev
 
 # install libgit2 from source
-git clone --branch v0.23.2 git://github.com/libgit2/libgit2.git /opt/libgit2
+git clone --branch v0.24.1 git://github.com/libgit2/libgit2.git /opt/libgit2
 cd /opt/libgit2 || exit 1
 mkdir build && cd build || exit 1
 cmake ..
@@ -29,7 +29,7 @@ cmake --build . --target install
 ldconfig
 
 # install pygit2
-pip install -U pip pygit2==0.23.2
+pip install -U cffi pip pygit2==0.24.1
 
 # cleanup
 apt-get remove -y libffi-dev libssl-dev

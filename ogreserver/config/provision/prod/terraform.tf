@@ -1,5 +1,5 @@
 atlas {
-  name = "mafrosis/ogre-staging"
+  name = "mafrosis/ogre-prod"
 }
 provider "aws" {
   access_key = "${var.AWS_ACCESS_KEY}"
@@ -51,8 +51,8 @@ resource "aws_security_group" "default" {
   }
 }
 
-resource "atlas_artifact" "ogre-staging" {
-  name = "mafrosis/ogre-staging"
+resource "atlas_artifact" "ogre-prod" {
+  name = "mafrosis/ogre-prod"
   type = "amazon.image"
   version = "${var.version}"
 }
@@ -72,13 +72,13 @@ EOH
 
   # re-run this everytime the AMI id has changed
   triggers {
-    ami = "${atlas_artifact.ogre-staging.metadata_full.region-eu-west-1}"
+    ami = "${atlas_artifact.ogre-prod.metadata_full.region-eu-west-1}"
   }
 }
 
 resource "aws_instance" "ogre-ec2" {
-  ami = "${var.ami}"
-  instance_type = "t2.medium"
+  ami = "${atlas_artifact.ogre-prod.metadata_full.region-eu-west-1}"
+  instance_type = "t2.large"
 
   security_groups = ["${aws_security_group.default.name}"]
   key_name = "${var.key_name}"

@@ -1,54 +1,60 @@
 help:
 	@echo 'Usage:'
-	@echo '   make local           local build of vagrant box for staging; useful for debugging'
-	@echo '   make staging         local build of staging AMI on EC2'
-	@echo '   make atlas           start remote Atlas build of staging AMI on EC2'
+	@echo '   make build           build ogreserver AMI on EC2'
+	@echo '   make up              bring up instance of latest AMI on EC2 (default: staging)'
+	@echo '   make destroy         destroy all infrastructure (default: staging)'
+	@echo '   make list-amis       display list of AMIs available for this env (default: staging)'
 
 
-_info:
-	@echo "Building for commit $$(git log -1 --oneline --abbrev-commit | cut -d\  -f 1)"
-	@echo "-----"
+ENV?=staging
+SALT_VERSION?=v2015.8.12
+
+# current HEAD commit ref
+BUILD_TAG:=$$(git log -1 --abbrev-commit --oneline | cut -d' ' -f1)
+
+# number of commits HEAD is ahead of remote on current branch
+COMMITS_AHEAD:=$$(git rev-list --count --left-right 'HEAD...@{upstream}' | cut -d$$'\t' -f1)
+
+# retrieve the most recent AMI from EC2
+LATEST_AMI:=$$(aws ec2 describe-images --filters "Name=tag:env,Values=staging" "Name=tag:app,Values=ogre" | jq -r '.Images | sort_by(.Name) | reverse[] | .ImageId' | head -1)
+
 
 _check-local:
 ifndef SESAME_PASSWORD
 	$(error 'You must export SESAME_PASSWORD to build OGRE')
 endif
 
-_check-atlas:
-ifndef ATLAS_TOKEN
-	$(error 'You must export ATLAS_TOKEN to deploy infrastructure')
-endif
+_check-commits-ahead:
+	@if [ $(COMMITS_AHEAD) -gt 0 ]; then \
+		echo 'You need to push commits!'; \
+		exit 1; \
+	fi
 
 
-local: _check-local _info
-	cd provision/staging && \
+build: _check-commits-ahead _check-local
+	@echo "Building for commit $(BUILD_TAG)"
+	@echo "-----"
+	cd provision && \
 	time packer build -force \
-	  -only=vmware-iso \
-		-var git_revision="$$(git log -1 --oneline --abbrev-commit | cut -d\  -f 1)" \
-		-var sesame_password=$$SESAME_PASSWORD \
-		-var salt_version=v2015.8.7 \
+		-only=amazon-ebs \
+		-var git_revision=$(BUILD_TAG) \
+		-var sesame_password=$(SESAME_PASSWORD) \
+		-var salt_version=$(SALT_VERSION) \
+		-var env=$(ENV) \
 		packer.json
 
-staging-create: _check-local _check-atlas _info
-	cd provision/staging && \
-	time packer build -force \
-	  -only=amazon-ebs \
-		-var git_revision="$$(git log -1 --oneline --abbrev-commit | cut -d\  -f 1)" \
-		-var sesame_password=$$SESAME_PASSWORD \
-		-var salt_version=v2015.8.7 \
-		packer.json
+up:
+	@echo "Deploying $(LATEST_AMI)"
+	@echo "-----"
+	@cd provision/$(ENV) && \
+		terraform apply -var ami=$(LATEST_AMI)
 
-staging-destroy: _check-atlas
-	cd provision/staging && \
-		terraform destroy -force
+destroy:
+	@cd provision/$(ENV) && \
+		terraform destroy -force -var ami=null
 
-atlas: _check-atlas _info
-	cd provision/staging && \
-	packer push \
-		-var git_revision="$$(git log -1 --oneline --abbrev-commit | cut -d\  -f 1)" \
-		atlas.json
+list-amis:
+	@aws ec2 describe-images --filters "Name=tag:env,Values=$(ENV)" "Name=tag:app,Values=ogre" | jq -r '.Images[] | .Name + "\t" + .ImageId + "\t" + .CreationDate' | sort -r
 
-staging-latest-ami:
-	aws ec2 describe-images --filters "Name=tag:app,Values=ogre" | jq '.Images[0].ImageId' | tr -d '"'
 
-.PHONY: help _info _check-local _check-atlas local staging atlas
+.PHONY: help _check-local _check-commits-ahead build up destroy list-amis

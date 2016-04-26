@@ -7,14 +7,12 @@ variable "region" {
 variable "version" {
 	default = "latest"
 }
-variable "ami" {
-}
 variable "eip" {
   default = "eipalloc-919226f4"
 }
-#variable "atlas_name" {
-#  default = "mafrosis/ogre-staging"
-#}
+variable "atlas_name" {
+  default = "mafrosis/ogre-staging"
+}
 variable "env" {
   default = "staging"
 }

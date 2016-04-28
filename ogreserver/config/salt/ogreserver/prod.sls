@@ -1,8 +1,9 @@
 include:
   - hostname
-  - ogreserver
+  - mysql.prod
   - newrelic
   - nginx.acme-ssl
+  - ogreserver
 
 
 extend:

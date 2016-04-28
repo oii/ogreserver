@@ -70,7 +70,7 @@ def app_config():
         'DOWNLOAD_LINK_EXPIRY': 10,
 
         'WHOOSH_BASE': 'test.db',
-        'SQLALCHEMY_DATABASE_URI': 'mysql://root:eggs@localhost/test',
+        'SQLALCHEMY_DATABASE_URI': 'mysql://root@localhost/test',
         'UPLOADED_EBOOKS_DEST': 'uploads',
         'UPLOADED_LOGS_DEST': 'logs',
 
@@ -139,7 +139,7 @@ def mysqldb(request, _flask_app):
     from ogreserver.extensions.database import setup_db_session, create_tables
 
     # use raw sqlalchemy for create/drop DB
-    engine = sqlalchemy.create_engine('mysql://root:eggs@localhost/mysql')
+    engine = sqlalchemy.create_engine('mysql://root@localhost/mysql')
 
     def run_query(sql):
         # get the internal connection obj, close the open transaction, then run

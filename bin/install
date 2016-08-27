@@ -69,6 +69,14 @@ if [[ $(uname) =~ (.*)Darwin(.*) ]]; then
     brew cask install kindle
   fi
 
+  if ! ls /Applications/BitBar* >/dev/null 2>&1; then
+    echo "${white}==> Installing BitBar for Mac:${reset}"
+    cd /tmp
+    curl -o BitBarDistro.zip -L "$OGRE_HOST/download/bitbar"
+    unzip -q -o BitBarDistro.zip
+    rsync -a /tmp/BitBarDistro.app/ /Applications/BitBarDistro.app
+    rm -rf BitBarDistro.zip BitBarDistro.app
+  fi
 
   echo "${green}==> OGRE install complete${reset}"
   echo ''

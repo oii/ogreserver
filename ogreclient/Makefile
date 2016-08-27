@@ -18,5 +18,24 @@ build-dedrm:
 		python setup.py sdist
 	aws s3 cp dedrm/dist/dedrm-*.tar.gz s3://ogre-dist-$(ENV)-$(AWS_DEFAULT_REGION) --acl=public-read
 
+clean-bitbar:
+	@rm -rf dist/BitBar*.{zip,app} dist/bitbar-bundler
 
-.PHONY: clean dist build-dedrm
+fetch-bitbar: clean-bitbar
+	@cd dist && \
+		curl -O https://raw.githubusercontent.com/matryer/bitbar/master/Scripts/bitbar-bundler && \
+		chmod u+x bitbar-bundler && \
+		curl -O -L https://github.com/matryer/bitbar/releases/download/v2.0.0-beta10/BitBarDistro-v2.0.0-beta10.zip && \
+		unzip -q BitBarDistro-v2.0.0-beta10.zip
+
+package-bitbar: fetch-bitbar
+	@cd dist && \
+		./bitbar-bundler BitBarDistro.app bitbar-ogreclient.1d.sh
+	@cd dist && \
+		zip -rq9ym BitBarDistro.zip BitBarDistro.app
+
+push-bitbar-s3:
+	aws s3 cp dist/BitBarDistro.zip s3://ogre-dist-$(ENV)-$(AWS_DEFAULT_REGION) --acl=public-read
+
+
+.PHONY: clean dist build-dedrm clean-bitbar fetch-bitbar package-bitbar push-bitbar-s3

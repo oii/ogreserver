@@ -3,11 +3,13 @@ build/
 *.pyc
 .coverage
 
-ogreclient/dist/ogreclient-*
-
 ogreclient/dedrm/
 ogreserver/install
 ogreserver/robots.txt
+
+ogreclient/dist/ogreclient-*
+ogreclient/dist/BitBar*.zip
+ogreclient/dist/bitbar-bundler
 
 .DS_Store
 OGRE_DRM_Tools*.zip

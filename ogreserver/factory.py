@@ -101,11 +101,13 @@ def register_blueprints(app):
     from .views import bp_core
     from .views.api import bp_api
     from .views.docs import bp_docs
+    from .views.download import bp_download
     from .views.ebooks import bp_ebooks
     from .views.user import bp_user
     app.register_blueprint(bp_core)
     app.register_blueprint(bp_api)
     app.register_blueprint(bp_docs)
+    app.register_blueprint(bp_download)
     app.register_blueprint(bp_ebooks)
     app.register_blueprint(bp_user)
 

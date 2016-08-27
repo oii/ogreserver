@@ -3,6 +3,9 @@ import os
 basedir = os.path.abspath(os.path.dirname('..'))
 
 
+OGRECLIENT_VERSION = "{{ pillar.get('ogreclient_version', 0) }}"
+
+
 # Celery config
 BROKER_URL = "amqp://{{ pillar['rabbitmq_user'] }}:{{ pillar['rabbitmq_pass'] }}@{{ pillar['rabbitmq_host'] }}:5672/{{ pillar['rabbitmq_vhost'] }}"
 CELERY_ACCEPT_CONTENT = ['pickle']

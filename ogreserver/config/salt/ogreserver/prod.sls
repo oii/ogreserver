@@ -43,18 +43,30 @@ gevent:
     - require_in:
       - service: supervisor
 
-# build ogreclient and stick it in the pypiserver cache
+awscli:
+  pip.installed
+
+# build ogreclient and extra client tooling
 build-ogreclient:
   cmd.run:
-    - name: python setup.py sdist
+    - name: make dist
     - cwd: /srv/ogre/ogreclient
+    - user: {{ pillar['app_user'] }}
+    - require:
+      - pip: awscli
+    - env:
+      - AWS_ACCESS_KEY_ID: {{ pillar['aws_access_key'] }}
+      - AWS_SECRET_ACCESS_KEY: {{ pillar['aws_secret_key'] }}
+      - AWS_DEFAULT_REGION: {{ pillar['aws_region'] }}
+      - ENV: {{ grains['env'] }}
+
+pypiserver-ogreclient:
   file.rename:
     - name: /var/pypiserver-cache/ogreclient-{{ pillar['ogreclient_version'] }}.tar.gz
     - source: /srv/ogre/ogreclient/dist/ogreclient-{{ pillar['ogreclient_version'] }}.tar.gz
     - force: true
     - require:
       - file: pypiserver-package-dir
-    - watch:
       - cmd: build-ogreclient
 
 # symlink files so they're available statically via nginx

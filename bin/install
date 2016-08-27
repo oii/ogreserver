@@ -3,6 +3,8 @@
 # Ogreclient install script for OSX and linux
 #
 
+OGRE_HOST=${OGRE_HOST:-https://ogre-staging.oii.yt}
+
 trap "echo Exited!; exit;" SIGINT SIGTERM
 
 red=$(tput setaf 1)
@@ -33,12 +35,11 @@ if [[ $(uname) =~ (.*)Darwin(.*) ]]; then
 
   if ! command pip &>/dev/null; then
     echo "${white}==> Installing/Updating Python${reset}"
-    brew install python --with-frameworks
+    brew install python
   fi
 
   if ! command ebook-meta &>/dev/null; then
     echo "${white}==> Installing Calibre${reset}"
-    brew tap caskroom/cask
     brew cask install calibre
   fi
 
@@ -59,20 +60,20 @@ if [[ $(uname) =~ (.*)Darwin(.*) ]]; then
   echo "${white}==> Upgrading pip:${reset}"
   pip install -U pip
 
-  echo "${white}==> Installing ogreclient:${reset}"
-  pip install \
-    --extra-index-url http://ogre-staging.oii.yt:8233/simple \
-    --trusted-host ogre-staging.oii.yt \
-    ogreclient
+  echo "${white}==> Installing OGRE from ${OGRE_HOST}:${reset}"
+  curl -o /tmp/ogreclient.zip -L "$OGRE_HOST/download/ogreclient"
+  pip install -U /tmp/ogreclient.zip
 
   if [[ -z $(system_profiler SPApplicationsDataType | awk '/Kindle.app/ {print $2}') ]]; then
     echo "${white}==> Kindle for Mac is missing:${reset}"
     brew cask install kindle
   fi
 
-  echo "${green}==> Ogreclient install complete${reset}"
+
+  echo "${green}==> OGRE install complete${reset}"
   echo ''
-  echo 'You will need to open Kindle for Mac and download all the books'
+  echo 'You will need to use Kindle for Mac to download ALL the books manually :/'
+  open /Applications/Kindle.app
 
 elif [[ $(uname) =~ (.*)Debian(.*) ]]; then
   echo "${red}Not implemented for Debian${reset}"

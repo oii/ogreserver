@@ -28,8 +28,8 @@ if sys.version_info < (2, 7):
 setup(
     name='ogreclient',
     version=ogreclient.__version__,
-    description='Encryption tool for application configs.',
-    long_description=open('README.rst').read(),
+    description='Client for private OGRE system',
+    long_description='Client for private OGRE system',
     author='Matt Black',
     author_email='dev@mafro.net',
     url='http://github.com/oii/ogre',

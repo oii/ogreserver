@@ -1,9 +1,17 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "windows7"
+  config.vm.box = "windows_7"
+
+  config.vm.provider "vmware_fusion" do |v|
+    v.vmx["memsize"] = "2048"
+    v.vmx["numvcpus"] = "2"
+    v.gui = true
+  end
 
   config.vm.guest = :windows
+  config.vm.communicator = "winrm"
+  config.ssh.insert_key = false
 
   # Port forward WinRM
   config.vm.network :forwarded_port, guest: 5985, host: 5985, id: "winrm", auto_correct: true

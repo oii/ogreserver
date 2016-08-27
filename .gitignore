@@ -1,8 +1,9 @@
 build/
-dist/
 *.egg-info
 *.pyc
 .coverage
+
+ogreclient/dist/ogreclient-*
 
 ogreclient/dedrm/
 ogreserver/install

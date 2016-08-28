@@ -38,7 +38,7 @@ extend:
 
 gevent:
   pip.installed:
-    - bin_env: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}
+    - bin_env: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['virtualenv_name'] }}
     - user: {{ pillar['app_user'] }}
     - require_in:
       - service: supervisor

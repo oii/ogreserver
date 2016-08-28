@@ -10,8 +10,8 @@ app_repo_rev: dev
 
 # supervisor program name (defaults to app_name)
 #supervisor_name: ogreserver
-# virtualenv name (defaults to app_name)
-#virtualenv_name: ogreserver
+# virtualenv name
+virtualenv_name: ogreserver
 # project will be cloned into /srv/<directory_name> (defaults to app_name)
 app_directory_name: ogre
 

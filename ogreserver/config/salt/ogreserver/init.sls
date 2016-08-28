@@ -31,6 +31,7 @@ extend:
   /etc/supervisor/conf.d/ogreserver.conf:
     file.managed:
       - context:
+          venv: {{ pillar['virtualenv_name'] }}
           workers:
             high: 0
             normal: 0
@@ -115,9 +116,9 @@ flask-config:
 
 ogre-init:
   cmd.run:
-    - name: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}/bin/python manage.py init_ogre
+    - name: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['virtualenv_name'] }}/bin/python manage.py init_ogre
     - cwd: /srv/ogre
-    - unless: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['app_name'] }}/bin/python manage.py init_ogre --test
+    - unless: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['virtualenv_name'] }}/bin/python manage.py init_ogre --test
     - user: {{ pillar['app_user'] }}
     - require:
       - virtualenv: app-virtualenv

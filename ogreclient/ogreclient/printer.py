@@ -16,7 +16,7 @@ class CliPrinter:
 
         @property
         def default(self):
-            return self._default or self._colours.itervalues().next()
+            return self._default or self.NORMAL
 
         @default.setter
         def default(self, val):
@@ -69,7 +69,7 @@ class CliPrinter:
         # used internally for tracking state
         self.progress_running = False
         self.line_needs_finishing = False
-        self.infinite_progress = None
+        self.infinite_progress_state = None
 
         # create a mutex for thread-safe printing
         self.lock = threading.Lock()
@@ -185,20 +185,20 @@ class CliPrinter:
         self.progress_running = True
 
         # start or reset the infinite progress counter
-        if not self.infinite_progress or self.infinite_progress == 4:
-            self.infinite_progress = 0
+        if not self.infinite_progress_state or self.infinite_progress_state == 4:
+            self.infinite_progress_state = 0
 
         PROG_CHARS = ['|', '/', '-', '\\']
 
         t = self._get_time_elapsed(notime)
         sys.stdout.write('\r{}{}{}{}[ {} ]{}'.format(
             prefix, CliPrinter.colours.GREY, t, colour,
-            PROG_CHARS[self.infinite_progress] * self.progressbar_len,
+            PROG_CHARS[self.infinite_progress_state] * self.progressbar_len,
             CliPrinter.colours.END
         ))
         sys.stdout.flush()
 
-        self.infinite_progress += 1
+        self.infinite_progress_state += 1
 
 
     def progressf(self, num_blocks=None, block_size=1, total_size=None, extra=None, notime=False, prefix=None):
@@ -232,24 +232,13 @@ class CliPrinter:
     def end_progress(self):
         # end progress bar by displaying 100%
         if self.progress_running is True:
-            self.infinite_progress = None
-            self.progressf(10, 1, 10)
-
-
-    def _get_time_prefix(self, notime=False):
-        if self.notimer is True:
-            # no timer at global printer level
-            return ' '
-        elif notime is True:
-            # no timer displayed on this particular print
-            return ' ' * 9
-        else:
-            return ''
+            self.infinite_progress_state = None
+            self.progressf(1, 1, 1)
 
 
     def _get_time_elapsed(self, notime=False, formatted=True):
         if self.notimer is True or notime is True:
-            return self._get_time_prefix(notime)
+            return ''
 
         ts = datetime.datetime.now() - self.start
         if formatted is True:

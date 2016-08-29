@@ -193,13 +193,15 @@ def init_ogre(test=False):
     s3 = connect_s3(app.config)
 
     # check bucket already exists
-    aws_setup1 = aws_setup2 = False
+    aws_setup1 = aws_setup2 = aws_setup3 = False
     for b in s3.get_all_buckets():
         if b.name == app.config['EBOOK_S3_BUCKET']:
             aws_setup1 = True
         elif b.name == app.config['STATIC_S3_BUCKET']:
             aws_setup2 = True
-    aws_setup = aws_setup1 & aws_setup2
+        elif b.name == app.config['DIST_S3_BUCKET']:
+            aws_setup3 = True
+    aws_setup = aws_setup1 & aws_setup2 & aws_setup3
 
     # check mysql DB created
     try:
@@ -239,14 +241,13 @@ def init_ogre(test=False):
             register_tasks(app)
             setup_roles(app)
 
-        for bucket in (app.config['EBOOK_S3_BUCKET'], app.config['STATIC_S3_BUCKET']):
+        for bucket_name in ('EBOOK', 'STATIC', 'DIST'):
             try:
-                if not app.config['DEBUG']:
-                    s3.create_bucket(bucket, location=app.config['AWS_REGION'])
-                    print 'Created S3 bucket in {}'.format(app.config['AWS_REGION'])
-                else:
-                    s3.create_bucket(bucket)
-                    print 'Created S3 bucket'
+                s3.create_bucket(
+                    app.config['{}_S3_BUCKET'.format(bucket_name)],
+                    location=app.config['AWS_REGION']
+                )
+                print 'Created S3 bucket in {}'.format(app.config['AWS_REGION'])
 
             except boto.exception.S3ResponseError as e:
                 sys.stderr.write('Failed verifying or creating S3 bucket.. ({})\n'.format(e.error_message))

@@ -8,7 +8,6 @@ include:
   - libsass
   - mysql
   - nodejs
-  - pypiserver
   - rabbitmq
   - rabbitmq.celerybeat
   - rethinkdb
@@ -45,16 +44,6 @@ extend:
         - file: /etc/supervisor/conf.d/{{ pillar['app_name'] }}.conf
         - file: /etc/gunicorn.d/{{ pillar['app_name'] }}.conf.py
 
-  pypiserver-log-dir:
-    file.directory:
-      - user: {{ pillar['app_user'] }}
-      - group: {{ pillar['app_user'] }}
-
-  pypiserver-supervisor-config:
-    file.managed:
-      - context:
-          port: 8233
-          runas: {{ pillar['app_user'] }}
 
 # install bower.io for Foundation 5
 bower:
@@ -144,7 +133,5 @@ build-dedrm:
     - name: /var/pypiserver-cache/dedrm-{{ pillar['dedrm_version'] }}.tar.gz
     - source: /srv/ogre/dedrm/dist/dedrm-{{ pillar['dedrm_version'] }}.tar.gz
     - force: true
-    - require:
-      - file: pypiserver-package-dir
     - watch:
       - cmd: build-dedrm

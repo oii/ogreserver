@@ -60,15 +60,6 @@ build-ogreclient:
       - AWS_DEFAULT_REGION: {{ pillar['aws_region'] }}
       - ENV: {{ grains['env'] }}
 
-pypiserver-ogreclient:
-  file.rename:
-    - name: /var/pypiserver-cache/ogreclient-{{ pillar['ogreclient_version'] }}.tar.gz
-    - source: /srv/ogre/ogreclient/dist/ogreclient-{{ pillar['ogreclient_version'] }}.tar.gz
-    - force: true
-    - require:
-      - file: pypiserver-package-dir
-      - cmd: build-ogreclient
-
 # symlink files so they're available statically via nginx
 /srv/ogre/ogreserver/robots.txt:
   file.symlink:

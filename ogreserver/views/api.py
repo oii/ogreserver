@@ -7,7 +7,7 @@ import json
 import os
 
 from flask import current_app as app
-from flask import Blueprint, jsonify, request, make_response, Response, abort
+from flask import Blueprint, jsonify, request, redirect, Response, abort
 from flask.ext.security import current_user
 from flask.ext.security.decorators import auth_token_required
 from flask.ext.uploads import UploadNotAllowed
@@ -40,8 +40,12 @@ def get_definitions():
 @auth_token_required
 def download_dedrm():
     # supply the latest DRM tools to the client
-    with open('/var/pypiserver-cache/dedrm-{}.tar.gz'.format(app.config['DEDRM_VERSION']), 'r') as f:
-        return make_response(f.read())
+    url = 'https://s3-{}.amazonaws.com/{}/dedrm-{}.tar.gz'.format(
+        app.config['AWS_REGION'],
+        app.config['DIST_S3_BUCKET'],
+        app.config['DEDRM_VERSION']
+    )
+    return redirect(url, code=302)
 
 
 @bp_api.route('/post', methods=['POST'])

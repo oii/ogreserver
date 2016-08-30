@@ -55,7 +55,9 @@ def app_config():
 
         'AWS_ACCESS_KEY': '',
         'AWS_SECRET_KEY': '',
+        'AWS_REGION': '',
         'EBOOK_S3_BUCKET': 'ogre-testing',
+        'DIST_S3_BUCKET': 'ogre-testing',
         'DEDRM_VERSION': '0.0.1',
 
         'EBOOK_DEFINITIONS': collections.OrderedDict([

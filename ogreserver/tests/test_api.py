@@ -103,8 +103,7 @@ def test_download_dedrm_tools_endpoint(flask_app, ogreclient_auth_token, mock_vi
     '''
     client = flask_app.test_client()
     resp = client.get('/api/v1/download-dedrm', headers={'Ogre-key': ogreclient_auth_token})
-    assert resp.status_code == 200
-    assert resp.data == 'API open() data'
+    assert resp.status_code == 302
 
 
 def test_upload_endpoint(flask_app, ogreclient_auth_token):

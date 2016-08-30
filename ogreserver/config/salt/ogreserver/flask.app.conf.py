@@ -30,11 +30,16 @@ GOODREADS_API_KEY = "{{ pillar.get('goodreads_api_key', '') }}"
 
 
 # Flask app
-{% if grains['env'] == 'dev' %}
+{% if grains['env'] in ['dev','staging'] %}
 DEBUG = True
-STATIC_BASE_URL = "http://{{ grains['ip4_interfaces']['eth0'][0] }}:8880"
 {% else %}
 DEBUG = False
+{% endif %}
+
+# Where to store/serve ebooks
+{% if grains.get('virtual') == 'VMWare' %}
+STATIC_BASE_URL = "http://{{ grains['ip4_interfaces']['eth0'][0] }}:8880"
+{% else %}
 STATIC_BASE_URL = "https://s3-eu-west-1.amazonaws.com"
 {% endif %}
 BETA = True

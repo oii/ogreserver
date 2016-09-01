@@ -7,6 +7,7 @@ import shutil
 
 from .ebook_obj import EbookObject
 from .utils import OgreConnection, deserialize_defs, make_temp_directory, retry
+from .printer import CliPrinter
 from .providers import LibProvider, PathsProvider
 from .dedrm import decrypt, DRM
 
@@ -15,6 +16,9 @@ from .exceptions import RequestError, NoEbooksError, DuplicateEbookBaseError, \
         SyncError, UploadError, CorruptEbookError, FailedWritingMetaDataError, \
         FailedConfirmError, FailedDebugLogsError, MissingFromCacheError, OgreException, \
         FailedUploadsQueryError, FailedGettingDefinitionsError, DeDrmMissingError, DecryptionFailed
+
+
+prntr = CliPrinter.get_printer()
 
 
 def get_definitions(connection):
@@ -29,7 +33,7 @@ def get_definitions(connection):
         raise FailedGettingDefinitionsError(inner_excp=e)
 
 
-def sync(config, prntr):
+def sync(config):
     # authenticate user and generate session API key
     connection = OgreConnection(config)
     connection.login(config['username'], config['password'])
@@ -38,7 +42,7 @@ def sync(config, prntr):
     prntr.p('Scanning for ebooks..', nonl=True, bold=True)
 
     # 1) find ebooks in config['ebook_home'] on local machine
-    ebooks_by_authortitle, ebooks_by_filehash, scan_errord, skipped = scan_for_ebooks(config, prntr)
+    ebooks_by_authortitle, ebooks_by_filehash, scan_errord, skipped = scan_for_ebooks(config)
 
     if scan_errord:
         prntr.p('Errors occurred during scan:')
@@ -46,7 +50,7 @@ def sync(config, prntr):
             prntr.e(e.ebook_obj.path, excp=e)
 
     # 2) remove DRM
-    decrypt_errord = clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash)
+    decrypt_errord = clean_all_drm(config, ebooks_by_authortitle, ebooks_by_filehash)
 
     if decrypt_errord:
         prntr.p('Errors occurred during decryption:')
@@ -64,18 +68,18 @@ def sync(config, prntr):
     ), bold=True)
 
     # 3) send dict of ebooks / md5s to ogreserver
-    response = sync_with_server(config, prntr, connection, ebooks_by_authortitle)
+    response = sync_with_server(config, connection, ebooks_by_authortitle)
 
     prntr.p('Come on sucker, lick my battery', bold=True)
 
     # 4) set ogre_id in metadata of each sync'd ebook
-    update_local_metadata(config, prntr, connection, ebooks_by_filehash, response['to_update'])
+    update_local_metadata(config, connection, ebooks_by_filehash, response['to_update'])
 
     # 5) query the set of books to upload
-    ebooks_to_upload = query_for_uploads(config, prntr, connection)
+    ebooks_to_upload = query_for_uploads(config, connection)
 
     # 6) upload the ebooks requested by ogreserver
-    upload_ebooks(config, prntr, connection, ebooks_by_filehash, ebooks_to_upload)
+    upload_ebooks(config, connection, ebooks_by_filehash, ebooks_to_upload)
 
     # 7) display/send errors
     all_errord = [err for err in scan_errord+decrypt_errord if isinstance(err, OgreException)]
@@ -85,11 +89,11 @@ def sync(config, prntr):
             prntr.e('Finished with errors. Re-run with --debug to send logs to OGRE')
         else:
             # send a log of all events, and upload bad books
-            send_logs(prntr, connection, all_errord)
+            send_logs(connection, all_errord)
 
 
-def scan_and_show_stats(config, prntr):
-    ebooks_by_authortitle, ebooks_by_filehash, errord_list, _ = scan_for_ebooks(config, prntr)
+def scan_and_show_stats(config):
+    ebooks_by_authortitle, ebooks_by_filehash, errord_list, _ = scan_for_ebooks(config)
 
     counts = {}
     errors = {}
@@ -125,7 +129,7 @@ def scan_and_show_stats(config, prntr):
     prntr.p(output, tabular=True, notime=True)
 
 
-def scan_for_ebooks(config, prntr):
+def scan_for_ebooks(config):
     ebooks = []
 
     def _process_filename(filename, provider_name):
@@ -258,7 +262,7 @@ def scan_for_ebooks(config, prntr):
     return ebooks_by_authortitle, ebooks_by_filehash, errord_list, skipped
 
 
-def clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash):
+def clean_all_drm(config, ebooks_by_authortitle, ebooks_by_filehash):
     errord_list = []
 
     i = 0
@@ -277,7 +281,7 @@ def clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash):
 
         try:
             # remove DRM from ebook
-            new_ebook_obj = remove_drm_from_ebook(config, prntr, ebook_obj)
+            new_ebook_obj = remove_drm_from_ebook(config, ebook_obj)
 
             if new_ebook_obj is not None:
                 # update the sync data with the decrypted ebook
@@ -304,7 +308,7 @@ def clean_all_drm(config, prntr, ebooks_by_authortitle, ebooks_by_filehash):
     return errord_list
 
 
-def remove_drm_from_ebook(config, prntr, ebook_obj):
+def remove_drm_from_ebook(config, ebook_obj):
     decrypted_ebook_obj = None
 
     # extract suffix
@@ -368,7 +372,7 @@ def remove_drm_from_ebook(config, prntr, ebook_obj):
     return decrypted_ebook_obj
 
 
-def sync_with_server(config, prntr, connection, ebooks_by_authortitle):
+def sync_with_server(config, connection, ebooks_by_authortitle):
     # serialize ebooks to dictionary for sending to ogreserver
     ebooks_for_sync = {}
     for authortitle, ebook_obj in ebooks_by_authortitle.iteritems():
@@ -396,7 +400,7 @@ def sync_with_server(config, prntr, connection, ebooks_by_authortitle):
     return data
 
 
-def update_local_metadata(config, prntr, connection, ebooks_by_filehash, ebooks_to_update):
+def update_local_metadata(config, connection, ebooks_by_filehash, ebooks_to_update):
     success, failed = 0, 0
 
     # update any books with ogre_id supplied from ogreserver
@@ -432,7 +436,7 @@ def update_local_metadata(config, prntr, connection, ebooks_by_filehash, ebooks_
         prntr.e('Failed updating {} ebooks'.format(failed))
 
 
-def query_for_uploads(config, prntr, connection):
+def query_for_uploads(config, connection):
     try:
         # query ogreserver for books to upload
         data = connection.request('to-upload')
@@ -442,7 +446,7 @@ def query_for_uploads(config, prntr, connection):
         raise FailedUploadsQueryError(inner_excp=e)
 
 
-def upload_ebooks(config, prntr, connection, ebooks_by_filehash, ebooks_to_upload):
+def upload_ebooks(config, connection, ebooks_by_filehash, ebooks_to_upload):
     if len(ebooks_to_upload) == 0:
         return
 
@@ -512,7 +516,7 @@ def upload_single_book(connection, ebook_obj):
         raise UploadError(ebook_obj, inner_excp=e)
 
 
-def send_logs(prntr, connection, errord_list):
+def send_logs(connection, errord_list):
     try:
         # concat all stored log data
         log_data = '\n'.join(prntr.logs).encode('utf-8')

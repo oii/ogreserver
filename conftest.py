@@ -355,10 +355,12 @@ def client_sync(request):
     from ogreclient.ogreclient.core import sync
     from ogreclient.ogreclient.printer import CliPrinter
 
-    prntr = CliPrinter(debug=True, nocolour=True)
-    prntr.log_output = True
+    # set printer to capture all logs
+    prntr = CliPrinter.get_printer()
+    CliPrinter.init(log_output=True)
+
     def wrapped(config):
-        sync(config, prntr)
+        sync(config)
         return prntr.logs
     return wrapped
 

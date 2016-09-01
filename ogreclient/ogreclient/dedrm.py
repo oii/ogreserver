@@ -7,6 +7,7 @@ import subprocess
 
 from .exceptions import RequestError, DeDrmNotAvailable, DeDrmMissingError, \
         DecryptionError, DecryptionFailed
+from .printer import CliPrinter
 from .utils import capture, enum, make_temp_directory, OgreConnection
 
 try:
@@ -19,6 +20,9 @@ except ImportError as e:
 
 
 DRM = enum('unknown', 'decrypted', 'none', 'wrong_key', 'failed', 'corrupt')
+
+
+prntr = CliPrinter.get_printer()
 
 
 def decrypt(filepath, suffix, config_dir, output_dir=None):
@@ -153,7 +157,7 @@ def init_keys(config_dir, ignore_check=False):
     return msgs
 
 
-def download_dedrm(config, prntr, debug=False):
+def download_dedrm(config, debug=False):
     prntr.p('Downloading latest DRM tools from {}'.format(config['host']))
 
     # authenticate with ogreserver to get DRM tools

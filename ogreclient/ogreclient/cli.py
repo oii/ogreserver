@@ -11,16 +11,18 @@ from .config import read_config
 from .core import scan_and_show_stats, sync
 from .ebook_obj import EbookObject
 from .prereqs import setup_ogreclient
-from .printer import CliPrinter, DummyPrinter
+from .printer import CliPrinter
 from .providers import PROVIDERS
 
 from .exceptions import OgreException, OgreWarning, ConfigSetupError, \
         AuthDeniedError, AuthError, NoEbooksError, SyncError, UploadError
 
 
+prntr = CliPrinter.get_printer()
+
+
 def entrypoint():
     ret = False
-    prntr = None
 
     try:
         # quick config load
@@ -30,20 +32,13 @@ def entrypoint():
         args = parse_command_line(conf)
 
         # global CLI printer
-        if args.quiet is True:
-            prntr = DummyPrinter()
-        else:
-            prntr = CliPrinter(debug=args.debug)
-
-            # set printer to log everything for later dispatch to ogreserver
-            if args.debug is True:
-                prntr.log_output = True
+        CliPrinter.init(debug=args.debug, log_output=args.debug, quiet=args.quiet)
 
         # run some checks and create some config variables
-        conf = setup_ogreclient(args, prntr, conf)
+        conf = setup_ogreclient(args, conf)
 
         if conf is not None:
-            ret = main(conf, args, prntr)
+            ret = main(conf, args)
 
     except ConfigSetupError as e:
         prntr.e('Failed setting up ogre', excp=e)
@@ -182,7 +177,7 @@ def parse_command_line(conf):
     return args
 
 
-def main(conf, args, prntr):
+def main(conf, args):
     # setup config for sync
     conf.update({
         'debug': args.debug,
@@ -195,25 +190,25 @@ def main(conf, args, prntr):
 
     if args.mode == 'info':
         # display metadata from a single book
-        ret = display_info(conf, prntr, args.inputfile)
+        ret = display_info(conf, args.inputfile)
 
     elif args.mode == 'dedrm':
         # decrypt a single book
-        ret = dedrm_single_ebook(conf, prntr, args.inputfile, args.output_dir)
+        ret = dedrm_single_ebook(conf, args.inputfile, args.output_dir)
 
     elif args.mode == 'scan':
         # scan for books and display library stats
-        ret = run_scan(conf, prntr)
+        ret = run_scan(conf)
 
     elif args.mode == 'sync':
         # run ogreclient
         conf['no_drm'] = args.no_drm
-        ret = run_sync(conf, prntr)
+        ret = run_sync(conf)
 
     return ret
 
 
-def dedrm_single_ebook(conf, prntr, inputfile, output_dir):
+def dedrm_single_ebook(conf, inputfile, output_dir):
     filename, ext = os.path.splitext(inputfile)
     from .dedrm import decrypt, DRM, DecryptionError
 
@@ -235,17 +230,17 @@ def dedrm_single_ebook(conf, prntr, inputfile, output_dir):
         return 1
 
 
-def display_info(conf, prntr, filepath):
+def display_info(conf, filepath):
     ebook_obj = EbookObject(filepath)
     ebook_obj.get_metadata(conf)
     prntr.p('Book meta', extra=ebook_obj.meta)
 
 
-def run_scan(conf, prntr):
+def run_scan(conf):
     ret = False
 
     try:
-        ret = scan_and_show_stats(conf, prntr)
+        ret = scan_and_show_stats(conf)
 
     # print messages on error
     except NoEbooksError:
@@ -256,11 +251,11 @@ def run_scan(conf, prntr):
     return ret
 
 
-def run_sync(conf, prntr):
+def run_sync(conf):
     ret = False
 
     try:
-        ret = sync(conf, prntr)
+        ret = sync(conf)
 
     # print messages on error
     except (AuthError, SyncError, UploadError) as e:

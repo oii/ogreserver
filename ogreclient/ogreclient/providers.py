@@ -10,10 +10,14 @@ import urlparse
 
 from xml.dom import minidom
 
-from .exceptions import ProviderBaseError, KindleProviderError, ADEProviderError, \
-        ProviderUnavailableBaseWarning, KindleUnavailableWarning, ADEUnavailableWarning, \
-        EbookHomeUnavailableWarning
+from .exceptions import (ProviderBaseError, KindleProviderError, ADEProviderError,
+                         ProviderUnavailableBaseWarning, KindleUnavailableWarning,
+                         ADEUnavailableWarning, EbookHomeUnavailableWarning)
+from .printer import CliPrinter
 from .utils import make_temp_directory
+
+
+prntr = CliPrinter.get_printer()
 
 
 class ProviderFactory:
@@ -77,7 +81,7 @@ PROVIDERS = {
 }
 
 
-def find_ebook_providers(prntr, conf, ignore=None):
+def find_ebook_providers(conf, ignore=None):
     '''
     Locate any ebook providers on the client machine (ie. Kindle, ADE)
     '''
@@ -106,7 +110,7 @@ def find_ebook_providers(prntr, conf, ignore=None):
             func_name = '_handle_{}_{}'.format(provider_name, platform.system())
             if func_name in globals() and hasattr(globals()[func_name], '__call__'):
                 try:
-                    globals()[func_name](prntr, provider)
+                    globals()[func_name](provider)
                     found = True
 
                 except ProviderUnavailableBaseWarning:
@@ -125,13 +129,13 @@ def find_ebook_providers(prntr, conf, ignore=None):
             conf['providers'][provider_name] = None
 
 
-def _handle_home_Darwin(prntr, provider):
+def _handle_home_Darwin(provider):
     # if EBOOK_HOME is not set, just skip
     if not provider.libpath:
         raise EbookHomeUnavailableWarning
 
 
-def _handle_kindle_Darwin(prntr, provider):
+def _handle_kindle_Darwin(provider):
     # search for Kindle on OSX
     plist1 = os.path.expanduser('~/Library/Containers/com.amazon.Kindle/Data/Library/Preferences/com.amazon.Kindle.plist')
     plist2 = os.path.expanduser('~/Library/Preferences/com.amazon.Kindle.plist')
@@ -176,7 +180,7 @@ def _handle_kindle_Darwin(prntr, provider):
             raise KindleProviderError(inner_excp=e)
 
 
-def _handle_ade_Darwin(prntr, provider):
+def _handle_ade_Darwin(provider):
     # search for ADE on OSX
     manifest_path = os.path.expanduser('~/Documents/Digital Editions')
 

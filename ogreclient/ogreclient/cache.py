@@ -7,8 +7,12 @@ import sqlite3
 
 from .ebook_obj import EbookObject
 from .exceptions import OgreException, MissingFromCacheError, EbookIdDuplicateEbookError
+from .printer import CliPrinter
 
 __CACHEVERSION__ = 1
+
+
+prntr = CliPrinter.get_printer()
 
 
 class Cache:
@@ -17,7 +21,7 @@ class Cache:
         self.ebook_cache_path = ebook_cache_path
 
 
-    def verify_cache(self, prntr):
+    def verify_cache(self):
         must_init_cache = False
 
         if os.path.exists(self.ebook_cache_path):

@@ -16,26 +16,30 @@ from .dedrm import download_dedrm
 from .definitions import OGRE_PROD_HOST
 from .exceptions import (ConfigSetupError, NoEbookSourcesFoundError, DeDrmNotAvailable,
                          EbookHomeMissingError, CalibreNotAvailable)
+from .printer import CliPrinter
 from .providers import PROVIDERS, find_ebook_providers
 from .utils import OgreConnection
 
 
-def setup_ogreclient(args, prntr, conf):
+prntr = CliPrinter.get_printer()
+
+
+def setup_ogreclient(args, conf):
     check_calibre_exists(conf)
 
     # not all commands need ogreserver
     if hasattr(args, 'host'):
-        setup_ogreserver_connection_and_get_definitions(args, prntr, conf)
+        setup_ogreserver_connection_and_get_definitions(args, conf)
 
     # all commands execpt dedrm need providers
     if args.mode in ('init', 'sync', 'stats', 'scan'):
-        setup_providers(args, prntr, conf)
+        setup_providers(args, conf)
 
     # write out this config for next run
     write_config(conf)
 
     # setup the sqlite cache
-    init_cache(prntr, conf)
+    init_cache(conf)
 
     # ensure the DRM tools are installed and up-to-date
     if args.mode == 'sync':
@@ -43,10 +47,10 @@ def setup_ogreclient(args, prntr, conf):
             # skip drm check
             pass
         else:
-            dedrm_check(prntr, args, conf)
+            dedrm_check(args, conf)
 
     elif args.mode == 'init':
-        dedrm_check(prntr, args, conf)
+        dedrm_check(args, conf)
 
     if args.mode == 'stats' and 'username' not in conf:
         # supply a default username during stats queries
@@ -87,14 +91,14 @@ def check_calibre_exists(conf):
         conf['calibre_ebook_meta_bin'] = calibre_ebook_meta_bin
 
 
-def setup_ogreserver_connection_and_get_definitions(args, prntr, conf):
+def setup_ogreserver_connection_and_get_definitions(args, conf):
     '''
     Load user's credentials & the ogreserver hostname from the CLI/environment
     Create a Connection object and login
     Load the definitions from ogreserver
     '''
     # setup user auth creds
-    conf['host'], conf['username'], conf['password'] = setup_user_auth(prntr, args, conf)
+    conf['host'], conf['username'], conf['password'] = setup_user_auth(args, conf)
 
     try:
         # strip port off host if included
@@ -128,11 +132,11 @@ def setup_ogreserver_connection_and_get_definitions(args, prntr, conf):
     return connection
 
 
-def setup_providers(args, prntr, conf):
+def setup_providers(args, conf):
     '''
     Validate EBOOK_HOME and ebooks providers (kindle etc) on the local machine
     '''
-    ebook_home_found, conf['ebook_home'] = setup_ebook_home(prntr, args, conf)
+    ebook_home_found, conf['ebook_home'] = setup_ebook_home(args, conf)
 
     if not os.path.exists(conf['ebook_home']):
         raise EbookHomeMissingError("Path specified in EBOOK_HOME doesn't exist!")
@@ -146,14 +150,14 @@ def setup_providers(args, prntr, conf):
             conf['ignore_providers'].append(provider)
 
     # scan for ebook-provider directories; modifies config in-place
-    find_ebook_providers(prntr, conf, ignore=conf['ignore_providers'])
+    find_ebook_providers(conf, ignore=conf['ignore_providers'])
 
     # hard error if no ebook provider dirs found
     if ebook_home_found is False and not conf['providers']:
         raise NoEbookSourcesFoundError
 
 
-def init_cache(prntr, conf):
+def init_cache(conf):
     '''
     Setup the Cache object for tracking ebooks in sqlite
     '''
@@ -161,12 +165,12 @@ def init_cache(prntr, conf):
     conf['ebook_cache'] = Cache(conf, os.path.join(conf['config_dir'], 'ebook_cache.db'))
 
     # verify the ogreclient cache; true means it was initialised
-    if conf['ebook_cache'].verify_cache(prntr):
+    if conf['ebook_cache'].verify_cache():
         prntr.p('Please note that metadata/DRM scanning means the first run of ogreclient '
                 'will be much slower than subsequent runs.')
 
 
-def dedrm_check(prntr, args, conf):
+def dedrm_check(args, conf):
     '''
     Check for and attempt to install dedrm tools
     '''
@@ -186,7 +190,7 @@ def dedrm_check(prntr, args, conf):
 
         # attempt to download and setup dedrm
         attempted_download = True
-        installed = download_dedrm(conf, prntr, debug=args.debug)
+        installed = download_dedrm(conf, debug=args.debug)
 
         if installed is None:
             # auth failed contacting ogreserver
@@ -210,7 +214,7 @@ def dedrm_check(prntr, args, conf):
         prntr.e('Failed to download DRM tools. Please report this error.')
 
 
-def setup_user_auth(prntr, args, conf):
+def setup_user_auth(args, conf):
     """
     Setup user auth credentials, sourced in this order:
      - CLI params
@@ -266,7 +270,7 @@ def setup_user_auth(prntr, args, conf):
     return host, username, password
 
 
-def setup_ebook_home(prntr, args, conf):
+def setup_ebook_home(args, conf):
     """
     Setup user's ebook home, config being set with this order of precedence:
      - CLI params

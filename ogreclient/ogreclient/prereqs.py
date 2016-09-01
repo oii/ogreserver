@@ -14,8 +14,8 @@ from .config import write_config
 from .core import get_definitions
 from .dedrm import download_dedrm
 from .definitions import OGRESERVER_HOST
-from .exceptions import ConfigSetupError, NoEbookSourcesFoundError, DeDrmNotAvailable, \
-        EbookHomeMissingError
+from .exceptions import (ConfigSetupError, NoEbookSourcesFoundError, DeDrmNotAvailable,
+                         EbookHomeMissingError, CalibreNotAvailable)
 from .providers import PROVIDERS, find_ebook_providers
 from .utils import OgreConnection
 
@@ -44,9 +44,7 @@ def setup_ogreclient(args, prntr, conf):
 
         # ogreclient requires calibre (unfortunately)
         if not calibre_ebook_meta_bin:
-            prntr.e('You must install Calibre in order to use ogreclient.')
-            prntr.e('Please follow the simple instructions at http://{}/install'.format(OGRESERVER_HOST))
-            sys.exit(1)
+            raise CalibreNotAvailable('You must install Calibre in order to use ogreclient.')
 
         # init the config dict
         conf['calibre_ebook_meta_bin'] = calibre_ebook_meta_bin

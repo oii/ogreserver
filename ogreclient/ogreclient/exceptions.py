@@ -79,6 +79,9 @@ class FailedDebugLogsError(OgreException):
 class NoEbookSourcesFoundError(OgreException):
     pass
 
+class CalibreNotAvailable(OgreException):
+    pass
+
 class DeDrmNotAvailable(OgreException):
     pass
 

@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import os
+import platform
 import shutil
 import subprocess
 import urllib
@@ -86,10 +87,13 @@ def find_ebook_providers(prntr, conf, ignore=None):
     for provider_name in PROVIDERS.keys():
         # ignore certain providers as determined by --ignore-* params
         if ignore and provider_name in ignore:
+            # remove provider loaded from app.config
+            if provider_name in conf['providers']:
+                conf['providers'][provider_name] = None
             continue
 
         # initialise any providers which werent loaded from config
-        if provider_name not in conf['providers']:
+        if not conf['providers'].get(provider_name):
             conf['providers'][provider_name] = ProviderFactory.create(provider_name, config=conf)
 
         # local variable for provider object
@@ -99,7 +103,7 @@ def find_ebook_providers(prntr, conf, ignore=None):
 
         if provider.needs_scan:
             # call provider handler functions dynamically by platform
-            func_name = '_handle_{}_{}'.format(provider_name, conf['platform'])
+            func_name = '_handle_{}_{}'.format(provider_name, platform.system())
             if func_name in globals() and hasattr(globals()[func_name], '__call__'):
                 try:
                     globals()[func_name](prntr, provider)
@@ -110,7 +114,7 @@ def find_ebook_providers(prntr, conf, ignore=None):
                 except ProviderBaseError as e:
                     prntr.e('Failed processing {}'.format(provider.friendly), excp=e)
             else:
-                prntr.p('{} not supported for {} books. Contact oii.'.format(conf['platform'], provider.friendly))
+                prntr.p('{} not supported for {} books. Contact oii.'.format(platform.system(), provider.friendly))
         else:
             found = True
 

@@ -21,8 +21,45 @@ from .utils import OgreConnection
 
 
 def setup_ogreclient(args, prntr, conf):
-    first_scan_warning = False
+    check_calibre_exists(conf)
 
+    # not all commands need ogreserver
+    if hasattr(args, 'host'):
+        setup_ogreserver_connection_and_get_definitions(args, prntr, conf)
+
+    # all commands execpt dedrm need providers
+    if args.mode in ('init', 'sync', 'stats', 'scan'):
+        setup_providers(args, prntr, conf)
+
+    # write out this config for next run
+    write_config(conf)
+
+    # setup the sqlite cache
+    init_cache(prntr, conf)
+
+    # ensure the DRM tools are installed and up-to-date
+    if args.mode == 'sync':
+        if args.no_drm is True:
+            # skip drm check
+            pass
+        else:
+            dedrm_check(prntr, args, conf)
+
+    elif args.mode == 'init':
+        dedrm_check(prntr, args, conf)
+
+    if args.mode == 'stats' and 'username' not in conf:
+        # supply a default username during stats queries
+        conf['username'] = 'oc'
+
+    # return config object
+    return conf
+
+
+def check_calibre_exists(conf):
+    '''
+    Validate the local machine has calibre available, and set calibre_ebook_meta_bin in conf
+    '''
     if 'calibre_ebook_meta_bin' not in conf:
         calibre_ebook_meta_bin = None
 
@@ -49,110 +86,97 @@ def setup_ogreclient(args, prntr, conf):
         # init the config dict
         conf['calibre_ebook_meta_bin'] = calibre_ebook_meta_bin
 
-    # not all ogreclient commands need auth
-    if hasattr(args, 'host'):
-        # setup user auth creds
-        conf['username'], conf['password'] = setup_user_auth(prntr, args, conf)
 
-        # set default hostname
-        if args.host is not None:
-            conf['host'] = args.host
+def setup_ogreserver_connection_and_get_definitions(args, prntr, conf):
+    '''
+    Load user's credentials & the ogreserver hostname from the CLI/environment
+    Create a Connection object and login
+    Load the definitions from ogreserver
+    '''
+    # setup user auth creds
+    conf['username'], conf['password'] = setup_user_auth(prntr, args, conf)
 
-            try:
-                # strip port off host if included
-                if ':' in args.host:
-                    hostname = args.host.split(':')[0]
-                else:
-                    hostname = args.host
+    # set default hostname
+    if args.host is not None:
+        conf['host'] = args.host
 
-                # no SSL for IP addresses
-                socket.inet_aton(hostname)
-                conf['use_ssl'] = False
-            except socket.error:
-                conf['use_ssl'] = True
+        try:
+            # strip port off host if included
+            if ':' in args.host:
+                hostname = args.host.split(':')[0]
+            else:
+                hostname = args.host
 
-            # if --host supplied CLI, ignore SSL errors on connect
-            conf['ignore_ssl_errors'] = True
-        else:
-            # production config
-            conf['host'] = OGRESERVER_HOST
+            # no SSL for IP addresses
+            socket.inet_aton(hostname)
+            conf['use_ssl'] = False
+        except socket.error:
             conf['use_ssl'] = True
-            conf['ignore_ssl_errors'] = False
 
-    providers_to_ignore = []
+        # if --host supplied CLI, ignore SSL errors on connect
+        conf['ignore_ssl_errors'] = True
+    else:
+        # production config
+        conf['host'] = OGRESERVER_HOST
+        conf['use_ssl'] = True
+        conf['ignore_ssl_errors'] = False
 
-    # return the user's OS
-    conf['platform'] = platform.system()
+    # authenticate user and generate session API key
+    connection = OgreConnection(conf)
+    connection.login(conf['username'], conf['password'])
 
-    if args.mode in ('init', 'sync', 'stats', 'scan'):
-        ebook_home_found, conf['ebook_home'] = setup_ebook_home(prntr, args, conf)
+    # query the server for current ebook definitions (which file extensions to scan for etc)
+    conf['definitions'] = get_definitions(connection)
 
-        if not os.path.exists(conf['ebook_home']):
-            raise EbookHomeMissingError("Path specified in EBOOK_HOME doesn't exist!")
+    return connection
 
-        # ignore certain providers as determined by --ignore-* params
-        for provider in PROVIDERS.keys():
-            ignore_str = 'ignore_{}'.format(provider)
-            if ignore_str in vars(args) and vars(args)[ignore_str] is True:
-                providers_to_ignore.append(provider)
 
-        # scan for ebook-provider directories; modifies config in-place
-        find_ebook_providers(prntr, conf, ignore=providers_to_ignore)
+def setup_providers(args, prntr, conf):
+    '''
+    Validate EBOOK_HOME and ebooks providers (kindle etc) on the local machine
+    '''
+    ebook_home_found, conf['ebook_home'] = setup_ebook_home(prntr, args, conf)
 
-        # hard error if no ebook provider dirs found
-        if ebook_home_found is False and not conf['providers']:
-            raise NoEbookSourcesFoundError
+    if not os.path.exists(conf['ebook_home']):
+        raise EbookHomeMissingError("Path specified in EBOOK_HOME doesn't exist!")
 
-    if args.mode in ('sync', 'init'):
-        # authenticate user and generate session API key
-        connection = OgreConnection(conf)
-        connection.login(conf['username'], conf['password'])
+    conf['ignore_providers'] = []
 
-        # query the server for current ebook definitions (which file extensions to scan for etc)
-        conf['definitions'] = get_definitions(connection)
+    # ignore certain providers as determined by --ignore-* params
+    for provider in PROVIDERS.keys():
+        ignore_str = 'ignore_{}'.format(provider)
+        if ignore_str in vars(args) and vars(args)[ignore_str] is True:
+            conf['ignore_providers'].append(provider)
 
-    # write the config file
-    write_config(conf)
+    # scan for ebook-provider directories; modifies config in-place
+    find_ebook_providers(prntr, conf, ignore=conf['ignore_providers'])
 
-    if providers_to_ignore:
-        # ignore certain providers as determined by --ignore-* params
-        conf['providers'] = {n:p for n,p in conf['providers'].items() if n not in providers_to_ignore}
+    # hard error if no ebook provider dirs found
+    if ebook_home_found is False and not conf['providers']:
+        raise NoEbookSourcesFoundError
 
+
+def init_cache(prntr, conf):
+    '''
+    Setup the Cache object for tracking ebooks in sqlite
+    '''
     # setup some ebook cache file paths
     conf['ebook_cache'] = Cache(conf, os.path.join(conf['config_dir'], 'ebook_cache.db'))
 
     # verify the ogreclient cache; true means it was initialised
     if conf['ebook_cache'].verify_cache(prntr):
-        first_scan_warning = True
-
-    # ensure the DRM tools are installed and up-to-date
-    if args.mode == 'sync':
-        if args.no_drm is True:
-            # skip drm check
-            pass
-        else:
-            dedrm_check(prntr, args, conf)
-
-    elif args.mode == 'init':
-        dedrm_check(prntr, args, conf)
-
-    if args.mode == 'stats' and 'username' not in conf:
-        # supply a default username during stats queries
-        conf['username'] = 'oc'
-
-    if args.mode != 'init' and first_scan_warning is True:
         prntr.p('Please note that metadata/DRM scanning means the first run of ogreclient '
                 'will be much slower than subsequent runs.')
 
-    # return config object
-    return conf
-
 
 def dedrm_check(prntr, args, conf):
+    '''
+    Check for and attempt to install dedrm tools
+    '''
     # check if we have decrypt capability
     from .dedrm import CAN_DECRYPT
 
-    if conf['platform'] == 'Linux':
+    if platform.system() == 'Linux':
         prntr.p('DeDRM in not supported under Linux')
         return
 
@@ -273,7 +297,7 @@ def setup_ebook_home(prntr, args, conf):
         home_dir = os.path.expanduser('~')
 
         # setup ebook home cross-platform
-        if conf['platform'] == 'Darwin':
+        if platform.system() == 'Darwin':
             ebook_home = os.path.join(home_dir, 'Documents/ogre-ebooks')
         else:
             ebook_home = os.path.join(home_dir, 'ogre-ebooks')

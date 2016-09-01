@@ -87,7 +87,7 @@ def read_config():
                 'kindle', libpath=cp.get('kindle', 'libpath')
             )
         except ConfigParser.NoOptionError:
-            pass
+            conf['providers']['kindle'] = None
 
     # load ebook scan definitions
     conf['definitions'] = deserialize_defs(

@@ -13,7 +13,7 @@ from .cache import Cache
 from .config import write_config
 from .core import get_definitions
 from .dedrm import download_dedrm
-from .definitions import OGRESERVER_HOST
+from .definitions import OGRE_PROD_HOST
 from .exceptions import (ConfigSetupError, NoEbookSourcesFoundError, DeDrmNotAvailable,
                          EbookHomeMissingError, CalibreNotAvailable)
 from .providers import PROVIDERS, find_ebook_providers
@@ -94,32 +94,29 @@ def setup_ogreserver_connection_and_get_definitions(args, prntr, conf):
     Load the definitions from ogreserver
     '''
     # setup user auth creds
-    conf['username'], conf['password'] = setup_user_auth(prntr, args, conf)
+    conf['host'], conf['username'], conf['password'] = setup_user_auth(prntr, args, conf)
 
-    # set default hostname
-    if args.host is not None:
-        conf['host'] = args.host
+    try:
+        # strip port off host if included
+        if ':' in conf['host']:
+            hostname = conf['host'].split(':')[0]
+        else:
+            hostname = conf['host']
 
-        try:
-            # strip port off host if included
-            if ':' in args.host:
-                hostname = args.host.split(':')[0]
-            else:
-                hostname = args.host
+        # no SSL for IP addresses
+        socket.inet_aton(hostname)
+        conf['use_ssl'] = False
+    except socket.error:
+        conf['use_ssl'] = True
 
-            # no SSL for IP addresses
-            socket.inet_aton(hostname)
-            conf['use_ssl'] = False
-        except socket.error:
-            conf['use_ssl'] = True
-
-        # if --host supplied CLI, ignore SSL errors on connect
-        conf['ignore_ssl_errors'] = True
-    else:
-        # production config
-        conf['host'] = OGRESERVER_HOST
+    # use SSL in production
+    if conf['host'] == OGRE_PROD_HOST:
         conf['use_ssl'] = True
         conf['ignore_ssl_errors'] = False
+
+    # if --host supplied CLI, ignore SSL errors on connect
+    if args.host:
+        conf['ignore_ssl_errors'] = True
 
     # authenticate user and generate session API key
     connection = OgreConnection(conf)
@@ -218,26 +215,35 @@ def setup_user_auth(prntr, args, conf):
     Setup user auth credentials, sourced in this order:
      - CLI params
      - ENV vars
-     - saved values in ogre config
+     - Saved values in ogre config
      - CLI readline interface
     """
     # 1) load CLI parameters
+    host = args.host
     username = args.username
     password = args.password
 
     # 2) load ENV vars
+    if host is None:
+        host = os.environ.get('OGRE_HOST')
     if username is None:
         username = os.environ.get('EBOOK_USER')
     if password is None:
         password = os.environ.get('EBOOK_PASS')
 
     # 3) load settings from saved config
+    if not host:
+        host = conf.get('host')
     if not username:
         username = conf.get('username')
     if not password:
         password = conf.get('password')
 
-    # 4.1) load username via readline
+    # 4.1) default to prod hostname
+    if not host:
+        host = OGRE_PROD_HOST
+
+    # 4.2) load username via readline
     if not username:
         prntr.p("Please enter your O.G.R.E. username, or press enter to use '{}':".format(getpass.getuser()))
         ri = raw_input()
@@ -250,14 +256,14 @@ def setup_user_auth(prntr, args, conf):
         if not username:
             raise ConfigSetupError('O.G.R.E. username not supplied')
 
-    # 4.2) load password via readline
+    # 4.3) load password via readline
     if not password:
         prntr.p('Please enter your password, or press enter to exit:')
         password = getpass.getpass()
         if len(password) == 0:
             raise ConfigSetupError('O.G.R.E. password not supplied')
 
-    return username, password
+    return host, username, password
 
 
 def setup_ebook_home(prntr, args, conf):

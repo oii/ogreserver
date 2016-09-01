@@ -105,10 +105,10 @@ def search_for_ebooks():
 def setup_user_auth():
     def wrapped(client_config):
         # setup fake argparse object
-        fakeargs = namedtuple('fakeargs', ('username', 'password'))
+        fakeargs = namedtuple('fakeargs', ('host', 'username', 'password'))
         return func_setup_user_auth(
             DummyPrinter(),
-            fakeargs(None, None),
+            fakeargs(None, None, None),
             client_config
         )
     return wrapped

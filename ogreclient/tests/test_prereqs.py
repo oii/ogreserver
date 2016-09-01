@@ -7,16 +7,18 @@ import platform
 def test_setup_user_auth_env(setup_user_auth, mock_os_environ_get, client_config):
     # setup mock for os.environ.get()
     def os_environ_get_side_effect(env_var, default=None):
-        if env_var == 'EBOOK_USER':
+        if env_var == 'OGRE_HOST':
             return 'env_user'
-        elif env_var == 'EBOOK_PASS':
+        elif env_var == 'OGRE_USER':
+            return 'env_user'
+        elif env_var == 'OGRE_PASS':
             return 'env_pass'
         else:
             return default
     mock_os_environ_get.side_effect = os_environ_get_side_effect
 
     # setup_user_auth() modifies client_config in place
-    username, password = setup_user_auth(client_config)
+    host, username, password = setup_user_auth(client_config)
 
     # ensure ENV vars are returned when --params are None
     assert username == 'env_user'
@@ -31,7 +33,7 @@ def test_setup_user_auth_config(setup_user_auth, mock_os_environ_get, client_con
     client_config['password'] = 'client_pass'
 
     # setup_user_auth() modifies client_config in place
-    username, password = setup_user_auth(client_config)
+    host, username, password = setup_user_auth(client_config)
 
     # ensure saved config var returned when ENV & --params are None
     assert username == 'client_user'
@@ -53,7 +55,7 @@ def test_setup_user_auth_params(setup_user_auth, mock_os_environ_get, mock_raw_i
     mock_getpass_getpass.return_value = 'manual_pass'
 
     # setup_user_auth() modifies client_config in place
-    username, password = setup_user_auth(client_config)
+    host, username, password = setup_user_auth(client_config)
 
     # ensure ENV vars are returned when --params passed as None
     assert username == 'manual_user'
@@ -63,7 +65,7 @@ def test_setup_user_auth_params(setup_user_auth, mock_os_environ_get, mock_raw_i
 def test_setup_ebook_home_env(setup_ebook_home, mock_os_environ_get, mock_os_mkdir, client_config):
     # setup mock for os.environ.get()
     def os_environ_get_side_effect(env_var, default=None):
-        if env_var in 'EBOOK_HOME':
+        if env_var in 'OGRE_HOME':
             return 'env_home'
         else:
             return default

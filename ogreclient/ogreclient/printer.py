@@ -9,7 +9,43 @@ import traceback
 PROGBAR_LEN = 40
 
 
-class CliPrinter:
+class CliPrinter(object):
+    '''
+    Singleton-style factory class
+
+    The python magic methods below forward dir/get/set calls onto the underlying
+    _prntr object (as Python's Logger class).
+    '''
+    _prntr = None
+
+    def __init__(self):
+        if not CliPrinter._prntr:
+            CliPrinter.init()
+
+    def __getattribute__(self, name):
+        return getattr(CliPrinter._prntr, name)
+
+    def __setattr__(self, name, value):
+        return setattr(CliPrinter._prntr, name, value)
+
+    def __dir__(self):
+        return dir(self._prntr)
+
+    @classmethod
+    def get_printer(cls):
+        return CliPrinter()
+
+    @classmethod
+    def init(cls, *args, **kwargs):
+        if kwargs.get('quiet'):
+            cls._prntr = DummyPrinter()
+        else:
+            if 'quiet' in kwargs:
+                del(kwargs['quiet'])
+            cls._prntr = CliPrinterImpl(*args, **kwargs)
+
+
+class CliPrinterImpl:
     class Colours:
         nocolour = False
         _default = None
@@ -49,7 +85,8 @@ class CliPrinter:
     log_output = False
     logs = []
 
-    def __init__(self, use_prefix=False, notimer=False, debug=False, progressbar_len=PROGBAR_LEN, progressbar_char="#", nocolour=False, app_name=None, default_colour=None):
+    def __init__(self, use_prefix=False, notimer=False, debug=False, progressbar_len=PROGBAR_LEN,
+                 progressbar_char="#", nocolour=False, app_name=None, default_colour=None, log_output=False):
         if use_prefix is True and app_name is None:
             raise IllegalArgumentError('You must supply app_name when use_prefix is True')
 
@@ -61,6 +98,7 @@ class CliPrinter:
         self.progressbar_char = progressbar_char
         self.colours.nocolour = nocolour
         self.colours.default = default_colour
+        self.log_output = log_output
 
         # start the timer if it's in use
         if notimer is False:
@@ -77,15 +115,15 @@ class CliPrinter:
 
     @staticmethod
     def _get_colour(success=None, bold=False):
-        colour = CliPrinter.colours.default or CliPrinter.colours.NORMAL
+        colour = CliPrinterImpl.colours.default or CliPrinterImpl.colours.NORMAL
 
         if bold:
-            colour = CliPrinter.colours.WHITE
+            colour = CliPrinterImpl.colours.WHITE
 
         if success is True:
-            colour = CliPrinter.colours.GREEN
+            colour = CliPrinterImpl.colours.GREEN
         elif success is False:
-            colour = CliPrinter.colours.RED
+            colour = CliPrinterImpl.colours.RED
 
         return colour
 
@@ -125,7 +163,7 @@ class CliPrinter:
         self.print_newline()
 
         # setup for print
-        colour = CliPrinter._get_colour(success=success, bold=bold)
+        colour = CliPrinterImpl._get_colour(success=success, bold=bold)
         prefix = self._get_prefix(prefix)
 
         # default stdout
@@ -151,8 +189,8 @@ class CliPrinter:
         # thread-safe printing to stdout
         with self.lock:
             out.write('{}{}{}{}{}{}'.format(
-                prefix, CliPrinter.colours.GREY,
-                t, colour, msg, CliPrinter.colours.END
+                prefix, CliPrinterImpl.colours.GREY,
+                t, colour, msg, CliPrinterImpl.colours.END
             ))
 
             # handle multi-line extra text, display it nicely
@@ -163,11 +201,11 @@ class CliPrinter:
             if type(extra) is list:
                 for line in extra:
                     out.write('\n{}> {}{}'.format(
-                        prefix, CliPrinter.colours.END, line
+                        prefix, CliPrinterImpl.colours.END, line
                     ))
             elif extra is not None:
                 out.write('\n{}> {}{}'.format(
-                    prefix, CliPrinter.colours.END, extra
+                    prefix, CliPrinterImpl.colours.END, extra
                 ))
 
             if nonl is True:
@@ -179,7 +217,7 @@ class CliPrinter:
 
 
     def progressi(self, prefix=None, notime=False):
-        colour = CliPrinter._get_colour()
+        colour = CliPrinterImpl._get_colour()
         prefix = self._get_prefix(prefix)
 
         self.progress_running = True
@@ -192,9 +230,9 @@ class CliPrinter:
 
         t = self._get_time_elapsed(notime)
         sys.stdout.write('\r{}{}{}{}[ {} ]{}'.format(
-            prefix, CliPrinter.colours.GREY, t, colour,
+            prefix, CliPrinterImpl.colours.GREY, t, colour,
             PROG_CHARS[self.infinite_progress_state] * self.progressbar_len,
-            CliPrinter.colours.END
+            CliPrinterImpl.colours.END
         ))
         sys.stdout.flush()
 
@@ -210,7 +248,7 @@ class CliPrinter:
 
         self.progress_running = True
 
-        colour = CliPrinter._get_colour()
+        colour = CliPrinterImpl._get_colour()
         prefix = self._get_prefix(prefix)
 
         # calculate progress bar size
@@ -219,12 +257,12 @@ class CliPrinter:
 
         t = self._get_time_elapsed(notime)
         sys.stdout.write('\r{}{}{}{}[ {}{} ] {}%{}'.format(
-            prefix, CliPrinter.colours.GREY, t, colour,
+            prefix, CliPrinterImpl.colours.GREY, t, colour,
             self.progressbar_char * int(progress * self.progressbar_len),
             ' ' * (self.progressbar_len - int(progress * self.progressbar_len)),
             round(progress * 100, 1),
-            CliPrinter.colours.GREY, extra,
-            CliPrinter.colours.END
+            CliPrinterImpl.colours.GREY, extra,
+            CliPrinterImpl.colours.END
         ))
         sys.stdout.flush()
 
@@ -262,7 +300,7 @@ class CliPrinter:
             len_max_string = max(len(str(row[colindex])) for row in data)
             # calculate the number of tabs required
             num_tabs = 1
-            while len_max_string - (CliPrinter.TAB_SIZE * num_tabs) > 0:
+            while len_max_string - (CliPrinterImpl.TAB_SIZE * num_tabs) > 0:
                 num_tabs += 1
             # store for later
             column_tab_sizes[colindex] = num_tabs
@@ -305,7 +343,7 @@ class CliPrinter:
         return '\n{0}{1}\n{0}{2}{0}'.format(separator, header, table)[:-1]
 
     def _get_padding(self, word, num_tabs):
-        return ' ' * ((CliPrinter.TAB_SIZE * num_tabs) - len(str(word)))
+        return ' ' * ((CliPrinterImpl.TAB_SIZE * num_tabs) - len(str(word)))
 
 
     def format_excp(self, ex, debug=False):

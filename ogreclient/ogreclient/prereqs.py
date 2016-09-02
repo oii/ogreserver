@@ -5,9 +5,9 @@ import codecs
 import getpass
 import os
 import platform
-import socket
 import subprocess
 import sys
+from urlparse import urlparse
 
 from .cache import Cache
 from .config import write_config
@@ -100,21 +100,15 @@ def setup_ogreserver_connection_and_get_definitions(args, conf):
     # setup user auth creds
     conf['host'], conf['username'], conf['password'] = setup_user_auth(args, conf)
 
-    try:
-        # strip port off host if included
-        if ':' in conf['host']:
-            hostname = conf['host'].split(':')[0]
-        else:
-            hostname = conf['host']
+    # include http:// on host if missing
+    if not conf['host'].startswith('http'):
+        conf['host'] = 'http://{}'.format(conf['host'])
 
-        # no SSL for IP addresses
-        socket.inet_aton(hostname)
-        conf['use_ssl'] = False
-    except socket.error:
-        conf['use_ssl'] = True
+    # parse protocol/hostname/port
+    conf['host'] = urlparse(conf['host'])
 
-    # use SSL in production
-    if conf['host'] == OGRE_PROD_HOST:
+    # always use SSL in production
+    if conf['host'].scheme == 'https' or conf['host'].netloc == OGRE_PROD_HOST:
         conf['use_ssl'] = True
         conf['ignore_ssl_errors'] = False
 

@@ -15,22 +15,17 @@ import tempfile
 import requests
 from requests.exceptions import ConnectionError, Timeout
 
-from .exceptions import OgreException, RequestError, AuthError, AuthDeniedError, \
-        OgreserverDownError
+from .exceptions import (OgreException, RequestError, AuthError, AuthDeniedError,
+                        OgreserverDownError)
 
 
 class OgreConnection(object):
     session_key = None
 
-    def __init__(self, conf):
-        self.host = conf['host']
-
-        # SSL support
-        if conf['use_ssl']:
-            self.protocol = 'https'
-        else:
-            self.protocol = 'http'
-
+    def __init__(self, conf, debug=False):
+        self.host = conf['host'].netloc
+        self.protocol = 'https' if conf.get('use_ssl', False) else 'http'
+        self.debug = debug
         self.ignore_ssl_errors = conf.get('ignore_ssl_errors', False)
 
         # hide SSL warnings barfed from urllib3

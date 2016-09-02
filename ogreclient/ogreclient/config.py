@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import ConfigParser
 import json
 import os
+from urlparse import urlunparse
 
 from .providers import PROVIDERS, ProviderFactory
 from .utils import serialize_defs, deserialize_defs
@@ -26,7 +27,7 @@ def write_config(conf):
     if 'host' in conf or 'username' in conf or 'password' in conf:
         cp.add_section('ogreserver')
         if 'host' in conf:
-            cp.set('ogreserver', 'host', conf['host'])
+            cp.set('ogreserver', 'host', urlunparse(conf['host']))
         if 'username' in conf:
             cp.set('ogreserver', 'username', conf['username'])
         if 'password' in conf:

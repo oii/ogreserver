@@ -158,7 +158,7 @@ def init_keys(config_dir, ignore_check=False):
 
 
 def download_dedrm(config, debug=False):
-    prntr.p('Downloading latest DRM tools from {}'.format(config['host']))
+    prntr.p('Downloading latest DRM tools from {}'.format(config['host'].netloc))
 
     # authenticate with ogreserver to get DRM tools
     connection = OgreConnection(config)

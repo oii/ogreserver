@@ -12,6 +12,7 @@ import shutil
 import string
 import subprocess
 import threading
+from urlparse import urlparse
 
 import boto.exception
 import mock
@@ -318,7 +319,7 @@ def client_config(flask_app, calibre_ebook_meta_bin, user):
         'providers': {},
         'username': user.username,
         'password': user.username,  # password=username during tests
-        'host': 'localhost:6543',
+        'host': urlparse('http://localhost:6543'),
         'definitions': flask_app.config['EBOOK_DEFINITIONS'],
         'verbose': False,
         'quiet': True,

@@ -79,7 +79,7 @@ def sync(config):
     ebooks_to_upload = query_for_uploads(config, connection)
 
     # 6) upload the ebooks requested by ogreserver
-    upload_ebooks(config, connection, ebooks_by_filehash, ebooks_to_upload)
+    uploaded_count = upload_ebooks(config, connection, ebooks_by_filehash, ebooks_to_upload)
 
     # 7) display/send errors
     all_errord = [err for err in scan_errord+decrypt_errord if isinstance(err, OgreException)]
@@ -90,6 +90,8 @@ def sync(config):
         else:
             # send a log of all events, and upload bad books
             send_logs(connection, all_errord)
+
+    return uploaded_count
 
 
 def scan_and_show_stats(config):
@@ -448,7 +450,7 @@ def query_for_uploads(config, connection):
 
 def upload_ebooks(config, connection, ebooks_by_filehash, ebooks_to_upload):
     if len(ebooks_to_upload) == 0:
-        return
+        return 0
 
     # grammatically correct messages are nice
     plural = 's' if len(ebooks_to_upload) > 1 else ''
@@ -495,6 +497,8 @@ def upload_ebooks(config, connection, ebooks_by_filehash, ebooks_to_upload):
                 ), excp=e.inner_excp
             )
         prntr.p('Please run another sync', success=True)
+
+    return success
 
 
 @retry(times=3)

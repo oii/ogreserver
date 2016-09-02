@@ -205,6 +205,10 @@ def main(conf, args):
         conf['no_drm'] = args.no_drm
         ret = run_sync(conf)
 
+        # print lonely output for quiet mode
+        if args.quiet:
+            prntr.warning("Sync'd {} ebooks".format(ret))
+
     return ret
 
 
@@ -252,10 +256,10 @@ def run_scan(conf):
 
 
 def run_sync(conf):
-    ret = False
+    uploaded_count = 0
 
     try:
-        ret = sync(conf)
+        uploaded_count = sync(conf)
 
     # print messages on error
     except (AuthError, SyncError, UploadError) as e:
@@ -267,4 +271,4 @@ def run_sync(conf):
     except Exception as e:
         prntr.e('Something went very wrong.', excp=e)
 
-    return ret
+    return uploaded_count

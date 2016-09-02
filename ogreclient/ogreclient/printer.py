@@ -402,6 +402,9 @@ class DummyPrinter:
     def progressf(self, *args, **kwargs):
         pass
 
+    def close(self):
+        pass
+
 
 class IllegalArgumentError(ValueError):
     pass

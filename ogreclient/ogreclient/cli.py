@@ -46,12 +46,12 @@ def entrypoint():
             ret = main(conf, args, prntr)
 
     except ConfigSetupError as e:
-        prntr.e('Failed setting up ogreclient', excp=e)
+        prntr.e('Failed setting up ogre', excp=e)
     except OgreWarning as e:
         prntr.e(e)
         ret = 1
     except OgreException as e:
-        prntr.e('An exception occurred in ogreclient', excp=e)
+        prntr.e('An exception occurred in ogre', excp=e)
         ret = 1
     finally:
         if prntr is not None:

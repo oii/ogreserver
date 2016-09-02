@@ -38,7 +38,7 @@ setup(
     package_dir={'': '.'},
     include_package_data=True,
     install_requires=requires,
-    scripts=['scripts/ogreclient'],
+    scripts=['scripts/ogre'],
     license=open('LICENSE').read(),
     classifiers=(
         'Development Status :: 3 - Alpha',

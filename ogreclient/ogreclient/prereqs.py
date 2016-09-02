@@ -128,12 +128,12 @@ def setup_ogreserver_connection_and_get_definitions(args, conf):
 
 def setup_providers(args, conf):
     '''
-    Validate EBOOK_HOME and ebooks providers (kindle etc) on the local machine
+    Validate OGRE_HOME and ebooks providers (kindle etc) on the local machine
     '''
     ebook_home_found, conf['ebook_home'] = setup_ebook_home(args, conf)
 
     if not os.path.exists(conf['ebook_home']):
-        raise EbookHomeMissingError("Path specified in EBOOK_HOME doesn't exist!")
+        raise EbookHomeMissingError("Path specified in OGRE_HOME doesn't exist!")
 
     conf['ignore_providers'] = []
 
@@ -225,9 +225,9 @@ def setup_user_auth(args, conf):
     if host is None:
         host = os.environ.get('OGRE_HOST')
     if username is None:
-        username = os.environ.get('EBOOK_USER')
+        username = os.environ.get('OGRE_USER')
     if password is None:
-        password = os.environ.get('EBOOK_PASS')
+        password = os.environ.get('OGRE_PASS')
 
     # 3) load settings from saved config
     if not host:
@@ -282,7 +282,7 @@ def setup_ebook_home(args, conf):
 
     # 2) load ENV vars
     if ebook_home is None:
-        ebook_home = os.environ.get('EBOOK_HOME')
+        ebook_home = os.environ.get('OGRE_HOME')
 
     # 3) load settings from saved config
     if ebook_home is None or len(ebook_home) == 0:

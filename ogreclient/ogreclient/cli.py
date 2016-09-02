@@ -108,11 +108,11 @@ def parse_command_line(conf):
         p.add_argument(
             '--username', '-u',
             help=('Your O.G.R.E. username. '
-                  'You can also set the environment variable $EBOOK_USER'))
+                  'You can also set the environment variable $OGRE_USER'))
         p.add_argument(
             '--password', '-p',
             help=('Your O.G.R.E. password. '
-                  'You can also set the environment variable $EBOOK_PASS'))
+                  'You can also set the environment variable $OGRE_PASS'))
 
     psync.add_argument(
         '--no-drm', action='store_true',
@@ -141,7 +141,7 @@ def parse_command_line(conf):
         p.add_argument(
             '--ebook-home', '-H',
             help=('The directory where you keep your ebooks. '
-                  'You can also set the environment variable $EBOOK_HOME'))
+                  'You can also set the environment variable $OGRE_HOME'))
 
 
     # setup parser for dedrm command
@@ -248,7 +248,7 @@ def run_scan(conf):
 
     # print messages on error
     except NoEbooksError:
-        prntr.e('No ebooks found. Pass --ebook-home or set $EBOOK_HOME.')
+        prntr.e('No ebooks found. Pass --ebook-home or set $OGRE_HOME.')
     except Exception as e:
         prntr.e('Something went very wrong.', excp=e)
 
@@ -267,7 +267,7 @@ def run_sync(conf):
     except AuthDeniedError:
         prntr.e('Permission denied. This is a private system.')
     except NoEbooksError:
-        prntr.e('No ebooks found. Pass --ebook-home or set $EBOOK_HOME.')
+        prntr.e('No ebooks found. Pass --ebook-home or set $OGRE_HOME.')
     except Exception as e:
         prntr.e('Something went very wrong.', excp=e)
 

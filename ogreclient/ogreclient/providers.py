@@ -53,7 +53,7 @@ class LibProvider(ProviderBase):
 
 class EbookHomeProvider(LibProvider):
     '''
-    A specialised LibsProvider just for $EBOOK_HOME
+    A specialised LibsProvider just for $OGRE_HOME
     '''
     def __init__(self, friendly=None, config=None):
         super(EbookHomeProvider, self).__init__(friendly, libpath=config['ebook_home'])
@@ -130,7 +130,7 @@ def find_ebook_providers(conf, ignore=None):
 
 
 def _handle_home_Darwin(provider):
-    # if EBOOK_HOME is not set, just skip
+    # if OGRE_HOME is not set, just skip
     if not provider.libpath:
         raise EbookHomeUnavailableWarning
 

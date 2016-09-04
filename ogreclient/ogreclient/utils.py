@@ -15,8 +15,12 @@ import tempfile
 import requests
 from requests.exceptions import ConnectionError, Timeout
 
+from .printer import CliPrinter
 from .exceptions import (OgreException, RequestError, AuthError, AuthDeniedError,
                         OgreserverDownError)
+
+
+prntr = CliPrinter.get_printer()
 
 
 class OgreConnection(object):
@@ -34,9 +38,11 @@ class OgreConnection(object):
 
     def login(self, username, password):
         try:
+            url = '{}://{}/login'.format(self.protocol, self.host)
+            prntr.debug(url)
             # authenticate the user
             resp = requests.post(
-                '{}://{}/login'.format(self.protocol, self.host),
+                url,
                 json={
                     'email': username,
                     'password': password
@@ -66,6 +72,7 @@ class OgreConnection(object):
     def _init_request(self, endpoint):
         # build correct URL to ogreserver
         url = '{}://{}/api/v1/{}'.format(self.protocol, self.host, endpoint)
+        prntr.debug(url)
         headers = {'Ogre-key': self.session_key}
         return url, headers
 

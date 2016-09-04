@@ -117,7 +117,7 @@ def setup_ogreserver_connection_and_get_definitions(args, conf):
         conf['ignore_ssl_errors'] = True
 
     # authenticate user and generate session API key
-    connection = OgreConnection(conf)
+    connection = OgreConnection(conf, debug=args.debug)
     connection.login(conf['username'], conf['password'])
 
     # query the server for current ebook definitions (which file extensions to scan for etc)

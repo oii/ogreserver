@@ -41,7 +41,8 @@ class OgreConnection(object):
                     'email': username,
                     'password': password
                 },
-                verify=not self.ignore_ssl_errors
+                verify=not self.ignore_ssl_errors,
+                timeout=5
             )
             # 502 in prod means Flask app is down
             if resp.status_code == 502:
@@ -75,7 +76,7 @@ class OgreConnection(object):
         try:
             # start request with streamed response
             resp = requests.get(
-                url, headers=headers, stream=True, verify=not self.ignore_ssl_errors
+                url, headers=headers, stream=True, verify=not self.ignore_ssl_errors, timeout=5
             )
 
         except (Timeout, ConnectionError) as e:
@@ -99,7 +100,7 @@ class OgreConnection(object):
         try:
             # upload some files and data as multipart
             resp = requests.post(
-                url, headers=headers, data=data, files=files, verify=not self.ignore_ssl_errors
+                url, headers=headers, data=data, files=files, verify=not self.ignore_ssl_errors, timeout=5
             )
 
         except (Timeout, ConnectionError) as e:
@@ -120,12 +121,12 @@ class OgreConnection(object):
             if data is not None:
                 # POST with JSON body
                 resp = requests.post(
-                    url, headers=headers, json=data, verify=not self.ignore_ssl_errors
+                    url, headers=headers, json=data, verify=not self.ignore_ssl_errors, timeout=5
                 )
             else:
                 # GET
                 resp = requests.get(
-                    url, headers=headers, verify=not self.ignore_ssl_errors
+                    url, headers=headers, verify=not self.ignore_ssl_errors, timeout=5
                 )
 
         except (Timeout, ConnectionError) as e:

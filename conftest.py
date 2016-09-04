@@ -20,6 +20,7 @@ import pytest
 import virtualenvapi.manage
 
 from ogreserver.utils import connect_s3
+from ogreclient.ogreclient.printer import CliPrinter
 
 
 def pytest_addoption(parser):
@@ -311,6 +312,9 @@ def client_config(flask_app, calibre_ebook_meta_bin, user):
             password = 'test'
         user = FakeUser()
 
+    # no fancy printing during tests
+    CliPrinter.init(quiet=True)
+
     return {
         'config_dir': None,
         'ebook_cache': mock.Mock(),
@@ -322,7 +326,6 @@ def client_config(flask_app, calibre_ebook_meta_bin, user):
         'host': urlparse('http://localhost:6543'),
         'definitions': flask_app.config['EBOOK_DEFINITIONS'],
         'verbose': False,
-        'quiet': True,
         'no_drm': True,
         'debug': True,
         'skip_cache': True,

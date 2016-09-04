@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import argparse
+import logging
 import os
 import sys
 
@@ -36,6 +37,11 @@ def entrypoint():
 
         if args.debug:
             prntr.level = logging.DEBUG
+
+        # log at warning level in quiet mode
+        if args.quiet:
+            prntr.level = logging.WARNING
+            prntr.notimer = True
 
         # run some checks and create some config variables
         conf = setup_ogreclient(args, conf)
@@ -186,7 +192,6 @@ def main(conf, args):
         'debug': args.debug,
         'skip_cache': args.skip_cache,
         'verbose': True if args.debug is True else args.verbose,
-        'quiet': args.quiet,
     })
 
     ret = None

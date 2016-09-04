@@ -39,30 +39,30 @@ def sync(config):
     connection.login(config['username'], config['password'])
 
     # let the user know something is happening
-    prntr.p('Scanning for ebooks..', nonl=True, bold=True)
+    prntr.info('Scanning for ebooks..', nonl=True, bold=True)
 
     # 1) find ebooks in config['ebook_home'] on local machine
     ebooks_by_authortitle, ebooks_by_filehash, scan_errord, skipped = scan_for_ebooks(config)
 
     if scan_errord:
-        prntr.p('Errors occurred during scan:')
+        prntr.info('Errors occurred during scan:')
         for e in scan_errord:
-            prntr.e(e.ebook_obj.path, excp=e)
+            prntr.error(e.ebook_obj.path, excp=e)
 
     # 2) remove DRM
     decrypt_errord = clean_all_drm(config, ebooks_by_authortitle, ebooks_by_filehash)
 
     if decrypt_errord:
-        prntr.p('Errors occurred during decryption:')
+        prntr.info('Errors occurred during decryption:')
         for e in decrypt_errord:
             # display an error message
-            prntr.e(e.ebook_obj.path, excp=e)
+            prntr.error(e.ebook_obj.path, excp=e)
             # remove the book from the sync data
             del(ebooks_by_filehash[e.ebook_obj.file_hash])
             del(ebooks_by_authortitle[e.ebook_obj.authortitle])
 
     # display a friendly count of books found/skipped
-    prntr.p('Found {} ebooks total{}'.format(
+    prntr.info('Found {} ebooks total{}'.format(
         len(ebooks_by_authortitle) + skipped,
         ', {} skipped'.format(skipped) if skipped > 0 else ''
     ), bold=True)
@@ -70,7 +70,7 @@ def sync(config):
     # 3) send dict of ebooks / md5s to ogreserver
     response = sync_with_server(config, connection, ebooks_by_authortitle)
 
-    prntr.p('Come on sucker, lick my battery', bold=True)
+    prntr.info('Come on sucker, lick my battery', bold=True)
 
     # 4) set ogre_id in metadata of each sync'd ebook
     update_local_metadata(config, connection, ebooks_by_filehash, response['to_update'])
@@ -86,7 +86,7 @@ def sync(config):
 
     if all_errord:
         if not config['debug']:
-            prntr.e('Finished with errors. Re-run with --debug to send logs to OGRE')
+            prntr.error('Finished with errors. Re-run with --debug to send logs to OGRE')
         else:
             # send a log of all events, and upload bad books
             send_logs(connection, all_errord)
@@ -128,7 +128,7 @@ def scan_and_show_stats(config):
     output += [(k,v) for k,v in errors.iteritems()]
 
     # print table
-    prntr.p(output, tabular=True, notime=True)
+    prntr.info(output, tabular=True, notime=True)
 
 
 def scan_for_ebooks(config):
@@ -146,7 +146,7 @@ def scan_for_ebooks(config):
         # a LibProvider contains a single directory containing ebooks
         if isinstance(provider, LibProvider):
             if config['debug']:
-                prntr.p('Scanning {} in {}'.format(provider.friendly, provider.libpath))
+                prntr.info('Scanning {} in {}'.format(provider.friendly, provider.libpath))
 
             for root, _, files in os.walk(provider.libpath):
                 for filename in files:
@@ -155,18 +155,18 @@ def scan_for_ebooks(config):
         # a PathsProvider contains a list of direct ebook paths
         elif isinstance(provider, PathsProvider):
             if config['debug']:
-                prntr.p('Scanning {}'.format(provider.friendly))
+                prntr.info('Scanning {}'.format(provider.friendly))
 
             for path in provider.paths:
                 _process_filename(filename, provider.friendly)
 
     i = 0
     skipped = 0
-    prntr.p('Discovered {} files'.format(len(ebooks)), bold=True)
+    prntr.info('Discovered {} files'.format(len(ebooks)), bold=True)
     if len(ebooks) == 0:
         raise NoEbooksError
 
-    prntr.p('Scanning ebook meta data and decrypting DRM..')
+    prntr.info('Scanning ebook meta data and decrypting DRM..')
     ebooks_by_authortitle = {}
     ebooks_by_filehash = {}
     errord_list = []
@@ -270,7 +270,7 @@ def clean_all_drm(config, ebooks_by_authortitle, ebooks_by_filehash):
     i = 0
     cleaned = 0
 
-    prntr.p('Ebook directory is {}'.format(config['ebook_home']))
+    prntr.info('Ebook directory is {}'.format(config['ebook_home']))
 
     for authortitle, ebook_obj in ebooks_by_authortitle.iteritems():
         # skip if book already DRM free or marked skip
@@ -305,7 +305,7 @@ def clean_all_drm(config, ebooks_by_authortitle, ebooks_by_filehash):
             prntr.progressf(num_blocks=i, total_size=len(ebooks_by_authortitle))
 
     if config['verbose'] and cleaned > 0:
-        prntr.p('Cleaned DRM from {} ebooks'.format(cleaned), success=True)
+        prntr.info('Cleaned DRM from {} ebooks'.format(cleaned), success=True)
 
     return errord_list
 
@@ -329,7 +329,7 @@ def remove_drm_from_ebook(config, ebook_obj):
 
             elif state == DRM.decrypted:
                 if config['verbose']:
-                    prntr.p('DRM removed from {}'.format(os.path.basename(ebook_obj.path)), bold=True)
+                    prntr.info('DRM removed from {}'.format(os.path.basename(ebook_obj.path)), bold=True)
 
                 # create new ebook_obj for decrypted ebook
                 decrypted_ebook_obj = EbookObject(
@@ -349,7 +349,7 @@ def remove_drm_from_ebook(config, ebook_obj):
                 shutil.move(decrypted_filepath, decrypted_ebook_obj.path)
 
                 if config['verbose']:
-                    prntr.p('Decrypted book moved to {}'.format(decrypted_ebook_obj.shortpath), success=True)
+                    prntr.info('Decrypted book moved to {}'.format(decrypted_ebook_obj.shortpath), success=True)
 
                 # add decrypted book to cache
                 config['ebook_cache'].store_ebook(decrypted_ebook_obj)
@@ -392,12 +392,12 @@ def sync_with_server(config, connection, ebooks_by_authortitle):
     # display server messages
     for msg in data['messages']:
         if len(msg) == 2:
-            prntr.p('{} {}'.format(msg[0], msg[1]))
+            prntr.info('{} {}'.format(msg[0], msg[1]))
         else:
-            prntr.p(msg)
+            prntr.info(msg)
 
     for msg in data['errors']:
-        prntr.e(msg)
+        prntr.error(msg)
 
     return data
 
@@ -419,7 +419,7 @@ def update_local_metadata(config, connection, ebooks_by_filehash, ebooks_to_upda
 
             success += 1
             if config['verbose']:
-                prntr.p('Wrote OGRE_ID to {}'.format(ebook_obj.shortpath))
+                prntr.info('Wrote OGRE_ID to {}'.format(ebook_obj.shortpath))
 
             # write to ogreclient cache
             config['ebook_cache'].update_ebook_property(
@@ -429,13 +429,13 @@ def update_local_metadata(config, connection, ebooks_by_filehash, ebooks_to_upda
             )
 
         except (FailedWritingMetaDataError, FailedConfirmError) as e:
-            prntr.e('Failed saving OGRE_ID in {}'.format(ebook_obj.shortpath), excp=e)
+            prntr.error('Failed saving OGRE_ID in {}'.format(ebook_obj.shortpath), excp=e)
             failed += 1
 
     if config['verbose'] and success > 0:
-        prntr.p('Updated {} ebooks'.format(success), success=True)
+        prntr.info('Updated {} ebooks'.format(success), success=True)
     if failed > 0:
-        prntr.e('Failed updating {} ebooks'.format(failed))
+        prntr.error('Failed updating {} ebooks'.format(failed))
 
 
 def query_for_uploads(config, connection):
@@ -455,7 +455,7 @@ def upload_ebooks(config, connection, ebooks_by_filehash, ebooks_to_upload):
     # grammatically correct messages are nice
     plural = 's' if len(ebooks_to_upload) > 1 else ''
 
-    prntr.p('Uploading {} file{}. Go make a brew.'.format(len(ebooks_to_upload), plural), bold=True)
+    prntr.info('Uploading {} file{}. Go make a brew.'.format(len(ebooks_to_upload), plural), bold=True)
 
     success, i = 0, 0
     failed_uploads = []
@@ -477,7 +477,7 @@ def upload_ebooks(config, connection, ebooks_by_filehash, ebooks_to_upload):
             failed_uploads.append(e)
         else:
             if config['verbose'] is True:
-                prntr.p('Uploaded {}'.format(ebook_obj.shortpath))
+                prntr.info('Uploaded {}'.format(ebook_obj.shortpath))
             success += 1
 
         if config['verbose'] is False:
@@ -486,17 +486,17 @@ def upload_ebooks(config, connection, ebooks_by_filehash, ebooks_to_upload):
 
     # only print completion message after all retries
     if success > 0:
-        prntr.p('Completed {} uploads'.format(success), success=True)
+        prntr.info('Completed {} uploads'.format(success), success=True)
 
     if len(failed_uploads) > 0:
-        prntr.e('Failed uploading {} ebooks:'.format(len(failed_uploads)))
+        prntr.error('Failed uploading {} ebooks:'.format(len(failed_uploads)))
         for e in failed_uploads:
-            prntr.e(
+            prntr.error(
                 '{}'.format(
                     ebooks_by_filehash[e.ebook_obj.file_hash].path
                 ), excp=e.inner_excp
             )
-        prntr.p('Please run another sync', success=True)
+        prntr.info('Please run another sync', success=True)
 
     return success
 
@@ -531,11 +531,11 @@ def send_logs(connection, errord_list):
         if data['result'] != 'ok':
             raise FailedDebugLogsError('Failed storing the logs, please report this.')
         else:
-            prntr.p('Uploaded logs to OGRE')
+            prntr.info('Uploaded logs to OGRE')
 
         # upload all books which failed
         if errord_list:
-            prntr.p('Uploaded failed books to OGRE for debug..')
+            prntr.info('Uploaded failed books to OGRE for debug..')
             i = 0
 
             for e in errord_list:

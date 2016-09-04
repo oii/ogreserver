@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import datetime
+import logging
 import sys
 import threading
 import traceback
@@ -85,15 +86,20 @@ class CliPrinterImpl:
     log_output = False
     logs = []
 
-    def __init__(self, use_prefix=False, notimer=False, debug=False, progressbar_len=PROGBAR_LEN,
-                 progressbar_char="#", nocolour=False, app_name=None, default_colour=None, log_output=False):
+    def __init__(self, level=False, app_name=None, use_prefix=False,
+                 progressbar_len=PROGBAR_LEN, progressbar_char="#",
+                 notimer=False, nocolour=False, default_colour=None, log_output=False):
         if use_prefix is True and app_name is None:
             raise IllegalArgumentError('You must supply app_name when use_prefix is True')
 
+        # validate logging.level
+        if not level:
+            self.level = logging.INFO
+        else:
+            self.level = logging._checkLevel(level)
         self.app_name = app_name
         self.use_prefix = use_prefix
         self.notimer = notimer
-        self.debug = debug
         self.progressbar_len = progressbar_len
         self.progressbar_char = progressbar_char
         self.colours.nocolour = nocolour
@@ -136,15 +142,32 @@ class CliPrinterImpl:
         return prefix
 
 
-    def e(self, msg=None, prefix=None, excp=None, notime=False):
+    def debug(self, *args, **kwargs):
+        if self.level <= logging.DEBUG:
+            self.p(*args, **kwargs)
+
+    def info(self, *args, **kwargs):
+        if self.level <= logging.INFO:
+            self.p(*args, **kwargs)
+
+    def warning(self, *args, **kwargs):
+        if self.level <= logging.WARNING:
+            self.p(*args, **kwargs)
+
+    def critical(self, *args, **kwargs):
+        if self.level <= logging.CRITICAL:
+            self.e(*args, **kwargs)
+
+
+    def error(self, msg=None, prefix=None, excp=None, notime=False):
         if msg is None and excp is None:
             raise IllegalArgumentError('You must supply either msg or excp')
 
         if excp:
             # format the exception object into printables
-            excp_msg, inner_msg, traceback = self.format_excp(excp, self.debug)
+            excp_msg, inner_msg, traceback = self.format_excp(excp)
 
-            if self.debug:
+            if self.level == logging.DEBUG:
                 self.p(excp_msg, prefix, success=False, notime=notime, extra=traceback)
             else:
                 # display supplied friendly message, or print exception message
@@ -217,6 +240,9 @@ class CliPrinterImpl:
 
 
     def progressi(self, prefix=None, notime=False):
+        if self.level > logging.INFO:
+            return
+
         colour = CliPrinterImpl._get_colour()
         prefix = self._get_prefix(prefix)
 
@@ -240,6 +266,9 @@ class CliPrinterImpl:
 
 
     def progressf(self, num_blocks=None, block_size=1, total_size=None, extra=None, notime=False, prefix=None):
+        if self.level > logging.INFO:
+            return
+
         if num_blocks is None or total_size is None:
             raise ProgressfArgumentError
 
@@ -346,7 +375,7 @@ class CliPrinterImpl:
         return ' ' * ((CliPrinterImpl.TAB_SIZE * num_tabs) - len(str(word)))
 
 
-    def format_excp(self, ex, debug=False):
+    def format_excp(self, ex):
         """
         Accepts an exception object and returns a tuple of message, inner_message,
         if available and a formatted stacktrace
@@ -358,7 +387,7 @@ class CliPrinterImpl:
         if hasattr(ex, 'inner_excp') and isinstance(ex.inner_excp, Exception):
             inner_msg = unicode(ex.inner_excp)
 
-        if debug is True:
+        if self.level == logging.DEBUG:
             # extract and print the latest exception; which is good for printing
             # immediately when the exception occurs
             _, _, tb = sys.exc_info()
@@ -390,10 +419,19 @@ class CliPrinterImpl:
 
 
 class DummyPrinter:
-    def e(self, *args, **kwargs):
+    def debug(self, *args, **kwargs):
         pass
 
-    def p(self, *args, **kwargs):
+    def info(self, *args, **kwargs):
+        pass
+
+    def warning(self, *args, **kwargs):
+        pass
+
+    def critical(self, *args, **kwargs):
+        pass
+
+    def error(self, *args, **kwargs):
         pass
 
     def progressi(self, *args, **kwargs):

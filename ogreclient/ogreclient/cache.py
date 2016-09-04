@@ -39,7 +39,7 @@ class Cache:
                     self.cache_migrate(version, __CACHEVERSION__)
 
             except:
-                prntr.e('Cache file corrupt! Recreating as per first run..')
+                prntr.error('Cache file corrupt! Recreating as per first run..')
                 must_init_cache = True
             finally:
                 if conn is not None:

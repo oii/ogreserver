@@ -158,14 +158,14 @@ def init_keys(config_dir, ignore_check=False):
 
 
 def download_dedrm(config, debug=False):
-    prntr.p('Downloading latest DRM tools from {}'.format(config['host'].netloc))
+    prntr.info('Downloading latest DRM tools from {}'.format(config['host'].netloc))
 
     # authenticate with ogreserver to get DRM tools
     connection = OgreConnection(config)
     connection.login(config['username'], config['password'])
 
-    prntr.p('Authenticated with Ogreserver')
-    prntr.p('Downloading..')
+    prntr.info('Authenticated with Ogreserver')
+    prntr.info('Downloading..')
 
     try:
         # start download
@@ -203,11 +203,11 @@ def download_dedrm(config, debug=False):
         mod = importlib.import_module('dedrm')
 
     except subprocess.CalledProcessError as e:
-        prntr.e('Failed installing dedrm tools', excp=e if debug else None)
+        prntr.error('Failed installing dedrm tools', excp=e if debug else None)
         return False
     except ImportError as e:
-        prntr.e('Failed installing dedrm tools', excp=e)
+        prntr.error('Failed installing dedrm tools', excp=e)
         return False
 
-    prntr.p('Installed dedrm {}'.format(mod.PLUGIN_VERSION))
+    prntr.info('Installed dedrm {}'.format(mod.PLUGIN_VERSION))
     return True

@@ -32,7 +32,10 @@ def entrypoint():
         args = parse_command_line(conf)
 
         # global CLI printer
-        CliPrinter.init(debug=args.debug, log_output=args.debug, quiet=args.quiet)
+        CliPrinter.init(log_output=args.debug)
+
+        if args.debug:
+            prntr.level = logging.DEBUG
 
         # run some checks and create some config variables
         conf = setup_ogreclient(args, conf)
@@ -41,12 +44,12 @@ def entrypoint():
             ret = main(conf, args)
 
     except ConfigSetupError as e:
-        prntr.e('Failed setting up ogre', excp=e)
+        prntr.error('Failed setting up ogre', excp=e)
     except OgreWarning as e:
-        prntr.e(e)
+        prntr.error(e)
         ret = 1
     except OgreException as e:
-        prntr.e('An exception occurred in ogre', excp=e)
+        prntr.error('An exception occurred in ogre', excp=e)
         ret = 1
     finally:
         if prntr is not None:
@@ -217,15 +220,15 @@ def dedrm_single_ebook(conf, inputfile, output_dir):
     from .dedrm import decrypt, DRM, DecryptionError
 
     try:
-        prntr.p('Decrypting ebook {}'.format(os.path.basename(inputfile)))
+        prntr.info('Decrypting ebook {}'.format(os.path.basename(inputfile)))
 
         state, decrypted_filepath = decrypt(
             inputfile, ext, conf['config_dir'], output_dir=output_dir
         )
-        prntr.p('Book decrypted at:', extra=decrypted_filepath, success=True)
+        prntr.info('Book decrypted at:', extra=decrypted_filepath, success=True)
 
     except DecryptionError as e:
-        prntr.p(str(e))
+        prntr.info(str(e))
         state = None
 
     if state == DRM.decrypted:
@@ -237,7 +240,7 @@ def dedrm_single_ebook(conf, inputfile, output_dir):
 def display_info(conf, filepath):
     ebook_obj = EbookObject(filepath)
     ebook_obj.get_metadata(conf)
-    prntr.p('Book meta', extra=ebook_obj.meta)
+    prntr.info('Book meta', extra=ebook_obj.meta)
 
 
 def run_scan(conf):
@@ -248,9 +251,9 @@ def run_scan(conf):
 
     # print messages on error
     except NoEbooksError:
-        prntr.e('No ebooks found. Pass --ebook-home or set $OGRE_HOME.')
+        prntr.error('No ebooks found. Pass --ebook-home or set $OGRE_HOME.')
     except Exception as e:
-        prntr.e('Something went very wrong.', excp=e)
+        prntr.error('Something went very wrong.', excp=e)
 
     return ret
 
@@ -263,12 +266,12 @@ def run_sync(conf):
 
     # print messages on error
     except (AuthError, SyncError, UploadError) as e:
-        prntr.e('Something went wrong.', excp=e)
+        prntr.error('Something went wrong.', excp=e)
     except AuthDeniedError:
-        prntr.e('Permission denied. This is a private system.')
+        prntr.error('Permission denied. This is a private system.')
     except NoEbooksError:
-        prntr.e('No ebooks found. Pass --ebook-home or set $OGRE_HOME.')
+        prntr.error('No ebooks found. Pass --ebook-home or set $OGRE_HOME.')
     except Exception as e:
-        prntr.e('Something went very wrong.', excp=e)
+        prntr.error('Something went very wrong.', excp=e)
 
     return uploaded_count

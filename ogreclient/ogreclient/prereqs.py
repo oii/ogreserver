@@ -160,7 +160,7 @@ def init_cache(conf):
 
     # verify the ogreclient cache; true means it was initialised
     if conf['ebook_cache'].verify_cache():
-        prntr.p('Please note that metadata/DRM scanning means the first run of ogreclient '
+        prntr.info('Please note that metadata/DRM scanning means the first run of ogreclient '
                 'will be much slower than subsequent runs.')
 
 
@@ -172,7 +172,7 @@ def dedrm_check(args, conf):
     from .dedrm import CAN_DECRYPT
 
     if platform.system() == 'Linux':
-        prntr.p('DeDRM in not supported under Linux')
+        prntr.info('DeDRM in not supported under Linux')
         return
 
     if CAN_DECRYPT is False:
@@ -199,13 +199,13 @@ def dedrm_check(args, conf):
     if CAN_DECRYPT is True or installed is True:
         msgs = init_keys(conf['config_dir'], ignore_check=True)
         for m in msgs:
-            prntr.p(m)
+            prntr.info(m)
 
         from dedrm import PLUGIN_VERSION
-        prntr.p('Initialised DeDRM tools v{}'.format(PLUGIN_VERSION))
+        prntr.info('Initialised DeDRM tools v{}'.format(PLUGIN_VERSION))
 
     elif attempted_download is True:
-        prntr.e('Failed to download DRM tools. Please report this error.')
+        prntr.error('Failed to download DRM tools. Please report this error.')
 
 
 def setup_user_auth(args, conf):
@@ -243,7 +243,7 @@ def setup_user_auth(args, conf):
 
     # 4.2) load username via readline
     if not username:
-        prntr.p("Please enter your O.G.R.E. username, or press enter to use '{}':".format(getpass.getuser()))
+        prntr.info("Please enter your O.G.R.E. username, or press enter to use '{}':".format(getpass.getuser()))
         ri = raw_input()
         if len(ri) > 0:
             username = ri
@@ -256,7 +256,7 @@ def setup_user_auth(args, conf):
 
     # 4.3) load password via readline
     if not password:
-        prntr.p('Please enter your password, or press enter to exit:')
+        prntr.info('Please enter your password, or press enter to exit:')
         password = getpass.getpass()
         if len(password) == 0:
             raise ConfigSetupError('O.G.R.E. password not supplied')
@@ -311,7 +311,7 @@ def setup_ebook_home(args, conf):
             if not os.path.exists(os.path.join(home_dir, 'Documents')):
                 os.mkdir(os.path.join(home_dir, 'Documents'))
             os.mkdir(ebook_home)
-            prntr.p('Decrypted ebooks will be put into {}'.format(ebook_home))
+            prntr.info('Decrypted ebooks will be put into {}'.format(ebook_home))
     else:
         ebook_home_found = True
 

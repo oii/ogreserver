@@ -116,14 +116,14 @@ def find_ebook_providers(conf, ignore=None):
                 except ProviderUnavailableBaseWarning:
                     pass
                 except ProviderBaseError as e:
-                    prntr.e('Failed processing {}'.format(provider.friendly), excp=e)
+                    prntr.error('Failed processing {}'.format(provider.friendly), excp=e)
             else:
-                prntr.p('{} not supported for {} books. Contact oii.'.format(platform.system(), provider.friendly))
+                prntr.info('{} not supported for {} books. Contact oii.'.format(platform.system(), provider.friendly))
         else:
             found = True
 
         if found is True:
-            prntr.p('Found {} directory'.format(provider.friendly))
+            prntr.info('Found {} directory'.format(provider.friendly))
         else:
             # provider is unavailable; remove it from the config
             conf['providers'][provider_name] = None

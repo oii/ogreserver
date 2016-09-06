@@ -43,6 +43,10 @@ def entrypoint():
             prntr.level = logging.WARNING
             prntr.notimer = True
 
+        # no timer during init command
+        if args.mode == 'init':
+            prntr.notimer = True
+
         # run some checks and create some config variables
         conf = setup_ogreclient(args, conf)
 
@@ -196,7 +200,15 @@ def main(conf, args):
 
     ret = None
 
-    if args.mode == 'info':
+    if args.mode == 'init':
+        instructions = [
+            'You will need to use Kindle for Mac to download ALL the books manually :/',
+            'Then run:',
+            '    ogre sync',
+        ]
+        prntr.info('Getting started:', extra=instructions)
+
+    elif args.mode == 'info':
         # display metadata from a single book
         ret = display_info(conf, args.inputfile)
 

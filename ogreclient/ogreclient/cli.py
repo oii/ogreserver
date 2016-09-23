@@ -61,6 +61,8 @@ def entrypoint():
     except OgreException as e:
         prntr.error('An exception occurred in ogre', excp=e)
         ret = 1
+    except KeyboardInterrupt:
+        raise SystemExit('\nExiting gracefully on Ctrl-c')
     finally:
         if prntr is not None:
             # allow the printer to cleanup

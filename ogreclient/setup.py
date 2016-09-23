@@ -38,7 +38,9 @@ setup(
     package_dir={'': '.'},
     include_package_data=True,
     install_requires=requires,
-    scripts=['scripts/ogre'],
+    entry_points = {
+        'console_scripts': ['ogre=ogreclient.cli:entrypoint']
+    },
     license=open('LICENSE').read(),
     classifiers=(
         'Development Status :: 3 - Alpha',

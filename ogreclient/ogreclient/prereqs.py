@@ -69,14 +69,23 @@ def check_calibre_exists(conf):
 
         if platform.system() == 'Darwin':
             # hardcoded path
-            if not calibre_ebook_meta_bin and os.path.exists('/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-meta'):
+            if os.path.exists('/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-meta'):
                 calibre_ebook_meta_bin = '/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-meta'
 
             # hardcoded path for pre-v2 calibre
-            if not calibre_ebook_meta_bin and os.path.exists('/Applications/calibre.app/Contents/MacOS/ebook-meta'):
+            elif os.path.exists('/Applications/calibre.app/Contents/MacOS/ebook-meta'):
                 calibre_ebook_meta_bin = '/Applications/calibre.app/Contents/MacOS/ebook-meta'
 
-        if not calibre_ebook_meta_bin:
+        elif platform.system() == 'Windows':
+            # calibre is packaged with ogreclient on Windows
+            ogre_win_path = os.path.dirname(__file__)[0:os.path.dirname(__file__).index('OGRE')+4]
+
+            calibre_ebook_meta_bin = os.path.join(ogre_win_path, 'CalibrePortable\Calibre\ebook-meta.exe')
+
+            if not os.path.exists(calibre_ebook_meta_bin):
+                raise CalibreNotAvailable('Calibre could not be found in OGRE program directory!')
+
+        elif platform.system() == 'Linux':
             try:
                 # locate calibre's binaries with shell
                 calibre_ebook_meta_bin = subprocess.check_output('which ebook-meta', shell=True).strip()

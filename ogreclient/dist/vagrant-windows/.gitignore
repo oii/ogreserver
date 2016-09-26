@@ -1,0 +1,3 @@
+*.suo
+OGRE/*/bin
+OGRE/*/obj

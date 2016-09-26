@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import ConfigParser
 import json
 import os
+import platform
 from urlparse import urlunparse
 
 from .providers import PROVIDERS, ProviderFactory
@@ -12,7 +13,11 @@ from .utils import serialize_defs, deserialize_defs
 
 def _get_config_dir():
     # setup config dir path
-    return os.path.join(os.environ.get('XDG_CONFIG_HOME', os.path.expanduser('~/.config')), 'ogre')
+    if platform.system() == 'Windows':
+        config_dir = '~'
+    else:
+        config_dir = '~/.config'
+    return os.path.join(os.environ.get('XDG_CONFIG_HOME', os.path.expanduser(config_dir)), 'ogre')
 
 
 def write_config(conf):

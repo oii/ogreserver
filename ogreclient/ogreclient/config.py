@@ -71,15 +71,20 @@ def read_config():
     try:
         cp.read(os.path.join(conf['config_dir'], 'app.config'))
     except ConfigParser.ParsingError:
+        # abort if config is broken
         return conf
 
-    conf['calibre_ebook_meta_bin'] = cp.get('config', 'calibre_ebook_meta_bin')
+    # read the user/pass/host variables first
+    conf['host'] = cp.get('ogreserver', 'host')
+    conf['username'] = cp.get('ogreserver', 'username')
+    conf['password'] = cp.get('ogreserver', 'password')
+
     try:
-        conf['host'] = cp.get('ogreserver', 'host')
-        conf['username'] = cp.get('ogreserver', 'username')
-        conf['password'] = cp.get('ogreserver', 'password')
+        conf['calibre_ebook_meta_bin'] = cp.get('config', 'calibre_ebook_meta_bin')
     except ConfigParser.NoSectionError:
-        pass
+        # if calibre config not set, return early. In this case it's likely
+        # app.config has been created externally by a script
+        return conf
 
     # extract which providers are already known (used for CLI options)
     for provider in PROVIDERS.keys():

@@ -61,15 +61,15 @@ watchdog:
     dir: /srv/ogre/ogreserver
   sass:
     pattern: "*.scss"
-    command: "cd /srv/ogre && make sass_dev"
+    command: "cd /srv/ogre/ogreserver/static && make sass_dev"
     dir: /srv/ogre/ogreserver/static/sass
   js:
     pattern: "*.js"
-    command: "cd /srv/ogre && make js_dev"
+    command: "cd /srv/ogre/ogreserver/static && make js_dev"
     dir: /srv/ogre/ogreserver/static/js
   image:
     pattern: "*.*"
-    command: "cd /srv/ogre && make images"
+    command: "cd /srv/ogre/ogreserver/static && make images"
     dir: /srv/ogre/ogreserver/static/images
 
 # server timezone & locale

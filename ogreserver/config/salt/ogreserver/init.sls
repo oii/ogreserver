@@ -72,11 +72,10 @@ bower-ogreserver-install:
 static-asset-compile:
   cmd.run:
     - name: make dev
-    - cwd: /srv/ogre
+    - cwd: /srv/{{ pillar['app_directory_name'] }}/ogreserver/static
     - user: {{ pillar['app_user'] }}
     - require:
       - cmd: bower-ogreserver-install
-    - unless: test -d /srv/{{ pillar['app_directory_name'] }}/ogreserver/static/dist
 
 
 pip-dependencies-extra:

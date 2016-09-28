@@ -121,6 +121,9 @@ def setup_ogreserver_connection_and_get_definitions(args, conf):
         conf['use_ssl'] = True
         conf['ignore_ssl_errors'] = False
 
+    # TODO beta only
+    conf['ignore_ssl_errors'] = True
+
     # if --host supplied CLI, ignore SSL errors on connect
     if args.host:
         conf['ignore_ssl_errors'] = True

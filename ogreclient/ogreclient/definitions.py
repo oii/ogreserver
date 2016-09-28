@@ -1,1 +1,1 @@
-OGRE_PROD_HOST = 'ogre.oii.yt'
+OGRE_PROD_HOST = 'ogre-staging.oii.yt'

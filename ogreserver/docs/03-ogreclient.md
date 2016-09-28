@@ -13,7 +13,7 @@ The `ogre` command line tool is what you lovely people use to decrypt and share 
 
 Open Terminal.app, and run this oneliner command:
 
-    curl -L ogre.oii.yt/install | bash && ogre init
+    curl -k -L ogre-staging.oii.yt/install | bash && ogre init
 
 Which will execute the following steps:
 

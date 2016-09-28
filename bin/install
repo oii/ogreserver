@@ -80,8 +80,11 @@ if [[ $(uname) =~ (.*)Darwin(.*) ]]; then
 
   echo "${green}==> OGRE install complete${reset}"
   echo ''
-  echo 'You will need to use Kindle for Mac to download ALL the books manually :/'
-  open /Applications/Kindle.app
+
+  # open Kindle for Mac on first run
+  if [[ ! -d ~/.config/ogre ]]; then
+    open --background /Applications/Kindle.app
+  fi
 
 elif [[ $(uname) =~ (.*)Debian(.*) ]]; then
   echo "${red}Not implemented for Debian${reset}"

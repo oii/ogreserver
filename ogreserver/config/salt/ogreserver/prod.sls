@@ -1,4 +1,5 @@
 include:
+  - create-app-user
   - hostname
   - mysql.prod
   - newrelic

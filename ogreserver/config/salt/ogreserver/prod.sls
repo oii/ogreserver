@@ -1,6 +1,6 @@
 include:
   - create-app-user
-  - hostname
+  - hostname.cloud-init
   - mysql.prod
   - newrelic
   - nginx.acme-ssl

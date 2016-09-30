@@ -88,7 +88,8 @@ class CliPrinterImpl:
 
     def __init__(self, level=False, app_name=None, use_prefix=False,
                  progressbar_len=PROGBAR_LEN, progressbar_char="#",
-                 notimer=False, nocolour=False, default_colour=None, log_output=False):
+                 notimer=False, nocolour=True, default_colour=None, log_output=False):
+
         if use_prefix is True and app_name is None:
             raise IllegalArgumentError('You must supply app_name when use_prefix is True')
 

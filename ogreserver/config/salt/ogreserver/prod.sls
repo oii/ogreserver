@@ -50,9 +50,8 @@ awscli:
 # build ogreclient and extra client tooling
 build-ogreclient:
   cmd.run:
-    - name: make dist
+    - name: make release
     - cwd: /srv/ogre/ogreclient
-    - user: {{ pillar['app_user'] }}
     - require:
       - pip: awscli
     - env:

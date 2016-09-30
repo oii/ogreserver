@@ -2,9 +2,13 @@
 
 ==== Simple ====
 
-Run the following command:
+Run the following command, which will build ogreclient and dedrm distributions:
 
-  make dist
+    make dist
+
+Alternatively the following command will build and push to S3 for use in staging/production. Note the supplied environment vars - you will also need `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` exported:
+
+    ENV=staging AWS_DEFAULT_REGION=eu-west-1 make release
 
 
 ==== Detailed ====

@@ -46,6 +46,9 @@ ogre_user_name: dev-user
 ogre_user_pass: password
 ogre_user_email: test@example.com
 
+# ogreclient version
+ogreclient_version: 0.0.3
+
 # version of DeDRM tools
 dedrm_version: 6.4.1
 

@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import os
-
 from flask import Flask
 from celery import Celery
 
@@ -10,30 +8,14 @@ from .extensions.celery import queue_configuration, schedule_tasks
 from .extensions.config import init_config
 
 
-class StaticFolderFlask(Flask):
-    '''
-    Make Flask's static_folder option configurable via flask.app.conf.py
-    '''
-    @property
-    def static_folder(self):
-        '''
-        Return configured STATIC_DIR or Flask default of "static"
-        '''
-        if self.config.get('STATIC_DIR') is not None:
-            return os.path.join(self.root_path, self.config.get('STATIC_DIR'))
-        else:
-            return 'static'
-
-    @static_folder.setter
-    def static_folder(self, value):
-        pass
-
-
 def create_app(config=None):
     # instantiate Flask application
-    app = StaticFolderFlask(__name__)
+    app = Flask(
+        __name__,
+        static_folder='static/dist',
+        static_url_path='/static',
+    )
 
-    # load config from param/filesystem/env
     init_config(app, config=config)
 
     def setup_db_before_request():

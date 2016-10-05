@@ -11,5 +11,3 @@ ogreclient-install:
     - name: /home/{{ pillar['app_user'] }}/.virtualenvs/ogreclient/bin/pip install -e .
     - cwd: /srv/ogre/ogreclient
     - user: {{ pillar['app_user'] }}
-    - require:
-      - git: git-clone-app

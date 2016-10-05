@@ -4,6 +4,10 @@ dist/
 *.pyc
 .coverage
 
+ogreclient/dedrm/
+ogreserver/install
+ogreserver/robots.txt
+
 .DS_Store
 OGRE_DRM_Tools*.zip
 search.db

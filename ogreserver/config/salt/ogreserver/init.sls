@@ -85,7 +85,6 @@ static-asset-compile:
     - cwd: /srv/ogre
     - user: {{ pillar['app_user'] }}
     - require:
-      - git: git-clone-app
       - cmd: bower-ogreserver-install
     - unless: test -d /srv/{{ pillar['app_directory_name'] }}/ogreserver/static/dist
 
@@ -110,7 +109,6 @@ flask-config:
     - user: {{ pillar['app_user'] }}
     - group: {{ pillar['app_user'] }}
     - require:
-      - git: git-clone-app
       - file: flask-config-dir
     - require_in:
       - service: supervisor

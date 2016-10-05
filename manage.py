@@ -5,9 +5,12 @@ from __future__ import absolute_import
 import datetime
 import json
 import os
+import subprocess
 import sys
+import time
 
 import boto
+import salt.client
 
 from flask.ext.script import Manager
 from sqlalchemy.exc import IntegrityError, ProgrammingError
@@ -18,11 +21,10 @@ from rethinkdb.errors import RqlRuntimeError
 from ogreserver.factory import create_app, make_celery, register_signals
 from ogreserver.extensions.celery import register_tasks
 from ogreserver.extensions.database import setup_db_session, create_tables, setup_roles
-from ogreserver.utils import connect_s3, decode_rql_dates
+from ogreserver.utils import connect_s3, decode_rql_dates, make_temp_directory
 
 app = create_app()
 manager = Manager(app)
-
 
 @manager.command
 def convert():
@@ -193,7 +195,7 @@ def init_ogre(test=False):
     s3 = connect_s3(app.config)
 
     # check bucket already exists
-    aws_setup1 = aws_setup2 = aws_setup3 = False
+    aws_setup1 = aws_setup2 = aws_setup3 = aws_setup4 = False
     for b in s3.get_all_buckets():
         if b.name == app.config['EBOOK_S3_BUCKET']:
             aws_setup1 = True
@@ -201,7 +203,9 @@ def init_ogre(test=False):
             aws_setup2 = True
         elif b.name == app.config['DIST_S3_BUCKET']:
             aws_setup3 = True
-    aws_setup = aws_setup1 & aws_setup2 & aws_setup3
+        elif b.name == app.config['BACKUP_S3_BUCKET']:
+            aws_setup4 = True
+    aws_setup = aws_setup1 & aws_setup2 & aws_setup3 & aws_setup4
 
     # check mysql DB created
     try:
@@ -241,7 +245,7 @@ def init_ogre(test=False):
             register_tasks(app)
             setup_roles(app)
 
-        for bucket_name in ('EBOOK', 'STATIC', 'DIST'):
+        for bucket_name in ('EBOOK', 'STATIC', 'DIST', 'BACKUP'):
             try:
                 s3.create_bucket(
                     app.config['{}_S3_BUCKET'.format(bucket_name)],
@@ -342,6 +346,80 @@ def check_pip():
             msg = 'up to date'
         pkg_info = '{dist.project_name} {dist.version}'.format(dist=dist)
         print '{pkg_info:40} {msg}'.format(pkg_info=pkg_info, msg=msg)
+
+
+@manager.command
+def dump_rethinkdb(identifier):
+    """
+    Dump rethinkdb to S3
+    """
+    command = 'rethinkdb dump --file {}'
+    dump_database_to_s3('rethinkdb', identifier, command)
+
+
+@manager.command
+def dump_mysql(identifier):
+    """
+    Dump mysql to S3
+    """
+    command = 'mysqldump -h {} -u {} -p{} {} | gzip -qv > {{}}'.format(
+        app.config['MYSQL_HOST'],
+        app.config['MYSQL_USER'],
+        app.config['MYSQL_PASS'],
+        app.config['MYSQL_DB'],
+    )
+    dump_database_to_s3('mysql', identifier, command)
+
+
+def dump_database_to_s3(db_type, identifier, command):
+    """
+    Dump a database to S3
+
+    :param  db_type     "mysql", "rethinkdb" etc
+    :param  identifier  unique DB backup id
+    :param  command     backup shell command with "{}" placeholder for filename
+    """
+    with make_temp_directory() as tmpdir:
+        try:
+            filename = '{}_dump_{}_{}.tar.gz'.format(db_type, int(time.time()), identifier)
+
+            subprocess.check_call(
+                command.format(os.path.join(tmpdir, filename)),
+                shell=True
+            )
+
+            # push to S3
+            s3 = connect_s3(app.config)
+            k = s3.get_bucket(app.config['BACKUP_S3_BUCKET']).new_key(filename)
+            k.set_contents_from_filename(os.path.join(tmpdir, filename))
+
+            # update latest backup redirect
+            k = s3.get_bucket(app.config['BACKUP_S3_BUCKET']).new_key(
+                '{}_dump_latest.tar.gz'.format(db_type)
+            )
+            k.set_redirect('/{}'.format(filename))
+
+        except subprocess.CalledProcessError as e:
+            sys.stderr.write('Failed dumping {} ({})\n'.format(db_type, e))
+            sys.exit(1)
+
+
+@manager.command
+def shutdown():
+    """
+    Prep the application for shutdown:
+     - dump rethinkdb to S3
+     - dump mysql to S3
+     - set OGRE DNS to point to static page
+    """
+    # retrieve current git commitish for HEAD
+    caller = salt.client.Caller()
+    data = caller.function('grains.item', 'git_revision')
+
+    # backup DBs to S3
+    dump_mysql(data['git_revision'])
+    dump_rethinkdb(data['git_revision'])
+
 
 if __name__ == "__main__":
     manager.run()

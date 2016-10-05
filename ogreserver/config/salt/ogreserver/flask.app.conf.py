@@ -19,6 +19,7 @@ AWS_REGION = "{{ pillar.get('aws_region', '') }}"
 EBOOK_S3_BUCKET = "ogre-ebooks-{{ grains['env'] }}-{{ pillar.get('aws_region', 'local') }}"
 STATIC_S3_BUCKET = "ogre-static-{{ grains['env'] }}-{{ pillar.get('aws_region', 'local') }}"
 DIST_S3_BUCKET = "ogre-dist-{{ grains['env'] }}-{{ pillar.get('aws_region', 'local') }}"
+BACKUP_S3_BUCKET = "ogre-backup-{{ grains['env'] }}-{{ pillar.get('aws_region', 'local') }}"
 
 # AWS Advertising API config
 AWS_ADVERTISING_API_ACCESS_KEY = "{{ pillar.get('aws_advertising_api_access_key', '') }}"
@@ -49,6 +50,11 @@ SECRET_KEY = "{{ pillar['flask_secret'] }}"
 
 # Main ebook database name
 RETHINKDB_DATABASE = 'ogreserver'
+
+MYSQL_HOST = "{{ pillar['mysql_host'] }}"
+MYSQL_USER = "{{ pillar['mysql_user'] }}"
+MYSQL_PASS = "{{ pillar['mysql_pass'] }}"
+MYSQL_DB = "{{ pillar['mysql_db'] }}"
 
 # SQLAlchemy DB URI
 SQLALCHEMY_DATABASE_URI = "mysql://{{ pillar['mysql_user'] }}:{{ pillar['mysql_pass'] }}@{{ pillar['mysql_host'] }}/{{ pillar['mysql_db'] }}"

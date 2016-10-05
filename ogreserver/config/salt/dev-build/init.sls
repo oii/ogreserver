@@ -1,5 +1,5 @@
 include:
-  - closure-compiler.local
+  - closure-compiler
   - create-ogre-user
   - dev-build.tmux
   - github
@@ -74,7 +74,7 @@ extend:
   static-asset-compile:
     cmd.run:
       - require:
-        - cmd: closure-compiler
+        - file: closure-compiler-service
 
   ogre-init:
     cmd.run:

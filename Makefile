@@ -9,15 +9,16 @@ prod: clean sass_prod js_prod images
 	@gzip -9 -c ogreserver/static/dist/ogreserver.js > ogreserver/static/dist/ogreserver.js.gz
 
 js_dev:
-	@java -jar /usr/local/lib/compiler.jar \
-		--compilation_level=WHITESPACE_ONLY \
-		--language_in=ECMASCRIPT5 \
-		--formatting=PRETTY_PRINT \
-		--js_output_file=ogreserver/static/dist/ogreserver.js \
-		ogreserver/static/js/*
+	@closure-compiler \
+		--comp-level=whitespace \
+		--language=ecma5 \
+		--output-format=text \
+		ogreserver/static/js/* \
+		> ogreserver/static/dist/ogreserver.js
 
 js_prod:
 	@closure-compiler \
+		--comp-level=simple \
 		--language=ecma5 \
 		--output-format=text \
 		ogreserver/static/js/* \

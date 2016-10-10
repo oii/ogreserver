@@ -405,6 +405,60 @@ def dump_database_to_s3(db_type, identifier, command):
 
 
 @manager.command
+def restore_rethinkdb():
+    """
+    Restore rethinkdb from S3
+    """
+    command = 'rethinkdb restore --force {}'
+    restore_database_from_s3('rethinkdb', command)
+
+
+@manager.command
+def restore_mysql():
+    """
+    Restore mysql from S3
+    """
+    command = 'gunzip --stdout {{}} | mysql -h {} -u {} -p{} {}'.format(
+        app.config['MYSQL_HOST'],
+        app.config['MYSQL_USER'],
+        app.config['MYSQL_PASS'],
+        app.config['MYSQL_DB']
+    )
+    restore_database_from_s3('mysql', command)
+
+
+def restore_database_from_s3(db_type, command):
+    """
+    Restore a database from S3 backup
+
+    :param  db_type     "mysql", "rethinkdb" etc
+    :param  command     backup shell command with "{}" placeholder for filename
+    """
+    s3 = connect_s3(app.config)
+
+    # retrieve the filename of the latest backup
+    k = s3.get_bucket(app.config['BACKUP_S3_BUCKET']).get_key(
+        '{}_dump_latest.tar.gz'.format(db_type)
+    )
+    backup_name = k.get_redirect()[1:]
+
+    with make_temp_directory() as tmpdir:
+        k = s3.get_bucket(app.config['BACKUP_S3_BUCKET']).get_key(backup_name)
+
+        try:
+            with open(os.path.join(tmpdir, backup_name), 'wb') as f:
+                k.get_contents_to_file(f)
+
+            subprocess.check_call(
+                command.format(os.path.join(tmpdir, backup_name)),
+                shell=True
+            )
+        except subprocess.CalledProcessError as e:
+            sys.stderr.write('Failed restoring {} ({})\n'.format(db_type, e))
+            sys.exit(1)
+
+
+@manager.command
 def shutdown():
     """
     Prep the application for shutdown:
@@ -419,6 +473,16 @@ def shutdown():
     # backup DBs to S3
     dump_mysql(data['git_revision'])
     dump_rethinkdb(data['git_revision'])
+
+
+@manager.command
+def startup():
+    """
+    Import DBs at application start
+    """
+    # restore DBs from S3
+    restore_mysql()
+    restore_rethinkdb()
 
 
 if __name__ == "__main__":

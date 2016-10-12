@@ -86,11 +86,11 @@ logs-chown:
     - require:
       - supervisord: ogreserver-supervisor-service
 
-# install pytest
+# install extra dev reqs
 requirements-dev-install:
   pip.installed:
     - requirements: /srv/ogre/ogreserver/config/requirements-dev.txt
-    - bin_env: /home/vagrant/.virtualenvs/{{ pillar['app_name'] }}
+    - bin_env: /home/vagrant/.virtualenvs/{{ pillar['virtualenv_name'] }}
     - user: {{ pillar['app_user'] }}
     - require:
       - virtualenv: app-virtualenv

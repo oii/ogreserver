@@ -44,6 +44,15 @@ gevent:
     - require_in:
       - service: supervisor
 
+# install extra production reqs
+requirements-prod-install:
+  pip.installed:
+    - requirements: /srv/ogre/ogreserver/config/requirements-prod.txt
+    - bin_env: /home/vagrant/.virtualenvs/{{ pillar['virtualenv_name'] }}
+    - user: {{ pillar['app_user'] }}
+    - require:
+      - virtualenv: app-virtualenv
+
 awscli:
   pip.installed
 

@@ -166,7 +166,7 @@ def scan_for_ebooks(config):
     if len(ebooks) == 0:
         raise NoEbooksError
 
-    prntr.info('Scanning ebook meta data and decrypting DRM..')
+    prntr.info('Scanning ebook meta data..')
     ebooks_by_authortitle = {}
     ebooks_by_filehash = {}
     errord_list = []
@@ -271,6 +271,7 @@ def clean_all_drm(config, ebooks_by_authortitle, ebooks_by_filehash):
     cleaned = 0
 
     prntr.info('Ebook directory is {}'.format(config['ebook_home']))
+    prntr.info('Decrypting DRM..')
 
     for authortitle, ebook_obj in ebooks_by_authortitle.iteritems():
         # skip if book already DRM free or marked skip

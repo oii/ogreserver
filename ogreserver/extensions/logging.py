@@ -17,12 +17,20 @@ def init_logging(app):
         )
     )
 
+    # extra logging during test runs
     if 'TESTING' in app.config and app.config['TESTING'] is True:
-        # during integration tests log to a file, since Flask is running on a background thread
-        handler = logging.FileHandler(app.config['TESTING_LOG_PATH'])
-        handler.setFormatter(
-            logging.Formatter(
-                '%(asctime)s [%(levelname)s] in %(module)s %(message)s', '%d/%m/%Y %H:%M:%S'
-            )
+        extra_testing_setup(app)
+
+
+def extra_testing_setup(app):
+    '''
+    During integration tests log to a file, since Flask is running on a
+    background thread
+    '''
+    handler = logging.FileHandler(app.config['TESTING_LOG_PATH'])
+    handler.setFormatter(
+        logging.Formatter(
+            '%(asctime)s [%(levelname)s] in %(module)s %(message)s', '%d/%m/%Y %H:%M:%S'
         )
-        app.logger.addHandler(handler)
+    )
+    app.logger.addHandler(handler)

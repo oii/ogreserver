@@ -59,6 +59,7 @@ MYSQL_DB = "{{ pillar['mysql_db'] }}"
 # SQLAlchemy DB URI
 SQLALCHEMY_DATABASE_URI = "mysql://{{ pillar['mysql_user'] }}:{{ pillar['mysql_pass'] }}@{{ pillar['mysql_host'] }}/{{ pillar['mysql_db'] }}"
 
+
 # Whoosh full-text search
 WHOOSH_BASE = os.path.join(basedir, 'search.db')
 
@@ -116,7 +117,12 @@ AMAZON_FUZZ_THRESHOLD = 50
 {% if grains['env'] == 'prod' %}
 # Production logging level
 import logging
-LOGGING_LEVEL = logging.WARNING
+LOGGING_LEVEL = logging.INFO
+{% endif %}
+
+{% if grains['env'] != 'dev' %}
+SENTRY_DSN = '{{ pillar['sentry_dsn'] }}'
+SENTRY_USER_ATTRS = ['username']
 {% endif %}
 
 

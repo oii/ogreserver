@@ -58,22 +58,27 @@ watchdog:
     pattern: "*.py"
     command: "pkill -HUP gunicorn"
     dir: /srv/ogre/ogreserver
+    polling: true
   celeryd:
     pattern: "*/tasks.py;*models/datastore.py"
     command: "sudo supervisorctl restart ogreserver:celeryd.low ogreserver:celeryd.normal ogreserver:celeryd.high"
     dir: /srv/ogre/ogreserver
+    polling: true
   sass:
     pattern: "*.scss"
     command: "cd /srv/ogre/ogreserver/static && make sass_dev"
     dir: /srv/ogre/ogreserver/static/sass
+    polling: true
   js:
     pattern: "*.js"
     command: "cd /srv/ogre/ogreserver/static && make js_dev"
     dir: /srv/ogre/ogreserver/static/js
+    polling: true
   image:
     pattern: "*.*"
     command: "cd /srv/ogre/ogreserver/static && make images"
     dir: /srv/ogre/ogreserver/static/images
+    polling: true
 
 # server timezone & locale
 timezone: "Europe/London"

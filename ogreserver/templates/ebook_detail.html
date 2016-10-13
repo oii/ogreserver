@@ -72,7 +72,9 @@
 
 		{% for fmt in ebook.versions[0].formats %}
 			<a href="{{ url_for('ebooks.download', ebook_id=ebook.ebook_id, version_id=ebook.versions[0].version_id, fmt=fmt.format) }}" class="download">
-				<img src="{{ url_for("core.static", filename="images/{}-icon.png".format(fmt.format)) }}" />
+				<svg class="icon icon-file-empty" style="width:64px; height:64px;">
+					<use xlink:href="{{ url_for("core.static", filename="images/doc.svg") }}#icon-{{ fmt.format }}"></use>
+				</svg>
 			</a>
 		{% endfor %}
 
@@ -101,7 +103,9 @@
 				<td>
 					{% for fmt in ebook.version.formats %}
 						<a href="{{ url_for('ebooks.download', ebook_id=ebook.ebook_id, version_id=ebook.versions[0].version_id, fmt=fmt.format) }}" class="download">
-							<img src="{{ url_for("core.static", filename="images/{}-icon.png".format(fmt.format)) }}" />
+							<svg class="icon icon-file-empty" style="width:64px; height:64px;">
+								<use xlink:href="{{ url_for("core.static", filename="images/doc.svg") }}#icon-{{ fmt.format }}"></use>
+							</svg>
 						</a>
 					{% endfor %}
 				</td>

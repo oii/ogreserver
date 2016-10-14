@@ -12,7 +12,6 @@ ogreclient/dist/BitBar*.zip
 ogreclient/dist/bitbar-bundler
 
 .DS_Store
-OGRE_DRM_Tools*.zip
 search.db
 .sass-cache
 ogreserver/static/stylesheets
@@ -47,3 +46,12 @@ ogreclient/include/
 ogreclient/lib/
 ogreclient/pip-selfcheck.json
 ogreclient/share/
+
+bin/
+include/
+lib/
+local/
+share/
+src/
+pip-selfcheck.json
+pyvenv.cfg

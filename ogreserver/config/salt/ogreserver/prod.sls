@@ -36,11 +36,18 @@ extend:
         - cmd: rabbitmq-server-running
         - file: newrelic-config
 
+  create-app-user:
+    user.present:
+      - require_in:
+        - file: app-directory
+
 
 gevent:
   pip.installed:
-    - bin_env: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['virtualenv_name'] }}
+    - bin_env: /srv/{{ pillar['app_directory_name'] }}
     - user: {{ pillar['app_user'] }}
+    - require:
+      - virtualenv: app-virtualenv
     - require_in:
       - service: supervisor
 
@@ -48,10 +55,12 @@ gevent:
 requirements-prod-install:
   pip.installed:
     - requirements: /srv/ogre/ogreserver/config/requirements-prod.txt
-    - bin_env: /home/vagrant/.virtualenvs/{{ pillar['virtualenv_name'] }}
+    - bin_env: /srv/{{ pillar['app_directory_name'] }}
     - user: {{ pillar['app_user'] }}
     - require:
       - virtualenv: app-virtualenv
+    - require_in:
+      - cmd: ogre-init
 
 awscli:
   pip.installed

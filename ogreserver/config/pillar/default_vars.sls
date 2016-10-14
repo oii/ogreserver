@@ -97,7 +97,6 @@ extras:
 # install extras from pip
 pip:
   - pyflakes
-  - virtualenvwrapper
   - ipdb
 
 # set debian APT mirror (ie, ftp.uk)

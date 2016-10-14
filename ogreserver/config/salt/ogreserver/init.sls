@@ -1,5 +1,4 @@
 include:
-  - app.virtualenv
   - app.source
   - app.supervisor
   - calibre
@@ -30,7 +29,7 @@ extend:
   /etc/supervisor/conf.d/ogreserver.conf:
     file.managed:
       - context:
-          venv: {{ pillar['virtualenv_name'] }}
+          app_dir: {{ pillar['app_directory_name'] }}
           workers:
             high: 0
             normal: 0
@@ -40,10 +39,34 @@ extend:
     supervisord.running:
       - require:
         - cmd: rabbitmq-server-running
+        - virtualenv: app-virtualenv
       - watch:
         - file: /etc/supervisor/conf.d/{{ pillar['app_name'] }}.conf
         - file: /etc/gunicorn.d/{{ pillar['app_name'] }}.conf.py
 
+
+venv-dependencies:
+  pkg.latest:
+    - names:
+      - python-dev
+      - python-pip
+      - build-essential
+    - require:
+      - pkg: required-packages
+
+virtualenv:
+  pip.installed:
+    - require:
+      - pkg: venv-dependencies
+
+app-virtualenv:
+  virtualenv.managed:
+    - name: /srv/{{ pillar['app_directory_name'] }}
+    - requirements: /srv/{{ pillar['app_directory_name'] }}/ogreserver/config/requirements.txt
+    - user: {{ pillar['app_user'] }}
+    - require:
+      - pip: virtualenv
+      - user: {{ pillar['app_user'] }}
 
 # install bower.io for Foundation 5
 bower:
@@ -104,9 +127,9 @@ flask-config:
 
 ogre-init:
   cmd.run:
-    - name: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['virtualenv_name'] }}/bin/python manage.py init_ogre
-    - cwd: /srv/ogre
-    - unless: /home/{{ pillar['app_user'] }}/.virtualenvs/{{ pillar['virtualenv_name'] }}/bin/python manage.py init_ogre --test
+    - name: bin/python manage.py init_ogre
+    - cwd: /srv/{{ pillar['app_directory_name'] }}
+    - unless: bin/python manage.py init_ogre --test
     - user: {{ pillar['app_user'] }}
     - require:
       - virtualenv: app-virtualenv

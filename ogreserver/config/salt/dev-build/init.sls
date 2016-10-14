@@ -90,7 +90,7 @@ logs-chown:
 requirements-dev-install:
   pip.installed:
     - requirements: /srv/ogre/ogreserver/config/requirements-dev.txt
-    - bin_env: /home/vagrant/.virtualenvs/{{ pillar['virtualenv_name'] }}
+    - bin_env: /srv/{{ pillar['app_directory_name'] }}
     - user: {{ pillar['app_user'] }}
     - require:
       - virtualenv: app-virtualenv

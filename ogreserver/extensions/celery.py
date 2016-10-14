@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import datetime
 import importlib
 
+from celery import signals
 from kombu import Exchange, Queue
 
 
@@ -44,3 +45,9 @@ def register_tasks(flask_app):
     with flask_app.app_context():
         # import celery tasks with Flask app_context
         importlib.import_module('.tasks', 'ogreserver')
+
+
+@signals.setup_logging.connect
+def setup_celery_logging(**kwargs):
+    # completely disable celery logging
+    pass

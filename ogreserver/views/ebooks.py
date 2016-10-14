@@ -72,12 +72,3 @@ def set_curated(ebook_id, state):
     ds = DataStore(app.config, app.logger)
     ds.set_curated(ebook_id, state)
     return redirect(url_for('.detail', ebook_id=ebook_id))
-
-
-@bp_ebooks.route('/download/<ebook_id>/', defaults={'version_id': None, 'fmt': None})
-@bp_ebooks.route('/download/<ebook_id>/<version_id>/', defaults={'fmt': None})
-@bp_ebooks.route('/download/<ebook_id>/<version_id>/<fmt>/')
-@login_required
-def download(ebook_id, version_id=None, fmt=None):
-    ds = DataStore(app.config, app.logger)
-    return redirect(ds.get_ebook_download_url(ebook_id, version_id=version_id, fmt=fmt))

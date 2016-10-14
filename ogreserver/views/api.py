@@ -54,7 +54,7 @@ def post():
     data = request.get_json()
 
     # stats log the upload
-    app.logger.info('CONNECT {}'.format(len(data)))
+    app.logger.info('CONNECT {} {}'.format(current_user.username, len(data)))
 
     # update the library
     ds = DataStore(app.config, app.logger)
@@ -71,7 +71,7 @@ def post():
     # extract list of errors
     errors = [item['error'] for key, item in syncd_books.items() if 'error' in item.keys()]
 
-    app.logger.info('NEW {}'.format(len(new_books)))
+    app.logger.info('NEW {} {}'.format(current_user.username, len(new_books)))
 
     # store sync events
     ds.log_event(current_user, len(data), len(new_books))

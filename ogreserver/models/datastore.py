@@ -254,7 +254,7 @@ class DataStore():
             raise RethinkdbError(ret['first_error'])
 
         # create version and initial format
-        version_id = self._create_new_version(ebook_id, user.username, incoming)
+        self._create_new_version(ebook_id, user.username, incoming)
 
         # signal new ebook created (when running in flask context)
         current_app.signals['ebook-created'].send(self, ebook_data=new_book)
@@ -585,7 +585,7 @@ class DataStore():
             data['ogreid_tagged'] = True
             r.table('formats').insert(data).run()
             r.table('formats').get(current_file_hash).delete().run()
-            self.logger.info('Updated {} to {} on {}'.format(
+            self.logger.debug('Updated {} to {} on {}'.format(
                 current_file_hash, updated_file_hash, data['version_id'])
             )
         except Exception:
@@ -652,7 +652,7 @@ class DataStore():
                 headers={'x-amz-meta-ogre-key': ebook_id},
                 md5=(file_hash,0)
             )
-            self.logger.info('UPLOADED {}'.format(filename))
+            self.logger.info('UPLOADED {} {}'.format(username, filename))
 
             # mark ebook as stored
             self.set_uploaded(file_hash, username, filename)

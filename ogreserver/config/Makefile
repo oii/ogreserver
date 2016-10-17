@@ -4,6 +4,7 @@ help:
 	@echo '   make up              bring up instance of latest AMI on EC2 (default: staging)'
 	@echo '   make destroy         destroy all infrastructure (default: staging)'
 	@echo '   make list-amis       display list of AMIs available for this env (default: staging)'
+	@echo '   make terraform-init	 init local env to use terraform (runs "remote config" and "get")'
 
 
 ENV?=staging
@@ -55,6 +56,11 @@ destroy:
 
 list-amis:
 	@aws ec2 describe-images --filters "Name=tag:env,Values=$(ENV)" "Name=tag:app,Values=ogre" | jq -r '.Images[] | .Name + "\t" + .ImageId + "\t" + .CreationDate' | sort -r
+
+terraform-init:
+	cd provision/$(ENV) && \
+		terraform remote config -backend=s3 -backend-config="bucket=ogre-terraform-$(ENV)-eu-west-1" -backend-config="key=terraform.tfstate" -backend-config="region=eu-west-1" && \
+		terraform get
 
 
 .PHONY: help _check-local _check-commits-ahead build up destroy list-amis

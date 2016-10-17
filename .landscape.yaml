@@ -1,6 +1,0 @@
-ignore-paths:
-  - dedrm/dedrm
-  - ogreclient/scripts
-  - ogreserver/docs
-  - ogreserver/static
-  - ogreserver/config

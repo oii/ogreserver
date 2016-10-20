@@ -15,7 +15,7 @@ def ogreclient():
     # supply the latest DRM tools to the client
     url = 'https://s3-{}.amazonaws.com/{}/ogreclient-{}.zip'.format(
         app.config['AWS_REGION'],
-        app.config['DIST_S3_BUCKET'],
+        app.config['DIST_S3_BUCKET'].format(app.config['env']),
         app.config['OGRECLIENT_VERSION']
     )
     return redirect(url, code=302)
@@ -26,7 +26,7 @@ def bitbar():
     # supply the latest DRM tools to the client
     url = 'https://s3-{}.amazonaws.com/{}/BitBarDistro.zip'.format(
         app.config['AWS_REGION'],
-        app.config['DIST_S3_BUCKET']
+        app.config['DIST_S3_BUCKET'].format(app.config['env'])
     )
     return redirect(url, code=302)
 

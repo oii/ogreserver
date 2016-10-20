@@ -39,7 +39,9 @@ def convert():
 
 @manager.command
 def cleardb():
-    if app.debug is False:
+    caller = salt.client.Caller()
+    env = caller.function('grains.item', 'env').get('env', 'dev')
+    if env != 'dev':
         print 'You cannot run cleardb when not in DEBUG!!'
         return
     conn = r.connect("localhost", 28015, db='ogreserver').repl()
@@ -190,6 +192,8 @@ def init_ogre(test=False):
     test (bool)
         Only check if OGRE has been setup; don't actually do anything
     """
+    caller = salt.client.Caller()
+    env = caller.function('grains.item', 'env').get('env', 'dev')
 
     # init S3
     s3 = connect_s3(app.config)
@@ -197,13 +201,13 @@ def init_ogre(test=False):
     # check bucket already exists
     aws_setup1 = aws_setup2 = aws_setup3 = aws_setup4 = False
     for b in s3.get_all_buckets():
-        if b.name == app.config['EBOOK_S3_BUCKET']:
+        if b.name == app.config['EBOOK_S3_BUCKET'].format(env):
             aws_setup1 = True
-        elif b.name == app.config['STATIC_S3_BUCKET']:
+        elif b.name == app.config['STATIC_S3_BUCKET'].format(env):
             aws_setup2 = True
-        elif b.name == app.config['DIST_S3_BUCKET']:
+        elif b.name == app.config['DIST_S3_BUCKET'].format(env):
             aws_setup3 = True
-        elif b.name == app.config['BACKUP_S3_BUCKET']:
+        elif b.name == app.config['BACKUP_S3_BUCKET'].format(env):
             aws_setup4 = True
     aws_setup = aws_setup1 & aws_setup2 & aws_setup3 & aws_setup4
 
@@ -248,7 +252,7 @@ def init_ogre(test=False):
         for bucket_name in ('EBOOK', 'STATIC', 'DIST', 'BACKUP'):
             try:
                 s3.create_bucket(
-                    app.config['{}_S3_BUCKET'.format(bucket_name)],
+                    app.config['{}_S3_BUCKET'.format(bucket_name)].format(env),
                     location=app.config['AWS_REGION']
                 )
                 print 'Created S3 bucket in {}'.format(app.config['AWS_REGION'])
@@ -319,9 +323,12 @@ def show_s3(test=False):
     else:
         config = app.config
 
+    caller = salt.client.Caller()
+    env = caller.function('grains.item', 'env').get('env', 'dev')
+
     # connect to S3
     s3 = connect_s3(config)
-    bucket = s3.get_bucket(config['EBOOK_S3_BUCKET'])
+    bucket = s3.get_bucket(config['EBOOK_S3_BUCKET'].format(env))
     for item in bucket.list():
         print item
 
@@ -379,6 +386,9 @@ def dump_database_to_s3(db_type, identifier, command):
     :param  identifier  unique DB backup id
     :param  command     backup shell command with "{}" placeholder for filename
     """
+    caller = salt.client.Caller()
+    env = caller.function('grains.item', 'env').get('env', 'dev')
+
     with make_temp_directory() as tmpdir:
         try:
             filename = '{}_dump_{}_{}.tar.gz'.format(db_type, int(time.time()), identifier)
@@ -390,11 +400,11 @@ def dump_database_to_s3(db_type, identifier, command):
 
             # push to S3
             s3 = connect_s3(app.config)
-            k = s3.get_bucket(app.config['BACKUP_S3_BUCKET']).new_key(filename)
+            k = s3.get_bucket(app.config['BACKUP_S3_BUCKET'].format(env)).new_key(filename)
             k.set_contents_from_filename(os.path.join(tmpdir, filename))
 
             # update latest backup redirect
-            k = s3.get_bucket(app.config['BACKUP_S3_BUCKET']).new_key(
+            k = s3.get_bucket(app.config['BACKUP_S3_BUCKET'].format(env)).new_key(
                 '{}_dump_latest.tar.gz'.format(db_type)
             )
             k.set_redirect('/{}'.format(filename))
@@ -434,16 +444,19 @@ def restore_database_from_s3(db_type, command):
     :param  db_type     "mysql", "rethinkdb" etc
     :param  command     backup shell command with "{}" placeholder for filename
     """
+    caller = salt.client.Caller()
+    env = caller.function('grains.item', 'env').get('env', 'dev')
+
     s3 = connect_s3(app.config)
 
     # retrieve the filename of the latest backup
-    k = s3.get_bucket(app.config['BACKUP_S3_BUCKET']).get_key(
+    k = s3.get_bucket(app.config['BACKUP_S3_BUCKET'].format(env)).get_key(
         '{}_dump_latest.tar.gz'.format(db_type)
     )
     backup_name = k.get_redirect()[1:]
 
     with make_temp_directory() as tmpdir:
-        k = s3.get_bucket(app.config['BACKUP_S3_BUCKET']).get_key(backup_name)
+        k = s3.get_bucket(app.config['BACKUP_S3_BUCKET'].format(env)).get_key(backup_name)
 
         try:
             with open(os.path.join(tmpdir, backup_name), 'wb') as f:

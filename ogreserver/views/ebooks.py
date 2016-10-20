@@ -51,7 +51,7 @@ def detail(ebook_id):
     # absolute URL to ebook cover image
     ebook['image_url'] = '{}/{}/{}-0.jpg'.format(
         app.config['STATIC_BASE_URL'],
-        app.config['STATIC_S3_BUCKET'],
+        app.config['STATIC_S3_BUCKET'].format(app.config['env']),
         ebook['ebook_id']
     )
 

@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import salt.client
+
 from flask import Flask
 from celery import Celery
 
@@ -31,6 +33,11 @@ def create_app(config=None):
     # setup application logging
     from .extensions.logging import init_logging
     init_logging(app)
+
+    # load the current environment from salt
+    caller = salt.client.Caller()
+    env = caller.function('grains.item', 'env').get('env', 'dev')
+    app.config['env'] = env
 
     return app
 

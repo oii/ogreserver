@@ -1,10 +1,31 @@
 # vim: set ft=jinja:
 import os
-basedir = os.path.abspath(os.path.dirname('..'))
+
+def getboolean(v):
+    # https://github.com/python/cpython/blob/2.7/Lib/ConfigParser.py#L367
+    _boolean_states = {'1': True, 'yes': True, 'true': True, 'on': True,
+                       '0': False, 'no': False, 'false': False, 'off': False}
+    if v.lower() not in _boolean_states:
+        raise ValueError, 'Not a boolean: %s' % v
+    return _boolean_states[v.lower()]
 
 
-OGRECLIENT_VERSION = "{{ pillar.get('ogreclient_version', 0) }}"
+### Runtime environment vars ###
 
+# Flask app
+{% if grains['env'] == 'dev' %}
+DEBUG=True
+{% else %}
+DEBUG = getboolean(os.environ.get('DEBUG', '0'))
+{% endif %}
+
+# Environment
+BETA = False
+
+OGRECLIENT_VERSION = os.environ.get('OGRECLIENT_VERSION', '{{ pillar.get('ogreclient_version', 0) }}')
+
+
+### Build time configuration ###
 
 # Celery config
 BROKER_URL = "amqp://{{ pillar['rabbitmq_user'] }}:{{ pillar['rabbitmq_pass'] }}@{{ pillar['rabbitmq_host'] }}:5672/{{ pillar['rabbitmq_vhost'] }}"
@@ -16,10 +37,11 @@ CELERY_TIMEZONE = '{{ pillar['timezone'] }}'
 AWS_ACCESS_KEY_ID = "{{ pillar.get('aws_access_key', '') }}"
 AWS_SECRET_ACCESS_KEY = "{{ pillar.get('aws_secret_key', '') }}"
 AWS_REGION = "{{ pillar.get('aws_region', '') }}"
-EBOOK_S3_BUCKET = "ogre-ebooks-{{ grains['env'] }}-{{ pillar.get('aws_region', 'local') }}"
-STATIC_S3_BUCKET = "ogre-static-{{ grains['env'] }}-{{ pillar.get('aws_region', 'local') }}"
-DIST_S3_BUCKET = "ogre-dist-{{ grains['env'] }}-{{ pillar.get('aws_region', 'local') }}"
-BACKUP_S3_BUCKET = "ogre-backup-{{ grains['env'] }}-{{ pillar.get('aws_region', 'local') }}"
+
+EBOOK_S3_BUCKET = "ogre-ebooks-{}-{{ pillar.get('aws_region', 'local') }}"
+STATIC_S3_BUCKET = "ogre-static-{}-{{ pillar.get('aws_region', 'local') }}"
+DIST_S3_BUCKET = "ogre-dist-{}-{{ pillar.get('aws_region', 'local') }}"
+BACKUP_S3_BUCKET = "ogre-backup-{}-{{ pillar.get('aws_region', 'local') }}"
 
 # AWS Advertising API config
 AWS_ADVERTISING_API_ACCESS_KEY = "{{ pillar.get('aws_advertising_api_access_key', '') }}"
@@ -30,20 +52,12 @@ AWS_ADVERTISING_API_ASSOCIATE_TAG = "{{ pillar.get('aws_advertising_api_associat
 GOODREADS_API_KEY = "{{ pillar.get('goodreads_api_key', '') }}"
 
 
-# Flask app
-{% if grains['env'] in ['dev','staging'] %}
-DEBUG = True
-{% else %}
-DEBUG = False
-{% endif %}
-
 # Where to store/serve ebooks
 {% if grains.get('virtual') == 'VMWare' %}
 STATIC_BASE_URL = "http://{{ grains['ip4_interfaces']['eth0'][0] }}:8880"
 {% else %}
 STATIC_BASE_URL = "https://s3-eu-west-1.amazonaws.com"
 {% endif %}
-BETA = True
 
 # Flask-WTF
 SECRET_KEY = "{{ pillar['flask_secret'] }}"
@@ -61,7 +75,7 @@ SQLALCHEMY_DATABASE_URI = "mysql://{{ pillar['mysql_user'] }}:{{ pillar['mysql_p
 
 
 # Whoosh full-text search
-WHOOSH_BASE = os.path.join(basedir, 'search.db')
+WHOOSH_BASE = "/srv/{{ pillar['app_directory_name'] }}/search.db"
 
 # Upload paths
 UPLOADED_EBOOKS_DEST = "/srv/{{ pillar['app_directory_name'] }}/uploads"
@@ -113,12 +127,6 @@ NUM_EBOOKS_FOR_CONVERT = 5
 
 # Minimum score to assume a match during fuzzywuzzy text comparison (see models/amazon.py)
 AMAZON_FUZZ_THRESHOLD = 50
-
-{% if grains['env'] == 'prod' %}
-# Production logging level
-import logging
-LOGGING_LEVEL = logging.INFO
-{% endif %}
 
 {% if grains['env'] != 'dev' %}
 SENTRY_DSN = '{{ pillar['sentry_dsn'] }}'

@@ -42,7 +42,7 @@ def download_dedrm():
     # supply the latest DRM tools to the client
     url = 'https://s3-{}.amazonaws.com/{}/dedrm-{}.tar.gz'.format(
         app.config['AWS_REGION'],
-        app.config['DIST_S3_BUCKET'],
+        app.config['DIST_S3_BUCKET'].format(app.config['env']),
         app.config['DEDRM_VERSION']
     )
     return redirect(url, code=302)

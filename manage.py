@@ -9,7 +9,6 @@ import subprocess
 import sys
 import time
 
-import boto
 import salt.client
 
 from flask.ext.script import Manager
@@ -192,27 +191,8 @@ def init_ogre(test=False):
     test (bool)
         Only check if OGRE has been setup; don't actually do anything
     """
-    caller = salt.client.Caller()
-    env = caller.function('grains.item', 'env').get('env', 'dev')
-
-    # init S3
-    s3 = connect_s3(app.config)
-
-    # check bucket already exists
-    aws_setup1 = aws_setup2 = aws_setup3 = aws_setup4 = False
-    for b in s3.get_all_buckets():
-        if b.name == app.config['EBOOK_S3_BUCKET'].format(env):
-            aws_setup1 = True
-        elif b.name == app.config['STATIC_S3_BUCKET'].format(env):
-            aws_setup2 = True
-        elif b.name == app.config['DIST_S3_BUCKET'].format(env):
-            aws_setup3 = True
-        elif b.name == app.config['BACKUP_S3_BUCKET'].format(env):
-            aws_setup4 = True
-    aws_setup = aws_setup1 & aws_setup2 & aws_setup3 & aws_setup4
-
-    # check mysql DB created
     try:
+        # check mysql DB created
         setup_db_session(app)
         from ogreserver.models.user import User
         User.query.first()
@@ -230,14 +210,14 @@ def init_ogre(test=False):
 
     if test is True:
         # only report state in test mode
-        if aws_setup is True and db_setup is True and rdb_setup is True:
+        if db_setup is True and rdb_setup is True:
             print 'Already setup'
             sys.exit(0)
         else:
             print 'Not setup'
             sys.exit(1)
     else:
-        if aws_setup is True and db_setup is True and rdb_setup is True:
+        if db_setup is True and rdb_setup is True:
             print 'You have already initialized OGRE :D'
             sys.exit(1)
 
@@ -248,26 +228,6 @@ def init_ogre(test=False):
             app.celery = make_celery(app)
             register_tasks(app)
             setup_roles(app)
-
-        for bucket_name in ('EBOOK', 'STATIC', 'DIST', 'BACKUP'):
-            try:
-                s3.create_bucket(
-                    app.config['{}_S3_BUCKET'.format(bucket_name)].format(env),
-                    location=app.config['AWS_REGION']
-                )
-                print 'Created S3 bucket in {}'.format(app.config['AWS_REGION'])
-
-            except boto.exception.S3ResponseError as e:
-                sys.stderr.write('Failed verifying or creating S3 bucket.. ({})\n'.format(e.error_message))
-                sys.exit(1)
-            except boto.exception.S3CreateError as e:
-                if e.error_code == 'BucketAlreadyExists':
-                    sys.stderr.write('Bucket name already in use! ({})\n'.format(e.error_message))
-                    sys.exit(1)
-                elif e.error_code == 'BucketAlreadyOwnedByYou':
-                    pass
-                else:
-                    raise e
 
         if rdb_setup is False:
             # create a database and a couple of tables

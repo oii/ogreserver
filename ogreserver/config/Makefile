@@ -3,7 +3,7 @@ help:
 	@echo '   make build           build ogreserver AMI on EC2'
 	@echo '   make up              bring up instance of latest AMI on EC2 (default: staging)'
 	@echo '   make destroy         destroy all infrastructure (default: staging)'
-	@echo '   make list-amis       display list of AMIs available for this env (default: staging)'
+	@echo '   make list-amis       display list of AMIs available'
 	@echo '   make terraform-init	 init local env to use terraform (runs "remote config" and "get")'
 
 
@@ -17,7 +17,7 @@ BUILD_TAG:=$$(git log -1 --abbrev-commit --oneline | cut -d' ' -f1)
 COMMITS_AHEAD:=$$(git rev-list --count --left-right 'HEAD...@{upstream}' | cut -d$$'\t' -f1)
 
 # retrieve the most recent AMI from EC2
-LATEST_AMI:=$$(aws ec2 describe-images --filters "Name=tag:env,Values=staging" "Name=tag:app,Values=ogre" | jq -r '.Images | sort_by(.Name) | reverse[] | .ImageId' | head -1)
+LATEST_AMI:=$$(aws ec2 describe-images --filters "Name=tag:app,Values=ogre" | jq -r '.Images | sort_by(.Name) | reverse[] | .ImageId' | head -1)
 
 
 _check-local:
@@ -41,7 +41,6 @@ build: _check-commits-ahead _check-local
 		-var git_revision=$(BUILD_TAG) \
 		-var sesame_password=$(SESAME_PASSWORD) \
 		-var salt_version=$(SALT_VERSION) \
-		-var env=$(ENV) \
 		packer.json
 
 up:
@@ -55,7 +54,7 @@ destroy:
 		terraform destroy -force -var ami=null
 
 list-amis:
-	@aws ec2 describe-images --filters "Name=tag:env,Values=$(ENV)" "Name=tag:app,Values=ogre" | jq -r '.Images[] | .Name + "\t" + .ImageId + "\t" + .CreationDate' | sort -r
+	@aws ec2 describe-images --filters "Name=tag:app,Values=ogre" | jq -r '.Images[] | .Name + "\t" + .ImageId + "\t" + .CreationDate' | sort -r
 
 terraform-init:
 	cd provision/$(ENV) && \

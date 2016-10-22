@@ -47,6 +47,7 @@ resource "aws_instance" "ogre-ec2" {
 
   tags {
     Name = "ogre-${var.env}"
+    app = "ogre"
     env = "${var.env}"
   }
 

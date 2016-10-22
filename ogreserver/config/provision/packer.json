@@ -5,18 +5,18 @@
 		"salt_version": "v2015.8.11",
 		"sesame_password": "{{ env `SESAME_PASSWORD` }}",
 		"source_ami": "ami-ff0e758c",
-		"env": "staging"
+		"env": "prod"
 	},
 	"builders": [{
 		"type": "amazon-ebs",
-		"ami_name": "ogre-{{ user `env` }}-{{ timestamp }}-{{ user `git_revision` }}",
+		"ami_name": "ogre-{{ timestamp }}-{{ user `git_revision` }}",
 		"instance_type": "t2.small",
 		"region": "eu-west-1",
 		"source_ami": "{{ user `source_ami` }}",
 		"ssh_keypair_name": "ogre-staging",
 		"ssh_private_key_file": "aws-keys/ogre-staging.pem",
 		"ssh_username": "admin",
-		"tags": {"app": "ogre", "env": "{{ user `env` }}"}
+		"tags": {"app": "ogre"}
 	}],
 	"provisioners": [{
 		"type": "shell",

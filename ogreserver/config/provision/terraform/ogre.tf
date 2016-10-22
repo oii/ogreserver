@@ -55,6 +55,11 @@ resource "aws_instance" "ogre-ec2" {
 #cloud-config
 preserve_hostname: true
 runcmd:
+  - export AWS_ACCESS_KEY_ID='${var.AWS_ACCESS_KEY}'
+  - export AWS_SECRET_ACCESS_KEY='${var.AWS_SECRET_KEY}'
+  - export AWS_DEFAULT_REGION='${var.region}'
+  - export ENV='${var.env}'
+  - cd /srv/ogre/ogreclient && make release
   - salt-call --local grains.setval env ${var.env}
   - supervisorctl restart 'ogreserver:'
   - /usr/local/bin/acmetool --batch reconcile

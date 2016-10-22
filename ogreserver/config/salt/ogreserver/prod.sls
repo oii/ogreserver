@@ -62,22 +62,6 @@ requirements-prod-install:
     - require_in:
       - cmd: ogre-init
 
-awscli:
-  pip.installed
-
-# build ogreclient and extra client tooling
-build-ogreclient:
-  cmd.run:
-    - name: make release
-    - cwd: /srv/ogre/ogreclient
-    - require:
-      - pip: awscli
-    - env:
-      - AWS_ACCESS_KEY_ID: {{ pillar['aws_access_key'] }}
-      - AWS_SECRET_ACCESS_KEY: {{ pillar['aws_secret_key'] }}
-      - AWS_DEFAULT_REGION: {{ pillar['aws_region'] }}
-      - ENV: {{ grains['env'] }}
-
 # symlink files so they're available statically via nginx
 /srv/ogre/ogreserver/robots.txt:
   file.symlink:

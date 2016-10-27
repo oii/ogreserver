@@ -51,6 +51,9 @@ AWS_ADVERTISING_API_ASSOCIATE_TAG = "{{ pillar.get('aws_advertising_api_associat
 # Goodreads API key
 GOODREADS_API_KEY = "{{ pillar.get('goodreads_api_key', '') }}"
 
+# Slack integration token
+SLACK_TOKEN = "{{ pillar.get('slack_token', '') }}"
+
 
 # Where to store/serve ebooks
 {% if grains.get('virtual') == 'VMWare' %}

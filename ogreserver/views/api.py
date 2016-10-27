@@ -15,6 +15,7 @@ from flask.ext.uploads import UploadNotAllowed
 from ..exceptions import SameHashSuppliedOnUpdateError
 from ..models.datastore import DataStore
 from ..models.reputation import Reputation
+from ..decorators import slack_token_required
 
 bp_api = Blueprint('api', __name__, url_prefix='/api/v1')
 
@@ -185,3 +186,9 @@ def upload():
         username=current_user.username
     )
     return jsonify(result='ok')
+
+
+@bp_api.route('/slack', methods=['POST'])
+@slack_token_required
+def slack():
+    return 'Hi {}'.format(request.form['user_name'])

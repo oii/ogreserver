@@ -10,9 +10,14 @@ variable "ami" {
 variable "size" {
   default = "t2.medium"
 }
+variable "env" {
+}
 variable "eip" {
 }
-variable "env" {
+variable "hostname" {
+}
+variable "acme-cert-mode" {
+  default = "2"
 }
 variable "key_name" {
 }

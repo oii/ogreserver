@@ -41,6 +41,11 @@ extend:
       - require_in:
         - file: app-directory
 
+  # disable ogreserver.conf so nginx will start before SSL certs are ready
+  # SSL certs are created at EC2 instance start
+  /etc/nginx/sites-enabled/ogreserver.conf:
+    file.symlink:
+      - name: /tmp/unused.conf
 
 gevent:
   pip.installed:

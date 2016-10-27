@@ -62,7 +62,12 @@ runcmd:
   - cd /srv/ogre/ogreclient && make release
   - salt-call --local grains.setval env ${var.env}
   - supervisorctl restart 'ogreserver:'
-  - /usr/local/bin/acmetool --batch reconcile
+  - hostnamectl set-hostname '${var.hostname}'
+  - sed -i 's/ogre.oii.yt/${var.hostname}/g' /etc/nginx/sites-available/ogreserver-80.conf
+  - sed -i 's/ogre.oii.yt/${var.hostname}/g' /etc/nginx/sites-available/ogreserver-443.conf
+  - ln -s /etc/nginx/sites-available/ogreserver-80.conf /etc/nginx/sites-enabled/ogreserver.conf
+  - echo ${var.acme-cert-mode} | /usr/local/bin/acmetool quickstart
+  - /usr/local/bin/acmetool want '${var.hostname}'
   - systemctl restart nginx
 EOH
 

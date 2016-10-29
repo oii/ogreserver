@@ -69,6 +69,12 @@ runcmd:
   - echo ${var.acme-cert-mode} | /usr/local/bin/acmetool quickstart
   - /usr/local/bin/acmetool want '${var.hostname}'
   - systemctl restart nginx
+phone_home:
+  url: https://liyhaonvah.execute-api.eu-west-1.amazonaws.com/dev
+  post:
+    - instance_id
+    - hostname
+    - fqdn
 EOH
 
   # associate EIP to the EC2 instance

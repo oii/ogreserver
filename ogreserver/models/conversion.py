@@ -5,7 +5,7 @@ import os
 import shutil
 import subprocess
 
-from flask import current_app
+from flask import current_app as app
 
 from ..exceptions import ConversionFailedError, EbookNotFoundOnS3Error
 from ..utils import compute_md5, connect_s3, id_generator, make_temp_directory
@@ -36,7 +36,7 @@ class Conversion:
                 # ensure source ebook has been uploaded
                 if original_format['uploaded'] is True:
                     # convert source format to required formats
-                    current_app.signals['convert-ebook'].send(
+                    app.signals['convert-ebook'].send(
                         self,
                         ebook_id=ebook_id,
                         version_id=f['version_id'],
@@ -99,7 +99,7 @@ class Conversion:
         self.datastore._create_new_format(version_id, file_hash, dest_fmt)
 
         # signal celery to store on S3
-        current_app.signals['store-ebook'].send(
+        app.signals['store-ebook'].send(
             self,
             ebook_id=ebook_id,
             filename=dest_path,

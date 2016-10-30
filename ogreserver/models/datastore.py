@@ -13,7 +13,7 @@ from boto.exception import S3ResponseError
 import dateutil.parser
 import ftfy
 
-from flask import current_app
+from flask import current_app as app
 
 from .user import User
 from ..utils import connect_s3, encode_rql_dates
@@ -257,7 +257,7 @@ class DataStore():
         self._create_new_version(ebook_id, user.username, incoming)
 
         # signal new ebook created (when running in flask context)
-        current_app.signals['ebook-created'].send(self, ebook_data=new_book)
+        app.signals['ebook-created'].send(self, ebook_data=new_book)
         return ebook_id
 
 
@@ -338,7 +338,7 @@ class DataStore():
             raise RethinkdbError(ret['first_error'])
 
         # signal ebook updated
-        current_app.signals['ebook-updated'].send(self, ebook_id=ebook_id)
+        app.signals['ebook-updated'].send(self, ebook_id=ebook_id)
 
 
     def append_owner(self, file_hash, username):

@@ -74,4 +74,4 @@ requirements-prod-install:
 
 /srv/ogre/ogreserver/install:
   file.symlink:
-    - target: /srv/ogre/bin/install
+    - target: /srv/ogre/script/install

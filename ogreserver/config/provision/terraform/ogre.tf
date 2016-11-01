@@ -59,6 +59,7 @@ runcmd:
   - export AWS_SECRET_ACCESS_KEY='${var.AWS_SECRET_KEY}'
   - export AWS_DEFAULT_REGION='${var.region}'
   - export ENV='${var.env}'
+  - pip install awscli
   - cd /srv/ogre/ogreclient && make release
   - salt-call --local grains.setval env ${var.env}
   - supervisorctl restart 'ogreserver:'

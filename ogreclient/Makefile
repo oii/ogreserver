@@ -2,6 +2,7 @@ AWS_ACCESS_KEY_ID?=error
 AWS_SECRET_ACCESS_KEY?=error
 AWS_DEFAULT_REGION?=local
 ENV?=dev
+AWSCLI?=/usr/local/bin/aws
 
 
 clean:
@@ -12,8 +13,8 @@ dist: clean build-dedrm
 
 release: dist
 	cd dist && \
-		aws s3 cp . s3://ogre-dist-$(ENV)-$(AWS_DEFAULT_REGION) --recursive --exclude "*" --include "ogreclient-*" --acl=public-read
-	aws s3 cp dedrm/dist/dedrm-*.tar.gz s3://ogre-dist-$(ENV)-$(AWS_DEFAULT_REGION) --acl=public-read
+		$(AWSCLI) s3 cp . s3://ogre-dist-$(ENV)-$(AWS_DEFAULT_REGION) --recursive --exclude "*" --include "ogreclient-*" --acl=public-read
+	$(AWSCLI) s3 cp dedrm/dist/dedrm-*.tar.gz s3://ogre-dist-$(ENV)-$(AWS_DEFAULT_REGION) --acl=public-read
 
 build-dedrm:
 	git clone --branch ogre https://github.com/oii/DeDRM_tools.git dedrm
@@ -37,7 +38,7 @@ package-bitbar: fetch-bitbar
 		zip -rq9ym BitBarDistro.zip BitBarDistro.app
 
 push-bitbar-s3:
-	aws s3 cp dist/BitBarDistro.zip s3://ogre-dist-$(ENV)-$(AWS_DEFAULT_REGION) --acl=public-read
+	$(AWSCLI) s3 cp dist/BitBarDistro.zip s3://ogre-dist-$(ENV)-$(AWS_DEFAULT_REGION) --acl=public-read
 
 
 .PHONY: clean dist build-dedrm clean-bitbar fetch-bitbar package-bitbar push-bitbar-s3

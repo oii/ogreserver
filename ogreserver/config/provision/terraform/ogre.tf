@@ -55,6 +55,8 @@ resource "aws_instance" "ogre-ec2" {
 #cloud-config
 preserve_hostname: true
 runcmd:
+  - salt-call --local grains.setval env ${var.env}
+  - supervisorctl restart 'ogreserver:'
   - /usr/local/bin/acmetool --batch reconcile
   - systemctl restart nginx
 EOH

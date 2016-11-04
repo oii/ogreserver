@@ -77,11 +77,9 @@ phone_home:
     - hostname
     - fqdn
 EOH
+}
 
-  # associate EIP to the EC2 instance
-  provisioner "local-exec" {
-    command = <<EOH
-      aws ec2 associate-address --instance-id ${aws_instance.ogre-ec2.id} --allocation-id ${var.eip}
-EOH
-  }
+resource "aws_eip_association" "ogre-eip" {
+  instance_id = "${aws_instance.ogre-ec2.id}"
+  allocation_id = "${var.eip}"
 }

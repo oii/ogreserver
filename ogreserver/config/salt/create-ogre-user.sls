@@ -5,6 +5,3 @@ ogre-create-user:
     - cwd: /srv/ogre
     - unless: bin/python manage.py create_user {{ pillar['ogre_user_name'] }} null null --test
     - user: {{ pillar['app_user'] }}
-    - require:
-      - virtualenv: app-virtualenv
-      - cmd: ogre-init

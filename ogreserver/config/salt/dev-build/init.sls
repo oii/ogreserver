@@ -74,6 +74,12 @@ extend:
       - require:
         - supervisord: s3proxy-supervisor-service
 
+  ogre-create-user:
+    cmd.run:
+      - require:
+        - virtualenv: app-virtualenv
+        - cmd: ogre-init
+
 # make the logs readable by the login user
 logs-chown:
   file.directory:

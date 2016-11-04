@@ -60,7 +60,7 @@ runcmd:
   - export AWS_DEFAULT_REGION='${var.region}'
   - export ENV='${var.env}'
   - pip install awscli
-  - cd /srv/ogre/ogreclient && make release
+  - cd /srv/ogre/ogreclient && make release && make push-bitbar-s3
   - salt-call --local grains.setval env ${var.env}
   - supervisorctl restart 'ogreserver:'
   - hostnamectl set-hostname '${var.hostname}'

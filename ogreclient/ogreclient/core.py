@@ -329,9 +329,6 @@ def remove_drm_from_ebook(config, ebook_obj):
                 config['ebook_cache'].update_ebook_property(ebook_obj.path, drmfree=True)
 
             elif state == DRM.decrypted:
-                if config['verbose']:
-                    prntr.info('DRM removed from {}'.format(os.path.basename(ebook_obj.path)), bold=True)
-
                 # create new ebook_obj for decrypted ebook
                 decrypted_ebook_obj = EbookObject(
                     config=config,
@@ -350,7 +347,10 @@ def remove_drm_from_ebook(config, ebook_obj):
                 shutil.move(decrypted_filepath, decrypted_ebook_obj.path)
 
                 if config['verbose']:
-                    prntr.info('Decrypted book moved to {}'.format(decrypted_ebook_obj.shortpath), success=True)
+                    prntr.info('Decrypted ebook {} moved to {}'.format(
+                        os.path.basename(ebook_obj.path),
+                        decrypted_ebook_obj.shortpath
+                    ), success=True)
 
                 # add decrypted book to cache
                 config['ebook_cache'].store_ebook(decrypted_ebook_obj)

@@ -16,3 +16,17 @@ module "ogre-staging" {
   AWS_ACCESS_KEY = "${var.AWS_ACCESS_KEY}"
   AWS_SECRET_KEY = "${var.AWS_SECRET_KEY}"
 }
+
+resource "null_resource" "provision-staging" {
+  connection {
+    host = "${module.ogre-staging.public_ip}"
+    user = "admin"
+    private_key = "${file("../aws-keys/ogre-staging.pem")}"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo salt-call state.sls create-ogre-user"
+    ]
+  }
+}

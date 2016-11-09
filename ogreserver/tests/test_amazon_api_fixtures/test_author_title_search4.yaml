@@ -1,12 +1,12 @@
 !!python/unicode 'mock_amazon_itemlookup': ['<?xml version="1.0" ?><ItemLookupResponse
-    xmlns="http://webservices.amazon.com/AWSECommerceService/2011-08-01"><OperationRequest><HTTPHeaders><Header
+    xmlns="http://webservices.amazon.com/AWSECommerceService/2013-08-01"><OperationRequest><HTTPHeaders><Header
     Name="UserAgent" Value="Python-urllib/2.7"></Header></HTTPHeaders><RequestId>a5e8705b-a19b-40e5-ab70-51552abbe4c4</RequestId><Arguments><Argument
     Name="AWSAccessKeyId" Value="egg"></Argument><Argument Name="AssociateTag"
     Value="egg"></Argument><Argument Name="ItemId" Value="B000FBFMZ2"></Argument><Argument
     Name="Operation" Value="ItemLookup"></Argument><Argument Name="ResponseGroup"
     Value="Images"></Argument><Argument Name="Service" Value="AWSECommerceService"></Argument><Argument
     Name="Timestamp" Value="2015-10-20T15:34:59Z"></Argument><Argument Name="Version"
-    Value="2011-08-01"></Argument><Argument Name="Signature" Value="Ozqq/cyzhitObNQeyCBReVxC891KFemRtkmFPvjG+Kg="></Argument></Arguments><RequestProcessingTime>0.0083470000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemLookupRequest><IdType>ASIN</IdType><ItemId>B000FBFMZ2</ItemId><ResponseGroup>Images</ResponseGroup><VariationPage>All</VariationPage></ItemLookupRequest></Request><Item><ASIN>B000FBFMZ2</ASIN><SmallImage><URL>http://ecx.images-amazon.com/images/I/51hFNetqu5L._SL75_.jpg</URL><Height
+    Value="2013-08-01"></Argument><Argument Name="Signature" Value="Ozqq/cyzhitObNQeyCBReVxC891KFemRtkmFPvjG+Kg="></Argument></Arguments><RequestProcessingTime>0.0083470000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemLookupRequest><IdType>ASIN</IdType><ItemId>B000FBFMZ2</ItemId><ResponseGroup>Images</ResponseGroup><VariationPage>All</VariationPage></ItemLookupRequest></Request><Item><ASIN>B000FBFMZ2</ASIN><SmallImage><URL>http://ecx.images-amazon.com/images/I/51hFNetqu5L._SL75_.jpg</URL><Height
     Units="pixels">75</Height><Width Units="pixels">50</Width></SmallImage><MediumImage><URL>http://ecx.images-amazon.com/images/I/51hFNetqu5L._SL160_.jpg</URL><Height
     Units="pixels">160</Height><Width Units="pixels">106</Width></MediumImage><LargeImage><URL>http://ecx.images-amazon.com/images/I/51hFNetqu5L.jpg</URL><Height
     Units="pixels">500</Height><Width Units="pixels">331</Width></LargeImage><ImageSets><ImageSet
@@ -18,24 +18,24 @@
     Units="pixels">160</Height><Width Units="pixels">106</Width></MediumImage><LargeImage><URL>http://ecx.images-amazon.com/images/I/51hFNetqu5L.jpg</URL><Height
     Units="pixels">500</Height><Width Units="pixels">331</Width></LargeImage></ImageSet></ImageSets></Item></Items></ItemLookupResponse>']
 !!python/unicode 'mock_amazon_itemsearch': ['<?xml version="1.0" ?><ItemSearchResponse
-    xmlns="http://webservices.amazon.com/AWSECommerceService/2011-08-01"><OperationRequest><HTTPHeaders><Header
+    xmlns="http://webservices.amazon.com/AWSECommerceService/2013-08-01"><OperationRequest><HTTPHeaders><Header
     Name="UserAgent" Value="Python-urllib/2.7"></Header></HTTPHeaders><RequestId>6c37ee21-00f4-4c5e-b878-c1ddd2407d3e</RequestId><Arguments><Argument
     Name="AWSAccessKeyId" Value="egg"></Argument><Argument Name="AssociateTag"
     Value="egg"></Argument><Argument Name="Keywords" Value="Richard Morgan Altered
     Carbon (GOLLANCZ S.F.)"></Argument><Argument Name="Operation" Value="ItemSearch"></Argument><Argument
     Name="SearchIndex" Value="KindleStore"></Argument><Argument Name="Service" Value="AWSECommerceService"></Argument><Argument
     Name="Timestamp" Value="2015-10-20T15:34:43Z"></Argument><Argument Name="Version"
-    Value="2011-08-01"></Argument><Argument Name="Signature" Value="dE5PiPrzbpG+oZa4Q9MCn9zqlEVxF/hU1Od7lu4jufQ="></Argument></Arguments><RequestProcessingTime>0.0176320000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemSearchRequest><Keywords>Richard
+    Value="2013-08-01"></Argument><Argument Name="Signature" Value="dE5PiPrzbpG+oZa4Q9MCn9zqlEVxF/hU1Od7lu4jufQ="></Argument></Arguments><RequestProcessingTime>0.0176320000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemSearchRequest><Keywords>Richard
     Morgan Altered Carbon (GOLLANCZ S.F.)</Keywords><ResponseGroup>Small</ResponseGroup><SearchIndex>KindleStore</SearchIndex></ItemSearchRequest><Errors><Error><Code>AWS.ECommerceService.NoExactMatches</Code><Message>We
     did not find any matches for your request.</Message></Error></Errors></Request><TotalResults>0</TotalResults><TotalPages>0</TotalPages><MoreSearchResultsUrl>http://www.amazon.com/gp/redirect.html?linkCode=xm2&amp;SubscriptionId=egg&amp;location=http%3A%2F%2Fwww.amazon.com%2Fgp%2Fsearch%3Fkeywords%3DRichard%2BMorgan%2BAltered%2BCarbon%2B%2528GOLLANCZ%2BS.F.%2529%26url%3Dsearch-alias%253Ddigital-text&amp;tag=egg&amp;creative=386001&amp;camp=2025</MoreSearchResultsUrl></Items></ItemSearchResponse>',
-  '<?xml version="1.0" ?><ItemSearchResponse xmlns="http://webservices.amazon.com/AWSECommerceService/2011-08-01"><OperationRequest><HTTPHeaders><Header
+  '<?xml version="1.0" ?><ItemSearchResponse xmlns="http://webservices.amazon.com/AWSECommerceService/2013-08-01"><OperationRequest><HTTPHeaders><Header
     Name="UserAgent" Value="Python-urllib/2.7"></Header></HTTPHeaders><RequestId>01b183a7-cdf9-4bfc-a5e5-8b1cee0b12f2</RequestId><Arguments><Argument
     Name="AWSAccessKeyId" Value="egg"></Argument><Argument Name="AssociateTag"
     Value="egg"></Argument><Argument Name="Keywords" Value="Richard Morgan Altered
     Carbon"></Argument><Argument Name="Operation" Value="ItemSearch"></Argument><Argument
     Name="SearchIndex" Value="KindleStore"></Argument><Argument Name="Service" Value="AWSECommerceService"></Argument><Argument
     Name="Timestamp" Value="2015-10-20T15:34:51Z"></Argument><Argument Name="Version"
-    Value="2011-08-01"></Argument><Argument Name="Signature" Value="H2rzb9K9FHw+IUfLNdUz9IYt9x2KqbyRpwhuCAzZtIc="></Argument></Arguments><RequestProcessingTime>0.0685420000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemSearchRequest><Keywords>Richard
+    Value="2013-08-01"></Argument><Argument Name="Signature" Value="H2rzb9K9FHw+IUfLNdUz9IYt9x2KqbyRpwhuCAzZtIc="></Argument></Arguments><RequestProcessingTime>0.0685420000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemSearchRequest><Keywords>Richard
     Morgan Altered Carbon</Keywords><ResponseGroup>Small</ResponseGroup><SearchIndex>KindleStore</SearchIndex></ItemSearchRequest></Request><TotalResults>2</TotalResults><TotalPages>1</TotalPages><MoreSearchResultsUrl>http://www.amazon.com/gp/redirect.html?linkCode=xm2&amp;SubscriptionId=egg&amp;location=http%3A%2F%2Fwww.amazon.com%2Fgp%2Fsearch%3Fkeywords%3DRichard%2BMorgan%2BAltered%2BCarbon%26url%3Dsearch-alias%253Ddigital-text&amp;tag=egg&amp;creative=386001&amp;camp=2025</MoreSearchResultsUrl><Item><ASIN>B000FBFMZ2</ASIN><DetailPageURL>http://www.amazon.com/Altered-Carbon-Takeshi-Kovacs-Novels-ebook/dp/B000FBFMZ2%3FSubscriptionId%3Degg%26tag%3Degg%26linkCode%3Dxm2%26camp%3D2025%26creative%3D165953%26creativeASIN%3DB000FBFMZ2</DetailPageURL><ItemLinks><ItemLink><Description>Technical
     Details</Description><URL>http://www.amazon.com/Altered-Carbon-Takeshi-Kovacs-Novels-ebook/dp/tech-data/B000FBFMZ2%3FSubscriptionId%3Degg%26tag%3Degg%26linkCode%3Dxm2%26camp%3D2025%26creative%3D386001%26creativeASIN%3DB000FBFMZ2</URL></ItemLink><ItemLink><Description>Add
     To Baby Registry</Description><URL>http://www.amazon.com/gp/registry/baby/add-item.html%3Fasin.0%3DB000FBFMZ2%26SubscriptionId%3Degg%26tag%3Degg%26linkCode%3Dxm2%26camp%3D2025%26creative%3D386001%26creativeASIN%3DB000FBFMZ2</URL></ItemLink><ItemLink><Description>Add

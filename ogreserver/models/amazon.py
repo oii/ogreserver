@@ -14,7 +14,7 @@ from ..utils import clean_string
 
 
 class AmazonAPI:
-    NS = 'http://webservices.amazon.com/AWSECommerceService/2011-08-01'
+    NS = 'http://webservices.amazon.com/AWSECommerceService/2013-08-01'
 
     def __init__(self, logger, access_key, secret_key, associate_tag, match_threshold=50):
         self.logger = logger

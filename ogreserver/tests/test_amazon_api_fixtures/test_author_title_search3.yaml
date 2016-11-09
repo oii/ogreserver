@@ -1,12 +1,12 @@
 !!python/unicode 'mock_amazon_itemlookup': ['<?xml version="1.0" ?><ItemLookupResponse
-    xmlns="http://webservices.amazon.com/AWSECommerceService/2011-08-01"><OperationRequest><HTTPHeaders><Header
+    xmlns="http://webservices.amazon.com/AWSECommerceService/2013-08-01"><OperationRequest><HTTPHeaders><Header
     Name="UserAgent" Value="Python-urllib/2.7"></Header></HTTPHeaders><RequestId>8af76ff0-8110-4210-a842-b081c63b57b4</RequestId><Arguments><Argument
     Name="AWSAccessKeyId" Value="egg"></Argument><Argument Name="AssociateTag"
     Value="egg"></Argument><Argument Name="ItemId" Value="B000JMKQX0"></Argument><Argument
     Name="Operation" Value="ItemLookup"></Argument><Argument Name="ResponseGroup"
     Value="Images"></Argument><Argument Name="Service" Value="AWSECommerceService"></Argument><Argument
     Name="Timestamp" Value="2015-10-20T15:34:19Z"></Argument><Argument Name="Version"
-    Value="2011-08-01"></Argument><Argument Name="Signature" Value="PDVN6H60P4Gw4E0upisSrNvikkMfkRABs5PFxVjOdac="></Argument></Arguments><RequestProcessingTime>0.0124470000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemLookupRequest><IdType>ASIN</IdType><ItemId>B000JMKQX0</ItemId><ResponseGroup>Images</ResponseGroup><VariationPage>All</VariationPage></ItemLookupRequest></Request><Item><ASIN>B000JMKQX0</ASIN><SmallImage><URL>http://ecx.images-amazon.com/images/I/51ELXqAe9UL._SL75_.jpg</URL><Height
+    Value="2013-08-01"></Argument><Argument Name="Signature" Value="PDVN6H60P4Gw4E0upisSrNvikkMfkRABs5PFxVjOdac="></Argument></Arguments><RequestProcessingTime>0.0124470000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemLookupRequest><IdType>ASIN</IdType><ItemId>B000JMKQX0</ItemId><ResponseGroup>Images</ResponseGroup><VariationPage>All</VariationPage></ItemLookupRequest></Request><Item><ASIN>B000JMKQX0</ASIN><SmallImage><URL>http://ecx.images-amazon.com/images/I/51ELXqAe9UL._SL75_.jpg</URL><Height
     Units="pixels">75</Height><Width Units="pixels">49</Width></SmallImage><MediumImage><URL>http://ecx.images-amazon.com/images/I/51ELXqAe9UL._SL160_.jpg</URL><Height
     Units="pixels">160</Height><Width Units="pixels">104</Width></MediumImage><LargeImage><URL>http://ecx.images-amazon.com/images/I/51ELXqAe9UL.jpg</URL><Height
     Units="pixels">500</Height><Width Units="pixels">325</Width></LargeImage><ImageSets><ImageSet
@@ -18,7 +18,7 @@
     Units="pixels">160</Height><Width Units="pixels">104</Width></MediumImage><LargeImage><URL>http://ecx.images-amazon.com/images/I/51ELXqAe9UL.jpg</URL><Height
     Units="pixels">500</Height><Width Units="pixels">325</Width></LargeImage></ImageSet></ImageSets></Item></Items></ItemLookupResponse>']
 !!python/unicode 'mock_amazon_itemsearch': [!!python/str "<?xml version=\"\
-    1.0\" ?><ItemSearchResponse xmlns=\"http://webservices.amazon.com/AWSECommerceService/2011-08-01\"\
+    1.0\" ?><ItemSearchResponse xmlns=\"http://webservices.amazon.com/AWSECommerceService/2013-08-01\"\
     ><OperationRequest><HTTPHeaders><Header Name=\"UserAgent\" Value=\"Python-urllib/2.7\"\
     ></Header></HTTPHeaders><RequestId>bf35c389-7a0f-4fd6-b53f-60af0d0723d4</RequestId><Arguments><Argument\
     \ Name=\"AWSAccessKeyId\" Value=\"egg\"></Argument><Argument\
@@ -27,7 +27,7 @@
     ItemSearch\"></Argument><Argument Name=\"SearchIndex\" Value=\"KindleStore\"></Argument><Argument\
     \ Name=\"Service\" Value=\"AWSECommerceService\"></Argument><Argument Name=\"\
     Timestamp\" Value=\"2015-10-20T15:34:11Z\"></Argument><Argument Name=\"Version\"\
-    \ Value=\"2011-08-01\"></Argument><Argument Name=\"Signature\" Value=\"2fqXtoF052Hhi5U1qMg3AJCcRXrZeczaNyGJWtK3TYk=\"\
+    \ Value=\"2013-08-01\"></Argument><Argument Name=\"Signature\" Value=\"2fqXtoF052Hhi5U1qMg3AJCcRXrZeczaNyGJWtK3TYk=\"\
     ></Argument></Arguments><RequestProcessingTime>0.0670080000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemSearchRequest><Keywords>Max\
     \ Brooks World War Z</Keywords><ResponseGroup>Small</ResponseGroup><SearchIndex>KindleStore</SearchIndex></ItemSearchRequest></Request><TotalResults>13</TotalResults><TotalPages>2</TotalPages><MoreSearchResultsUrl>http://www.amazon.com/gp/redirect.html?linkCode=xm2&amp;SubscriptionId=egg&amp;location=http%3A%2F%2Fwww.amazon.com%2Fgp%2Fsearch%3Fkeywords%3DMax%2BBrooks%2BWorld%2BWar%2BZ%26url%3Dsearch-alias%253Ddigital-text&amp;tag=egg&amp;creative=386001&amp;camp=2025</MoreSearchResultsUrl><Item><ASIN>B000JMKQX0</ASIN><DetailPageURL>http://www.amazon.com/World-War-Oral-History-Zombie-ebook/dp/B000JMKQX0%3FSubscriptionId%3Degg%26tag%3Degg%26linkCode%3Dxm2%26camp%3D2025%26creative%3D165953%26creativeASIN%3DB000JMKQX0</DetailPageURL><ItemLinks><ItemLink><Description>Technical\
     \ Details</Description><URL>http://www.amazon.com/World-War-Oral-History-Zombie-ebook/dp/tech-data/B000JMKQX0%3FSubscriptionId%3Degg%26tag%3Degg%26linkCode%3Dxm2%26camp%3D2025%26creative%3D386001%26creativeASIN%3DB000JMKQX0</URL></ItemLink><ItemLink><Description>Add\

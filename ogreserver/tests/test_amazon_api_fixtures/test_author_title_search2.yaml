@@ -1,12 +1,12 @@
 !!python/unicode 'mock_amazon_itemlookup': ['<?xml version="1.0" ?><ItemLookupResponse
-    xmlns="http://webservices.amazon.com/AWSECommerceService/2011-08-01"><OperationRequest><HTTPHeaders><Header
+    xmlns="http://webservices.amazon.com/AWSECommerceService/2013-08-01"><OperationRequest><HTTPHeaders><Header
     Name="UserAgent" Value="Python-urllib/2.7"></Header></HTTPHeaders><RequestId>809f91bd-4013-4030-bfc6-8ce153db258a</RequestId><Arguments><Argument
     Name="AWSAccessKeyId" Value="egg"></Argument><Argument Name="AssociateTag"
     Value="egg"></Argument><Argument Name="ItemId" Value="2352942322"></Argument><Argument
     Name="Operation" Value="ItemLookup"></Argument><Argument Name="ResponseGroup"
     Value="Images"></Argument><Argument Name="Service" Value="AWSECommerceService"></Argument><Argument
     Name="Timestamp" Value="2015-10-20T15:33:46Z"></Argument><Argument Name="Version"
-    Value="2011-08-01"></Argument><Argument Name="Signature" Value="u5QSGYYvm5nbbl27GKyj2y7JHhxi6hGSYspan7vQ9FQ="></Argument></Arguments><RequestProcessingTime>0.0062710000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemLookupRequest><IdType>ASIN</IdType><ItemId>2352942322</ItemId><ResponseGroup>Images</ResponseGroup><VariationPage>All</VariationPage></ItemLookupRequest></Request><Item><ASIN>2352942322</ASIN><SmallImage><URL>http://ecx.images-amazon.com/images/I/51URUN95YpL._SL75_.jpg</URL><Height
+    Value="2013-08-01"></Argument><Argument Name="Signature" Value="u5QSGYYvm5nbbl27GKyj2y7JHhxi6hGSYspan7vQ9FQ="></Argument></Arguments><RequestProcessingTime>0.0062710000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemLookupRequest><IdType>ASIN</IdType><ItemId>2352942322</ItemId><ResponseGroup>Images</ResponseGroup><VariationPage>All</VariationPage></ItemLookupRequest></Request><Item><ASIN>2352942322</ASIN><SmallImage><URL>http://ecx.images-amazon.com/images/I/51URUN95YpL._SL75_.jpg</URL><Height
     Units="pixels">75</Height><Width Units="pixels">48</Width></SmallImage><MediumImage><URL>http://ecx.images-amazon.com/images/I/51URUN95YpL._SL160_.jpg</URL><Height
     Units="pixels">160</Height><Width Units="pixels">103</Width></MediumImage><LargeImage><URL>http://ecx.images-amazon.com/images/I/51URUN95YpL.jpg</URL><Height
     Units="pixels">500</Height><Width Units="pixels">322</Width></LargeImage><ImageSets><ImageSet
@@ -18,14 +18,14 @@
     Units="pixels">160</Height><Width Units="pixels">103</Width></MediumImage><LargeImage><URL>http://ecx.images-amazon.com/images/I/51URUN95YpL.jpg</URL><Height
     Units="pixels">500</Height><Width Units="pixels">322</Width></LargeImage></ImageSet></ImageSets></Item></Items></ItemLookupResponse>']
 !!python/unicode 'mock_amazon_itemsearch': ['<?xml version="1.0" ?><ItemSearchResponse
-    xmlns="http://webservices.amazon.com/AWSECommerceService/2011-08-01"><OperationRequest><HTTPHeaders><Header
+    xmlns="http://webservices.amazon.com/AWSECommerceService/2013-08-01"><OperationRequest><HTTPHeaders><Header
     Name="UserAgent" Value="Python-urllib/2.7"></Header></HTTPHeaders><RequestId>15627160-8256-407a-8ff1-6a4d2e07372d</RequestId><Arguments><Argument
     Name="AWSAccessKeyId" Value="egg"></Argument><Argument Name="AssociateTag"
     Value="egg"></Argument><Argument Name="Keywords" Value="Richard Morgan Black
     Man"></Argument><Argument Name="Operation" Value="ItemSearch"></Argument><Argument
     Name="SearchIndex" Value="KindleStore"></Argument><Argument Name="Service" Value="AWSECommerceService"></Argument><Argument
     Name="Timestamp" Value="2015-10-20T15:33:22Z"></Argument><Argument Name="Version"
-    Value="2011-08-01"></Argument><Argument Name="Signature" Value="1xU/KlpPtjYnnkzzk+VoIeiXyZzhD2sxeDCyF4oF6Uk="></Argument></Arguments><RequestProcessingTime>0.0240360000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemSearchRequest><Keywords>Richard
+    Value="2013-08-01"></Argument><Argument Name="Signature" Value="1xU/KlpPtjYnnkzzk+VoIeiXyZzhD2sxeDCyF4oF6Uk="></Argument></Arguments><RequestProcessingTime>0.0240360000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemSearchRequest><Keywords>Richard
     Morgan Black Man</Keywords><ResponseGroup>Small</ResponseGroup><SearchIndex>KindleStore</SearchIndex></ItemSearchRequest></Request><TotalResults>1</TotalResults><TotalPages>1</TotalPages><MoreSearchResultsUrl>http://www.amazon.com/gp/redirect.html?linkCode=xm2&amp;SubscriptionId=egg&amp;location=http%3A%2F%2Fwww.amazon.com%2Fgp%2Fsearch%3Fkeywords%3DRichard%2BMorgan%2BBlack%2BMan%26url%3Dsearch-alias%253Ddigital-text&amp;tag=egg&amp;creative=386001&amp;camp=2025</MoreSearchResultsUrl><Item><ASIN>B00HVBJGCO</ASIN><DetailPageURL>http://www.amazon.com/The-New-Encyclopedia-Southern-Culture-ebook/dp/B00HVBJGCO%3FSubscriptionId%3Degg%26tag%3Degg%26linkCode%3Dxm2%26camp%3D2025%26creative%3D165953%26creativeASIN%3DB00HVBJGCO</DetailPageURL><ItemLinks><ItemLink><Description>Technical
     Details</Description><URL>http://www.amazon.com/The-New-Encyclopedia-Southern-Culture-ebook/dp/tech-data/B00HVBJGCO%3FSubscriptionId%3Degg%26tag%3Degg%26linkCode%3Dxm2%26camp%3D2025%26creative%3D386001%26creativeASIN%3DB00HVBJGCO</URL></ItemLink><ItemLink><Description>Add
     To Baby Registry</Description><URL>http://www.amazon.com/gp/registry/baby/add-item.html%3Fasin.0%3DB00HVBJGCO%26SubscriptionId%3Degg%26tag%3Degg%26linkCode%3Dxm2%26camp%3D2025%26creative%3D386001%26creativeASIN%3DB00HVBJGCO</URL></ItemLink><ItemLink><Description>Add
@@ -38,14 +38,14 @@
     Role="Editor">Charles Reagan Wilson</Creator><Manufacturer>The University of North
     Carolina Press</Manufacturer><ProductGroup>eBooks</ProductGroup><Title>The New
     Encyclopedia of Southern Culture: Volume 10: Law and Politics</Title></ItemAttributes></Item></Items></ItemSearchResponse>',
-  '<?xml version="1.0" ?><ItemSearchResponse xmlns="http://webservices.amazon.com/AWSECommerceService/2011-08-01"><OperationRequest><HTTPHeaders><Header
+  '<?xml version="1.0" ?><ItemSearchResponse xmlns="http://webservices.amazon.com/AWSECommerceService/2013-08-01"><OperationRequest><HTTPHeaders><Header
     Name="UserAgent" Value="Python-urllib/2.7"></Header></HTTPHeaders><RequestId>393fe0d2-7dce-4a34-ba81-60286f65245a</RequestId><Arguments><Argument
     Name="AWSAccessKeyId" Value="egg"></Argument><Argument Name="AssociateTag"
     Value="egg"></Argument><Argument Name="Keywords" Value="Richard Morgan Black
     Man"></Argument><Argument Name="Operation" Value="ItemSearch"></Argument><Argument
     Name="SearchIndex" Value="KindleStore"></Argument><Argument Name="Service" Value="AWSECommerceService"></Argument><Argument
     Name="Timestamp" Value="2015-10-20T15:33:30Z"></Argument><Argument Name="Version"
-    Value="2011-08-01"></Argument><Argument Name="Signature" Value="aG5YZcAT6XD+ORKZwsRpwAxNYFEth1VJ77t8S0gbYZE="></Argument></Arguments><RequestProcessingTime>0.0282970000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemSearchRequest><Keywords>Richard
+    Value="2013-08-01"></Argument><Argument Name="Signature" Value="aG5YZcAT6XD+ORKZwsRpwAxNYFEth1VJ77t8S0gbYZE="></Argument></Arguments><RequestProcessingTime>0.0282970000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemSearchRequest><Keywords>Richard
     Morgan Black Man</Keywords><ResponseGroup>Small</ResponseGroup><SearchIndex>KindleStore</SearchIndex></ItemSearchRequest></Request><TotalResults>1</TotalResults><TotalPages>1</TotalPages><MoreSearchResultsUrl>http://www.amazon.com/gp/redirect.html?linkCode=xm2&amp;SubscriptionId=egg&amp;location=http%3A%2F%2Fwww.amazon.com%2Fgp%2Fsearch%3Fkeywords%3DRichard%2BMorgan%2BBlack%2BMan%26url%3Dsearch-alias%253Ddigital-text&amp;tag=egg&amp;creative=386001&amp;camp=2025</MoreSearchResultsUrl><Item><ASIN>B00HVBJGCO</ASIN><DetailPageURL>http://www.amazon.com/The-New-Encyclopedia-Southern-Culture-ebook/dp/B00HVBJGCO%3FSubscriptionId%3Degg%26tag%3Degg%26linkCode%3Dxm2%26camp%3D2025%26creative%3D165953%26creativeASIN%3DB00HVBJGCO</DetailPageURL><ItemLinks><ItemLink><Description>Technical
     Details</Description><URL>http://www.amazon.com/The-New-Encyclopedia-Southern-Culture-ebook/dp/tech-data/B00HVBJGCO%3FSubscriptionId%3Degg%26tag%3Degg%26linkCode%3Dxm2%26camp%3D2025%26creative%3D386001%26creativeASIN%3DB00HVBJGCO</URL></ItemLink><ItemLink><Description>Add
     To Baby Registry</Description><URL>http://www.amazon.com/gp/registry/baby/add-item.html%3Fasin.0%3DB00HVBJGCO%26SubscriptionId%3Degg%26tag%3Degg%26linkCode%3Dxm2%26camp%3D2025%26creative%3D386001%26creativeASIN%3DB00HVBJGCO</URL></ItemLink><ItemLink><Description>Add
@@ -58,14 +58,14 @@
     Role="Editor">Charles Reagan Wilson</Creator><Manufacturer>The University of North
     Carolina Press</Manufacturer><ProductGroup>eBooks</ProductGroup><Title>The New
     Encyclopedia of Southern Culture: Volume 10: Law and Politics</Title></ItemAttributes></Item></Items></ItemSearchResponse>',
-  '<?xml version="1.0" ?><ItemSearchResponse xmlns="http://webservices.amazon.com/AWSECommerceService/2011-08-01"><OperationRequest><HTTPHeaders><Header
+  '<?xml version="1.0" ?><ItemSearchResponse xmlns="http://webservices.amazon.com/AWSECommerceService/2013-08-01"><OperationRequest><HTTPHeaders><Header
     Name="UserAgent" Value="Python-urllib/2.7"></Header></HTTPHeaders><RequestId>1af228ba-0348-4046-bd5f-d96d17e885ea</RequestId><Arguments><Argument
     Name="AWSAccessKeyId" Value="egg"></Argument><Argument Name="AssociateTag"
     Value="egg"></Argument><Argument Name="Keywords" Value="Richard Morgan Black
     Man"></Argument><Argument Name="Operation" Value="ItemSearch"></Argument><Argument
     Name="SearchIndex" Value="Books"></Argument><Argument Name="Service" Value="AWSECommerceService"></Argument><Argument
     Name="Timestamp" Value="2015-10-20T15:33:38Z"></Argument><Argument Name="Version"
-    Value="2011-08-01"></Argument><Argument Name="Signature" Value="3hEmGVQohm3/u+GmZeC1D7r8dA+bsfPz9LxHqHUThD0="></Argument></Arguments><RequestProcessingTime>0.0614950000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemSearchRequest><Keywords>Richard
+    Value="2013-08-01"></Argument><Argument Name="Signature" Value="3hEmGVQohm3/u+GmZeC1D7r8dA+bsfPz9LxHqHUThD0="></Argument></Arguments><RequestProcessingTime>0.0614950000000000</RequestProcessingTime></OperationRequest><Items><Request><IsValid>True</IsValid><ItemSearchRequest><Keywords>Richard
     Morgan Black Man</Keywords><ResponseGroup>Small</ResponseGroup><SearchIndex>Books</SearchIndex></ItemSearchRequest></Request><TotalResults>10</TotalResults><TotalPages>1</TotalPages><MoreSearchResultsUrl>http://www.amazon.com/gp/redirect.html?linkCode=xm2&amp;SubscriptionId=egg&amp;location=http%3A%2F%2Fwww.amazon.com%2Fgp%2Fsearch%3Fkeywords%3DRichard%2BMorgan%2BBlack%2BMan%26url%3Dsearch-alias%253Dstripbooks&amp;tag=egg&amp;creative=386001&amp;camp=2025</MoreSearchResultsUrl><Item><ASIN>2352942322</ASIN><DetailPageURL>http://www.amazon.com/Black-Man-Richard-Morgan/dp/2352942322%3FSubscriptionId%3Degg%26tag%3Degg%26linkCode%3Dxm2%26camp%3D2025%26creative%3D165953%26creativeASIN%3D2352942322</DetailPageURL><ItemLinks><ItemLink><Description>Technical
     Details</Description><URL>http://www.amazon.com/Black-Man-Richard-Morgan/dp/tech-data/2352942322%3FSubscriptionId%3Degg%26tag%3Degg%26linkCode%3Dxm2%26camp%3D2025%26creative%3D386001%26creativeASIN%3D2352942322</URL></ItemLink><ItemLink><Description>Add
     To Baby Registry</Description><URL>http://www.amazon.com/gp/registry/baby/add-item.html%3Fasin.0%3D2352942322%26SubscriptionId%3Degg%26tag%3Degg%26linkCode%3Dxm2%26camp%3D2025%26creative%3D386001%26creativeASIN%3D2352942322</URL></ItemLink><ItemLink><Description>Add

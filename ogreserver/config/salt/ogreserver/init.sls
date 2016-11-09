@@ -7,8 +7,7 @@ include:
   - libsass
   - mysql
   - nodejs
-  - rabbitmq
-  - rabbitmq.celerybeat
+  - redis
   - rethinkdb
 
 
@@ -38,7 +37,7 @@ extend:
   ogreserver-supervisor-service:
     supervisord.running:
       - require:
-        - cmd: rabbitmq-server-running
+        - service: redis
         - virtualenv: app-virtualenv
       - watch:
         - file: /etc/supervisor/conf.d/{{ pillar['app_name'] }}.conf
@@ -67,6 +66,14 @@ app-virtualenv:
     - require:
       - pip: virtualenv
       - user: {{ pillar['app_user'] }}
+
+# celerybeat schedule directory
+/var/celerybeat:
+  file.directory:
+    - user: {{ pillar['app_user'] }}
+    - group: {{ pillar['app_user'] }}
+    - require_in:
+      - service: supervisor
 
 # install bower.io for Foundation 5
 bower:

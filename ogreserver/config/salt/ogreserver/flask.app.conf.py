@@ -28,7 +28,7 @@ OGRECLIENT_VERSION = os.environ.get('OGRECLIENT_VERSION', '{{ pillar.get('ogrecl
 ### Build time configuration ###
 
 # Celery config
-BROKER_URL = "amqp://{{ pillar['rabbitmq_user'] }}:{{ pillar['rabbitmq_pass'] }}@{{ pillar['rabbitmq_host'] }}:5672/{{ pillar['rabbitmq_vhost'] }}"
+BROKER_URL = 'redis://localhost:6379'
 CELERY_ACCEPT_CONTENT = ['pickle']
 CELERY_TIMEZONE = '{{ pillar['timezone'] }}'
 

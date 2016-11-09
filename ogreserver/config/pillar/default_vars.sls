@@ -31,12 +31,6 @@ mysql_db: ogre
 mysql_user: ogreserver
 mysql_pass: oii
 
-# rabbitmq settings
-rabbitmq_host: localhost
-rabbitmq_vhost: dev
-rabbitmq_user: dev
-rabbitmq_pass: dev
-
 # flask app settings
 flask_secret: its_a_secret
 password_salt: eggs

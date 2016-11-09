@@ -33,7 +33,7 @@ extend:
   ogreserver-supervisor-service:
     supervisord.running:
       - require:
-        - cmd: rabbitmq-server-running
+        - service: redis
         - file: newrelic-config
 
   create-app-user:

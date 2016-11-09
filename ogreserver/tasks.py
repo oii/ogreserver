@@ -33,6 +33,11 @@ def query_ebook_metadata(ebook_data):
     Set and validate ebook metadata, authors, title etc. by querying external APIs
     """
     with app.app_context():
+        app.logger.info('{} Querying metadata for {} {} {}'.format(
+            ebook_data['ebook_id'], ebook_data['author'],
+            ebook_data['title'], ebook_data['meta']['asin']
+        ))
+
         am = AmazonAPI(
             app.logger,
             app.config['AWS_ADVERTISING_API_ACCESS_KEY'],
@@ -48,7 +53,8 @@ def query_ebook_metadata(ebook_data):
                 author=ebook_data['author'],
                 title=ebook_data['title']
             )
-            app.logger.debug(am_data)
+            app.logger.debug('{} {}'.format(ebook_data['ebook_id'], am_data))
+
         except AmazonHttpError:
             # retry the current task
             query_ebook_metadata.retry(
@@ -59,6 +65,10 @@ def query_ebook_metadata(ebook_data):
         author = title = None
 
         if am_data:
+            app.logger.info('{} Amazon data for ASIN {}'.format(
+                ebook_data['ebook_id'], am_data['asin']
+            ))
+
             # store all Amazon data in ebook meta
             ebook_data['meta']['amazon'] = am_data
 
@@ -79,9 +89,13 @@ def query_ebook_metadata(ebook_data):
             author=author or ebook_data['author'],
             title=title or ebook_data['title']
         )
-        app.logger.debug(gr_data)
+        app.logger.debug('{} {}'.format(ebook_data['ebook_id'], gr_data))
 
         if gr_data:
+            app.logger.info('{} Goodreads data for ISBN {}'.format(
+                ebook_data['ebook_id'], ebook_data['meta']['isbn']
+            ))
+
             # extract first author from Goodreads
             try:
                 ebook_data['author'] = gr_data['authors'][0]['name']

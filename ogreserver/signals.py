@@ -9,15 +9,19 @@ from .tasks import convert, query_ebook_metadata, send_mail, store_ebook, index_
 
 
 def when_store_ebook(sender, ebook_id, filename, file_hash, fmt, username):
+    app.logger.debug('SIGNAL when_store_ebook')
     store_ebook.delay(ebook_id, filename, file_hash, fmt, username)
 
 def when_convert_ebook(sender, ebook_id, version_id, original_filename, dest_fmt):
+    app.logger.debug('SIGNAL when_convert_ebook')
     convert.delay(ebook_id, version_id, original_filename, dest_fmt)
 
 def when_ebook_created(sender, ebook_data):
+    app.logger.debug('SIGNAL when_ebook_created')
     query_ebook_metadata.delay(ebook_data)
 
 def when_ebook_updated(sender, ebook_id):
+    app.logger.debug('SIGNAL when_ebook_updated')
     index_for_search.delay(ebook_id=ebook_id)
 
 

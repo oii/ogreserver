@@ -157,8 +157,7 @@ def image_upload(ebook_data):
                 # upload to S3
                 s3 = connect_s3(app.config)
                 bucket = s3.get_bucket(app.config['STATIC_S3_BUCKET'].format(app.config['env']))
-                k = boto.s3.key.Key(bucket)
-                k.key = filename
+                k = bucket.new_key(filename)
                 k.content_type = 'image/jpeg'
                 k.set_contents_from_filename(res[0], policy='public-read')
 

@@ -7,7 +7,6 @@ import re
 import rethinkdb as r
 from rethinkdb.errors import RqlRuntimeError
 
-import boto
 from boto.exception import S3ResponseError
 
 import dateutil.parser
@@ -636,8 +635,7 @@ class DataStore():
         self.logger.debug('Generated filename {} for {}'.format(filename, file_hash))
 
         # create a new storage key
-        k = boto.s3.key.Key(bucket)
-        k.key = filename
+        k = bucket.new_key(filename)
         k.content_type = content_type
 
         # check if our file is already up on S3

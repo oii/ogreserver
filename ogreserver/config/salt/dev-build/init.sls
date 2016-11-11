@@ -7,7 +7,6 @@ include:
   - logs
   - ogreclient
   - s3proxy
-  - watchdog
 
 
 extend:
@@ -44,25 +43,10 @@ extend:
       - context:
           production: false
 
-  app-virtualenv:
-    virtualenv.managed:
-      - require_in:
-        - pip: watchdog
-
   app-log-directory:
     file.directory:
       - require_in:
         - service: supervisor
-
-  ogreserver-supervisor-service:
-    supervisord.running:
-      - require_in:
-        - supervisord: watchdog-service
-
-  sassc-install:
-    cmd.run:
-      - require_in:
-        - supervisord: watchdog-service
 
   static-asset-compile:
     cmd.run:

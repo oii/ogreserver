@@ -1,5 +1,9 @@
 {% set sass_version = pillar.get('sass_version', '3.3.6') %}
 
+libsass-build-essential:
+  pkg.installed:
+    - name: build-essential
+
 libsass-src:
   git.latest:
     - name: https://github.com/sass/libsass.git
@@ -18,6 +22,7 @@ sassc:
     - cwd: /tmp/sassc
     - require:
       - git: libsass-src
+      - pkg: build-essential
     - watch:
       - git: sassc
 

@@ -9,6 +9,7 @@ import subprocess
 import sys
 import time
 
+import boto
 import salt.client
 
 from flask.ext.script import Manager
@@ -239,7 +240,37 @@ def init_ogre(test=False):
             r.db('ogreserver').table_create('sync_events').run(conn)
             set_indexes()
 
+    caller = salt.client.Caller()
+    env = caller.function('grains.item', 'env').get('env', 'dev')
+    if env == 'dev':
+        create_ogre_s3_dev()
+
     print 'Succesfully initialized OGRE'
+
+
+
+@manager.command
+def create_ogre_s3_dev():
+    # create S3 buckets in dev (handled by terraform in prod)
+    s3 = connect_s3(app.config)
+
+    for bucket_name in ('EBOOK', 'STATIC', 'DIST', 'BACKUP'):
+        try:
+            s3.create_bucket(
+                app.config['{}_S3_BUCKET'.format(bucket_name)].format('dev')
+            )
+
+        except boto.exception.S3ResponseError as e:
+            sys.stderr.write('Failed verifying or creating S3 bucket.. ({})\n'.format(e.error_message))
+            sys.exit(1)
+        except boto.exception.S3CreateError as e:
+            if e.error_code == 'BucketAlreadyExists':
+                sys.stderr.write('Bucket name already in use! ({})\n'.format(e.error_message))
+                sys.exit(1)
+            elif e.error_code == 'BucketAlreadyOwnedByYou':
+                pass
+            else:
+                raise e
 
 
 @manager.command

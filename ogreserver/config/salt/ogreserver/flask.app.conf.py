@@ -78,7 +78,7 @@ SQLALCHEMY_DATABASE_URI = "mysql://{{ pillar['mysql_user'] }}:{{ pillar['mysql_p
 
 
 # Whoosh full-text search
-WHOOSH_BASE = "/srv/{{ pillar['app_directory_name'] }}/search.db"
+WHOOSH_BASE = "/var/ogre/search.db"
 
 # Upload paths
 UPLOADED_EBOOKS_DEST = "/srv/{{ pillar['app_directory_name'] }}/uploads"

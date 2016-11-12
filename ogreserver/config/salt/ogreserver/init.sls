@@ -75,6 +75,12 @@ app-virtualenv:
     - require_in:
       - service: supervisor
 
+# storage for whoosh DB
+/var/ogre:
+  file.directory:
+    - user: {{ pillar['app_user'] }}
+    - group: {{ pillar['app_user'] }}
+
 # install bower.io for Foundation 5
 bower:
   npm.installed:

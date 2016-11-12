@@ -49,9 +49,9 @@ def cleardb():
     r.table('versions').delete().run()
     r.table('formats').delete().run()
     r.table('sync_events').delete().run()
-    if os.path.exists('search.db'):
+    if os.path.exists('/var/ogre/search.db'):
         import shutil, subprocess
-        shutil.rmtree('search.db')
+        shutil.rmtree('/var/ogre/search.db')
         subprocess.call('pkill -HUP gunicorn', shell=True)
     conn.close()
 

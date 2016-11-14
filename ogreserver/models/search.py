@@ -6,6 +6,8 @@ import math
 from whoosh.query import Every, And, Term
 from whoosh.qparser import MultifieldParser, OrGroup, FuzzyTermPlugin
 
+from ..exceptions import NoMoreResultsError
+
 
 class Search:
     def __init__(self, whoosh, pagelen):
@@ -78,5 +80,10 @@ class Search:
 
             if pagecount is None:
                 pagecount = int(math.ceil(float(len(output)) / self.pagelen))
+
+        # whoosh is returning final page of results when the pagenum is higher
+        # than the pagecount
+        if pagenum > pagecount:
+            raise NoMoreResultsError
 
         return {'results': output, 'pagecount': pagecount}

@@ -52,6 +52,9 @@ class RethinkdbError(OgreException):
 class S3DatastoreError(OgreException):
     pass
 
+class NoMoreResultsError(OgreException):
+    pass
+
 
 class APIAccessDenied(OgreException):
     pass

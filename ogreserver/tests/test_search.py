@@ -1,6 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import pytest
+
+from ogreserver.exceptions import NoMoreResultsError
+
 
 def test_search_keywords(search):
     '''
@@ -23,8 +27,8 @@ def test_search_keywords(search):
     assert len(result['results']) == 1
 
     # check a random string fails
-    result = search.query('zcsdsf')
-    assert len(result['results']) == 0
+    with pytest.raises(NoMoreResultsError):
+        result = search.query('zcsdsf')
 
 
 def test_search_keyword_fuzzy(search):

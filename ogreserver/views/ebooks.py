@@ -9,6 +9,7 @@ from flask import g, Blueprint, request, jsonify, redirect, url_for
 from flask.ext.security.decorators import login_required
 from werkzeug.exceptions import abort
 
+from ..exceptions import NoMoreResultsError
 from ..forms.search import SearchForm
 from ..models.datastore import DataStore
 from ..models.search import Search
@@ -28,7 +29,10 @@ def listing(pagenum=1):
 
     if request_wants_json(request):
         # return single page as JSON
-        return jsonify(search.query(**search_form.data))
+        try:
+            return jsonify(search.query(**search_form.data))
+        except NoMoreResultsError:
+            return jsonify({})
     else:
         # return all pages upto pagenum as HTML
         search_form.data['allpages'] = True

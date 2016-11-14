@@ -2,7 +2,6 @@
 
 @import 'settings';
 @import 'foundation';
-@import 'motion-ui';
 
 @include foundation-global-styles;
 @include foundation-grid;
@@ -21,9 +20,6 @@
 @include foundation-table;
 @include foundation-thumbnail;
 @include foundation-top-bar;
-
-@include motion-ui-transitions;
-@include motion-ui-animations;
 
 
 header {

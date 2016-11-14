@@ -10,16 +10,14 @@ prod: clean sass_prod js_prod images
 
 js_dev:
 	@closure-compiler \
-		--comp-level=whitespace \
-		--language=ecma5 \
-		--output-format=text \
+		--language=ecma6 \
+		--pretty \
 		js/* \
 		> dist/ogreserver.js
 
 js_prod:
 	@closure-compiler \
-		--language=ecma5 \
-		--output-format=text \
+		--language=ecma6 \
 		js/* \
 		> dist/ogreserver.js
 

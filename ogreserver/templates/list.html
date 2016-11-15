@@ -5,28 +5,7 @@
 
 	<ul id="ebook-listing" class="no-bullet">
 
-	{% for b in ebooks['results'] %}
-
-	<li class="ebook">
-		<div class="callout radius">
-			<div class="firstsection">
-				<a class="title" href="{{ url_for('ebooks.detail', ebook_id=b.ebook_id) }}">{{b.author}} - {{b.title}}</a>
-				<span class="info">
-					<span class="rating">{{b.rating}}</span>
-				</span>
-			</div>
-			<div class="secondsection">
-				{% if b.is_curated %}
-					<span class="label success">Curated</span>
-				{% else %}
-					<span class="label warning">Not curated!</span>
-				{% endif %}
-				<span class="label primary">{% if not b.is_fiction %}Non-{% endif %}Fiction</span>
-			</div>
-		</div>
-	</li>
-
-	{% endfor %}
+		{% include 'list_fragment.html' %}
 
 	</ul>
 

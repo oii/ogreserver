@@ -1,0 +1,1 @@
+../bower_components/intercooler-js/src/intercooler.js

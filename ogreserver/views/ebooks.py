@@ -5,7 +5,7 @@ import pyaml
 
 from flask import current_app as app
 
-from flask import g, Blueprint, request, jsonify, redirect, url_for
+from flask import g, Blueprint, make_response, request, redirect, url_for
 from flask.ext.security.decorators import login_required
 from werkzeug.exceptions import abort
 
@@ -13,7 +13,7 @@ from ..exceptions import NoMoreResultsError
 from ..forms.search import SearchForm
 from ..models.datastore import DataStore
 from ..models.search import Search
-from ..utils import render_template, request_wants_json
+from ..utils import render_template
 
 bp_ebooks = Blueprint('ebooks', __name__)
 
@@ -21,23 +21,65 @@ bp_ebooks = Blueprint('ebooks', __name__)
 @bp_ebooks.route('/list/', methods=['GET', 'POST'])
 @bp_ebooks.route('/list/<int:pagenum>/')
 @login_required
-def listing(pagenum=1):
-    search_form = SearchForm(request.args)
-    search_form.data['pagenum'] = pagenum
+def listing(pagenum=None):
+    if not pagenum:
+        pagenum = int(request.args.get('pagenum', 1))
 
-    search = Search(app.whoosh, pagelen=app.config.get('SEARCH_PAGELEN', 20))
+    query_data = {
+        's': request.args.get('s'),
+        'is_curated': request.args.get('is_curated'),
+        'is_fiction': request.args.get('is_fiction'),
+        'pagenum': pagenum,
+        'allpages': True,
+    }
 
-    if request_wants_json(request):
-        # return single page as JSON
-        try:
-            return jsonify(search.query(**search_form.data))
-        except NoMoreResultsError:
-            return jsonify({})
-    else:
-        # return all pages upto pagenum as HTML
-        search_form.data['allpages'] = True
-        rs = search.query(**search_form.data)
-        return render_template('list.html', ebooks=rs, search_form=search_form)
+    rs = None
+
+    try:
+        search = Search(app.whoosh, pagelen=app.config.get('SEARCH_PAGELEN', 10))
+        rs = search.query(**query_data)
+    except NoMoreResultsError:
+        if pagenum > 1:
+            # redirect to /list with no page number
+            return redirect(url_for('ebooks.listing'))
+
+    return render_template(
+        'list.html',
+        ebooks=rs or [],
+        pagenum=pagenum,
+        search_form=SearchForm(request.args)
+    )
+
+
+@bp_ebooks.route('/list-fragment/')
+@login_required
+def listing_fragment():
+    pagenum = int(request.args['pagenum'])
+
+    query_data = {
+        's': request.args['s'],
+        'is_curated': True,
+        'is_fiction': True,
+        'pagenum': pagenum,
+        'allpages': False,
+    }
+
+    try:
+        search = Search(app.whoosh, pagelen=app.config.get('SEARCH_PAGELEN', 10))
+        rs = search.query(**query_data)
+    except NoMoreResultsError:
+        return ''
+
+    resp = make_response(render_template(
+        'list_fragment.html',
+        ebooks=rs,
+        search_text=request.args['s'],
+        pagenum=pagenum,
+        search_form=SearchForm(**query_data)
+    ))
+    # use intercooler's history rewrite header
+    resp.headers['X-IC-PushURL'] = '/list/{}/#{}'.format(pagenum, rs['results'][0]['ebook_id'][0:7])
+    return resp
 
 
 @bp_ebooks.route('/ebook/<ebook_id>/')

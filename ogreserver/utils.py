@@ -14,8 +14,7 @@ import tempfile
 import boto
 import boto.s3
 import boto.s3.connection
-
-import rethinkdb as r
+import pytz
 
 from flask import render_template as flask_render_template
 
@@ -103,28 +102,31 @@ def make_temp_directory():
         shutil.rmtree(temp_dir)
 
 
-def encode_rql_dates(data):
+def date_to_rqltzinfo(data):
     '''
-    Convert all datetime.date and datetime.datetime objects to RqlTzinfo objects
+    Recursively convert datetime.date to datetime.datetime with UTC timezone
     '''
+    def _convert(d):
+        # reset time component to midnight and set UTC
+        if type(d) is datetime.date:
+            d = datetime.datetime.combine(d, datetime.time())
+        return d.replace(tzinfo=pytz.UTC)
+
+    # convert date or datetime immediately
+    if type(data) is datetime.date or type(data) is datetime.datetime:
+        return _convert(data)
+
     for k,v in data.items():
         if type(v) is dict:
-            encode_rql_dates(v)
+            date_to_rqltzinfo(v)
         elif type(v) is datetime.date or type(v) is datetime.datetime:
-            if type(v) is datetime.date:
-                v = datetime.datetime.combine(v, datetime.time())
-            data[k] = r.iso8601('{}Z'.format(v.isoformat()))
+            data[k] = _convert(v)
 
 
-def decode_rql_dates(data):
-    '''
-    Convert all RqlTzinfo objects to datetime.datetime objects
-    '''
-    for k,v in data.items():
-        if type(v) is dict:
-            decode_rql_dates(v)
-        elif type(v) is datetime.datetime:
-            data[k] = v.isoformat()
+def rqltzinfo_to_iso8601(dt):
+    if dt is None:
+        return None
+    return datetime.datetime.fromtimestamp(dt['epoch_time']).isoformat()
 
 
 def request_wants_json(request):

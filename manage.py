@@ -21,7 +21,7 @@ from rethinkdb.errors import RqlRuntimeError
 from ogreserver.factory import create_app, make_celery, register_signals
 from ogreserver.extensions.celery import register_tasks
 from ogreserver.extensions.database import setup_db_session, create_tables, setup_roles
-from ogreserver.utils import connect_s3, decode_rql_dates, make_temp_directory
+from ogreserver.utils import connect_s3, make_temp_directory, rqltzinfo_to_iso8601
 
 app = create_app()
 manager = Manager(app)
@@ -69,14 +69,16 @@ def lb(ebook_id):
             print 'Not found'
             return
 
+    # convert RqlTzinfo to iso8601
+    ebook['publish_date'] = rqltzinfo_to_iso8601(ebook['publish_date'])
+
     for v in ebook['versions']:
-        v['date_added'] = v['date_added'].isoformat()
+        v['date_added'] = rqltzinfo_to_iso8601(v['date_added'])
+
+        # remove duplicate IDs
         del(v['ebook_id'])
         for f in v['formats']:
             del(f['version_id'])
-
-    # decode ReQL date objects for JSON encode
-    decode_rql_dates(ebook)
 
     # pretty print json with colorized ebook_id/file_hash
     print json.dumps(ebook, indent=2).replace(

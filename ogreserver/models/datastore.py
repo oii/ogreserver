@@ -15,7 +15,7 @@ import ftfy
 from flask import current_app as app
 
 from .user import User
-from ..utils import connect_s3, encode_rql_dates
+from ..utils import connect_s3, date_to_rqltzinfo
 
 from ..exceptions import OgreException, BadMetaDataError, S3DatastoreError, RethinkdbError, \
         NoFormatAvailableError, SameHashSuppliedOnUpdateError, DuplicateBaseError, FileHashDuplicateError, \
@@ -208,13 +208,17 @@ class DataStore():
     def _create_new_ebook(self, title, author, user, incoming):
         ebook_id = DataStore._generate_ebook_id(author, title)
 
+        publish_date = None
+
         # parse dates
         if 'publish_date' in incoming['meta']:
-            incoming['publish_date'] = dateutil.parser.parse(incoming['meta']['publish_date']).date()
+            publish_date = dateutil.parser.parse(incoming['meta']['publish_date'])
 
             # handle year >= 1400 for RethinkDB (only comes up on bad dates)
-            if incoming['publish_date'].year < 1400:
-                del(incoming['publish_date'])
+            if publish_date.year < 1400:
+                publish_date = None
+            else:
+                date_to_rqltzinfo(publish_date)
 
         def _init_curated(provider):
             if provider == 'Amazon Kindle':
@@ -232,7 +236,7 @@ class DataStore():
             'rating': None,
             'comments': [],
             'publisher': incoming['meta']['publisher'] if 'publisher' in incoming['meta'] else None,
-            'publish_date': incoming['publish_date'] if 'publish_date' in incoming else None,
+            'publish_date': publish_date,
             'is_fiction': self.is_fiction(incoming['format']),
             'is_curated': _init_curated(incoming['meta']['source']),
             'meta': {
@@ -247,7 +251,6 @@ class DataStore():
                 }
             },
         }
-        encode_rql_dates(new_book)
         ret = r.table('ebooks').insert(new_book).run()
         if 'first_error' in ret:
             raise RethinkdbError(ret['first_error'])
@@ -330,7 +333,7 @@ class DataStore():
         Update a part of an ebook record
         """
         # convert datetime objects for rethinkdb
-        encode_rql_dates(data)
+        date_to_rqltzinfo(data)
 
         ret = r.table('ebooks').get(ebook_id).update(data).run()
         if 'first_error' in ret:

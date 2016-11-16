@@ -27,7 +27,7 @@ from .models.search import Search
 from .utils import make_temp_directory, connect_s3
 
 
-@app.celery.task(queue='normal', rate_limit='1/s')
+@app.celery.task(queue='high', rate_limit='1/s')
 def query_ebook_metadata(ebook_data):
     """
     Set and validate ebook metadata, authors, title etc. by querying external APIs
@@ -226,7 +226,7 @@ def store_ebook(ebook_id, filename, file_hash, fmt, username):
                     os.remove(os.path.join(app.config['UPLOADED_EBOOKS_DEST'], fn))
 
 
-@app.celery.task(queue='normal')
+@app.celery.task(queue='low')
 def conversion_search():
     """
     Search for ebooks which are missing key formats epub & mobi

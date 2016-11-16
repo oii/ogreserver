@@ -17,14 +17,13 @@ def queue_configuration():
     exchange = Exchange('ogreserver', type='direct')
     config['CELERY_QUEUES'] = (
         Queue('low', exchange, routing_key='low'),
-        Queue('normal', exchange, routing_key='normal'),
         Queue('high', exchange, routing_key='high'),
     )
 
     # configure default queue
-    config['CELERY_DEFAULT_QUEUE'] = 'normal'
+    config['CELERY_DEFAULT_QUEUE'] = 'low'
     config['CELERY_DEFAULT_EXCHANGE'] = 'ogreserver'
-    config['CELERY_DEFAULT_ROUTING_KEY'] = 'normal'
+    config['CELERY_DEFAULT_ROUTING_KEY'] = 'low'
 
     return config
 

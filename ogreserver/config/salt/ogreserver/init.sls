@@ -31,7 +31,6 @@ extend:
           app_dir: {{ pillar['app_directory_name'] }}
           workers:
             high: 0
-            normal: 0
             low: 1
 
   ogreserver-supervisor-service:

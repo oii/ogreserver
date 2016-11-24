@@ -8,7 +8,7 @@ help:
 
 
 ENV?=staging
-SALT_VERSION?=v2015.8.12
+SALT_VERSION?=v2016.3.5
 
 # current HEAD commit ref
 BUILD_TAG:=$$(git log -1 --abbrev-commit --oneline | cut -d' ' -f1)

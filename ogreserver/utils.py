@@ -72,7 +72,7 @@ def connect_s3(config):
         return boto.connect_s3(
             aws_access_key_id='identity',
             aws_secret_access_key='credential',
-            host='127.0.0.1',
+            host=config['VAGRANT_IP'],
             port=8880,
             is_secure=False,
             calling_format=boto.s3.connection.OrdinaryCallingFormat()

@@ -57,6 +57,7 @@ SLACK_TOKEN = "{{ pillar.get('slack_token', '') }}"
 
 # Where to store/serve ebooks
 {% if grains.get('virtual') == 'VMWare' %}
+VAGRANT_IP = "{{ grains['ip4_interfaces']['eth0'][0] }}"
 STATIC_BASE_URL = "http://{{ grains['ip4_interfaces']['eth0'][0] }}:8880"
 {% else %}
 STATIC_BASE_URL = "https://s3-eu-west-1.amazonaws.com"

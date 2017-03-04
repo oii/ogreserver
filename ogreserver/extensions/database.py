@@ -28,10 +28,6 @@ def shutdown_db_session(exception=None):
 
 
 def create_tables(app):
-    # import all modules here that define models
-    from ..models.reputation import UserBadge
-    from ..models.user import User, Role, roles_users
-
     # create the DB tables
     engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'], convert_unicode=True)
     Base.metadata.create_all(bind=engine)

@@ -64,6 +64,11 @@ extend:
         - virtualenv: app-virtualenv
         - cmd: ogre-init
 
+  create-postgres-user:
+    postgres_user.present:
+      - createdb: true
+
+
 # make the logs readable by the login user
 logs-chown:
   file.directory:

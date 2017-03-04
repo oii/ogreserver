@@ -73,8 +73,12 @@ def app_config():
         'EBOOK_FORMATS': ['egg', 'mobi', 'epub'],
         'DOWNLOAD_LINK_EXPIRY': 10,
 
+        'DB_HOST': 'localhost',
+        'DB_USER': 'ogre',
+        'DB_PASS': 'oii',
+        'DB_NAME': 'test',
+
         'WHOOSH_BASE': 'test.db',
-        'SQLALCHEMY_DATABASE_URI': 'mysql://root@localhost/test',
         'UPLOADED_EBOOKS_DEST': 'uploads',
         'UPLOADED_LOGS_DEST': 'logs',
 
@@ -133,8 +137,19 @@ def ogreserver(request, _flask_app):
     return app_thread
 
 
+def terminate_db_connections(engine, db_name):
+    # terminate any existing DB connections
+    text = '''
+    SELECT pg_terminate_backend(pg_stat_activity.pid)
+    FROM pg_stat_activity
+    WHERE pg_stat_activity.datname = '{}'
+      AND pid <> pg_backend_pid();
+    '''.format(db_name)
+    engine.execute(text)
+
+
 @pytest.yield_fixture(scope='session')
-def mysqldb(request, _flask_app):
+def postgresql(request, _flask_app):
     if request.config.getoption('--only-client'):
         yield None
         return
@@ -142,8 +157,13 @@ def mysqldb(request, _flask_app):
     import sqlalchemy
     from ogreserver.extensions.database import setup_db_session, create_tables
 
+    # update DB connection string
+    _flask_app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}/test'.format(**_flask_app.config)
+
     # use raw sqlalchemy for create/drop DB
-    engine = sqlalchemy.create_engine('mysql://root@localhost/mysql')
+    engine = sqlalchemy.create_engine(
+        'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}/'.format(**_flask_app.config)
+    )
 
     def run_query(sql):
         # get the internal connection obj, close the open transaction, then run
@@ -158,29 +178,32 @@ def mysqldb(request, _flask_app):
 
     with _flask_app.test_request_context():
         # init app tables into test database
-        create_tables(_flask_app)
         db_session = setup_db_session(_flask_app)
+        create_tables(_flask_app)
         yield db_session
+
+    # terminate any existing DB connections
+    terminate_db_connections(engine, 'test')
 
     # cleanup the test mysql db
     run_query('drop database if exists test')
 
 
 @pytest.fixture(scope='session')
-def user(request, mysqldb):
+def user(request, postgresql):
     if request.config.getoption('--only-client'):
         return
 
-    return _create_user(request, mysqldb)
+    return _create_user(request, postgresql)
 
 @pytest.fixture(scope='session')
-def user2(request, mysqldb):
+def user2(request, postgresql):
     if request.config.getoption('--only-client'):
         return
 
-    return _create_user(request, mysqldb)
+    return _create_user(request, postgresql)
 
-def _create_user(request, mysqldb):
+def _create_user(request, postgresql):
     from ogreserver.models.user import User
 
     # create random username
@@ -189,8 +212,8 @@ def _create_user(request, mysqldb):
     user = User(username, password=username, email='{}@example.com'.format(username), active=True, roles=[])
     user.confirmed_at = datetime.datetime.utcnow()
     user.preferred_ebook_format = 'mobi'
-    mysqldb.add(user)
-    mysqldb.commit()
+    postgresql.add(user)
+    postgresql.commit()
     return user
 
 

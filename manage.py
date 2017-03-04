@@ -358,24 +358,24 @@ def dump_rethinkdb(identifier):
 
 
 @manager.command
-def dump_mysql(identifier):
+def dump_postgres(identifier):
     """
-    Dump mysql to S3
+    Dump postgres to S3
     """
-    command = 'mysqldump -h {} -u {} -p{} {} | gzip -qv > {{}}'.format(
-        app.config['MYSQL_HOST'],
-        app.config['MYSQL_USER'],
-        app.config['MYSQL_PASS'],
-        app.config['MYSQL_DB'],
+    command = 'postgresdump -h {} -u {} -p{} {} | gzip -qv > {{}}'.format(
+        app.config['POSTGRES_HOST'],
+        app.config['POSTGRES_USER'],
+        app.config['POSTGRES_PASS'],
+        app.config['POSTGRES_DB'],
     )
-    dump_database_to_s3('mysql', identifier, command)
+    dump_database_to_s3('postgres', identifier, command)
 
 
 def dump_database_to_s3(db_type, identifier, command):
     """
     Dump a database to S3
 
-    :param  db_type     "mysql", "rethinkdb" etc
+    :param  db_type     "postgres", "rethinkdb" etc
     :param  identifier  unique DB backup id
     :param  command     backup shell command with "{}" placeholder for filename
     """
@@ -417,24 +417,24 @@ def restore_rethinkdb():
 
 
 @manager.command
-def restore_mysql():
+def restore_postgres():
     """
-    Restore mysql from S3
+    Restore postgres from S3
     """
-    command = 'gunzip --stdout {{}} | mysql -h {} -u {} -p{} {}'.format(
-        app.config['MYSQL_HOST'],
-        app.config['MYSQL_USER'],
-        app.config['MYSQL_PASS'],
-        app.config['MYSQL_DB']
+    command = 'gunzip --stdout {{}} | postgres -h {} -u {} -p{} {}'.format(
+        app.config['POSTGRES_HOST'],
+        app.config['POSTGRES_USER'],
+        app.config['POSTGRES_PASS'],
+        app.config['POSTGRES_DB']
     )
-    restore_database_from_s3('mysql', command)
+    restore_database_from_s3('postgres', command)
 
 
 def restore_database_from_s3(db_type, command):
     """
     Restore a database from S3 backup
 
-    :param  db_type     "mysql", "rethinkdb" etc
+    :param  db_type     "postgres", "rethinkdb" etc
     :param  command     backup shell command with "{}" placeholder for filename
     """
     caller = salt.client.Caller()
@@ -469,7 +469,7 @@ def shutdown():
     """
     Prep the application for shutdown:
      - dump rethinkdb to S3
-     - dump mysql to S3
+     - dump postgres to S3
      - set OGRE DNS to point to static page
     """
     # retrieve current git commitish for HEAD
@@ -477,7 +477,7 @@ def shutdown():
     data = caller.function('grains.item', 'git_revision')
 
     # backup DBs to S3
-    dump_mysql(data['git_revision'])
+    dump_postgres(data['git_revision'])
     dump_rethinkdb(data['git_revision'])
 
 
@@ -487,7 +487,7 @@ def startup():
     Import DBs at application start
     """
     # restore DBs from S3
-    restore_mysql()
+    restore_postgres()
     restore_rethinkdb()
 
 

@@ -25,11 +25,11 @@ login_user: admin
 gunicorn_host: localhost
 gunicorn_port: 8005
 
-# mysql settings
-mysql_host: localhost
-mysql_db: ogre
-mysql_user: ogreserver
-mysql_pass: oii
+# postgres settings
+db_host: localhost
+db_name: ogre
+db_user: ogre
+db_pass: oii
 
 # flask app settings
 flask_secret: its_a_secret

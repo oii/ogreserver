@@ -5,7 +5,7 @@ include:
   - closure-compiler
   - gunicorn
   - libsass
-  - mysql
+  - postgres
   - nodejs
   - redis
   - rethinkdb
@@ -116,7 +116,7 @@ static-asset-compile:
 pip-dependencies-extra:
   pkg.latest:
     - names:
-      - libmysqlclient-dev
+      - libpq-dev
       - libevent-dev
 
 flask-config-dir:
@@ -146,5 +146,5 @@ ogre-init:
     - require:
       - virtualenv: app-virtualenv
       - file: flask-config
-      - mysql_grants: create-mysql-user-perms
+      - postgres_privileges: create-postgres-privileges
       - pip: rethinkdb-python-driver

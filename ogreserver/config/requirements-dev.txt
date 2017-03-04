@@ -2,3 +2,4 @@ mock
 pytest
 git+git://github.com/mafrosis/virtualenv-api.git@adaae70#egg=virtualenv_api-origin-dont-cwd
 ipdb
+pgcli

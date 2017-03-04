@@ -41,7 +41,7 @@ class User(Base, UserMixin):
         Role, secondary=roles_users, backref=backref('users', lazy='dynamic')
     )
     points = Column(Integer, default=0)
-    needs_password_reset = Column(Boolean, default=1)
+    needs_password_reset = Column(Boolean, default=True)
     preferred_ebook_format = Column(String(4))
     dont_email_me = Column(Boolean, default=False)
     badges = relationship(UserBadge, backref='user', lazy='dynamic')

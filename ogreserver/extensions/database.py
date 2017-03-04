@@ -35,6 +35,7 @@ def create_tables(app):
     # create the DB tables
     engine = create_engine(app.config['SQLALCHEMY_DATABASE_URI'], convert_unicode=True)
     Base.metadata.create_all(bind=engine)
+    g.db_session.commit()
 
 
 def setup_roles(app):

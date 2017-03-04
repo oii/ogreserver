@@ -69,13 +69,13 @@ SECRET_KEY = "{{ pillar['flask_secret'] }}"
 # Main ebook database name
 RETHINKDB_DATABASE = 'ogreserver'
 
-MYSQL_HOST = "{{ pillar['mysql_host'] }}"
-MYSQL_USER = "{{ pillar['mysql_user'] }}"
-MYSQL_PASS = "{{ pillar['mysql_pass'] }}"
-MYSQL_DB = "{{ pillar['mysql_db'] }}"
+DB_HOST = "{{ pillar['db_host'] }}"
+DB_USER = "{{ pillar['db_user'] }}"
+DB_PASS = "{{ pillar['db_pass'] }}"
+DB_NAME = "{{ pillar['db_name'] }}"
 
 # SQLAlchemy DB URI
-SQLALCHEMY_DATABASE_URI = "mysql://{{ pillar['mysql_user'] }}:{{ pillar['mysql_pass'] }}@{{ pillar['mysql_host'] }}/{{ pillar['mysql_db'] }}"
+SQLALCHEMY_DATABASE_URI = "postgres://{{ pillar['db_user'] }}:{{ pillar['db_pass'] }}@{{ pillar['db_host'] }}/{{ pillar['db_name'] }}"
 
 
 # Whoosh full-text search

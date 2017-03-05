@@ -11,12 +11,7 @@ def test_update_ebook_hash(datastore, rethinkdb, user):
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb798'
     }).run()
-    datastore._create_new_version('bcddb798', user, {
-        'format': 'epub',
-        'file_hash': '38b3fc3a',
-        'size': 1234,
-        'dedrm': False,
-    })
+    datastore._create_new_version('bcddb798', user, '38b3fc3a', 'epub', 1234, False)
 
     # md5 is different after ogre_id written to metadata on client
     ret = datastore.update_ebook_hash('38b3fc3a', 'egg')
@@ -36,12 +31,7 @@ def test_find_formats(datastore, user, rethinkdb):
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb798'
     }).run()
-    datastore._create_new_version('bcddb798', user, {
-        'format': 'epub',
-        'file_hash': '38b3fc3a',
-        'size': 1234,
-        'dedrm': False,
-    })
+    datastore._create_new_version('bcddb798', user, '38b3fc3a', 'epub', 1234, False)
 
     data = datastore.find_missing_formats('mobi')
     assert len(data) == 1
@@ -57,12 +47,7 @@ def test_find_formats_non_fiction(datastore, user, rethinkdb):
         'title': 'Test PDF',
         'ebook_id': 'bcddb798'
     }).run()
-    datastore._create_new_version('bcddb798', user, {
-        'format': 'pdf',
-        'file_hash': '38b3fc3a',
-        'size': 1234,
-        'dedrm': False,
-    })
+    datastore._create_new_version('bcddb798', user, '38b3fc3a', 'pdf', 1234, False)
 
     data = datastore.find_missing_formats('mobi')
     assert len(data) == 0
@@ -78,12 +63,7 @@ def test_find_formats_none(datastore, user, rethinkdb):
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb798'
     }).run()
-    version_id = datastore._create_new_version('bcddb798', user, {
-        'format': 'epub',
-        'file_hash': '38b3fc3a',
-        'size': 1234,
-        'dedrm': False,
-    })
+    version_id = datastore._create_new_version('bcddb798', user, '38b3fc3a', 'epub', 1234, False)
     datastore._create_new_format(version_id, '9da4f3ba', 'mobi')
 
     data = datastore.find_missing_formats('epub')
@@ -99,12 +79,7 @@ def test_get_missing_books_for_user(datastore, user, user2, rethinkdb):
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb798'
     }).run()
-    version_id = datastore._create_new_version('bcddb798', user, {
-        'format': 'epub',
-        'file_hash': '38b3fc3a',
-        'size': 1234,
-        'dedrm': False,
-    })
+    version_id = datastore._create_new_version('bcddb798', user, '38b3fc3a', 'epub', 1234, False)
     # add another format and mark uploaded=True
     datastore._create_new_format(version_id, '9da4f3ba', 'mobi', user=user)
     datastore.set_uploaded('9da4f3ba', user, filename='egg.pub')
@@ -113,12 +88,7 @@ def test_get_missing_books_for_user(datastore, user, user2, rethinkdb):
     assert len(datastore.get_missing_books(user=user)) == 1
 
     # add another version
-    version_id = datastore._create_new_version('bcddb798', user, {
-        'format': 'epub',
-        'file_hash': '06bc5351',
-        'size': 1234,
-        'dedrm': False,
-    })
+    version_id = datastore._create_new_version('bcddb798', user, '06bc5351', 'epub', 1234, False)
 
     # should now be two missing books for user
     assert len(datastore.get_missing_books(user=user)) == 2

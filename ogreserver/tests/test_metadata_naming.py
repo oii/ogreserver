@@ -49,12 +49,7 @@ def test_generate_filename_with_db_load(datastore, rethinkdb, user):
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
     }).run()
-    datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, {
-        'format': 'epub',
-        'file_hash': '38b3fc3aa7fe67e76f0d8b248e62b940',
-        'size': 1234,
-        'dedrm': False,
-    })
+    datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, '38b3fc3aa7fe67e76f0d8b248e62b940', 'epub', 1234, False)
 
     # test filename generate when supplying only an MD5
     filename = datastore._generate_filename('38b3fc3aa7fe67e76f0d8b248e62b940')

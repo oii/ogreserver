@@ -15,12 +15,7 @@ def test_get_best_ebook_filehash_specific_format(datastore, user, rethinkdb):
     }).run()
 
     # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, {
-        'format': 'epub',
-        'file_hash': '38b3fc3a',
-        'size': 1234,
-        'dedrm': False,
-    })
+    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, '38b3fc3a', 'epub', 1234, False)
 
     # mark single format as uploaded
     rethinkdb.table('formats').get('38b3fc3a').update({'uploaded': True}).run()
@@ -44,12 +39,7 @@ def test_get_best_ebook_filehash_none_uploaded(datastore, user, rethinkdb):
     }).run()
 
     # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, {
-        'format': 'epub',
-        'file_hash': '38b3fc3a',
-        'size': 1234,
-        'dedrm': False,
-    })
+    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, '38b3fc3a', 'epub', 1234, False)
 
     # assert exception since no formats are marked as 'uploaded'
     with pytest.raises(NoFormatAvailableError):
@@ -69,12 +59,7 @@ def test_get_best_ebook_filehash_user_preferred_format(datastore, user, rethinkd
     }).run()
 
     # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, {
-        'format': 'epub',
-        'file_hash': '38b3fc3a',
-        'size': 1234,
-        'dedrm': False,
-    })
+    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, '38b3fc3a', 'epub', 1234, False)
 
     # mark first format as uploaded
     rethinkdb.table('formats').get('38b3fc3a').update({'uploaded': True}).run()
@@ -108,12 +93,7 @@ def test_get_best_ebook_filehash_OGRE_preferred_format(datastore, user, rethinkd
     }).run()
 
     # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, {
-        'format': 'egg',
-        'file_hash': '38b3fc3a',
-        'size': 1234,
-        'dedrm': False,
-    })
+    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, '38b3fc3a', 'egg', 1234, False)
 
     # mark first format as uploaded
     rethinkdb.table('formats').get('38b3fc3a').update({'uploaded': True}).run()
@@ -146,12 +126,7 @@ def test_get_best_ebook_filehash_uploaded(datastore, user, rethinkdb):
     }).run()
 
     # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, {
-        'format': 'egg',
-        'file_hash': '38b3fc3a',
-        'size': 1234,
-        'dedrm': False,
-    })
+    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, '38b3fc3a', 'egg', 1234, False)
 
     # create another format against the single version
     rethinkdb.table('formats').insert({

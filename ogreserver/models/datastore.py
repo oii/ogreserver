@@ -136,7 +136,14 @@ class DataStore():
                         continue
 
                 # create new version, with its initial format
-                self._create_new_version(existing_ebook['ebook_id'], user, incoming)
+                self._create_new_version(
+                    existing_ebook['ebook_id'],
+                    user,
+                    incoming['file_hash'],
+                    incoming['format'],
+                    incoming['size'],
+                    incoming['dedrm'],
+                )
 
                 # mark with ebook_id and continue
                 output[incoming['file_hash']]['ebook_id'] = existing_ebook['ebook_id']
@@ -256,17 +263,24 @@ class DataStore():
             raise RethinkdbError(ret['first_error'])
 
         # create version and initial format
-        self._create_new_version(ebook_id, user, incoming)
+        self._create_new_version(
+            ebook_id,
+            user,
+            incoming['file_hash'],
+            incoming['format'],
+            incoming['size'],
+            incoming['dedrm'],
+        )
 
         # signal new ebook created (when running in flask context)
         app.signals['ebook-created'].send(self, ebook_data=new_book)
         return ebook_id
 
 
-    def _create_new_version(self, ebook_id, user, incoming):
+    def _create_new_version(self, ebook_id, user, file_hash, fmt, size, dedrm):
         # default higher popularity if book has been decrypted by ogreclient;
         # due to better guarantee of provenance
-        if incoming['dedrm']:
+        if dedrm:
             popularity = 10
         else:
             popularity = 1
@@ -275,11 +289,11 @@ class DataStore():
         ret = r.table('versions').insert({
             'ebook_id': ebook_id,
             'user': user.username,
-            'size': incoming['size'],
+            'size': size,
             'popularity': popularity,
             'quality': 1,
             'ranking': DataStore.versions_rank_algorithm(1, popularity),
-            'original_format': incoming['format'],
+            'original_format': fmt,
             'date_added': r.now(),
         }).run()
         if 'first_error' in ret:
@@ -290,15 +304,15 @@ class DataStore():
         # create a new format
         self._create_new_format(
             version_id,
-            incoming['file_hash'],
-            incoming['format'],
+            file_hash,
+            fmt,
             user=user,
-            dedrm=incoming['dedrm'],
+            dedrm=dedrm,
         )
 
         # record the file_hash of the originally supplied ebook
         ret = r.table('versions').get(version_id).update({
-            'original_filehash': incoming['file_hash']
+            'original_filehash': file_hash
         }).run()
         if 'first_error' in ret:
             raise RethinkdbError(ret['first_error'])

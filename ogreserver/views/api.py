@@ -153,7 +153,7 @@ def to_upload():
     ds = DataStore(app.config, app.logger)
 
     # query books to upload and supply back to the client
-    missing_books = ds.get_missing_books(username=current_user.username)
+    missing_books = ds.get_missing_books(user=current_user)
 
     return jsonify(result=missing_books)
 

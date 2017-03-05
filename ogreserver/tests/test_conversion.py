@@ -18,13 +18,13 @@ def test_search(flask_app, datastore, user, rethinkdb, conversion, mock_utils_ma
         'title': "Andersen's Fairy Tales",
         'ebook_id': ebook_id
     }).run()
-    version_id = datastore._create_new_version(ebook_id, user.username, {
+    version_id = datastore._create_new_version(ebook_id, user, {
         'format': 'epub',
         'file_hash': file_hash,
         'size': 1234,
         'dedrm': False,
     })
-    datastore.set_uploaded(file_hash, user.username, filename='egg.pub')
+    datastore.set_uploaded(file_hash, user, filename='egg.pub')
 
     with flask_app.app_context():
         # setup a fixture for expected call params to convert-ebook signal
@@ -63,13 +63,13 @@ def test_convert(flask_app, datastore, user, rethinkdb, conversion, mock_connect
         'title': "Andersen's Fairy Tales",
         'ebook_id': ebook_id
     }).run()
-    version_id = datastore._create_new_version(ebook_id, user.username, {
+    version_id = datastore._create_new_version(ebook_id, user, {
         'format': 'epub',
         'file_hash': '38b3fc3a',
         'size': 1234,
         'dedrm': False,
     })
-    datastore.set_uploaded('38b3fc3a', user.username, filename='egg.pub')
+    datastore.set_uploaded('38b3fc3a', user, filename='egg.pub')
 
     # mock return from Popen().communicate()
     mock_subprocess_popen.return_value.communicate.return_value = 'AZW3 output written to', ''

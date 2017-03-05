@@ -24,6 +24,7 @@ from .models.amazon import AmazonAPI
 from .models.datastore import DataStore
 from .models.goodreads import GoodreadsAPI
 from .models.search import Search
+from .models.user import User
 from .utils import make_temp_directory, connect_s3
 
 
@@ -212,8 +213,10 @@ def store_ebook(ebook_id, filename, file_hash, fmt, username):
             if fmt in app.config['EBOOK_CONTENT_TYPES']:
                 content_type = app.config['EBOOK_CONTENT_TYPES'][fmt]
 
+            user = User.query.get(username=username)
+
             # store the file into S3
-            ds.store_ebook(ebook_id, file_hash, filepath, username, content_type)
+            ds.store_ebook(ebook_id, file_hash, filepath, user, content_type)
 
         except S3DatastoreError as e:
             app.logger.error('Failed uploading {} with {}'.format(file_hash, e))

@@ -136,7 +136,7 @@ class DataStore():
                         continue
 
                 # create new version, with its initial format
-                self._create_new_version(existing_ebook['ebook_id'], user.username, incoming)
+                self._create_new_version(existing_ebook['ebook_id'], user, incoming)
 
                 # mark with ebook_id and continue
                 output[incoming['file_hash']]['ebook_id'] = existing_ebook['ebook_id']
@@ -148,7 +148,7 @@ class DataStore():
                     self.increment_popularity(e.file_hash)
 
                     # add the current user as an owner of this file
-                    self.append_owner(e.file_hash, user.username)
+                    self.append_owner(e.file_hash, user)
 
                 # enable client to update book with ebook_id
                 output[incoming['file_hash']]['ebook_id'] = e.ebook_id
@@ -256,14 +256,14 @@ class DataStore():
             raise RethinkdbError(ret['first_error'])
 
         # create version and initial format
-        self._create_new_version(ebook_id, user.username, incoming)
+        self._create_new_version(ebook_id, user, incoming)
 
         # signal new ebook created (when running in flask context)
         app.signals['ebook-created'].send(self, ebook_data=new_book)
         return ebook_id
 
 
-    def _create_new_version(self, ebook_id, username, incoming):
+    def _create_new_version(self, ebook_id, user, incoming):
         # default higher popularity if book has been decrypted by ogreclient;
         # due to better guarantee of provenance
         if incoming['dedrm']:
@@ -274,7 +274,7 @@ class DataStore():
         # add the first version
         ret = r.table('versions').insert({
             'ebook_id': ebook_id,
-            'user': username,
+            'user': user.username,
             'size': incoming['size'],
             'popularity': popularity,
             'quality': 1,
@@ -292,7 +292,7 @@ class DataStore():
             version_id,
             incoming['file_hash'],
             incoming['format'],
-            username=username,
+            user=user,
             dedrm=incoming['dedrm'],
         )
 
@@ -306,12 +306,12 @@ class DataStore():
         return version_id
 
 
-    def _create_new_format(self, version_id, file_hash, fmt, username=None, dedrm=None, ogreid_tagged=False):
+    def _create_new_format(self, version_id, file_hash, fmt, user=None, dedrm=None, ogreid_tagged=False):
         ret = r.table('formats').insert({
             'file_hash': file_hash,
             'version_id': version_id,
             'format': fmt,
-            'owners': [username if username is not None else 'ogrebot'],
+            'owners': [user.username if user is not None else 'ogrebot'],
             'uploaded_by': None,
             'uploaded': False,
             'is_fiction': self.is_fiction(fmt),
@@ -343,12 +343,12 @@ class DataStore():
         app.signals['ebook-updated'].send(self, ebook_id=ebook_id)
 
 
-    def append_owner(self, file_hash, username):
+    def append_owner(self, file_hash, user):
         """
         Append the current user to the list of owners of this particular file
         """
         r.table('formats').get(file_hash).update(
-            {'owners': r.row['owners'].set_insert(username)}
+            {'owners': r.row['owners'].set_insert(user.username)}
         ).run()
 
 
@@ -608,13 +608,13 @@ class DataStore():
         """
         return r.table('formats').get(file_hash)['uploaded'].run()
 
-    def set_uploaded(self, file_hash, username, filename, isit=True):
+    def set_uploaded(self, file_hash, user, filename, isit=True):
         """
         Mark an ebook as having been uploaded to S3
         """
         r.table('formats').get(file_hash).update({
             'uploaded': isit,
-            'uploaded_by': username,
+            'uploaded_by': user.username,
             's3_filename': filename,
         }).run()
 
@@ -625,7 +625,7 @@ class DataStore():
         r.table('formats').get(file_hash).update({'dedrm': True}).run()
 
 
-    def store_ebook(self, ebook_id, file_hash, filepath, username, content_type=None):
+    def store_ebook(self, ebook_id, file_hash, filepath, user, content_type=None):
         """
         Store an ebook on S3
         """
@@ -646,7 +646,7 @@ class DataStore():
             metadata = k._get_remote_metadata()
             if 'x-amz-meta-ogre-key' in metadata and metadata['x-amz-meta-ogre-key'] == ebook_id:
                 # if already exists, abort and flag as uploaded
-                self.set_uploaded(file_hash, username, filename)
+                self.set_uploaded(file_hash, user, filename)
                 return False
 
         try:
@@ -656,10 +656,10 @@ class DataStore():
                 headers={'x-amz-meta-ogre-key': ebook_id},
                 md5=(file_hash,0)
             )
-            self.logger.info('UPLOADED {} {}'.format(username, filename))
+            self.logger.info('UPLOADED {} {}'.format(user.username, filename))
 
             # mark ebook as stored
-            self.set_uploaded(file_hash, username, filename)
+            self.set_uploaded(file_hash, user, filename)
 
         except S3ResponseError as e:
             raise S3DatastoreError(
@@ -718,7 +718,7 @@ class DataStore():
         return '{}.{}.{}'.format(authortitle, file_hash[0:8], fmt)
 
 
-    def get_missing_books(self, username=None):
+    def get_missing_books(self, user=None):
         """
         Query the DB for books marked as not uploaded
         """
@@ -729,8 +729,8 @@ class DataStore():
         query = query.eq_join('version_id', r.table('versions'), index='version_id').zip()
 
         # filter by username
-        if username is not None:
-            query = query.filter(lambda d: d['owners'].contains(username))
+        if user is not None:
+            query = query.filter(lambda d: d['owners'].contains(user.username))
 
         # return a list of file_hashes
         cursor = query['file_hash'].run()

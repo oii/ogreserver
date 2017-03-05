@@ -11,7 +11,7 @@ def test_update_ebook_hash(datastore, rethinkdb, user):
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb798'
     }).run()
-    datastore._create_new_version('bcddb798', user.username, {
+    datastore._create_new_version('bcddb798', user, {
         'format': 'epub',
         'file_hash': '38b3fc3a',
         'size': 1234,
@@ -36,7 +36,7 @@ def test_find_formats(datastore, user, rethinkdb):
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb798'
     }).run()
-    datastore._create_new_version('bcddb798', user.username, {
+    datastore._create_new_version('bcddb798', user, {
         'format': 'epub',
         'file_hash': '38b3fc3a',
         'size': 1234,
@@ -57,7 +57,7 @@ def test_find_formats_non_fiction(datastore, user, rethinkdb):
         'title': 'Test PDF',
         'ebook_id': 'bcddb798'
     }).run()
-    datastore._create_new_version('bcddb798', user.username, {
+    datastore._create_new_version('bcddb798', user, {
         'format': 'pdf',
         'file_hash': '38b3fc3a',
         'size': 1234,
@@ -78,7 +78,7 @@ def test_find_formats_none(datastore, user, rethinkdb):
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb798'
     }).run()
-    version_id = datastore._create_new_version('bcddb798', user.username, {
+    version_id = datastore._create_new_version('bcddb798', user, {
         'format': 'epub',
         'file_hash': '38b3fc3a',
         'size': 1234,
@@ -99,21 +99,21 @@ def test_get_missing_books_for_user(datastore, user, user2, rethinkdb):
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb798'
     }).run()
-    version_id = datastore._create_new_version('bcddb798', user.username, {
+    version_id = datastore._create_new_version('bcddb798', user, {
         'format': 'epub',
         'file_hash': '38b3fc3a',
         'size': 1234,
         'dedrm': False,
     })
     # add another format and mark uploaded=True
-    datastore._create_new_format(version_id, '9da4f3ba', 'mobi', username=user.username)
-    datastore.set_uploaded('9da4f3ba', user.username, filename='egg.pub')
+    datastore._create_new_format(version_id, '9da4f3ba', 'mobi', user=user)
+    datastore.set_uploaded('9da4f3ba', user, filename='egg.pub')
 
     # should be a single missing book for user
-    assert len(datastore.get_missing_books(username=user.username)) == 1
+    assert len(datastore.get_missing_books(user=user)) == 1
 
     # add another version
-    version_id = datastore._create_new_version('bcddb798', user.username, {
+    version_id = datastore._create_new_version('bcddb798', user, {
         'format': 'epub',
         'file_hash': '06bc5351',
         'size': 1234,
@@ -121,22 +121,22 @@ def test_get_missing_books_for_user(datastore, user, user2, rethinkdb):
     })
 
     # should now be two missing books for user
-    assert len(datastore.get_missing_books(username=user.username)) == 2
+    assert len(datastore.get_missing_books(user=user)) == 2
 
     # mark book uploaded
-    datastore.set_uploaded('06bc5351', user.username, filename='egg.pub')
+    datastore.set_uploaded('06bc5351', user, filename='egg.pub')
 
     # should be a single missing book for user
-    assert len(datastore.get_missing_books(username=user.username)) == 1
+    assert len(datastore.get_missing_books(user=user)) == 1
 
     # assert there are no books for user2
-    assert len(datastore.get_missing_books(username=user2.username)) == 0
+    assert len(datastore.get_missing_books(user=user2)) == 0
 
     # add this user as another owner of the un-uploaded file
-    datastore.append_owner('38b3fc3a', user2.username)
+    datastore.append_owner('38b3fc3a', user2)
 
     # should be now a single missing book for user2
-    assert len(datastore.get_missing_books(username=user2.username)) == 1
+    assert len(datastore.get_missing_books(user=user2)) == 1
 
 
 def test_create_new_ebook(datastore, rethinkdb, user, flask_app):

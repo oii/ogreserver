@@ -15,7 +15,7 @@ def test_get_best_ebook_filehash_specific_format(datastore, user, rethinkdb):
     }).run()
 
     # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user.username, {
+    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, {
         'format': 'epub',
         'file_hash': '38b3fc3a',
         'size': 1234,
@@ -44,7 +44,7 @@ def test_get_best_ebook_filehash_none_uploaded(datastore, user, rethinkdb):
     }).run()
 
     # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user.username, {
+    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, {
         'format': 'epub',
         'file_hash': '38b3fc3a',
         'size': 1234,
@@ -69,7 +69,7 @@ def test_get_best_ebook_filehash_user_preferred_format(datastore, user, rethinkd
     }).run()
 
     # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user.username, {
+    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, {
         'format': 'epub',
         'file_hash': '38b3fc3a',
         'size': 1234,
@@ -108,7 +108,7 @@ def test_get_best_ebook_filehash_OGRE_preferred_format(datastore, user, rethinkd
     }).run()
 
     # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user.username, {
+    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, {
         'format': 'egg',
         'file_hash': '38b3fc3a',
         'size': 1234,
@@ -146,7 +146,7 @@ def test_get_best_ebook_filehash_uploaded(datastore, user, rethinkdb):
     }).run()
 
     # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user.username, {
+    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, {
         'format': 'egg',
         'file_hash': '38b3fc3a',
         'size': 1234,

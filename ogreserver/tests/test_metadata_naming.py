@@ -49,7 +49,7 @@ def test_generate_filename_with_db_load(datastore, rethinkdb, user):
         'title': "Andersen's Fairy Tales",
         'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
     }).run()
-    datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user.username, {
+    datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, {
         'format': 'epub',
         'file_hash': '38b3fc3aa7fe67e76f0d8b248e62b940',
         'size': 1234,

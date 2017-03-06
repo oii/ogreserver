@@ -3,8 +3,6 @@ from __future__ import unicode_literals
 
 import os
 
-from flask import current_app
-
 import mock
 
 
@@ -21,29 +19,28 @@ def test_search(flask_app, datastore, user, rethinkdb, conversion, mock_utils_ma
     version_id = datastore._create_new_version(ebook_id, user, file_hash, 'epub', 1234, False)
     datastore.set_uploaded(file_hash, user, filename='egg.pub')
 
-    with flask_app.app_context():
-        # setup a fixture for expected call params to convert-ebook signal
-        expected_params = [
-            ((conversion,), {
-                'ebook_id': ebook_id,
-                'version_id': version_id,
-                'original_filename': 'egg.pub',
-                'dest_fmt': 'egg'
-            }),
-            ((conversion,), {
-                'ebook_id': ebook_id,
-                'version_id': version_id,
-                'original_filename': 'egg.pub',
-                'dest_fmt': 'mobi'
-            }),
-        ]
+    # setup a fixture for expected call params to convert-ebook signal
+    expected_params = [
+        ((conversion,), {
+            'ebook_id': ebook_id,
+            'version_id': version_id,
+            'original_filename': 'egg.pub',
+            'dest_fmt': 'egg'
+        }),
+        ((conversion,), {
+            'ebook_id': ebook_id,
+            'version_id': version_id,
+            'original_filename': 'egg.pub',
+            'dest_fmt': 'mobi'
+        }),
+    ]
 
-        # search for books which need converting; this sends convert signals
-        conversion.search()
+    # search for books which need converting; this sends convert signals
+    conversion.search()
 
-        # assert convert signal was sent twice, once for each missing format
-        assert current_app.signals['convert-ebook'].send.call_count == 2
-        assert current_app.signals['convert-ebook'].send.call_args_list == expected_params
+    # assert convert signal was sent twice, once for each missing format
+    assert flask_app.signals['convert-ebook'].send.call_count == 2
+    assert flask_app.signals['convert-ebook'].send.call_args_list == expected_params
 
 
 def test_convert(flask_app, datastore, user, rethinkdb, conversion, mock_connect_s3, mock_subprocess_popen,
@@ -79,19 +76,18 @@ def test_convert(flask_app, datastore, user, rethinkdb, conversion, mock_connect
     # assert ebook_write_metadata was called
     conversion._ebook_write_metadata.call_count == 1
 
-    with flask_app.app_context():
-        # assert signal store-ebook sent with correct args
-        current_app.signals['store-ebook'].send.assert_called_once_with(
-            conversion,
-            ebook_id='bcddb798',
-            filename=os.path.join(
-                flask_app.config['UPLOADED_EBOOKS_DEST'],
-                '{}.{}'.format(converted_file_hash, target_convert_format)
-            ),
-            file_hash=converted_file_hash,
-            fmt=target_convert_format,
-            username='ogrebot'
-        )
+    # assert signal store-ebook sent with correct args
+    flask_app.signals['store-ebook'].send.assert_called_once_with(
+        conversion,
+        ebook_id='bcddb798',
+        filename=os.path.join(
+            flask_app.config['UPLOADED_EBOOKS_DEST'],
+            '{}.{}'.format(converted_file_hash, target_convert_format)
+        ),
+        file_hash=converted_file_hash,
+        fmt=target_convert_format,
+        username='ogrebot'
+    )
 
     # verify new format object was created
     format_obj = rethinkdb.table('formats').get(converted_file_hash).run()

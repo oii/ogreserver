@@ -129,21 +129,20 @@ def test_create_new_ebook(datastore, rethinkdb, user, flask_app):
         },
         'dedrm': False,
     }
-    with flask_app.app_context():
-        # create the book
-        ebook_id = datastore._create_new_ebook(title, author, user, incoming_ebook_data)
+    # create the book
+    ebook_id = datastore._create_new_ebook(title, author, user, incoming_ebook_data)
 
-        # ensure create signal called
-        assert flask_app.signals['ebook-created'].send.call_count == 1
+    # ensure create signal called
+    assert flask_app.signals['ebook-created'].send.call_count == 1
 
-        # retrieve ebook from rethinkdb and verify
-        obj = datastore.load_ebook(ebook_id)
-        assert obj['author'] == 'H. C. Andersen'
-        assert obj['meta']['asin'] == 'B00KG6MZ2O'
-        assert len(obj['versions']) == 1
+    # retrieve ebook from rethinkdb and verify
+    obj = datastore.load_ebook(ebook_id)
+    assert obj['author'] == 'H. C. Andersen'
+    assert obj['meta']['asin'] == 'B00KG6MZ2O'
+    assert len(obj['versions']) == 1
 
-        # verify only format's file_hash is stored against version for provenance
-        assert obj['versions'][0]['original_filehash'] == obj['versions'][0]['formats'][0]['file_hash']
+    # verify only format's file_hash is stored against version for provenance
+    assert obj['versions'][0]['original_filehash'] == obj['versions'][0]['formats'][0]['file_hash']
 
 
 def test_update_ebook(datastore, rethinkdb, user):

@@ -19,7 +19,7 @@ import mock
 import pytest
 import virtualenvapi.manage
 
-from ogreserver.utils import connect_s3
+from ogreserver.utils.s3 import connect_s3
 from ogreclient.ogreclient.printer import CliPrinter
 
 

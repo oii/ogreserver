@@ -25,7 +25,8 @@ from .models.datastore import DataStore
 from .models.goodreads import GoodreadsAPI
 from .models.search import Search
 from .models.user import User
-from .utils import make_temp_directory, connect_s3
+from .utils.generic import make_temp_directory
+from .utils.s3 import connect_s3
 
 
 @app.celery.task(queue='high', rate_limit='1/s')

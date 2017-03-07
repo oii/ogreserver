@@ -8,7 +8,7 @@ import xml.etree.cElementTree as ET
 
 from ..decorators import handle_http_error
 from ..exceptions import GoodreadsAPIError, GoodreadsBookNotFoundError
-from ..utils import clean_string
+from ..utils.generic import clean_string
 
 
 class GoodreadsAPI:

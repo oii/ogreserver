@@ -7,7 +7,7 @@ from werkzeug.exceptions import Forbidden
 
 from ..forms.profile_edit import ProfileEditForm
 from ..models.user import User
-from ..utils import render_template
+from ..utils.flask import render_template
 
 bp_user = Blueprint('user', __name__)
 

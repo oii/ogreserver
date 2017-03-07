@@ -21,7 +21,9 @@ from rethinkdb.errors import RqlRuntimeError
 from ogreserver.factory import create_app, make_celery, register_signals
 from ogreserver.extensions.celery import register_tasks
 from ogreserver.extensions.database import setup_db_session, create_tables, setup_roles
-from ogreserver.utils import connect_s3, make_temp_directory, rqltzinfo_to_iso8601
+from ogreserver.utils.db import rqltzinfo_to_iso8601
+from ogreserver.utils.generic import make_temp_directory
+from ogreserver.utils.s3 import connect_s3
 
 app = create_app()
 manager = Manager(app)

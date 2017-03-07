@@ -13,7 +13,7 @@ from ..exceptions import NoMoreResultsError
 from ..forms.search import SearchForm
 from ..models.datastore import DataStore
 from ..models.search import Search
-from ..utils import render_template
+from ..utils.flask import render_template
 
 bp_ebooks = Blueprint('ebooks', __name__)
 

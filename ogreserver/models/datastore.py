@@ -15,7 +15,8 @@ import ftfy
 from flask import current_app as app
 
 from .user import User
-from ..utils import connect_s3, date_to_rqltzinfo
+from ..utils.db import date_to_rqltzinfo
+from ..utils.s3 import connect_s3
 
 from ..exceptions import OgreException, BadMetaDataError, S3DatastoreError, RethinkdbError, \
         NoFormatAvailableError, SameHashSuppliedOnUpdateError, DuplicateBaseError, FileHashDuplicateError, \

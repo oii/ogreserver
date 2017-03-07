@@ -9,7 +9,7 @@ import os
 from flask import Blueprint, abort, render_template_string
 from flask.ext.security.decorators import login_required
 
-from ..utils import render_template
+from ..utils.flask import render_template
 
 bp_docs = Blueprint('docs', __name__)
 

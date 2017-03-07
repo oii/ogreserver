@@ -5,14 +5,16 @@ from __future__ import unicode_literals
 import pytest
 
 
-def test_generate_filename(datastore):
+def test_generate_filename_unicode_error(datastore):
     # ensure exception raised on non-unicode string passed
     with pytest.raises(UnicodeWarning):
-        filename = datastore._generate_filename(
+        datastore._generate_filename(
             '38b3fc3aa7fe67e76f0d8b248e62b940',
             author=str('H. C.'),
         )
 
+
+def test_generate_filename_short_name(datastore):
     filename = datastore._generate_filename(
         '38b3fc3aa7fe67e76f0d8b248e62b940',
         author='H. C. Andersen',
@@ -21,6 +23,8 @@ def test_generate_filename(datastore):
     )
     assert filename == 'H_C_Andersen__Andersens_Fairy_Tales.38b3fc3a.epub'
 
+
+def test_generate_filename_extended_name(datastore):
     filename = datastore._generate_filename(
         '38b3fc3aa7fe67e76f0d8b248e62b940',
         author='H. C. (Hans Christian) Andersen',
@@ -40,25 +44,3 @@ def test_generate_filename_transpose(datastore):
     )
 
     assert 'Bronte' in filename, 'transcode of ë failed'
-
-
-def test_generate_filename_with_db_load(datastore, rethinkdb, user):
-    # create test ebook data directly in rethinkdb
-    rethinkdb.table('ebooks').insert({
-        'author': 'H. C. Andersen',
-        'title': "Andersen's Fairy Tales",
-        'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
-    }).run()
-    datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, '38b3fc3aa7fe67e76f0d8b248e62b940', 'epub', 1234, False)
-
-    # test filename generate when supplying only an MD5
-    filename = datastore._generate_filename('38b3fc3aa7fe67e76f0d8b248e62b940')
-    assert filename == 'H_C_Andersen__Andersens_Fairy_Tales.38b3fc3a.epub'
-
-    # test filename generate with everything except format
-    filename = datastore._generate_filename(
-        '38b3fc3aa7fe67e76f0d8b248e62b940',
-        author='H. C. Andersen',
-        title="Andersen's Fairy Tales"
-    )
-    assert filename == 'H_C_Andersen__Andersens_Fairy_Tales.38b3fc3a.epub'

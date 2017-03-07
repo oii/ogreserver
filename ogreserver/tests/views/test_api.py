@@ -21,7 +21,6 @@ def test_get_definitions_list_of_lists(flask_app, ogreclient_auth_token):
     assert type(json.loads(result.data)[1]) is list
     assert type(json.loads(result.data)[2]) is list
     assert type(json.loads(result.data)[3]) is list
-    assert type(json.loads(result.data)[4]) is list
 
 
 def test_get_definitions_order(flask_app, ogreclient_auth_token):
@@ -38,7 +37,7 @@ def test_get_definitions_order(flask_app, ogreclient_auth_token):
     )
 
     # ensure the formats come back in the correct order
-    assert defs.keys() == ['mobi', 'pdf', 'azw', 'azw3', 'epub']
+    assert defs.keys() == ['mobi', 'pdf', 'azw3', 'epub']
     assert [k for k,v in defs.iteritems() if v[0] is True] == ['mobi', 'azw3', 'epub']
 
 

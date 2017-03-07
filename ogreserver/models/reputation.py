@@ -43,7 +43,7 @@ class Reputation():
 
     def earn_badges(self):
         """
-        Check if a user has earned any badges on this synchronisation
+        Check if a user has earned any badges on this sync
         """
         conn = r.connect("localhost", 28015, db=app.config['RETHINKDB_DATABASE'])
 

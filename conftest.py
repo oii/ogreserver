@@ -65,12 +65,11 @@ def app_config():
         'EBOOK_DEFINITIONS': collections.OrderedDict([
             ('mobi', FormatConfig(True, False)),
             ('pdf', FormatConfig(False, True)),
-            ('azw', FormatConfig(False, True)),
             ('azw3', FormatConfig(True, False)),
             ('epub', FormatConfig(True, False)),
         ]),
 
-        'EBOOK_FORMATS': ['egg', 'mobi', 'epub'],
+        'EBOOK_FORMATS': ['egg', 'mobi', 'azw3'],
         'DOWNLOAD_LINK_EXPIRY': 10,
 
         'DB_HOST': 'localhost',

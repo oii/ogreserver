@@ -545,7 +545,7 @@ class DataStore():
 
         # if no file_hash, we have a problem
         if file_hash is None:
-            raise NoFormatAvailableError('Not found: {} {} {} {}'.format(ebook_id, version_id, fmt, user))
+            raise NoFormatAvailableError('{} {} {} {}'.format(ebook_id, version_id, fmt, user))
 
         return file_hash
 

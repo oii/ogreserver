@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import copy
 import mock
 import os
 import pytest
@@ -11,6 +12,8 @@ import whoosh
 from ogreserver.models.amazon import AmazonAPI
 from ogreserver.models.goodreads import GoodreadsAPI
 from ogreserver.models.search import Search
+
+import fixtures
 
 
 @pytest.yield_fixture(scope='function')
@@ -127,3 +130,27 @@ def get_data_fixtures():
         with open(fixture_path, 'r') as f:
             return yaml.load(f.read())
     return wrapped
+
+
+@pytest.fixture(scope='function')
+def ebook_fixture_azw3():
+    return copy.deepcopy(fixtures.EBOOK_FIXTURE_1)
+
+
+@pytest.fixture(scope='function')
+def ebook_fixture_pdf():
+    return copy.deepcopy(fixtures.EBOOK_FIXTURE_2)
+
+
+@pytest.fixture(scope='function')
+def ebook_sync_fixture_1(ebook_fixture_azw3):
+    return {
+        "H. C.\u0006Andersen\u0007Andersen's Fairy Tales": ebook_fixture_azw3
+    }
+
+
+@pytest.fixture(scope='function')
+def ebook_sync_fixture_2(ebook_fixture_pdf):
+    return {
+        'Eggbert\u0006Yolker\u0007The Sun is an Egg': ebook_fixture_pdf
+    }

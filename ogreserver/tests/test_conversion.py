@@ -6,30 +6,26 @@ import os
 import mock
 
 
-def test_search(flask_app, datastore, user, rethinkdb, conversion, mock_utils_make_tempdir):
-    ebook_id = 'bcddb798'
-    file_hash = '38b3fc3a'
+def test_search(flask_app, datastore, user, rethinkdb, conversion, mock_utils_make_tempdir, ebook_fixture_azw3):
+    # create test ebook data
+    ebook_id = datastore._create_new_ebook(
+        "Andersen's Fairy Tales", 'H. C. Andersen', user, ebook_fixture_azw3
+    )
+    datastore.set_uploaded(ebook_fixture_azw3['file_hash'], user, filename='egg.pub')
 
-    # create test ebook data directly in rethinkdb
-    rethinkdb.table('ebooks').insert({
-        'author': 'H. C. Andersen',
-        'title': "Andersen's Fairy Tales",
-        'ebook_id': ebook_id
-    }).run()
-    version_id = datastore._create_new_version(ebook_id, user, file_hash, 'epub', 1234, False)
-    datastore.set_uploaded(file_hash, user, filename='egg.pub')
+    ebook_data = datastore.load_ebook(ebook_id)
 
     # setup a fixture for expected call params to convert-ebook signal
     expected_params = [
         ((conversion,), {
             'ebook_id': ebook_id,
-            'version_id': version_id,
+            'version_id': ebook_data['versions'][0]['version_id'],
             'original_filename': 'egg.pub',
             'dest_fmt': 'egg'
         }),
         ((conversion,), {
             'ebook_id': ebook_id,
-            'version_id': version_id,
+            'version_id': ebook_data['versions'][0]['version_id'],
             'original_filename': 'egg.pub',
             'dest_fmt': 'mobi'
         }),
@@ -43,23 +39,22 @@ def test_search(flask_app, datastore, user, rethinkdb, conversion, mock_utils_ma
     assert flask_app.signals['convert-ebook'].send.call_args_list == expected_params
 
 
-def test_convert(flask_app, datastore, user, rethinkdb, conversion, mock_connect_s3, mock_subprocess_popen,
+def test_convert(flask_app, datastore, user, rethinkdb, conversion,
+                 ebook_fixture_azw3, mock_connect_s3, mock_subprocess_popen,
                  mock_subprocess_check_call, mock_shutil_move, mock_utils_make_tempdir):
-    ebook_id = 'bcddb798'
     converted_file_hash = 'eggsbacon'
-    target_convert_format = 'azw3'
+    target_convert_format = 'mobi'
 
-    # create test ebook data directly in rethinkdb
-    rethinkdb.table('ebooks').insert({
-        'author': 'H. C. Andersen',
-        'title': "Andersen's Fairy Tales",
-        'ebook_id': ebook_id
-    }).run()
-    version_id = datastore._create_new_version(ebook_id, user, '38b3fc3a', 'epub', 1234, False)
-    datastore.set_uploaded('38b3fc3a', user, filename='egg.pub')
+    # create test ebook data
+    ebook_id = datastore._create_new_ebook(
+        "Andersen's Fairy Tales", 'H. C. Andersen', user, ebook_fixture_azw3
+    )
+    datastore.set_uploaded(ebook_fixture_azw3['file_hash'], user, filename='egg.pub')
+
+    ebook_data = datastore.load_ebook(ebook_id)
 
     # mock return from Popen().communicate()
-    mock_subprocess_popen.return_value.communicate.return_value = 'AZW3 output written to', ''
+    mock_subprocess_popen.return_value.communicate.return_value = 'MOBI output written to', ''
     # mock subprocess.check_call
     mock_subprocess_check_call.return_value = None
 
@@ -68,7 +63,7 @@ def test_convert(flask_app, datastore, user, rethinkdb, conversion, mock_connect
     conversion._ebook_write_metadata.return_value = converted_file_hash
 
     # NOTE: run the actual conversion code
-    conversion.convert('bcddb798', version_id, 'tests/ebooks/pg11.epub', target_convert_format)
+    conversion.convert(ebook_id, ebook_data['versions'][0]['version_id'], 'tests/ebooks/pg11.epub', target_convert_format)
 
     # assert connect_s3 was called
     mock_connect_s3.call_count == 1
@@ -79,7 +74,7 @@ def test_convert(flask_app, datastore, user, rethinkdb, conversion, mock_connect
     # assert signal store-ebook sent with correct args
     flask_app.signals['store-ebook'].send.assert_called_once_with(
         conversion,
-        ebook_id='bcddb798',
+        ebook_id=ebook_id,
         filename=os.path.join(
             flask_app.config['UPLOADED_EBOOKS_DEST'],
             '{}.{}'.format(converted_file_hash, target_convert_format)

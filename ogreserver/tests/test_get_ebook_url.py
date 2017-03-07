@@ -6,77 +6,58 @@ from ogreserver.exceptions import NoFormatAvailableError
 import pytest
 
 
-def test_get_best_ebook_filehash_specific_format(datastore, user, rethinkdb):
-    # create test ebook data directly in rethinkdb
-    rethinkdb.table('ebooks').insert({
-        'author': 'H. C. Andersen',
-        'title': "Andersen's Fairy Tales",
-        'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
-    }).run()
-
-    # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, '38b3fc3a', 'epub', 1234, False)
+def test_get_best_ebook_filehash_specific_format(datastore, user, rethinkdb, ebook_fixture_azw3):
+    # create test ebook data
+    ebook_id = datastore._create_new_ebook(
+        "Andersen's Fairy Tales", 'H. C. Andersen', user, ebook_fixture_azw3
+    )
+    ebook_data = datastore.load_ebook(ebook_id)
 
     # mark single format as uploaded
-    rethinkdb.table('formats').get('38b3fc3a').update({'uploaded': True}).run()
+    datastore.set_uploaded(ebook_fixture_azw3['file_hash'], user, filename='egg.azw3')
 
     file_hash = datastore._get_best_ebook_filehash(
-        'bcddb7988cf91f7025dd778ca49ecf9f',
-        version_id=version_id,
-        fmt='epub'
+        ebook_id, version_id=ebook_data['versions'][0]['version_id'], fmt='azw3'
     )
 
     # assert filehash is from the first version in rethinkdb
-    assert file_hash == '38b3fc3a'
+    assert file_hash == ebook_fixture_azw3['file_hash']
 
 
-def test_get_best_ebook_filehash_none_uploaded(datastore, user, rethinkdb):
-    # create test ebook data directly in rethinkdb
-    rethinkdb.table('ebooks').insert({
-        'author': 'H. C. Andersen',
-        'title': "Andersen's Fairy Tales",
-        'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
-    }).run()
-
-    # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, '38b3fc3a', 'epub', 1234, False)
+def test_get_best_ebook_filehash_none_uploaded(datastore, user, rethinkdb, ebook_fixture_azw3):
+    # create test ebook data
+    ebook_id = datastore._create_new_ebook(
+        "Andersen's Fairy Tales", 'H. C. Andersen', user, ebook_fixture_azw3
+    )
+    ebook_data = datastore.load_ebook(ebook_id)
 
     # assert exception since no formats are marked as 'uploaded'
     with pytest.raises(NoFormatAvailableError):
         datastore._get_best_ebook_filehash(
-            'bcddb7988cf91f7025dd778ca49ecf9f',
-            version_id=version_id,
-            fmt='epub'
+            ebook_id, version_id=ebook_data['versions'][0]['version_id'], fmt='azw3'
         )
 
 
-def test_get_best_ebook_filehash_user_preferred_format(datastore, user, rethinkdb):
-    # create test ebook data directly in rethinkdb
-    rethinkdb.table('ebooks').insert({
-        'author': 'H. C. Andersen',
-        'title': "Andersen's Fairy Tales",
-        'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
-    }).run()
-
-    # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, '38b3fc3a', 'epub', 1234, False)
+def test_get_best_ebook_filehash_user_preferred_format(datastore, user, rethinkdb, ebook_fixture_azw3):
+    # create test ebook data
+    ebook_id = datastore._create_new_ebook(
+        "Andersen's Fairy Tales", 'H. C. Andersen', user, ebook_fixture_azw3
+    )
+    ebook_data = datastore.load_ebook(ebook_id)
 
     # mark first format as uploaded
-    rethinkdb.table('formats').get('38b3fc3a').update({'uploaded': True}).run()
+    datastore.set_uploaded(ebook_fixture_azw3['file_hash'], user, filename='egg.azw3')
 
     # create another format against the single version
-    rethinkdb.table('formats').insert({
-        'file_hash': 'f7025dd7',
-        'version_id': version_id,
-        'format': 'mobi',
-        'user': user.username,
-        'uploaded': True,
-    }).run()
+    datastore._create_new_format(ebook_data['versions'][0]['version_id'], 'f7025dd7', 'mobi', user=user)
+
+    # mark first format as uploaded
+    datastore.set_uploaded('f7025dd7', user, filename='egg.mobi')
 
     # test user.preferred_ebook_format == 'mobi'
     file_hash = datastore._get_best_ebook_filehash(
-        'bcddb7988cf91f7025dd778ca49ecf9f',
-        version_id=version_id,
+        ebook_id,
+        version_id=ebook_data['versions'][0]['version_id'],
         user=user
     )
 
@@ -84,63 +65,49 @@ def test_get_best_ebook_filehash_user_preferred_format(datastore, user, rethinkd
     assert file_hash == 'f7025dd7'
 
 
-def test_get_best_ebook_filehash_OGRE_preferred_format(datastore, user, rethinkdb):
-    # create test ebook data directly in rethinkdb
-    rethinkdb.table('ebooks').insert({
-        'author': 'H. C. Andersen',
-        'title': "Andersen's Fairy Tales",
-        'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
-    }).run()
-
-    # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, '38b3fc3a', 'egg', 1234, False)
+def test_get_best_ebook_filehash_OGRE_preferred_format(datastore, user, rethinkdb, ebook_fixture_azw3):
+    # create test ebook data
+    ebook_id = datastore._create_new_ebook(
+        "Andersen's Fairy Tales", 'H. C. Andersen', user, ebook_fixture_azw3
+    )
+    ebook_data = datastore.load_ebook(ebook_id)
 
     # mark first format as uploaded
-    rethinkdb.table('formats').get('38b3fc3a').update({'uploaded': True}).run()
+    datastore.set_uploaded(ebook_fixture_azw3['file_hash'], user, filename='egg.azw3')
 
     # create another format against the single version
-    rethinkdb.table('formats').insert({
-        'file_hash': 'f7025dd7',
-        'version_id': version_id,
-        'format': 'mobi',
-        'user': user.username,
-        'uploaded': True,
-    }).run()
+    datastore._create_new_format(ebook_data['versions'][0]['version_id'], 'f7025dd7', 'mobi', user=user)
+
+    # mark first format as uploaded
+    datastore.set_uploaded('f7025dd7', user, filename='egg.mobi')
 
     # test OGRE's EBOOK_FORMATS config supplies 'egg' top
     file_hash = datastore._get_best_ebook_filehash(
-        'bcddb7988cf91f7025dd778ca49ecf9f',
-        version_id=version_id
+        ebook_id,
+        version_id=ebook_data['versions'][0]['version_id'],
     )
 
     # assert filehash is from the first version in rethinkdb
-    assert file_hash == '38b3fc3a'
+    assert file_hash == 'f7025dd7'
 
 
-def test_get_best_ebook_filehash_uploaded(datastore, user, rethinkdb):
-    # create test ebook data directly in rethinkdb
-    rethinkdb.table('ebooks').insert({
-        'author': 'H. C. Andersen',
-        'title': "Andersen's Fairy Tales",
-        'ebook_id': 'bcddb7988cf91f7025dd778ca49ecf9f'
-    }).run()
-
-    # use the datastore API to create version/format
-    version_id = datastore._create_new_version('bcddb7988cf91f7025dd778ca49ecf9f', user, '38b3fc3a', 'egg', 1234, False)
+def test_get_best_ebook_filehash_uploaded(datastore, user, rethinkdb, ebook_fixture_azw3):
+    # create test ebook data
+    ebook_id = datastore._create_new_ebook(
+        "Andersen's Fairy Tales", 'H. C. Andersen', user, ebook_fixture_azw3
+    )
+    ebook_data = datastore.load_ebook(ebook_id)
 
     # create another format against the single version
-    rethinkdb.table('formats').insert({
-        'file_hash': 'f7025dd7',
-        'version_id': version_id,
-        'format': 'egg',
-        'user': user.username,
-        'uploaded': True,
-    }).run()
+    datastore._create_new_format(ebook_data['versions'][0]['version_id'], 'f7025dd7', 'egg', user=user)
+
+    # mark first format as uploaded
+    datastore.set_uploaded('f7025dd7', user, filename='egg.egg')
 
     # test get file_hash for format where uploaded is True
     file_hash = datastore._get_best_ebook_filehash(
-        'bcddb7988cf91f7025dd778ca49ecf9f',
-        version_id=version_id
+        ebook_id,
+        version_id=ebook_data['versions'][0]['version_id']
     )
 
     # assert filehash is from the first version in rethinkdb

@@ -119,9 +119,9 @@ def test_create_new_ebook(datastore, rethinkdb, user, flask_app, ebook_fixture_a
     assert ebook['versions'][0]['original_filehash'] == ebook['versions'][0]['formats'][0]['file_hash']
 
 
-def test_update_ebook(datastore, rethinkdb, user, ebook_fixture_azw3):
+def test_append_ebook_metadata(datastore, rethinkdb, user, flask_app, ebook_fixture_azw3):
     '''
-    Test conversion of datetime objects into rql objects
+    Test merging metadata dicts into ebook object
     '''
     # create test ebook data
     ebook_id = datastore._create_new_ebook(
@@ -129,19 +129,16 @@ def test_update_ebook(datastore, rethinkdb, user, ebook_fixture_azw3):
     )
 
     # create fixture for update
-    data = {
-        'author': 'eggsbacon',
-        'meta': {
-            'asin': 'eggsbacon',
-            'amazon': {
-                'publication_date': datetime.date(2014, 7, 15)
-            }
+    metadata = {
+        'amazon': {
+            'publication_date': datetime.date(2014, 7, 15)
         }
     }
-    datastore.update_ebook(ebook_id, data)
+    datastore.append_ebook_metadata(ebook_id, metadata)
 
-    # retrieve ebook from rethinkdb and assert update
+    # retrieve ebook from DB and assert update
     ebook = datastore.load_ebook(ebook_id)
-    assert ebook['author'] == 'eggsbacon'
-    assert ebook['meta']['asin'] == 'eggsbacon'
     assert type(ebook['meta']['amazon']['publication_date']) is datetime.datetime
+
+    # ensure updated signal called
+    assert flask_app.signals['ebook-updated'].send.call_count == 1

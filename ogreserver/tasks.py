@@ -122,7 +122,8 @@ def query_ebook_metadata(ebook_data):
         try:
             # update the datastore
             ds = DataStore(app.config, app.logger)
-            ds.update_ebook(ebook_data['ebook_id'], ebook_data)
+            ds.append_ebook_metadata(ebook_data['ebook_id'], ebook_data)
+
         except RethinkdbError:
             app.logger.critical(
                 'Failed updating ebook metadata: {}'.format(ebook_data['ebook_id'])

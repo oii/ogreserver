@@ -343,14 +343,14 @@ class DataStore():
         ]
 
 
-    def update_ebook(self, ebook_id, data):
+    def append_ebook_metadata(self, ebook_id, metadata):
         """
-        Update a part of an ebook record
+        Append new metadata into an ebook object
         """
         # convert datetime objects for rethinkdb
-        date_to_rqltzinfo(data)
+        date_to_rqltzinfo(metadata)
 
-        ret = r.table('ebooks').get(ebook_id).update(data).run()
+        ret = r.table('ebooks').get(ebook_id).update({'meta': metadata}).run()
         if 'first_error' in ret:
             raise RethinkdbError(ret['first_error'])
 

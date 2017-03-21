@@ -245,7 +245,7 @@ class DataStore():
             'comments': [],
             'publisher': incoming['meta']['publisher'] if 'publisher' in incoming['meta'] else None,
             'publish_date': publish_date,
-            'is_fiction': self.is_fiction(incoming['format']),
+            'is_non_fiction': self.is_non_fiction(incoming['format']),
             'is_curated': _init_curated(incoming['meta']['source']),
             'meta': {
                 'isbn': incoming['meta']['isbn'] if 'isbn' in incoming['meta'] else None,
@@ -329,7 +329,7 @@ class DataStore():
             'owners': [user.username if user is not None else 'ogrebot'],
             'uploaded_by': None,
             'uploaded': False,
-            'is_fiction': self.is_fiction(fmt),
+            'is_non_fiction': self.is_non_fiction(fmt),
             'ogreid_tagged': ogreid_tagged,
             'dedrm': dedrm,
         }).run()
@@ -337,9 +337,9 @@ class DataStore():
             raise RethinkdbError(ret['first_error'])
 
 
-    def is_fiction(self, fmt):
+    def is_non_fiction(self, fmt):
         return fmt in [
-            k for k,v in self.config['EBOOK_DEFINITIONS'].iteritems() if v.is_non_fiction is False
+            k for k,v in self.config['EBOOK_DEFINITIONS'].iteritems() if v.is_non_fiction is True
         ]
 
 
@@ -439,7 +439,7 @@ class DataStore():
                 ...
             ]
         """
-        q = r.table('formats').filter({'is_fiction': True}).filter(
+        q = r.table('formats').filter({'is_non_fiction': False}).filter(
             lambda row: r.table('formats').filter(
                 {'format': fmt}
             )['version_id'].contains(

@@ -4,18 +4,14 @@ from __future__ import unicode_literals
 from flask_security import UserMixin, RoleMixin
 from flask_security import utils as security_utils
 
-import rethinkdb as r
-
 from sqlalchemy import Table, Column, Integer, String, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.sql import func
 
+from .ebook import Format, SyncEvent
 from .reputation import Reputation, UserBadge
+from ..extensions.database import Base
 
 from flask import g
-from flask import current_app as app
-
-from ..extensions.database import Base
 
 
 roles_users = Table(
@@ -26,13 +22,20 @@ roles_users = Table(
 
 class Role(Base, RoleMixin):
     __tablename__ = 'role'
+
     id = Column(Integer, primary_key=True)
     name = Column(String(80), unique=True)
     description = Column(String(100))
 
 
+class classproperty(property):
+    def __get__(self, cls, owner):
+        return classmethod(self.fget).__get__(None, owner)()
+
+
 class User(Base, UserMixin):
     __tablename__ = 'user'
+
     id = Column(Integer, primary_key=True)
     username = Column(String(80), unique=True)
     password = Column(String(256))
@@ -56,6 +59,7 @@ class User(Base, UserMixin):
     login_count = Column(Integer)
 
     total_users = None
+    _ogrebot = None
 
     def __init__(self, username, password, email, active, roles):
         self.username = username
@@ -75,22 +79,21 @@ class User(Base, UserMixin):
         return Reputation.has_badge(self, badge)
 
     def get_stats(self):
-        conn = r.connect("localhost", 28015, db=app.config['RETHINKDB_DATABASE'])
-
         # get the number of times user has sync'd
-        total_syncs = r.table('sync_events').get_all(
-            self.username, index='username'
-        ).count().run(conn)
+        total_syncs = SyncEvent.query.distinct(SyncEvent.user_id).count()
 
         # total uploads
-        total_uploads = r.table('formats').get_all(
-            self.username, index='uploaded_by'
-        ).count().run(conn)
+        total_uploads = Format.query.filter(
+            Format.uploader == self,
+            Format.uploaded == True
+        ).count()
 
         # number of DRM cleaned books
-        total_dedrm = r.table('formats').get_all(
-            [self.username, True], index='uploadedby_dedrm'
-        ).count().run(conn)
+        total_dedrm = Format.query.filter(
+            Format.uploader == self,
+            Format.uploaded == True,
+            Format.dedrm == True
+        ).count()
 
         return {
             'total_syncs': total_syncs,
@@ -104,9 +107,17 @@ class User(Base, UserMixin):
         Return the total number of registered users
         """
         if User.total_users is None:
-            q = g.db_session.query(func.count(User.id))
-            User.total_users = g.db_session.execute(q).scalar()
+            User.total_users = User.query.distinct().count()
         return User.total_users
+
+    @classproperty
+    def ogrebot(cls):
+        """
+        Return the OGRE internal user
+        """
+        if cls._ogrebot is None:
+            cls._ogrebot = User.query.filter_by(username='ogrebot').first()
+        return cls._ogrebot
 
     def __str__(self):
         return "<User: %s, %s>" % (self.id, self.username)

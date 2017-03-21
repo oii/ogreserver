@@ -1,13 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import rethinkdb as r
-
 from sqlalchemy import Column, Integer, Boolean, ForeignKey
 
 from flask import g
 from flask import current_app as app
 
+from .ebook import SyncEvent
 from ..extensions.database import Base
 
 
@@ -45,7 +44,7 @@ class Reputation():
         """
         Check if a user has earned any badges on this sync
         """
-        conn = r.connect("localhost", 28015, db=app.config['RETHINKDB_DATABASE'])
+        stats = None
 
         if not self.user.has_badge(Badges.Beta_Tester):
             # everyone who uses the app during beta phase gets this badge
@@ -58,33 +57,31 @@ class Reputation():
 
         if not self.user.has_badge(Badges.Keener):
             # user ran a sync 10 times with nothing new to report
-            count = r.table('sync_events').get_all(
-                [self.user.username, 0], index='user_new_books_count'
-            ).count().run(conn)
+            count = SyncEvent.query.distinct(
+                SyncEvent.user_id, SyncEvent.syncd_books_count
+            ).count()
 
             if count >= 10:
                 self.award(Badges.Keener)
 
         if not self.user.has_badge(Badges.Librarian):
-            # award badges based on how many books a user has uploaded
-            count = r.table('formats').get_all(
-                self.user.username, index='uploaded_by'
-            ).count().run(conn)
+            # award badges for volume uploads
+            if not stats:
+                stats = self.user.get_stats()
 
-            if count >= 200:
+            if stats['total_uploads'] >= 200:
                 self.award(Badges.Librarian)
-            elif count >= 100:
+            elif stats['total_uploads'] >= 100:
                 self.award(Badges.Scholar)
-            elif count >= 20:
+            elif stats['total_uploads'] >= 20:
                 self.award(Badges.Contributor)
 
         if not self.user.has_badge(Badges.Pirate):
             # award badge for decrypted ebooks
-            count = r.table('formats').get_all(
-                [self.user.username, True], index='uploadedby_dedrm'
-            ).count().run(conn)
+            if not stats:
+                stats = self.user.get_stats()
 
-            if count > 0:
+            elif stats['total_dedrm'] > 0:
                 self.award(Badges.Pirate)
 
 
@@ -108,6 +105,7 @@ class Reputation():
 
 class UserBadge(Base):
     __tablename__ = 'user_badge'
+
     user_id = Column(Integer, ForeignKey('user.id'), primary_key=True)
     badge = Column(Integer, primary_key=True, autoincrement=False)
     been_alerted = Column(Boolean, default=False)

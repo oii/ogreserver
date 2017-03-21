@@ -16,9 +16,9 @@ def when_convert_ebook(sender, ebook_id, version_id, original_filename, dest_fmt
     app.logger.debug('SIGNAL when_convert_ebook')
     convert.delay(ebook_id, version_id, original_filename, dest_fmt)
 
-def when_ebook_created(sender, ebook_data):
+def when_ebook_created(sender, ebook_id):
     app.logger.debug('SIGNAL when_ebook_created')
-    query_ebook_metadata.delay(ebook_data)
+    query_ebook_metadata.delay(ebook_id)
 
 def when_ebook_updated(sender, ebook_id):
     app.logger.debug('SIGNAL when_ebook_updated')

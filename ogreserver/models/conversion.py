@@ -24,35 +24,28 @@ class Conversion:
         Search for ebooks which are missing the key formats epub & mobi
         """
         for dest_fmt in self.config['EBOOK_FORMATS']:
-            # load all ebook format entries which need converting to dest_fmt
-            formats = self.datastore.find_missing_formats(dest_fmt, limit=None)
+            # load all Versions which are missing format dest_fmt
+            versions = self.datastore.find_missing_formats(dest_fmt, limit=None)
 
-            for f in formats:
-                # ebook_id & original format are same for all formats
-                ebook_id = formats[0]['ebook_id']
-                original_format = formats[0]['original_format']
-
-                # find the originally uploaded ebook
-                original_format = next((f for f in formats if original_format == f['format']), None)
-
+            for version in versions:
                 # ensure source ebook has been uploaded
-                if original_format['uploaded'] is True:
-                    # convert source format to required formats
+                if version.source_format.uploaded is True:
+                    # convert source to dest_fmt
                     app.signals['convert-ebook'].send(
                         self,
-                        ebook_id=ebook_id,
-                        version_id=f['version_id'],
-                        original_filename=original_format['s3_filename'],
+                        ebook_id=version.ebook_id,
+                        version_id=version.id,
+                        original_filename=version.source_format.s3_filename,
                         dest_fmt=dest_fmt
                     )
 
 
-    def convert(self, ebook_id, version_id, original_filename, dest_fmt):
+    def convert(self, ebook_id, version, original_filename, dest_fmt):
         """
         Convert an ebook to both mobi & epub based on which is missing
 
         ebook_id (str):             Ebook's PK
-        version_id (str):           PK of this version
+        version (Version obj):
         original_filename (str):    Filename on S3 of source book uploaded to OGRE
         dest_fmt (str):             Target format to convert to
         """
@@ -61,7 +54,7 @@ class Conversion:
             temp_filepath = os.path.join(temp_dir, '{}.{}'.format(id_generator(), dest_fmt))
 
             # download the original book from S3
-            s3 = connect_s3(self.datastore.config)
+            s3 = connect_s3(self.config)
             bucket = s3.get_bucket(self.config['EBOOK_S3_BUCKET'].format(app.config['env']))
             k = bucket.get_key(original_filename)
             if k is None:
@@ -97,8 +90,8 @@ class Conversion:
             except subprocess.CalledProcessError as e:
                 raise ConversionFailedError(inner_excp=e)
 
-        # add newly created format to datastore
-        self.datastore._create_new_format(version_id, file_hash, dest_fmt)
+        # add newly created format to store
+        self.datastore.create_format(version, file_hash, dest_fmt)
 
         # signal celery to store on S3
         app.signals['store-ebook'].send(
@@ -144,10 +137,10 @@ class Conversion:
     def _write_metadata_tags(ebook, temp_file_path):
         # append ogre's ebook_id to the ebook's comma-separated tags field
         # as Amazon formats don't support identifiers in metadata
-        if ebook['meta']['raw_tags'] is not None and len(ebook['meta']['raw_tags']) > 0:
-            new_tags = 'ogre_id={}, {}'.format(ebook['ebook_id'], ebook['meta']['raw_tags'])
+        if ebook.raw_tags is not None and len(ebook.raw_tags) > 0:
+            new_tags = 'ogre_id={}, {}'.format(ebook.id, ebook.raw_tags)
         else:
-            new_tags = 'ogre_id={}'.format(ebook['ebook_id'])
+            new_tags = 'ogre_id={}'.format(ebook.id)
 
         # write ogre_id to --tags
         subprocess.check_output(
@@ -160,7 +153,7 @@ class Conversion:
     def _write_metadata_identifier(ebook, temp_file_path):
         # write ogre_id to identifier metadata
         subprocess.check_output(
-            '/usr/bin/ebook-meta {} --identifier ogre_id:{}'.format(temp_file_path, ebook['ebook_id']),
+            '/usr/bin/ebook-meta {} --identifier ogre_id:{}'.format(temp_file_path, ebook.id),
             stderr=subprocess.STDOUT,
             shell=True
         )

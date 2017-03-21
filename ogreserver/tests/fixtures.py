@@ -36,3 +36,21 @@ EBOOK_FIXTURE_2 = {
     },
     'size': 973355
 }
+
+EBOOK_FIXTURE_3 = {
+    'dedrm': False,
+    'format': 'epub',
+    'file_hash': '5c253944f52d9bf3114611687a372eb0',
+    'meta': {
+        'publisher': 'Bantam',
+        'isbn': '86739271908',
+        'firstname': 'Issac',
+        'tags': '',
+        'lastname': 'Asimov',
+        'title': 'Foundation',
+        'source': 'Unknown',
+        'publish_date': '2016-07-08T13:30:00+00:00',
+        'asin': 'B00KF5AAAZ'
+    },
+    'size': 746218
+}

@@ -16,7 +16,7 @@ def test_login_ok(flask_app, user):
     )
     assert result.status_code == 200
     assert json.loads(result.data)['meta']['code'] == 200
-    assert json.loads(result.data)['response']['user']['id'] == '1'
+    assert json.loads(result.data)['response']['user']['id'] == '2'
     assert 'authentication_token' in json.loads(result.data)['response']['user']
 
 

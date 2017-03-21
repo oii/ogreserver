@@ -8,7 +8,6 @@ include:
   - postgres
   - nodejs
   - redis
-  - rethinkdb
 
 
 extend:
@@ -147,4 +146,3 @@ ogre-init:
       - virtualenv: app-virtualenv
       - file: flask-config
       - postgres_privileges: create-postgres-privileges
-      - pip: rethinkdb-python-driver

@@ -143,6 +143,11 @@ def ebook_fixture_pdf():
 
 
 @pytest.fixture(scope='function')
+def ebook_fixture_epub():
+    return copy.deepcopy(fixtures.EBOOK_FIXTURE_3)
+
+
+@pytest.fixture(scope='function')
 def ebook_sync_fixture_1(ebook_fixture_azw3):
     return {
         "H. C.\u0006Andersen\u0007Andersen's Fairy Tales": ebook_fixture_azw3

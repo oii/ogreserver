@@ -1,35 +1,33 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import datetime
+import decimal
 import hashlib
 import re
-
-import rethinkdb as r
-from rethinkdb.errors import RqlRuntimeError
+import uuid
 
 from boto.exception import S3ResponseError
 
 import dateutil.parser
 import ftfy
 
-from flask import current_app as app
+from flask import current_app as app, g
+from sqlalchemy.orm import contains_eager
 
+from .ebook import Ebook, Version, Format, SyncEvent
 from .user import User
-from ..utils.db import date_to_rqltzinfo
 from ..utils.s3 import connect_s3
 
-from ..exceptions import OgreException, BadMetaDataError, S3DatastoreError, RethinkdbError, \
-        NoFormatAvailableError, SameHashSuppliedOnUpdateError, DuplicateBaseError, FileHashDuplicateError, \
-        AuthortitleDuplicateError, AsinDuplicateError
+from ..exceptions import OgreException, BadMetaDataError, S3DatastoreError, \
+        NoFormatAvailableError, SameHashSuppliedOnUpdateError, DuplicateBaseError, \
+        FileHashDuplicateError, AuthortitleDuplicateError, AsinDuplicateError, IsbnDuplicateError
 
 
 class DataStore():
     def __init__(self, config, logger):
         self.config = config
         self.logger = logger
-
-        # connect rethinkdb and make default connection
-        r.connect(db=self.config['RETHINKDB_DATABASE']).repl()
 
 
     def update_library(self, ebooks, user):
@@ -67,78 +65,55 @@ class DataStore():
                     output[incoming['file_hash']]['update'] = True
 
                 # check if this exact file has been uploaded before
-                if r.table('formats').get(incoming['file_hash']).run():
-                    if existing_ebook is not None:
-                        raise FileHashDuplicateError(existing_ebook['ebook_id'], incoming['file_hash'])
-                    else:
-                        ebook = self.load_ebook_by_file_hash(incoming['file_hash'])
-                        raise FileHashDuplicateError(ebook['ebook_id'], incoming['file_hash'])
+                identical_ebook = self.load_ebook_by_file_hash(incoming['file_hash'])
+                if identical_ebook:
+                    raise FileHashDuplicateError(identical_ebook.id, incoming['file_hash'])
 
                 else:
                     # check if original source ebook was uploaded with this hash
-                    original_ebook = next(
-                        r.table('versions').get_all(
-                            incoming['file_hash'], index='original_filehash'
-                        ).eq_join(
-                            'version_id', r.table('formats'), index='version_id'
-                        ).zip().run(), None
-                    )
+                    original_ebook = self.load_ebook_by_original_file_hash(incoming['file_hash'])
 
                     if original_ebook is not None:
                         raise FileHashDuplicateError(
-                            original_ebook['ebook_id'],
-                            original_ebook['file_hash']
+                            original_ebook.id,
+                            original_ebook.versions[0].source_format.file_hash
                         )
 
-                if existing_ebook is None:
-                    # check for ASIN duplicates
-                    # the assumption is that ASIN dupes are the same book from the Amazon store
-                    # they will ALWAYS have different file_hashes due to decryption of every file
-                    if 'asin' in incoming['meta']:
-                        existing_ebook = next(r.table('ebooks').get_all(incoming['meta']['asin'], index='asin').run(), None)
-                        if existing_ebook is not None:
-                            raise AsinDuplicateError(existing_ebook['ebook_id'])
-
-                    # check for ISBN duplicates
-                    # these are treated as new versions of an existing ebook
-                    if 'isbn' in incoming['meta']:
-                        existing_ebook = next(r.table('ebooks').get_all(incoming['meta']['isbn'], index='isbn').run(), None)
-
                 if not existing_ebook:
+                    # check for ASIN & ISBN duplicates
+                    # the assumption is that ASIN dupes are the same book from the Amazon store
+                    if 'asin' in incoming['meta']:
+                        existing_ebook = self.load_ebook_by_asin(incoming['meta']['asin'])
+                        if existing_ebook:
+                            raise AsinDuplicateError(existing_ebook.id)
+
+                    if 'isbn' in incoming['meta']:
+                        existing_ebook = self.load_ebook_by_isbn(incoming['meta']['isbn'])
+                        if existing_ebook:
+                            raise IsbnDuplicateError(existing_ebook.id)
+
                     # check for author/title duplicates
-                    existing_ebook = next(
-                        r.table('ebooks').get_all(
-                            [author.lower(), title.lower()],
-                            index='authortitle'
-                        ).run(), None
-                    )
+                    existing_ebook = self.load_ebook_by_authortitle(author, title)
 
                     if existing_ebook:
                         # duplicate authortitle found
                         # must be a new version of the book else it would have been matched above
                         # don't accept new version of book from user who has already syncd it before
-                        duplicate = next(
-                            r.table('versions').get_all(
-                                [existing_ebook['ebook_id'], user.username],
-                                index='ebook_username'
-                            ).run(), None
-                        )
-
-                        if duplicate:
-                            raise AuthortitleDuplicateError(existing_ebook['ebook_id'], incoming['file_hash'])
+                        if existing_ebook.original_version.uploader is user:
+                            raise AuthortitleDuplicateError(existing_ebook.id, incoming['file_hash'])
 
                     else:
                         # new books are easy
-                        ebook_id = self._create_new_ebook(title, author, user, incoming)
+                        ebook = self.create_ebook(title, author, user, incoming)
 
                         # mark book as new
-                        output[incoming['file_hash']]['ebook_id'] = ebook_id
+                        output[incoming['file_hash']]['ebook_id'] = ebook.id
                         output[incoming['file_hash']]['new'] = True
                         continue
 
                 # create new version, with its initial format
-                self._create_new_version(
-                    existing_ebook['ebook_id'],
+                self.create_version(
+                    existing_ebook,
                     user,
                     incoming['file_hash'],
                     incoming['format'],
@@ -147,12 +122,12 @@ class DataStore():
                 )
 
                 # mark with ebook_id and continue
-                output[incoming['file_hash']]['ebook_id'] = existing_ebook['ebook_id']
+                output[incoming['file_hash']]['ebook_id'] = existing_ebook.id
 
 
             except DuplicateBaseError as e:
                 if e.file_hash:
-                    # increase popularity on incoming duplicate ebook
+                    # increase popularity of existing duplicate ebook
                     self.increment_popularity(e.file_hash)
 
                     # add the current user as an owner of this file
@@ -213,7 +188,7 @@ class DataStore():
         return unicode(hashlib.md5(("~".join((author, title))).encode('utf8')).hexdigest())
 
 
-    def _create_new_ebook(self, title, author, user, incoming):
+    def create_ebook(self, title, author, user, incoming):
         ebook_id = DataStore._generate_ebook_id(author, title)
 
         publish_date = None
@@ -222,50 +197,35 @@ class DataStore():
         if 'publish_date' in incoming['meta']:
             publish_date = dateutil.parser.parse(incoming['meta']['publish_date'])
 
-            # handle year >= 1400 for RethinkDB (only comes up on bad dates)
-            if publish_date.year < 1400:
-                publish_date = None
-            else:
-                date_to_rqltzinfo(publish_date)
-
         def _init_curated(provider):
             if provider == 'Amazon Kindle':
-                return 1
+                return True
             elif provider == 'Adobe Digital Editions':
-                return 1
+                return True
             else:
-                return 0
+                return False
 
         # create this as a new book
         new_book = {
-            'ebook_id': ebook_id,
+            'id': ebook_id,
             'title': title,
             'author': author,
-            'rating': None,
-            'comments': [],
             'publisher': incoming['meta']['publisher'] if 'publisher' in incoming['meta'] else None,
             'publish_date': publish_date,
             'is_non_fiction': self.is_non_fiction(incoming['format']),
             'is_curated': _init_curated(incoming['meta']['source']),
-            'meta': {
-                'isbn': incoming['meta']['isbn'] if 'isbn' in incoming['meta'] else None,
-                'asin': incoming['meta']['asin'] if 'asin' in incoming['meta'] else None,
-                'uri': incoming['meta']['uri'] if 'uri' in incoming['meta'] else None,
-                'raw_tags': incoming['meta']['tags'] if 'tags' in incoming['meta'] else None,
-                'source': {
-                    'provider': incoming['meta']['source'],
-                    'title': title,
-                    'author': author
-                }
-            },
+            'isbn': incoming['meta']['isbn'] if 'isbn' in incoming['meta'] else None,
+            'asin': incoming['meta']['asin'] if 'asin' in incoming['meta'] else None,
+            'uri': incoming['meta']['uri'] if 'uri' in incoming['meta'] else None,
+            'raw_tags': incoming['meta']['tags'] if 'tags' in incoming['meta'] else None,
+            'source_provider': incoming['meta']['source'],
+            'source_title': title,
+            'source_author': author
         }
-        ret = r.table('ebooks').insert(new_book).run()
-        if 'first_error' in ret:
-            raise RethinkdbError(ret['first_error'])
+        ebook = Ebook(**new_book)
 
-        # create version and initial format
-        self._create_new_version(
-            ebook_id,
+        version = self.create_version(
+            ebook,
             user,
             incoming['file_hash'],
             incoming['format'],
@@ -273,69 +233,15 @@ class DataStore():
             incoming['dedrm'],
         )
 
-        # signal new ebook created (when running in flask context)
-        app.signals['ebook-created'].send(self, ebook_data=new_book)
-        return ebook_id
+        # store first version uploaded (separately to avoid SA circular dependency)
+        ebook.original_version = version
+        g.db_session.add(ebook)
+        g.db_session.commit()
 
+        # TODO signal new ebook created (when running in flask context)
+        app.signals['ebook-created'].send(ebook, ebook_id=ebook_id)
 
-    def _create_new_version(self, ebook_id, user, file_hash, fmt, size, dedrm):
-        # default higher popularity if book has been decrypted by ogreclient;
-        # due to better guarantee of provenance
-        if dedrm:
-            popularity = 10
-        else:
-            popularity = 1
-
-        # add the first version
-        ret = r.table('versions').insert({
-            'ebook_id': ebook_id,
-            'user': user.username,
-            'size': size,
-            'popularity': popularity,
-            'quality': 1,
-            'ranking': DataStore.versions_rank_algorithm(1, popularity),
-            'original_format': fmt,
-            'date_added': r.now(),
-        }).run()
-        if 'first_error' in ret:
-            raise RethinkdbError(ret['first_error'])
-
-        version_id = ret['generated_keys'][0]
-
-        # create a new format
-        self._create_new_format(
-            version_id,
-            file_hash,
-            fmt,
-            user=user,
-            dedrm=dedrm,
-        )
-
-        # record the file_hash of the originally supplied ebook
-        ret = r.table('versions').get(version_id).update({
-            'original_filehash': file_hash
-        }).run()
-        if 'first_error' in ret:
-            raise RethinkdbError(ret['first_error'])
-
-        return version_id
-
-
-    def _create_new_format(self, version_id, file_hash, fmt, user=None, dedrm=None, ogreid_tagged=False):
-        ret = r.table('formats').insert({
-            'file_hash': file_hash,
-            'version_id': version_id,
-            'format': fmt,
-            'owners': [user.username if user is not None else 'ogrebot'],
-            'uploaded_by': None,
-            'uploaded': False,
-            'is_non_fiction': self.is_non_fiction(fmt),
-            'ogreid_tagged': ogreid_tagged,
-            'dedrm': dedrm,
-        }).run()
-        if 'first_error' in ret:
-            raise RethinkdbError(ret['first_error'])
-
+        return ebook
 
     def is_non_fiction(self, fmt):
         return fmt in [
@@ -343,81 +249,190 @@ class DataStore():
         ]
 
 
-    def append_ebook_metadata(self, ebook_id, metadata):
-        """
-        Append new metadata into an ebook object
-        """
-        # convert datetime objects for rethinkdb
-        date_to_rqltzinfo(metadata)
+    def create_version(self, ebook, user, file_hash, fmt, size, dedrm):
+        # default higher popularity if book has been decrypted by ogreclient;
+        # due to better guarantee of provenance
+        if dedrm:
+            popularity = 10
+        else:
+            popularity = 1
 
-        ret = r.table('ebooks').get(ebook_id).update({'meta': metadata}).run()
-        if 'first_error' in ret:
-            raise RethinkdbError(ret['first_error'])
+        new_version = {
+            'id': str(uuid.uuid4()),
+            'uploader': user,
+            'size': size,
+            'popularity': popularity,
+            'quality': 1,
+            'ranking': DataStore.versions_rank_algorithm(1, popularity),
+            'original_file_hash': file_hash,
+        }
+        version = Version(**new_version)
+        version.ebook = ebook
+
+        # create a new format
+        format = self.create_format(
+            version,
+            file_hash,
+            fmt,
+            user=user,
+            dedrm=dedrm,
+            nocommit=True,
+        )
+
+        # store Version & Format
+        g.db_session.add(version)
+        g.db_session.commit()
+
+        # store FK to source format (separately to avoid SA circular dependency in ORM)
+        version.source_format = format
+        g.db_session.add(version)
+        g.db_session.commit()
+
+        return version
+
+
+    def create_format(self, version, file_hash, fmt, user=None, dedrm=None, ogreid_tagged=False, nocommit=False):
+        new_format = {
+            'file_hash': file_hash,
+            'format': fmt,
+            'uploader': user if user is not None else User.ogrebot,
+            'owners': [user if user is not None else User.ogrebot],
+            'uploaded': False,
+            'ogreid_tagged': ogreid_tagged,
+            'dedrm': dedrm,
+        }
+        format = Format(**new_format)
+        format.version = version
+
+        if not nocommit:
+            g.db_session.add(format)
+            g.db_session.commit()
+
+        return format
+
+
+    def append_ebook_metadata(self, ebook, provider, metadata):
+        """
+        Append new metadata into an ebook from one of our providers
+
+        params:
+            ebook: Ebook obj
+            provider: str (either Amazon or Goodreads)
+            metadata: dict
+        """
+        ebook.provider_metadata = {provider: metadata}
+        g.db_session.add(ebook)
+        g.db_session.commit()
 
         # signal ebook updated
-        app.signals['ebook-updated'].send(self, ebook_id=ebook_id)
+        app.signals['ebook-updated'].send(ebook, ebook_id=ebook.id)
 
 
     def append_owner(self, file_hash, user):
         """
         Append the current user to the list of owners of this particular file
+
+        params:
+            file_hash: str
+            user: User object
         """
-        r.table('formats').get(file_hash).update(
-            {'owners': r.row['owners'].set_insert(user.username)}
-        ).run()
+        format = Format.query.get(file_hash)
+        format.owners.append(user)
+        g.db_session.add(format)
+        g.db_session.commit()
+
+
+    @staticmethod
+    def _load_ebook_query():
+        return Ebook.query.join(
+            Ebook.versions
+        ).join(
+            Version.formats
+        ).options(
+            contains_eager(Ebook.versions, Version.formats)
+        )
 
 
     def load_ebook(self, ebook_id):
-        # query returns dict with ebook->versions->formats nested document
-        # versions are ordered by popularity
-        try:
-            ebook = r.table('ebooks').get(ebook_id).merge(
-                lambda ebook: {
-                    'versions': r.table('versions').get_all(
-                        ebook['ebook_id'], index='ebook_id'
-                    ).order_by(
-                        r.desc('ranking')
-                    ).coerce_to('array').merge(
-                        lambda version: {
-                            'formats': r.table('formats').get_all(
-                                version['version_id'], index='version_id'
-                            ).coerce_to('array')
-                        }
-                    )
-                }
-            ).run()
+        """
+        Load an ebook by id
 
-        except RqlRuntimeError as e:
-            if 'Cannot perform merge on a non-object non-sequence `null`' in str(e):
-                return None
-            else:
-                raise e
+        params:
+            ebook_id: str
+        """
+        query = DataStore._load_ebook_query()
 
-        return ebook
+        return query.filter(Ebook.id == ebook_id).one_or_none()
+
+
+    def load_ebook_by_asin(self, asin):
+        """
+        Load an ebook by the ASIN
+        """
+        return Ebook.query.filter_by(asin=asin).first()
+
+
+    def load_ebook_by_isbn(self, isbn):
+        """
+        Load an ebook by the ISBN
+        """
+        return Ebook.query.filter_by(isbn=isbn).first()
 
 
     def set_curated(self, ebook_id, state):
-        r.table('ebooks').get(ebook_id).update({'curated': state}).run()
+        ebook = Ebook.query.get(ebook_id)
+        ebook.curated = state
+        g.db_session.add(ebook)
+        g.db_session.commit()
 
 
-    def load_ebook_by_file_hash(self, file_hash, match=False):
-        # enable substring filehash searching; like git commit ids
-        if match:
-            filter_func = lambda d: d['file_hash'].match('^{}'.format(file_hash))
+    def load_ebook_by_file_hash(self, file_hash):
+        """
+        Load an ebook object by a Format file_hash PK.
+
+        params:
+            file_hash: str
+        """
+        query = DataStore._load_ebook_query()
+
+        if len(file_hash) < 32:
+            # query LIKE startswith
+            query = query.filter(
+                Format.file_hash.like('{}%'.format(file_hash))
+            )
         else:
-            filter_func = {'file_hash': file_hash}
+            query = query.filter(Format.file_hash == file_hash)
 
-        ebook_id = next(
-            r.table('formats').filter(filter_func).eq_join(
-                'version_id', r.table('versions'), index='version_id'
-            ).zip().pluck(
-                'ebook_id'
-            )['ebook_id'].run(), None
-        )
+        return query.one_or_none()
 
-        if ebook_id is not None:
-            # now return the full ebook object
-            return self.load_ebook(ebook_id)
+
+    def load_ebook_by_original_file_hash(self, file_hash):
+        """
+        When an ebook is first uploaded, before OGRE has modified it at all, the file_hash
+        is recorded. Load an ebook object by this field.
+
+        params:
+            file_hash: str
+        """
+        query = DataStore._load_ebook_query()
+
+        return query.filter(Version.original_file_hash == file_hash).one_or_none()
+
+
+    def load_ebook_by_authortitle(self, author, title):
+        """
+        Load an ebook by the author/title combination
+
+        params:
+            author: str
+            title: str
+        """
+        query = DataStore._load_ebook_query()
+
+        return query.filter(
+            Ebook.author.ilike(author),
+            Ebook.title.ilike(title)
+        ).one_or_none()
 
 
     def find_missing_formats(self, fmt, limit=None):
@@ -426,33 +441,38 @@ class DataStore():
 
         Each ebook should have several formats available for download (defined
         in config['EBOOK_FORMATS']). This method is called nightly by a celery
-        task to ensure all defined formats are available.
+        task to ensure all expected formats are available.
 
         Objects are returned where supplied fmt is missing (ie, needs creating)
 
-        Params:
-            fmt (str)   Required ebook format that might be missing
+        params:
+            fmt (str)   Required ebook format
             limit (int) Limit number of results returned
-        Returns
-            version_id: [
-                {format, original_format, file_hash, ebook_id, s3_filename, uploaded},
-                ...
-            ]
+        return:
+            list of Version objects
         """
-        q = r.table('formats').filter({'is_non_fiction': False}).filter(
-            lambda row: r.table('formats').filter(
-                {'format': fmt}
-            )['version_id'].contains(
-                row['version_id']
-            ).not_()
-        ).eq_join(
-            'version_id', r.table('versions'), index='version_id'
-        ).zip().pluck(
-            'version_id', 'format', 'original_format', 'file_hash', 'ebook_id', 's3_filename', 'uploaded'
+        # select distinct version_id which have supplied format and is fiction
+        query = Format.query.with_entities(
+            Format.version_id
+        ).distinct(
+            Format.version_id
+        ).filter(
+            Format.format == fmt
         )
+
+        # get all Versions missing that format
+        query = Version.query.join(
+            Version.ebook
+        ).filter(
+            Ebook.is_non_fiction == False
+        ).filter(
+            ~Version.id.in_(query.subquery())
+        )
+
         if limit:
-            q = q.limit(limit)
-        return list(q.run())
+            query = query.limit(limit)
+
+        return query.all()
 
 
     @staticmethod
@@ -468,7 +488,8 @@ class DataStore():
         Every download increases a version's popularity
         Every duplicate found on sync increases a version's popularity
         """
-        return (quality * 0.7) + (float(popularity) / User.get_total_users() * 100 * 0.3)
+        return (quality * decimal.Decimal(0.7)) + \
+                (popularity / User.get_total_users() * 100 * decimal.Decimal(0.3))
 
 
     def get_ebook_download_url(self, ebook_id, version_id=None, fmt=None, user=None):
@@ -482,7 +503,7 @@ class DataStore():
         self.increment_popularity(file_hash)
 
         # load the stored s3 filename
-        filename = r.table('formats').get(file_hash)['s3_filename'].run()
+        format = Format.query.get(file_hash)
 
         # create an expiring auto-authenticate url for S3
         s3 = connect_s3(self.config)
@@ -490,7 +511,7 @@ class DataStore():
             self.config['DOWNLOAD_LINK_EXPIRY'],
             'GET',
             bucket=self.config['EBOOK_S3_BUCKET'].format(app.config['env']),
-            key=filename
+            key=format.s3_filename
         )
 
 
@@ -522,24 +543,25 @@ class DataStore():
         # find the appropriate version
         if version_id is None:
             if fmt is None:
-                # select top-ranked version
-                version = ebook['versions'][0]
+                # select top-ranked version (list always ordered by rank)
+                version = ebook.versions[0]
             else:
                 # iterate versions, break on first version which has the format we want
-                for v in ebook['versions']:
-                    for f in v['formats']:
-                        if f['format'] == fmt and f['uploaded'] is True:
+                for v in ebook.versions:
+                    for f in v.formats:
+                        if f.format == fmt and f.uploaded is True:
                             version = v
                             break
+                    break
         else:
-            version = next((v for v in ebook['versions'] if v['version_id'] == version_id), None)
+            version = next((v for v in ebook.versions if v.id == version_id), None)
             if version is None:
                 raise NoFormatAvailableError('No version with id {}'.format(version_id))
 
         # iterate preferred_formats, break on first match on this version
         for fmt in preferred_formats:
             file_hash = next((
-                f['file_hash'] for f in version['formats'] if f['format'] == fmt and f['uploaded'] is True
+                f.file_hash for f in version.formats if f.format == fmt and f.uploaded is True
             ), None)
             if file_hash is not None:
                 break
@@ -553,91 +575,78 @@ class DataStore():
 
     def increment_popularity(self, file_hash):
         """
-        Increase an ebook version's popularity by one
+        Increase an ebook version's popularity by one. Popularity is stored against
+        the version record.
+
+        params:
+            file_hash: str
         """
-        # get the version_id from the file_hash
-        version_id = r.table('formats').get(file_hash)['version_id'].run()
+        version = Version.query.join(
+            Version.formats
+        ).filter_by(
+            file_hash=file_hash
+        ).first()
 
-        # increment the popularity
-        r.table('versions').get(version_id).update({
-            'popularity': r.row['popularity']+1
-        }).run()
+        # increment popularity
+        version.popularity += 1
 
-        # reindex ebook version ranking
-        self.set_version_rank(version_id)
+        # calculate new ranking
+        version.ranking = DataStore.versions_rank_algorithm(version.quality, version.popularity)
 
-
-    def set_version_rank(self, version_id):
-        """
-        Set a version's ranking, which is based on quality & popularity.
-        See versions_rank_algorithm
-        """
-        # get the version object
-        version = r.table('versions').get(version_id).run()
-        # calculate ranking
-        ranking = DataStore.versions_rank_algorithm(version['quality'], version['popularity'])
-        # update the version table
-        r.table('versions').get(version_id).update({'ranking': ranking}).run()
+        g.db_session.add(version)
+        g.db_session.commit()
 
 
     def update_ebook_hash(self, current_file_hash, updated_file_hash):
         """
         Update a format with a new filehash (which is the primary key)
-        This is called via the API after the OGRE-ID meta data is written into an ebook on the
-        client, since changing the metadata changes the ebook's filehash
+        This is invoked when OGRE ebook_id is written to a book's metadata by
+        ogreclient, this changing the ebook's filehash
         """
         if current_file_hash == updated_file_hash:
             raise SameHashSuppliedOnUpdateError(current_file_hash)
 
-        # check this filehash has already been processed
-        exists = r.table('formats').get(updated_file_hash).run()
-        if exists:
+        # return if this file_hash has already been seen
+        # TODO under what conditions does this happen?
+        if Format.query.get(updated_file_hash):
             return True
 
-        data = r.table('formats').get(current_file_hash).run()
-        if data is None:
+        format = Format.query.get(current_file_hash)
+        if format is None:
             self.logger.error('Format {} does not exist'.format(current_file_hash))
             return False
 
-        try:
-            # update the ebook format as tagged by the client (insert/delete since changing PK)
-            data['file_hash'] = updated_file_hash
-            data['ogreid_tagged'] = True
-            r.table('formats').insert(data).run()
-            r.table('formats').get(current_file_hash).delete().run()
-            self.logger.debug('Updated {} to {} on {}'.format(
-                current_file_hash, updated_file_hash, data['version_id'])
-            )
-        except Exception:
-            self.logger.error(
-                'Failed updating format {} on {}'.format(current_file_hash, data['version_id']),
-                exc_info=True
-            )
-            return False
+        # update the ebook format as tagged by the client (insert/delete since changing PK)
+        format.file_hash = updated_file_hash
+        format.ogreid_tagged = True
+        g.db_session.add(format)
+        g.db_session.commit()
+
+        self.logger.debug('Updated {} to {} on {}'.format(
+            current_file_hash, updated_file_hash, format.version_id)
+        )
 
         return True
-
-    def get_uploaded(self, file_hash):
-        """
-        Get all books marked as having been uploaded to S3
-        """
-        return r.table('formats').get(file_hash)['uploaded'].run()
 
     def set_uploaded(self, file_hash, user, filename, isit=True):
         """
         Mark an ebook as having been uploaded to S3
         """
-        r.table('formats').get(file_hash).update({
-            'uploaded': isit,
-            'uploaded_by': user.username,
-            's3_filename': filename,
-        }).run()
+        format = Format.query.get(file_hash)
+        format.uploaded = isit
+        format.uploaded_by = user
+        format.s3_filename = filename
+        g.db_session.add(format)
+        g.db_session.commit()
 
     def set_dedrm_flag(self, file_hash):
         """
         Mark a book as having had DRM removed
         """
-        r.table('formats').get(file_hash).update({'dedrm': True}).run()
+        format = Format.query.get(file_hash)
+        format.dedrm = True
+        g.db_session.add(format)
+        g.db_session.commit()
 
 
     def store_ebook(self, ebook_id, file_hash, filepath, user, content_type=None):
@@ -696,23 +705,20 @@ class DataStore():
             raise UnicodeWarning('Title must be unicode')
 
         if author is None or title is None:
-            # load the author and title of this book
-            ebook_data = next(
-                r.table('formats').filter({'file_hash': file_hash}).eq_join(
-                    'version_id', r.table('versions'), index='version_id'
-                ).zip().eq_join(
-                    'ebook_id', r.table('ebooks'), index='ebook_id'
-                ).zip().pluck(
-                    'author', 'title', 'format'
-                ).run(), None
-            )
-            author = ebook_data['author']
-            title = ebook_data['title']
-            fmt = ebook_data['format']
+            format = Format.query.join(
+                Format.version
+            ).join(
+                Version.ebook
+            ).filter(
+                Format.file_hash == file_hash
+            ).one()
+            author = format.version.ebook.author
+            title = format.version.ebook.title
+            fmt = format.format
 
         elif fmt is None:
             # load the file format for this book's hash
-            fmt = r.table('formats').get(file_hash).pluck('format').run()['format']
+            fmt = Format.query.get(file_hash).format
 
         # transpose unicode for ASCII filenames
         from unidecode import unidecode
@@ -735,32 +741,27 @@ class DataStore():
 
     def get_missing_books(self, user=None):
         """
-        Query the DB for books marked as not uploaded
+        Query for books marked as not uploaded
         """
-        # query the formats table for missing ebooks
-        query = r.table('formats').get_all(False, index='uploaded')
+        # query the formats table for un-uploaded ebooks
+        query = Format.query.join(Format.version).filter(Format.uploaded == False)
 
-        # join up to the versions table
-        query = query.eq_join('version_id', r.table('versions'), index='version_id').zip()
+        # filter by User
+        if user:
+            query = query.join(Format.owners).filter(User.id == user.id)
 
-        # filter by username
-        if user is not None:
-            query = query.filter(lambda d: d['owners'].contains(user.username))
-
-        # return a list of file_hashes
-        cursor = query['file_hash'].run()
-
-        # flatten for output
-        return list(cursor)
+        return query.all()
 
 
     def log_event(self, user, syncd_books_count, new_books_count):
         """
         Add entries to a log every time a user syncs from ogreclient
         """
-        return r.table('sync_events').insert({
-            'username': user.username,
-            'syncd_books_count': syncd_books_count,
-            'new_books_count': new_books_count,
-            'timestamp': r.now(),
-        }).run()
+        event = SyncEvent(
+            user=user,
+            syncd_books_count=syncd_books_count,
+            new_books_count=new_books_count,
+            timestamp=datetime.datetime.now(),
+        )
+        g.db_session.add(event)
+        g.db_session.commit()

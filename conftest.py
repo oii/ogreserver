@@ -19,7 +19,13 @@ import mock
 import pytest
 import virtualenvapi.manage
 
+from sqlalchemy import create_engine
+
+from ogreserver.extensions.database import setup_db_session, create_tables
 from ogreserver.utils.s3 import connect_s3
+from ogreserver.models.user import User
+from ogreserver.models.ebook import Ebook, Version, Format
+
 from ogreclient.ogreclient.printer import CliPrinter
 
 
@@ -80,8 +86,6 @@ def app_config():
         'WHOOSH_BASE': 'test.db',
         'UPLOADED_EBOOKS_DEST': 'uploads',
         'UPLOADED_LOGS_DEST': 'logs',
-
-        'RETHINKDB_DATABASE': 'test',
 
         'SECURITY_PASSWORD_HASH': str('pbkdf2_sha256'),
         'SECURITY_PASSWORD_SALT': 'test',
@@ -148,19 +152,16 @@ def terminate_db_connections(engine, db_name):
 
 
 @pytest.yield_fixture(scope='session')
-def postgresql(request, _flask_app):
+def _postgresql(request, _flask_app):
     if request.config.getoption('--only-client'):
         yield None
         return
-
-    import sqlalchemy
-    from ogreserver.extensions.database import setup_db_session, create_tables
 
     # update DB connection string
     _flask_app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}/test'.format(**_flask_app.config)
 
     # use raw sqlalchemy for create/drop DB
-    engine = sqlalchemy.create_engine(
+    engine = create_engine(
         'postgresql://{DB_USER}:{DB_PASS}@{DB_HOST}/'.format(**_flask_app.config)
     )
 
@@ -179,6 +180,14 @@ def postgresql(request, _flask_app):
         # init app tables into test database
         db_session = setup_db_session(_flask_app)
         create_tables(_flask_app)
+
+        # create the ogrebot user
+        ogrebot = User(
+            'ogrebot', password='ogrebot', email='ogrebot@example.com', active=False, roles=[]
+        )
+        db_session.add(ogrebot)
+        db_session.commit()
+
         yield db_session
 
     # terminate any existing DB connections
@@ -188,32 +197,41 @@ def postgresql(request, _flask_app):
     run_query('drop database if exists test')
 
 
+@pytest.yield_fixture(scope='function')
+def postgresql(request, flask_app, _postgresql):
+    """
+    Function-scope fixture which rolls back any DB changes made during unit test
+    """
+    yield _postgresql
+    Format.query.delete()
+    Version.query.delete()
+    Ebook.query.delete()
+
+
 @pytest.fixture(scope='session')
-def user(request, postgresql):
+def user(request, _postgresql):
     if request.config.getoption('--only-client'):
         return
 
-    return _create_user(request, postgresql)
+    return _create_user(request, _postgresql)
 
 @pytest.fixture(scope='session')
-def user2(request, postgresql):
+def user2(request, _postgresql):
     if request.config.getoption('--only-client'):
         return
 
-    return _create_user(request, postgresql)
+    return _create_user(request, _postgresql)
 
-def _create_user(request, postgresql):
-    from ogreserver.models.user import User
-
+def _create_user(request, _postgresql):
     # create random username
     username = ''.join(random.choice(string.ascii_lowercase) for n in range(6))
     # create user in auth DB
-    user = User(username, password=username, email='{}@example.com'.format(username), active=True, roles=[])
-    user.confirmed_at = datetime.datetime.utcnow()
-    user.preferred_ebook_format = 'mobi'
-    postgresql.add(user)
-    postgresql.commit()
-    return user
+    _user = User(username, password=username, email='{}@example.com'.format(username), active=True, roles=[])
+    _user.confirmed_at = datetime.datetime.utcnow()
+    _user.preferred_ebook_format = 'mobi'
+    _postgresql.add(_user)
+    _postgresql.commit()
+    return _user
 
 
 @pytest.fixture(scope='session')
@@ -225,70 +243,6 @@ def ogreclient_auth_token(_flask_app, user):
         content_type='application/json'
     )
     return json.loads(result.data)['response']['user']['authentication_token']
-
-
-@pytest.yield_fixture(scope='session')
-def _rethinkdb(request):
-    if request.config.getoption('--only-client'):
-        yield None
-        return
-
-    import rethinkdb as r
-    conn = r.connect('localhost', 28015)
-
-    # drop/create test database
-    if 'test' in r.db_list().run(conn):
-        r.db_drop('test').run(conn)
-    r.db_create('test').run(conn)
-
-    # reconnect with db=test and repl
-    r.connect(db='test').repl()
-
-    r.table_create('ebooks', primary_key='ebook_id').run()
-    r.table_create('versions', primary_key='version_id').run()
-    r.table_create('formats', primary_key='file_hash').run()
-    r.table_create('sync_events').run()
-
-    def create_index(table, name, index=None):
-        if name not in r.table(table).index_list().run():
-            if index is None:
-                r.db('test').table(table).index_create(name).run()
-            else:
-                r.db('test').table(table).index_create(name, index).run()
-            r.db('test').table(table).index_wait(name).run()
-
-    # create FK indexes
-    create_index(
-        'ebooks', 'authortitle',
-        index=[r.row['author'].downcase(), r.row['title'].downcase()]
-    )
-    create_index('ebooks', 'asin', index=r.row['meta']['asin'])
-    create_index('ebooks', 'isbn', index=r.row['meta']['isbn'])
-    create_index('versions', 'ebook_id')
-    create_index('versions', 'original_filehash')
-    create_index('versions', 'ebook_username', index=[r.row['ebook_id'], r.row['username']])
-    create_index('formats', 'version_id')
-    create_index('formats', 'uploaded')
-    create_index('formats', 'uploaded_by')
-    create_index('formats', 'uploadedby_dedrm', index=[r.row['uploaded_by'], r.row['dedrm']])
-    create_index('sync_events', 'username')
-    create_index('sync_events', 'timestamp')
-    create_index('sync_events', 'user_new_books_count', index=[r.row['username'], r.row['new_books_count']])
-
-    yield r
-
-    # remove test database
-    if 'test' in r.db_list().run(conn):
-        r.db_drop('test').run(conn)
-    conn.close()
-
-
-@pytest.fixture(scope='function')
-def rethinkdb(request, _rethinkdb):
-    _rethinkdb.db('test').table('ebooks').delete().run()
-    _rethinkdb.db('test').table('versions').delete().run()
-    _rethinkdb.db('test').table('formats').delete().run()
-    return _rethinkdb
 
 
 @pytest.fixture(scope='function')

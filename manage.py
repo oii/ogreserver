@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import
 
-import datetime
 import json
 import os
 import subprocess
@@ -15,13 +14,12 @@ import salt.client
 from flask.ext.script import Manager
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 
-import rethinkdb as r
-from rethinkdb.errors import RqlRuntimeError
-
 from ogreserver.factory import create_app, make_celery, register_signals
 from ogreserver.extensions.celery import register_tasks
 from ogreserver.extensions.database import setup_db_session, create_tables, setup_roles
-from ogreserver.utils.db import rqltzinfo_to_iso8601
+from ogreserver.models.ebook import Ebook, Version, Format, SyncEvent
+from ogreserver.models.user import User
+from ogreserver.stores import ebooks as ebook_store
 from ogreserver.utils.generic import make_temp_directory
 from ogreserver.utils.s3 import connect_s3
 
@@ -30,61 +28,50 @@ manager = Manager(app)
 
 @manager.command
 def convert():
-    from ogreserver.models.datastore import DataStore
     from ogreserver.models.conversion import Conversion
     app.celery = make_celery(app)
     register_tasks(app)
     register_signals(app)
-    conversion = Conversion(app.config, DataStore(app.config, app.logger))
+    conversion = Conversion(app.config)
     conversion.search()
 
 
 @manager.command
 def cleardb():
+    db_session = setup_db_session(app)
+
     caller = salt.client.Caller()
     env = caller.function('grains.item', 'env').get('env', 'dev')
     if env != 'dev':
         print 'You cannot run cleardb when not in DEBUG!!'
         return
-    conn = r.connect("localhost", 28015, db='ogreserver').repl()
-    r.table('ebooks').delete().run()
-    r.table('versions').delete().run()
-    r.table('formats').delete().run()
-    r.table('sync_events').delete().run()
+    Format.query.delete()
+    Version.query.delete()
+    Ebook.query.delete()
+    SyncEvent.query.delete()
+    db_session.commit()
     if os.path.exists('/var/ogre/search.db'):
         import shutil, subprocess
         shutil.rmtree('/var/ogre/search.db')
         subprocess.call('pkill -HUP gunicorn', shell=True)
-    conn.close()
 
 
 @manager.command
 def lb(ebook_id):
-    from ogreserver.models.datastore import DataStore
-    ds = DataStore(app.config, logger=None)
-    ebook = ds.load_ebook(ebook_id)
+    setup_db_session(app)
+
+    ebook = ebook_store.load_ebook(ebook_id)
 
     # if no ebook_id supplied, check if supplied param is file_hash
     if ebook is None:
-        ebook = ds.load_ebook_by_file_hash(ebook_id, match=True)
+        ebook = ebook_store.load_ebook_by_file_hash(ebook_id)
         if ebook is None:
             print 'Not found'
             return
 
-    # convert RqlTzinfo to iso8601
-    ebook['publish_date'] = rqltzinfo_to_iso8601(ebook['publish_date'])
-
-    for v in ebook['versions']:
-        v['date_added'] = rqltzinfo_to_iso8601(v['date_added'])
-
-        # remove duplicate IDs
-        del(v['ebook_id'])
-        for f in v['formats']:
-            del(f['version_id'])
-
     # pretty print json with colorized ebook_id/file_hash
     print json.dumps(ebook, indent=2).replace(
-        ebook_id, '\033[92m{}\033[0m'.format(ebook_id)
+        ebook.id, '\033[92m{}\033[0m'.format(ebook.id)
     )
 
 
@@ -100,13 +87,12 @@ def rebuild_metadata(foreground=False):
 
     from ogreserver.tasks import query_ebook_metadata
 
-    # connect to rethinkdb and run metadata task for all ebooks
-    conn = r.connect('localhost', 28015, db='ogreserver')
-    for ebook_data in r.table('ebooks').run(conn):
+    # run metadata task for all ebooks
+    for ebook in Ebook.query.all():
         if foreground:
-            query_ebook_metadata(ebook_data)
+            query_ebook_metadata(ebook.id)
         else:
-            query_ebook_metadata.delay(ebook_data)
+            query_ebook_metadata.delay(ebook.id)
 
 
 @manager.command
@@ -121,13 +107,12 @@ def rebuild_index(foreground=False):
 
     from ogreserver.tasks import index_for_search
 
-    # connect to rethinkdb and run index task for all ebooks
-    conn = r.connect('localhost', 28015, db='ogreserver')
-    for ebook_data in r.table('ebooks').run(conn):
+    # run search index task for all ebooks
+    for ebook in Ebook.query.all():
         if foreground:
-            index_for_search(ebook_data=ebook_data)
+            index_for_search(ebook.id)
         else:
-            index_for_search.delay(ebook_data=ebook_data)
+            index_for_search.delay(ebook.id)
 
 
 @manager.command
@@ -138,10 +123,10 @@ def create_user(username, password, email, role='user', confirmed=False, test=Fa
     test (bool)
         Only check if user has been created; don't actually do anything
     """
+    setup_db_session(app)
+
     try:
         # load a user
-        setup_db_session(app)
-        from ogreserver.models.user import User
         user = User.query.filter_by(username=username).first()
 
     except ProgrammingError as e:
@@ -191,38 +176,30 @@ def create_user(username, password, email, role='user', confirmed=False, test=Fa
 @manager.command
 def init_ogre(test=False):
     """
-    Initialize the AWS S3 bucket & RethinkDB storage for OGRE.
+    Initialize the DB and AWS S3 bucket for OGRE.
 
     test (bool)
         Only check if OGRE has been setup; don't actually do anything
     """
+    setup_db_session(app)
+
     try:
         # check mysql DB created
-        setup_db_session(app)
-        from ogreserver.models.user import User
         User.query.first()
         db_setup = True
     except ProgrammingError:
         db_setup = False
 
-    # check rethinkdb initialized
-    conn = r.connect('localhost', 28015)
-    try:
-        r.db('ogreserver').table('ebooks').run(conn)
-        rdb_setup = True
-    except RqlRuntimeError:
-        rdb_setup = False
-
     if test is True:
         # only report state in test mode
-        if db_setup is True and rdb_setup is True:
+        if db_setup is True:
             print 'Already setup'
             sys.exit(0)
         else:
             print 'Not setup'
             sys.exit(1)
     else:
-        if db_setup is True and rdb_setup is True:
+        if db_setup is True:
             print 'You have already initialized OGRE :D'
             sys.exit(1)
 
@@ -233,16 +210,6 @@ def init_ogre(test=False):
             app.celery = make_celery(app)
             register_tasks(app)
             setup_roles(app)
-
-        if rdb_setup is False:
-            # create a database and a couple of tables
-            r.db_create('ogreserver').run(conn)
-            r.db('ogreserver').table_create('ebooks', primary_key='ebook_id').run(conn)
-            r.db('ogreserver').table_create('versions', primary_key='version_id').run(conn)
-            r.db('ogreserver').table_create('formats', primary_key='file_hash').run(conn)
-            r.db('ogreserver').table_create('authors', primary_key='author_id').run(conn)
-            r.db('ogreserver').table_create('sync_events').run(conn)
-            set_indexes()
 
     caller = salt.client.Caller()
     env = caller.function('grains.item', 'env').get('env', 'dev')
@@ -275,38 +242,6 @@ def create_ogre_s3_dev():
                 pass
             else:
                 raise e
-
-
-@manager.command
-def set_indexes():
-    def create_index(table, name, index=None):
-        conn = r.connect('localhost', 28015, db='ogreserver')
-        if name not in r.table(table).index_list().run(conn):
-            start = datetime.datetime.now()
-            if index is None:
-                r.table(table).index_create(name).run(conn)
-            else:
-                r.table(table).index_create(name, index).run(conn)
-            r.table(table).index_wait(name).run(conn)
-            print "index '{}' created in {}".format(name, datetime.datetime.now()-start)
-
-    # create the rethinkdb indexes used by ogreserver
-    create_index(
-        'ebooks', 'authortitle',
-        index=[r.row['author'].downcase(), r.row['title'].downcase()]
-    )
-    create_index('ebooks', 'asin', index=r.row['meta']['asin'])
-    create_index('ebooks', 'isbn', index=r.row['meta']['isbn'])
-    create_index('versions', 'ebook_id')
-    create_index('versions', 'original_filehash')
-    create_index('versions', 'ebook_username', index=[r.row['ebook_id'], r.row['username']])
-    create_index('formats', 'version_id')
-    create_index('formats', 'uploaded')
-    create_index('formats', 'uploaded_by')
-    create_index('formats', 'uploadedby_dedrm', index=[r.row['uploaded_by'], r.row['dedrm']])
-    create_index('sync_events', 'username')
-    create_index('sync_events', 'timestamp')
-    create_index('sync_events', 'user_new_books_count', index=[r.row['username'], r.row['new_books_count']])
 
 
 @manager.command
@@ -351,15 +286,6 @@ def check_pip():
 
 
 @manager.command
-def dump_rethinkdb(identifier):
-    """
-    Dump rethinkdb to S3
-    """
-    command = 'rethinkdb dump --file {}'
-    dump_database_to_s3('rethinkdb', identifier, command)
-
-
-@manager.command
 def dump_postgres(identifier):
     """
     Dump postgres to S3
@@ -377,7 +303,7 @@ def dump_database_to_s3(db_type, identifier, command):
     """
     Dump a database to S3
 
-    :param  db_type     "postgres", "rethinkdb" etc
+    :param  db_type     "postgres" only
     :param  identifier  unique DB backup id
     :param  command     backup shell command with "{}" placeholder for filename
     """
@@ -410,15 +336,6 @@ def dump_database_to_s3(db_type, identifier, command):
 
 
 @manager.command
-def restore_rethinkdb():
-    """
-    Restore rethinkdb from S3
-    """
-    command = 'rethinkdb restore --force {}'
-    restore_database_from_s3('rethinkdb', command)
-
-
-@manager.command
 def restore_postgres():
     """
     Restore postgres from S3
@@ -436,7 +353,7 @@ def restore_database_from_s3(db_type, command):
     """
     Restore a database from S3 backup
 
-    :param  db_type     "postgres", "rethinkdb" etc
+    :param  db_type     "postgres" only
     :param  command     backup shell command with "{}" placeholder for filename
     """
     caller = salt.client.Caller()
@@ -470,7 +387,6 @@ def restore_database_from_s3(db_type, command):
 def shutdown():
     """
     Prep the application for shutdown:
-     - dump rethinkdb to S3
      - dump postgres to S3
      - set OGRE DNS to point to static page
     """
@@ -480,7 +396,6 @@ def shutdown():
 
     # backup DBs to S3
     dump_postgres(data['git_revision'])
-    dump_rethinkdb(data['git_revision'])
 
 
 @manager.command
@@ -490,7 +405,6 @@ def startup():
     """
     # restore DBs from S3
     restore_postgres()
-    restore_rethinkdb()
 
 
 if __name__ == "__main__":

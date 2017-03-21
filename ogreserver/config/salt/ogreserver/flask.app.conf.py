@@ -66,9 +66,7 @@ STATIC_BASE_URL = "https://s3-eu-west-1.amazonaws.com"
 # Flask-WTF
 SECRET_KEY = "{{ pillar['flask_secret'] }}"
 
-# Main ebook database name
-RETHINKDB_DATABASE = 'ogreserver'
-
+# Postgres DB
 DB_HOST = "{{ pillar['db_host'] }}"
 DB_USER = "{{ pillar['db_user'] }}"
 DB_PASS = "{{ pillar['db_pass'] }}"

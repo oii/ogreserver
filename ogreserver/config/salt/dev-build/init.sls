@@ -38,11 +38,6 @@ extend:
           gunicorn: true
           celeryd: true
 
-  rethinkdb-config:
-    file.managed:
-      - context:
-          production: false
-
   app-log-directory:
     file.directory:
       - require_in:
@@ -58,7 +53,13 @@ extend:
       - require:
         - supervisord: s3proxy-supervisor-service
 
-  ogre-create-user:
+  create-ogre-user:
+    cmd.run:
+      - require:
+        - virtualenv: app-virtualenv
+        - cmd: ogre-init
+
+  create-ogrebot-user:
     cmd.run:
       - require:
         - virtualenv: app-virtualenv
@@ -67,6 +68,7 @@ extend:
   create-postgres-user:
     postgres_user.present:
       - createdb: true
+      - superuser: true
 
 
 # make the logs readable by the login user

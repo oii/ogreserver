@@ -31,6 +31,10 @@ class AsinDuplicateError(DuplicateBaseError):
     def __init__(self, ebook_id):
         super(AsinDuplicateError, self).__init__(ebook_id, None)
 
+class IsbnDuplicateError(DuplicateBaseError):
+    def __init__(self, ebook_id):
+        super(IsbnDuplicateError, self).__init__(ebook_id, None)
+
 class BadMetaDataError(OgreException):
     pass
 

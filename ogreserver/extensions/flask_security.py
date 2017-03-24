@@ -3,12 +3,12 @@ from __future__ import unicode_literals
 
 from flask import g
 
-from flask.ext.security import Security, current_user
-from flask.ext.security.datastore import Datastore, UserDatastore
-from flask.ext.security.forms import LoginForm
-from flask.ext.security.signals import password_changed, password_reset, \
+from flask_security import Security, current_user
+from flask_security.datastore import Datastore, UserDatastore
+from flask_security.forms import LoginForm
+from flask_security.signals import password_changed, password_reset, \
         reset_password_instructions_sent, confirm_instructions_sent
-from flask.ext.security.utils import get_identity_attributes
+from flask_security.utils import get_identity_attributes
 
 from ..models.user import User, Role
 from ..signals import when_password_reset, when_password_changed, \

@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from flask.ext.security import UserMixin, RoleMixin
-from flask.ext.security import utils as security_utils
+from flask_security import UserMixin, RoleMixin
+from flask_security import utils as security_utils
 
 import rethinkdb as r
 

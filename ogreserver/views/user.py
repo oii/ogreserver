@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from flask import Blueprint, g, request, redirect
-from flask.ext.security.decorators import login_required
+from flask_security.decorators import login_required
 from werkzeug.exceptions import Forbidden
 
 from ..forms.profile_edit import ProfileEditForm

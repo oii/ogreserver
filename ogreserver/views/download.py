@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from flask import current_app as app
 from flask import Blueprint, redirect
-from flask.ext.security.decorators import login_required
+from flask_security.decorators import login_required
 
 from ..models.datastore import DataStore
 

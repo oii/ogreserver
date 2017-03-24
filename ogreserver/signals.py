@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from flask import current_app as app
 
-from flask.ext.security.utils import url_for_security
+from flask_security.utils import url_for_security
 
 from .tasks import convert, query_ebook_metadata, send_mail, store_ebook, index_for_search
 

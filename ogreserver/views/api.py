@@ -8,9 +8,9 @@ import os
 
 from flask import current_app as app
 from flask import Blueprint, jsonify, request, redirect, Response, abort
-from flask.ext.security import current_user
-from flask.ext.security.decorators import auth_token_required
-from flask.ext.uploads import UploadNotAllowed
+from flask_security import current_user
+from flask_security.decorators import auth_token_required
+from flask_uploads import UploadNotAllowed
 
 from ..exceptions import SameHashSuppliedOnUpdateError
 from ..models.datastore import DataStore

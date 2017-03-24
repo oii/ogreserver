@@ -6,7 +6,7 @@ import pyaml
 from flask import current_app as app
 
 from flask import g, Blueprint, make_response, request, redirect, url_for
-from flask.ext.security.decorators import login_required
+from flask_security.decorators import login_required
 from werkzeug.exceptions import abort
 
 from ..exceptions import NoMoreResultsError

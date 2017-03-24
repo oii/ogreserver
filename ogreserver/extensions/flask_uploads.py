@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import os
 
 # import Flask-Uploads
-from flask.ext.uploads import UploadSet, ALL, configure_uploads
+from flask_uploads import UploadSet, ALL, configure_uploads
 
 
 def init_uploads(app):

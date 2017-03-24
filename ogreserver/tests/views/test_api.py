@@ -6,6 +6,8 @@ import json
 
 from StringIO import StringIO
 
+import mock
+
 
 def test_get_definitions_list_of_lists(flask_app, ogreclient_auth_token):
     '''
@@ -41,7 +43,7 @@ def test_get_definitions_order(flask_app, ogreclient_auth_token):
     assert [k for k,v in defs.iteritems() if v[0] is True] == ['mobi', 'azw3', 'epub']
 
 
-def test_download_dedrm_tools_endpoint(flask_app, ogreclient_auth_token, mock_views_api_open):
+def test_download_dedrm(flask_app, ogreclient_auth_token, mock_views_api_open):
     '''
     Test GET to /download-dedrm returns binary data
     '''
@@ -50,7 +52,25 @@ def test_download_dedrm_tools_endpoint(flask_app, ogreclient_auth_token, mock_vi
     assert resp.status_code == 302
 
 
-def test_upload_endpoint(flask_app, ogreclient_auth_token):
+def test_to_upload(flask_app, ogreclient_auth_token, mock_views_api_datastore_class):
+    '''
+    Test retrieve uploads from to /to-upload
+    '''
+    mock_datastore = mock.Mock()
+    mock_views_api_datastore_class.return_value = mock_datastore
+    mock_datastore.get_missing_books.return_value = ['fake-book-to-upload.epub']
+
+    client = flask_app.test_client()
+    resp = client.get(
+        '/api/v1/to-upload',
+        headers={'Ogre-key': ogreclient_auth_token}
+    )
+    assert resp.status_code == 200
+    assert mock_datastore.get_missing_books.call_count == 1
+    assert json.loads(resp.data)['result'] == ['fake-book-to-upload.epub']
+
+
+def test_upload(flask_app, ogreclient_auth_token):
     '''
     Test multipart upload to /upload
     '''
@@ -68,3 +88,6 @@ def test_upload_endpoint(flask_app, ogreclient_auth_token):
     )
     assert resp.status_code == 200
     assert json.loads(resp.data)['result'] == 'ok'
+
+    # ensure store signal called
+    assert flask_app.signals['store-ebook'].send.call_count == 1

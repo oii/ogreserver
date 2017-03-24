@@ -114,6 +114,13 @@ def mock_views_api_open(request):
     m.stop()
 
 
+@pytest.yield_fixture(scope='function')
+def mock_views_api_datastore_class(request):
+    m = mock.patch('ogreserver.views.api.DataStore')
+    yield m.start()
+    m.stop()
+
+
 @pytest.fixture(scope='session')
 def get_data_fixtures():
     """

@@ -59,6 +59,26 @@ class Ebook(Base, TimestampMixin):
     def __repr__(self):
         return '<Ebook>{}:{} - {}'.format(self.id, self.author, self.title)
 
+    def __json__(self):
+        return {
+            'ebook_id': self.id,
+            'title': self.title,
+            'author': self.author,
+            'rating': self.rating,
+            'publisher': self.publisher,
+            'publish_date': self.publish_date,
+            'is_non_fiction': self.is_non_fiction,
+            'is_curated': self.is_curated,
+            'isbn': self.isbn,
+            'isbn13': self.isbn13,
+            'asin': self.asin,
+            'uri': self.uri,
+            'num_pages': self.num_pages,
+            'average_rating': self.average_rating,
+            'versions': [v.id for v in self.versions],
+            'original_version_id': self.original_version_id,
+        }
+
 
 class Version(Base, TimestampMixin):
     __tablename__ = 'versions'
@@ -97,6 +117,21 @@ class Version(Base, TimestampMixin):
 
     def __repr__(self):
         return '<Version>{}'.format(self.id)
+
+    def __json__(self):
+        return {
+            'version_id': self.id,
+            'ebook_id': self.ebook_id,
+            'uploader': self.uploader.username,
+            'size': self.size,
+            'popularity': self.popularity,
+            'quality': self.quality,
+            'ranking': self.ranking,
+            'publish_date': self.publish_date.isoformat(),
+            'original_file_hash': self.original_file_hash,
+            'formats': {f.format: f.file_hash for f in self.formats},
+            'source_format': self.source_format.format,
+        }
 
 
 # many-to-many owners of formats
@@ -137,6 +172,19 @@ class Format(Base, TimestampMixin):
 
     def __repr__(self):
         return '<Format>{}:{}'.format(self.file_hash, self.format)
+
+    def __json__(self):
+        return {
+            'file_hash': self.file_hash,
+            'version_id': self.version_id,
+            'uploader': self.uploader.username,
+            'owners': [u.username for u in self.owners],
+            'format': self.format,
+            'uploaded': self.uploaded,
+            'ogreid_tagged': self.ogreid_tagged,
+            'dedrm': self.dedrm,
+            's3_filename': self.s3_filename,
+        }
 
 
 class SyncEvent(Base):

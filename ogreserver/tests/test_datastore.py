@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from flask import jsonify
+
 
 def test_update_ebook_hash(datastore, postgresql, user, ebook_fixture_azw3):
     # create test ebook data
@@ -72,6 +74,20 @@ def test_find_formats_none(datastore, postgresql, user, ebook_fixture_azw3):
     assert len(data) == 0
     data = datastore.find_missing_formats('epub')
     assert len(data) == 0
+
+
+def test_get_missing_books_json_serializable(datastore, postgresql, user, ebook_fixture_azw3):
+    # create test ebook data
+    ebook = datastore.create_ebook(
+        "Andersen's Fairy Tales", 'H. C. Andersen', user, ebook_fixture_azw3
+    )
+
+    # add another format and mark uploaded=True
+    datastore.create_format(ebook.versions[0], '9da4f3ba', 'mobi', user=user)
+    datastore.set_uploaded('9da4f3ba', user, filename='egg.pub')
+
+    # validate result is JSON serializable
+    assert jsonify(datastore.get_missing_books(user=user))
 
 
 def test_get_missing_books_for_user(datastore, postgresql, user, user2, ebook_fixture_azw3, ebook_fixture_pdf):

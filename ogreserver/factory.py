@@ -84,6 +84,10 @@ def configure_extensions(app):
     from .extensions.jinja import init_jinja
     init_jinja(app)
 
+    # setup JSON encoder extension to integrate with models
+    from .extensions.json import init_json
+    init_json(app)
+
 
 def register_blueprints(app):
     # import view blueprints and register with the Flask app

@@ -2,7 +2,6 @@
 
 from __future__ import absolute_import
 
-import json
 import os
 import subprocess
 import sys
@@ -11,12 +10,14 @@ import time
 import boto
 import salt.client
 
+from flask import json
 from flask.ext.script import Manager
 from sqlalchemy.exc import IntegrityError, ProgrammingError
 
 from ogreserver.factory import create_app, make_celery, register_signals
 from ogreserver.extensions.celery import register_tasks
 from ogreserver.extensions.database import setup_db_session, create_tables, setup_roles
+from ogreserver.extensions.json import init_json
 from ogreserver.models.ebook import Ebook, Version, Format, SyncEvent
 from ogreserver.models.user import User
 from ogreserver.stores import ebooks as ebook_store
@@ -61,6 +62,9 @@ def lb(ebook_id):
     setup_db_session(app)
 
     ebook = ebook_store.load_ebook(ebook_id)
+
+    # setup JSON encoder extension to integrate with models
+    init_json(app)
 
     # if no ebook_id supplied, check if supplied param is file_hash
     if ebook is None:

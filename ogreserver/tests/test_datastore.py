@@ -90,6 +90,20 @@ def test_get_missing_books_json_serializable(datastore, postgresql, user, ebook_
     assert jsonify(datastore.get_missing_books(user=user))
 
 
+def test_get_missing_books_returns_file_hashes(datastore, postgresql, user, ebook_fixture_azw3):
+    # create test ebook data
+    datastore.create_ebook(
+        "Andersen's Fairy Tales", 'H. C. Andersen', user, ebook_fixture_azw3
+    )
+
+    # assert result looks like a list of file_hashes
+    data = datastore.get_missing_books()
+    assert type(data) is list
+    assert len(data) == 1
+    assert isinstance(data[0], basestring)
+    assert len(data[0]) == 32
+
+
 def test_get_missing_books_for_user(datastore, postgresql, user, user2, ebook_fixture_azw3, ebook_fixture_pdf):
     # create test ebook data
     ebook = datastore.create_ebook(

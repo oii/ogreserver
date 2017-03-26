@@ -744,13 +744,19 @@ class DataStore():
         Query for books marked as not uploaded
         """
         # query the formats table for un-uploaded ebooks
-        query = Format.query.join(Format.version).filter(Format.uploaded == False)
+        query = Format.query.with_entities(
+            Format.file_hash
+        ).join(
+            Format.version
+        ).filter(
+            Format.uploaded == False
+        )
 
         # filter by User
         if user:
             query = query.join(Format.owners).filter(User.id == user.id)
 
-        return query.all()
+        return [f.file_hash for f in query.all()]
 
 
     def log_event(self, user, syncd_books_count, new_books_count):

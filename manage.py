@@ -120,100 +120,58 @@ def rebuild_index(foreground=False):
 
 
 @manager.command
-def create_user(username, password, email, role='user', confirmed=False, test=False):
+def create_user(username, password, email, role='user', confirmed=False):
     """
     Create a new user for OGRE
-
-    test (bool)
-        Only check if user has been created; don't actually do anything
     """
     setup_db_session(app)
 
     try:
         # load a user
         user = User.query.filter_by(username=username).first()
+        print 'User {} already exists'.format(username)
 
-    except ProgrammingError as e:
-        if "doesn't exist" in str(e):
-            print 'You must run init_ogre command first!'
-            sys.exit(1)
-        else:
-            raise e
+    except ProgrammingError:
+        try:
+            # celery is required for flask_security as it imports tasks.py
+            app.celery = make_celery(app)
+            register_tasks(app)
 
-    if test is True:
-        # only report state in test mode
-        if user is None:
-            print "User doesn't exist"
-            sys.exit(1)
-        else:
-            print 'User {} exists'.format(username)
-            sys.exit(0)
-    else:
-        if user is None:
-            try:
-                # celery is required for flask_security as it imports tasks.py
-                app.celery = make_celery(app)
-                register_tasks(app)
+            from ogreserver.extensions.flask_security import init_security
 
-                from ogreserver.extensions.flask_security import init_security
+            app.security = init_security(app)
+            user = app.security.datastore.create_user(
+                username=username, email=email, password=password
+            )
+            if confirmed:
+                from flask.ext.security.confirmable import confirm_user
+                confirm_user(user)
 
-                app.security = init_security(app)
-                user = app.security.datastore.create_user(
-                    username=username, email=email, password=password
-                )
-                if confirmed:
-                    from flask.ext.security.confirmable import confirm_user
-                    confirm_user(user)
+            app.security.datastore.commit()
 
-                app.security.datastore.commit()
+            print "Created user {} with role '{}'".format(username, role)
 
-                print "Created user {} with role '{}'".format(username, role)
-
-            except IntegrityError:
-                print 'A user with this email address already exists'
-                sys.exit(1)
-        else:
-            print 'User {} already exists'.format(username)
+        except IntegrityError:
+            print 'A user with this email address already exists'
             sys.exit(1)
 
 
 @manager.command
-def init_ogre(test=False):
+def init_ogre():
     """
     Initialize the DB and AWS S3 bucket for OGRE.
-
-    test (bool)
-        Only check if OGRE has been setup; don't actually do anything
     """
     setup_db_session(app)
 
     try:
         # check mysql DB created
         User.query.first()
-        db_setup = True
     except ProgrammingError:
-        db_setup = False
-
-    if test is True:
-        # only report state in test mode
-        if db_setup is True:
-            print 'Already setup'
-            sys.exit(0)
-        else:
-            print 'Not setup'
-            sys.exit(1)
-    else:
-        if db_setup is True:
-            print 'You have already initialized OGRE :D'
-            sys.exit(1)
-
-        # create the local mysql database from our models
-        if db_setup is False:
-            create_tables(app)
-            # celery is required for setup_roles as it imports tasks.py via flask_security
-            app.celery = make_celery(app)
-            register_tasks(app)
-            setup_roles(app)
+        create_tables(app)
+        # celery is required for setup_roles as it imports tasks.py via flask_security
+        app.celery = make_celery(app)
+        register_tasks(app)
+        setup_roles(app)
 
     caller = salt.client.Caller()
     env = caller.function('grains.item', 'env').get('env', 'dev')
@@ -236,13 +194,10 @@ def create_ogre_s3_dev():
             )
 
         except boto.exception.S3ResponseError as e:
-            sys.stderr.write('Failed verifying or creating S3 bucket.. ({})\n'.format(e.error_message))
+            sys.stderr.write('Failed creating S3 bucket.. ({})\n'.format(e.error_message))
             sys.exit(1)
         except boto.exception.S3CreateError as e:
-            if e.error_code == 'BucketAlreadyExists':
-                sys.stderr.write('Bucket name already in use! ({})\n'.format(e.error_message))
-                sys.exit(1)
-            elif e.error_code == 'BucketAlreadyOwnedByYou':
+            if e.error_code in ('BucketAlreadyExists', 'BucketAlreadyOwnedByYou'):
                 pass
             else:
                 raise e

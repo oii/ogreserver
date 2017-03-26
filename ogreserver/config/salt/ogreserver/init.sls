@@ -140,7 +140,6 @@ ogre-init:
   cmd.run:
     - name: bin/python manage.py init_ogre
     - cwd: /srv/{{ pillar['app_directory_name'] }}
-    - unless: bin/python manage.py init_ogre --test
     - user: {{ pillar['app_user'] }}
     - require:
       - virtualenv: app-virtualenv

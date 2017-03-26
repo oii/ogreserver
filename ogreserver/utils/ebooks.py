@@ -1,9 +1,47 @@
+from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import base64
+import decimal
 import hashlib
 import random
 import string
+
+from flask import current_app as app
+
+from ..models.user import User
+
+
+def generate_ebook_id(author, title):
+    """
+    Generate the ebook_id from the author and title
+    """
+    return unicode(hashlib.md5(("~".join((author, title))).encode('utf8')).hexdigest())
+
+
+def versions_rank_algorithm(quality, popularity):
+    """
+    Generate a score for this version of an ebook.
+
+    The quality score and the popularity score are ratioed together 70:30
+    Since popularity is a scalar and can grow indefinitely, it's divided by
+    the number of total system users.
+
+    Popularity is set to 10 when a newly decrypted ebook is added to OGRE
+    Every download increases a version's popularity
+    Every duplicate found on sync increases a version's popularity.
+    """
+    return (quality * decimal.Decimal(0.7)) + \
+            (popularity / User.get_total_users() * 100 * decimal.Decimal(0.3))
+
+
+def is_non_fiction(fmt):
+    """
+    Return list of formats classed as fiction
+    """
+    return fmt in [
+        k for k,v in app.config['EBOOK_DEFINITIONS'].iteritems() if v.is_non_fiction is False
+    ]
 
 
 def compute_md5(filepath, buf_size=8192):

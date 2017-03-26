@@ -11,8 +11,8 @@ from werkzeug.exceptions import abort
 
 from ..exceptions import NoMoreResultsError
 from ..forms.search import SearchForm
-from ..models.datastore import DataStore
 from ..models.search import Search
+from ..stores import ebooks as ebook_store
 from ..utils.flask import render_template
 
 bp_ebooks = Blueprint('ebooks', __name__)
@@ -85,8 +85,7 @@ def listing_fragment():
 @bp_ebooks.route('/ebook/<ebook_id>/')
 @login_required
 def detail(ebook_id):
-    ds = DataStore(app.config, app.logger)
-    ebook = ds.load_ebook(ebook_id)
+    ebook = ebook_store.load_ebook(ebook_id)
 
     if ebook is None:
         abort(404)
@@ -120,6 +119,5 @@ def detail(ebook_id):
 @bp_ebooks.route('/ebook/<ebook_id>/curated/<int:state>')
 @login_required
 def set_curated(ebook_id, state):
-    ds = DataStore(app.config, app.logger)
-    ds.set_curated(ebook_id, state)
+    ebook_store.set_curated(ebook_id, state)
     return redirect(url_for('.detail', ebook_id=ebook_id))

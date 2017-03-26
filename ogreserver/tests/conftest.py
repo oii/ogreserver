@@ -115,8 +115,8 @@ def mock_views_api_open(request):
 
 
 @pytest.yield_fixture(scope='function')
-def mock_views_api_datastore_class(request):
-    m = mock.patch('ogreserver.views.api.DataStore')
+def mock_views_api_ebook_store(request):
+    m = mock.patch('ogreserver.views.api.ebook_store')
     yield m.start()
     m.stop()
 

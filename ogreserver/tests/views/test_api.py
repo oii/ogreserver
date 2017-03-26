@@ -6,8 +6,6 @@ import json
 
 from StringIO import StringIO
 
-import mock
-
 
 def test_get_definitions_list_of_lists(flask_app, ogreclient_auth_token):
     '''
@@ -52,13 +50,32 @@ def test_download_dedrm(flask_app, ogreclient_auth_token, mock_views_api_open):
     assert resp.status_code == 302
 
 
-def test_to_upload(flask_app, ogreclient_auth_token, mock_views_api_datastore_class):
+def test_confirm(flask_app, ogreclient_auth_token, mock_views_api_ebook_store):
+    '''
+    Test POST to /confirm endpoint
+    '''
+    mock_views_api_ebook_store.update_ebook_hash.return_value = True
+
+    client = flask_app.test_client()
+    resp = client.post(
+        '/api/v1/confirm',
+        headers={'Ogre-key': ogreclient_auth_token},
+        data=json.dumps({
+            'file_hash': '38b3fc3a',
+            'new_hash': 'bcddb798',
+        }),
+        content_type='application/json'
+    )
+    assert resp.status_code == 200
+    assert mock_views_api_ebook_store.update_ebook_hash.call_count == 1
+    assert json.loads(resp.data)['result'] == 'ok'
+
+
+def test_to_upload(flask_app, ogreclient_auth_token, mock_views_api_ebook_store):
     '''
     Test retrieve uploads from to /to-upload
     '''
-    mock_datastore = mock.Mock()
-    mock_views_api_datastore_class.return_value = mock_datastore
-    mock_datastore.get_missing_books.return_value = ['fake-book-to-upload.epub']
+    mock_views_api_ebook_store.get_missing_books.return_value = ['fake-book-to-upload.epub']
 
     client = flask_app.test_client()
     resp = client.get(
@@ -66,7 +83,7 @@ def test_to_upload(flask_app, ogreclient_auth_token, mock_views_api_datastore_cl
         headers={'Ogre-key': ogreclient_auth_token}
     )
     assert resp.status_code == 200
-    assert mock_datastore.get_missing_books.call_count == 1
+    assert mock_views_api_ebook_store.get_missing_books.call_count == 1
     assert json.loads(resp.data)['result'] == ['fake-book-to-upload.epub']
 
 
@@ -90,4 +107,4 @@ def test_upload(flask_app, ogreclient_auth_token):
     assert json.loads(resp.data)['result'] == 'ok'
 
     # ensure store signal called
-    assert flask_app.signals['store-ebook'].send.call_count == 1
+    assert flask_app.signals['upload-ebook'].send.call_count == 1

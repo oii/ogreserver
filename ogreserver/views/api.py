@@ -12,10 +12,12 @@ from flask_security import current_user
 from flask_security.decorators import auth_token_required
 from flask_uploads import UploadNotAllowed
 
-from ..exceptions import SameHashSuppliedOnUpdateError
-from ..models.datastore import DataStore
-from ..models.reputation import Reputation
 from ..decorators import slack_token_required
+from ..exceptions import SameHashSuppliedOnUpdateError
+from ..models.reputation import Reputation
+from ..models.sync import update_library
+from ..stores import ebooks as ebook_store
+from ..stores import events as event_store
 
 bp_api = Blueprint('api', __name__, url_prefix='/api/v1')
 
@@ -58,8 +60,7 @@ def post():
     app.logger.info('CONNECT {} {}'.format(current_user.username, len(data)))
 
     # update the library
-    ds = DataStore(app.config, app.logger)
-    syncd_books = ds.update_library(data, current_user)
+    syncd_books = update_library(data, current_user)
 
     # extract the subset of newly supplied books
     new_books = [item for key, item in syncd_books.items() if item['new'] is True]
@@ -75,7 +76,7 @@ def post():
     app.logger.info('NEW {} {}'.format(current_user.username, len(new_books)))
 
     # store sync events
-    ds.log_event(current_user, len(data), len(new_books))
+    event_store.log(current_user, len(data), len(new_books))
 
     # handle badge and reputation changes
     r = Reputation(current_user)
@@ -133,13 +134,14 @@ def confirm():
     data = request.get_json()
 
     # update a file's md5 hash
-    current_file_hash = data['file_hash']
-    updated_file_hash = data['new_hash']
+    current_file_hash = data.get('file_hash')
+    updated_file_hash = data.get('new_hash')
 
-    ds = DataStore(app.config, app.logger)
+    if not current_file_hash or not updated_file_hash:
+        return jsonify(result='fail')
 
     try:
-        if ds.update_ebook_hash(current_file_hash, updated_file_hash):
+        if ebook_store.update_ebook_hash(current_file_hash, updated_file_hash):
             return jsonify(result='ok')
         else:
             return jsonify(result='fail')
@@ -150,10 +152,8 @@ def confirm():
 @bp_api.route('/to-upload', methods=['GET'])
 @auth_token_required
 def to_upload():
-    ds = DataStore(app.config, app.logger)
-
     # query books to upload and supply back to the client
-    missing_books = ds.get_missing_books(user=current_user)
+    missing_books = ebook_store.get_missing_books(user=current_user)
 
     return jsonify(result=missing_books)
 
@@ -177,7 +177,7 @@ def upload():
         abort(415)
 
     # signal celery to process the upload
-    app.signals['store-ebook'].send(
+    app.signals['upload-ebook'].send(
         bp_api,
         ebook_id=request.form.get('ebook_id'),
         filename=upload_path,

@@ -2,14 +2,15 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from ogreserver.models.ebook import Ebook, Version
+from ogreserver.models.sync import update_library
+from ogreserver.stores import ebooks as ebook_store
 
 
-def test_sync_duplicate(datastore, postgresql, user, ebook_sync_fixture_1):
+def test_sync_duplicate(postgresql, user, ebook_sync_fixture_1):
     '''
     Test two basic syncs with the same data. Book should be flagged as dupe
     '''
-    # create the datastore and run a sync
-    result = datastore.update_library(ebook_sync_fixture_1, user)
+    result = update_library(ebook_sync_fixture_1, user)
 
     # assert book is new
     file_hash, data = result.items()[0]
@@ -17,20 +18,19 @@ def test_sync_duplicate(datastore, postgresql, user, ebook_sync_fixture_1):
     assert data['dupe'] is False, 'book should not be a duplicate'
 
     # sync again
-    result = datastore.update_library(ebook_sync_fixture_1, user)
+    result = update_library(ebook_sync_fixture_1, user)
 
     # assert book is duplicate
     file_hash, data = result.items()[0]
     assert data['dupe'] is True, 'book should be a duplicate'
 
 
-def test_sync_ogre_id(datastore, postgresql, user, ebook_sync_fixture_1):
+def test_sync_ogre_id(postgresql, user, ebook_sync_fixture_1):
     '''
     Test two basic syncs with the same book, supplying OGRE id in second sync
     as ogreclient should do
     '''
-    # create the datastore and run a sync
-    result = datastore.update_library(ebook_sync_fixture_1, user)
+    result = update_library(ebook_sync_fixture_1, user)
 
     # check book needs updating
     file_hash, data = result.items()[0]
@@ -42,14 +42,14 @@ def test_sync_ogre_id(datastore, postgresql, user, ebook_sync_fixture_1):
     ebook_sync_fixture_1.values()[0]['ebook_id'] = data['ebook_id']
 
     # sync again
-    result = datastore.update_library(ebook_sync_fixture_1, user)
+    result = update_library(ebook_sync_fixture_1, user)
 
     # assert book does not need update
     file_hash, data = result.items()[0]
     assert data['update'] is False, 'book should not need update'
 
 
-def test_sync_dupe_on_authortitle(datastore, postgresql, user, user2, ebook_sync_fixture_1):
+def test_sync_dupe_on_authortitle(postgresql, user, user2, ebook_sync_fixture_1):
     '''
     Test sync from two users with same book (different file hash)
 
@@ -57,8 +57,7 @@ def test_sync_dupe_on_authortitle(datastore, postgresql, user, user2, ebook_sync
     - Ensure 2 versions are created on said ebook
     - Ensure the book is marked with both owners
     '''
-    # create the datastore and run a sync
-    result = datastore.update_library(ebook_sync_fixture_1, user)
+    result = update_library(ebook_sync_fixture_1, user)
 
     # extract ebook_id of syncd book
     ebook_id = result.itervalues().next()['ebook_id']
@@ -69,7 +68,7 @@ def test_sync_dupe_on_authortitle(datastore, postgresql, user, user2, ebook_sync
     ebook_sync_fixture_1.values()[0]['file_hash'] = '058e92c0'
 
     # sync with diff user
-    result = datastore.update_library(ebook_sync_fixture_1, user2)
+    result = update_library(ebook_sync_fixture_1, user2)
 
     # assert first sync ebook_id returned
     assert result.itervalues().next()['ebook_id'] == ebook_id
@@ -78,14 +77,14 @@ def test_sync_dupe_on_authortitle(datastore, postgresql, user, user2, ebook_sync
     assert Ebook.query.count() == 1
 
     # assert ebook has two versions attached
-    ebook = datastore.load_ebook(ebook_id)
+    ebook = ebook_store.load_ebook(ebook_id)
     assert Version.query.count() == 2
 
     # assert the two version are owned by different users
     assert ebook.versions[0].uploader is not ebook.versions[1].uploader
 
 
-def test_sync_dupe_on_ebook_id(datastore, postgresql, user, user2, ebook_sync_fixture_1, ebook_sync_fixture_2):
+def test_sync_dupe_on_ebook_id(postgresql, user, user2, ebook_sync_fixture_1, ebook_sync_fixture_2):
     '''
     Test sync from two users with same book (different file hash/authortitle);
     On the 2nd sync ebook_id is supplied
@@ -94,8 +93,7 @@ def test_sync_dupe_on_ebook_id(datastore, postgresql, user, user2, ebook_sync_fi
     - Ensure 2 versions are created on said ebook
     - Ensure the book is marked with both owners
     '''
-    # create the datastore and run a sync
-    result = datastore.update_library(ebook_sync_fixture_1, user)
+    result = update_library(ebook_sync_fixture_1, user)
 
     # extract ebook_id of syncd book
     ebook_id = result.itervalues().next()['ebook_id']
@@ -106,20 +104,20 @@ def test_sync_dupe_on_ebook_id(datastore, postgresql, user, user2, ebook_sync_fi
     ebook_sync_fixture_2.values()[0]['ebook_id'] = ebook_id
 
     # sync with diff user
-    result = datastore.update_library(ebook_sync_fixture_2, user2)
+    result = update_library(ebook_sync_fixture_2, user2)
 
     # assert only one ebook in DB
     assert Ebook.query.count() == 1
 
     # assert ebook has two versions attached
-    ebook = datastore.load_ebook(ebook_id)
+    ebook = ebook_store.load_ebook(ebook_id)
     assert Version.query.count() == 2
 
     # assert the two version are owned by different users
     assert ebook.versions[0].uploader is not ebook.versions[1].uploader
 
 
-def test_sync_dupe_on_original_hash(datastore, postgresql, user, user2, ebook_sync_fixture_1):
+def test_sync_dupe_on_original_hash(postgresql, user, user2, ebook_sync_fixture_1):
     '''
     Test sync from two users with same book (same file hash)
     (Ebooks' file_hash will change when adding OGRE_ID to metadata, so test
@@ -129,8 +127,7 @@ def test_sync_dupe_on_original_hash(datastore, postgresql, user, user2, ebook_sy
     - Ensure only a single version is attached to said ebook
     - Ensure the book is marked with both owners
     '''
-    # create the datastore and run a sync
-    result = datastore.update_library(ebook_sync_fixture_1, user)
+    result = update_library(ebook_sync_fixture_1, user)
 
     # assert book is new
     file_hash, data = result.items()[0]
@@ -138,25 +135,25 @@ def test_sync_dupe_on_original_hash(datastore, postgresql, user, user2, ebook_sy
     assert data['dupe'] is False, 'book should not be a duplicate'
 
     # a new file_hash results from the OGRE ebook_id being written to the file
-    ret = datastore.update_ebook_hash(file_hash, '7a4943ec53ba25fbccecacdfd47c3f88')
+    ret = ebook_store.update_ebook_hash(file_hash, '7a4943ec53ba25fbccecacdfd47c3f88')
     assert ret is True
 
     # sync same book with a different user
-    result = datastore.update_library(ebook_sync_fixture_1, user2)
+    result = update_library(ebook_sync_fixture_1, user2)
 
     # assert book is duplicate
     file_hash, data = result.items()[0]
     assert data['dupe'] is True, 'book should be a duplicate'
 
     # assert ebook has single version attached
-    ebook = datastore.load_ebook(data['ebook_id'])
+    ebook = ebook_store.load_ebook(data['ebook_id'])
     assert len(ebook.versions) == 1, 'should only be a single version'
 
     # assert both users are owners of single format
     assert len(ebook.versions[0].formats[0].owners) == 2
 
 
-def test_sync_dupe_on_asin(datastore, postgresql, user, ebook_sync_fixture_1, ebook_sync_fixture_2):
+def test_sync_dupe_on_asin(postgresql, user, ebook_sync_fixture_1, ebook_sync_fixture_2):
     '''
     Sync a book with ASIN set. Second sync should return duplicate.
 
@@ -164,8 +161,7 @@ def test_sync_dupe_on_asin(datastore, postgresql, user, ebook_sync_fixture_1, eb
     - Ensure the second sync rejects the duplicate
     - Ensure only a single version is attached to said ebook
     '''
-    # create the datastore and run a sync
-    result = datastore.update_library(ebook_sync_fixture_1, user)
+    result = update_library(ebook_sync_fixture_1, user)
 
     # assert book is new
     file_hash, data = result.items()[0]
@@ -176,18 +172,18 @@ def test_sync_dupe_on_asin(datastore, postgresql, user, ebook_sync_fixture_1, eb
     ebook_sync_fixture_2.values()[0]['meta']['asin'] = ebook_sync_fixture_1.values()[0]['meta']['asin']
 
     # sync with a different book; matching ASIN
-    result = datastore.update_library(ebook_sync_fixture_2, user)
+    result = update_library(ebook_sync_fixture_2, user)
 
     # assert book is duplicate
     file_hash, data = result.items()[0]
     assert data['dupe'] is True, 'book should be a duplicate'
 
     # assert ebook has single version attached
-    ebook = datastore.load_ebook(data['ebook_id'])
+    ebook = ebook_store.load_ebook(data['ebook_id'])
     assert len(ebook.versions) == 1, 'should be single version'
 
 
-def test_sync_dupe_on_isbn(datastore, postgresql, user, ebook_sync_fixture_1, ebook_sync_fixture_2):
+def test_sync_dupe_on_isbn(postgresql, user, ebook_sync_fixture_1, ebook_sync_fixture_2):
     '''
     Sync a book with ISBN set. Second sync should return duplicate.
 
@@ -195,8 +191,7 @@ def test_sync_dupe_on_isbn(datastore, postgresql, user, ebook_sync_fixture_1, eb
     - Ensure the second sync attaches 2 versions to the single ebook_id
     - Ensure 2 versions are created on said ebook
     '''
-    # create the datastore and run a sync
-    result = datastore.update_library(ebook_sync_fixture_1, user)
+    result = update_library(ebook_sync_fixture_1, user)
 
     # assert book is new
     file_hash, data = result.items()[0]
@@ -207,29 +202,28 @@ def test_sync_dupe_on_isbn(datastore, postgresql, user, ebook_sync_fixture_1, eb
     ebook_sync_fixture_2.values()[0]['meta']['isbn'] = ebook_sync_fixture_1.values()[0]['meta']['isbn']
 
     # sync with a different book; matching ISBN
-    result = datastore.update_library(ebook_sync_fixture_2, user)
+    result = update_library(ebook_sync_fixture_2, user)
 
     # assert book is duplicate
     file_hash, data = result.items()[0]
     assert data['dupe'] is True, 'book should be a duplicate'
 
     # assert ebook has single version attached
-    ebook = datastore.load_ebook(data['ebook_id'])
+    ebook = ebook_store.load_ebook(data['ebook_id'])
     assert len(ebook.versions) == 1, 'should be single version'
 
 
-def test_meta(datastore, postgresql, user, ebook_sync_fixture_1):
+def test_meta(postgresql, user, ebook_sync_fixture_1):
     '''
     Ensure all meta fields are applied to ebook on sync
     '''
-    # create the datastore and run a sync
-    result = datastore.update_library(ebook_sync_fixture_1, user)
+    result = update_library(ebook_sync_fixture_1, user)
 
     # extract ebook_id of syncd book
     ebook_id = result.values()[0]['ebook_id']
 
     # assert meta data
-    ebook = datastore.load_ebook(ebook_id)
+    ebook = ebook_store.load_ebook(ebook_id)
     assert ebook.asin == 'B00KG6MZ2O'
     assert ebook.isbn == '9781491999999'
     assert ebook.source_provider == 'Amazon Kindle'

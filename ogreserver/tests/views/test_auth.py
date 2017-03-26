@@ -11,7 +11,9 @@ def test_login_ok(flask_app, user):
     client = flask_app.test_client()
     result = client.post(
         '/login',
-        data=json.dumps({'email': user.email, 'password': user.username}),
+        data=json.dumps({
+            'email': user.email, 'password': user.username
+        }),
         content_type='application/json'
     )
     assert result.status_code == 200
@@ -27,7 +29,10 @@ def test_login_bad_creds(flask_app, user):
     client = flask_app.test_client()
     result = client.post(
         '/login',
-        data=json.dumps({'email': user.email, 'password': 'eggsbacon'}),
+        data=json.dumps({
+            'email': user.email,
+            'password': 'eggsbacon'
+        }),
         content_type='application/json'
     )
     assert result.status_code == 200
@@ -42,7 +47,9 @@ def test_login_without_email_address(flask_app, user):
     client = flask_app.test_client()
     result = client.post(
         '/login',
-        data=json.dumps({'password': user.username}),
+        data=json.dumps({
+            'password': user.username
+        }),
         content_type='application/json'
     )
     assert result.status_code == 200

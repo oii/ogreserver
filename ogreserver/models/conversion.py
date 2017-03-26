@@ -8,15 +8,15 @@ import subprocess
 from flask import current_app as app
 
 from ..exceptions import ConversionFailedError, EbookNotFoundOnS3Error
+from ..stores import ebooks as ebook_store
 from ..utils.ebooks import compute_md5, id_generator
 from ..utils.generic import make_temp_directory
 from ..utils.s3 import connect_s3
 
 
 class Conversion:
-    def __init__(self, config, datastore):
+    def __init__(self, config):
         self.config = config
-        self.datastore = datastore
 
 
     def search(self, limit=None):
@@ -25,7 +25,7 @@ class Conversion:
         """
         for dest_fmt in self.config['EBOOK_FORMATS']:
             # load all Versions which are missing format dest_fmt
-            versions = self.datastore.find_missing_formats(dest_fmt, limit=None)
+            versions = ebook_store.find_missing_formats(dest_fmt, limit=None)
 
             for version in versions:
                 # ensure source ebook has been uploaded
@@ -91,10 +91,10 @@ class Conversion:
                 raise ConversionFailedError(inner_excp=e)
 
         # add newly created format to store
-        self.datastore.create_format(version, file_hash, dest_fmt)
+        ebook_store.create_format(version, file_hash, dest_fmt)
 
         # signal celery to store on S3
-        app.signals['store-ebook'].send(
+        app.signals['upload-ebook'].send(
             self,
             ebook_id=ebook_id,
             filename=dest_path,
@@ -113,7 +113,7 @@ class Conversion:
         fmt (str):              File format
         """
         # load the ebook object
-        ebook = self.datastore.load_ebook(ebook_id)
+        ebook = ebook_store.load_ebook(ebook_id)
 
         with make_temp_directory() as temp_dir:
             # copy the ebook to a temp file

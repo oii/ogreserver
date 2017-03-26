@@ -20,11 +20,13 @@ from .extensions.whoosh import init_whoosh
 from .exceptions import (ConversionFailedError, EbookNotFoundOnS3Error, S3DatastoreError,
                          AmazonHttpError)
 from .models.amazon import AmazonAPI
-from .models.datastore import DataStore
+from .models.conversion import Conversion
 from .models.ebook import Ebook, Version
 from .models.goodreads import GoodreadsAPI
 from .models.search import Search
 from .models.user import User
+from .stores import ebooks as ebook_store
+from .stores import s3 as s3_store
 from .utils.generic import make_temp_directory
 from .utils.s3 import connect_s3
 
@@ -69,13 +71,11 @@ def query_ebook_metadata(ebook_id):
             )
             return
 
-        ds = DataStore(app.config, app.logger)
-
         if am_data:
             app.logger.info('{} - Amazon data for ASIN {}'.format(ebook, am_data['asin']))
 
             # store all Amazon data in ebook meta
-            ds.append_ebook_metadata(ebook, 'amazon', am_data)
+            ebook_store.append_ebook_metadata(ebook, 'amazon', am_data)
 
             # copy ASIN into top-level ebook meta
             ebook.asin = am_data['asin']
@@ -120,7 +120,7 @@ def query_ebook_metadata(ebook_id):
                 ebook.average_rating = gr_data['average_rating']
 
             # store all Goodreads data in ebook meta
-            ds.append_ebook_metadata(ebook, 'goodreads', gr_data)
+            ebook_store.append_ebook_metadata(ebook, 'goodreads', gr_data)
 
         # write directly back to the DB
         g.db_session.add(ebook)
@@ -202,18 +202,15 @@ def index_for_search(ebook_id):
 
 
 @app.celery.task(queue='high')
-def store_ebook(ebook_id, filename, file_hash, fmt, username):
+def upload_ebook(ebook_id, filename, file_hash, fmt, username):
     """
-    Store an ebook in the datastore
+    Upload an ebook to S3
     """
     with app.app_context():
         # initialise the DB connection in our fake app context
         setup_db_session(app)
 
         try:
-            # create the datastore
-            ds = DataStore(app.config, app.logger)
-
             # local path of uploaded file
             filepath = os.path.join(app.config['UPLOADED_EBOOKS_DEST'], os.path.basename(filename))
 
@@ -222,10 +219,10 @@ def store_ebook(ebook_id, filename, file_hash, fmt, username):
             if fmt in app.config['EBOOK_CONTENT_TYPES']:
                 content_type = app.config['EBOOK_CONTENT_TYPES'][fmt]
 
-            user = User.query.get(username=username)
+            user = User.query.filter_by(username=username).one()
 
             # store the file into S3
-            ds.store_ebook(ebook_id, file_hash, filepath, user, content_type)
+            s3_store.upload_ebook(ebook_id, file_hash, filepath, user, content_type)
 
         except S3DatastoreError as e:
             app.logger.error('Failed uploading {} with {}'.format(file_hash, e))
@@ -247,9 +244,7 @@ def conversion_search():
         # initialise the DB connection in our fake app context
         setup_db_session(app)
 
-        # late import to prevent circular import
-        from .models.conversion import Conversion
-        conversion = Conversion(app.config, DataStore(app.config, app.logger))
+        conversion = Conversion(app.config)
         conversion.search(app.config['NUM_EBOOKS_FOR_CONVERT'])
 
 
@@ -262,9 +257,7 @@ def convert(ebook_id, version_id, original_filename, dest_fmt):
         # initialise the DB connection in our fake app context
         setup_db_session(app)
 
-        # late import to prevent circular import
-        from .models.conversion import Conversion
-        conversion = Conversion(app.config, DataStore(app.config, app.logger))
+        conversion = Conversion(app.config)
 
         try:
             version = Version.query.get(version_id)

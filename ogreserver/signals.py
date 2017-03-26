@@ -5,12 +5,12 @@ from flask import current_app as app
 
 from flask_security.utils import url_for_security
 
-from .tasks import convert, query_ebook_metadata, send_mail, store_ebook, index_for_search
+from .tasks import convert, query_ebook_metadata, send_mail, upload_ebook, index_for_search
 
 
-def when_store_ebook(sender, ebook_id, filename, file_hash, fmt, username):
-    app.logger.debug('SIGNAL when_store_ebook')
-    store_ebook.delay(ebook_id, filename, file_hash, fmt, username)
+def when_upload_ebook(sender, ebook_id, filename, file_hash, fmt, username):
+    app.logger.debug('SIGNAL when_upload_ebook')
+    upload_ebook.delay(ebook_id, filename, file_hash, fmt, username)
 
 def when_convert_ebook(sender, ebook_id, version_id, original_filename, dest_fmt):
     app.logger.debug('SIGNAL when_convert_ebook')

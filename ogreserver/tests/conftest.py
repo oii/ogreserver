@@ -10,6 +10,7 @@ import yaml
 import whoosh
 
 from ogreserver.models.search import Search
+from ogreserver.stores import ebooks as ebook_store
 
 import fixtures
 
@@ -137,6 +138,36 @@ def ebook_fixture_pdf():
 @pytest.fixture(scope='function')
 def ebook_fixture_epub():
     return copy.deepcopy(fixtures.EBOOK_FIXTURE_3)
+
+
+@pytest.yield_fixture(scope='function')
+def ebook_db_fixture_azw3(postgresql, ebook_fixture_azw3, user):
+    ebook = ebook_store.create_ebook(
+        "Andersen's Fairy Tales", 'H. C. Andersen', user, ebook_fixture_azw3
+    )
+    yield ebook
+    postgresql.delete(ebook)
+    postgresql.commit()
+
+
+@pytest.yield_fixture(scope='function')
+def ebook_db_fixture_pdf(postgresql, ebook_fixture_pdf, user):
+    ebook = ebook_store.create_ebook(
+        'Eggbert Yolker', 'The Sun is an Egg', user, ebook_fixture_pdf
+    )
+    yield ebook
+    postgresql.delete(ebook)
+    postgresql.commit()
+
+
+@pytest.yield_fixture(scope='function')
+def ebook_db_fixture_epub(postgresql, ebook_fixture_epub, user):
+    ebook = ebook_store.create_ebook(
+        'Foundation', 'Issac Asimov', user, ebook_fixture_epub
+    )
+    yield ebook
+    postgresql.delete(ebook)
+    postgresql.commit()
 
 
 @pytest.fixture(scope='function')

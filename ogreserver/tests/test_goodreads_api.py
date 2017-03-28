@@ -3,8 +3,12 @@ from __future__ import unicode_literals
 
 import mock
 
+from ogreserver.models.goodreads import GoodreadsAPI
 
-def test_isbn_search(mock_goodreads, goodreads, get_data_fixtures):
+
+def test_isbn_search(mock_goodreads, get_data_fixtures):
+    goodreads = GoodreadsAPI(None)
+
     side_effects = []
 
     # load GoodreadsAPI response fixtures
@@ -25,7 +29,9 @@ def test_isbn_search(mock_goodreads, goodreads, get_data_fixtures):
     assert gr_data['authors'][0]['name'] == 'Max Brooks'
 
 
-def test_isbn13_search1(mock_goodreads, goodreads, get_data_fixtures):
+def test_isbn13_search1(mock_goodreads, get_data_fixtures):
+    goodreads = GoodreadsAPI(None)
+
     side_effects = []
 
     # load GoodreadsAPI response fixtures
@@ -46,7 +52,9 @@ def test_isbn13_search1(mock_goodreads, goodreads, get_data_fixtures):
     assert gr_data['authors'][0]['name'] == 'Max Brooks'
 
 
-def test_isbn13_search2(mock_goodreads, goodreads, get_data_fixtures):
+def test_isbn13_search2(mock_goodreads, get_data_fixtures):
+    goodreads = GoodreadsAPI(None)
+
     side_effects = []
 
     # load GoodreadsAPI response fixtures
@@ -67,7 +75,9 @@ def test_isbn13_search2(mock_goodreads, goodreads, get_data_fixtures):
     assert gr_data['authors'][0]['name'] == 'Anthony Ryan'
 
 
-def test_author_title_search(mock_goodreads, goodreads, get_data_fixtures):
+def test_author_title_search(mock_goodreads, get_data_fixtures):
+    goodreads = GoodreadsAPI(None)
+
     side_effects = []
 
     # load GoodreadsAPI response fixtures
@@ -88,7 +98,9 @@ def test_author_title_search(mock_goodreads, goodreads, get_data_fixtures):
     assert gr_data['authors'][0]['name'] == 'Richard K. Morgan'
 
 
-def test_author_title_unicode(mock_goodreads, goodreads, get_data_fixtures):
+def test_author_title_unicode(mock_goodreads, get_data_fixtures):
+    goodreads = GoodreadsAPI(None)
+
     side_effects = []
 
     # load GoodreadsAPI response fixtures

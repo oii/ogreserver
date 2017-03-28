@@ -9,7 +9,6 @@ import yaml
 
 import whoosh
 
-from ogreserver.models.goodreads import GoodreadsAPI
 from ogreserver.models.search import Search
 
 import fixtures
@@ -28,11 +27,6 @@ def mock_amazon():
     m = mock.patch('ogreserver.models.amazon.bottlenose.Amazon')
     yield m.start()
     m.stop()
-
-
-@pytest.fixture(scope='session')
-def goodreads(app_config):
-    return GoodreadsAPI(app_config.get('GOODREADS_API_KEY', None))
 
 
 @pytest.yield_fixture(scope='function')

@@ -245,12 +245,6 @@ def ogreclient_auth_token(_flask_app, user):
     return json.loads(result.data)['response']['user']['authentication_token']
 
 
-@pytest.fixture(scope='function')
-def conversion(request, app_config, flask_app):
-    from ogreserver.models.conversion import Conversion
-    return Conversion(app_config)
-
-
 @pytest.fixture(scope='session')
 def calibre_ebook_meta_bin():
     calibre_ebook_meta_bin = None

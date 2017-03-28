@@ -5,10 +5,13 @@ import os
 
 import mock
 
+from ogreserver.models.conversion import Conversion
 from ogreserver.stores import ebooks as ebook_store
 
 
-def test_search(flask_app, postgresql, user, conversion, mock_utils_make_tempdir, ebook_fixture_azw3):
+def test_search(flask_app, postgresql, user, mock_utils_make_tempdir, ebook_fixture_azw3):
+    conversion = Conversion(flask_app.config)
+
     # create test ebook data
     ebook = ebook_store.create_ebook(
         "Andersen's Fairy Tales", 'H. C. Andersen', user, ebook_fixture_azw3
@@ -39,9 +42,11 @@ def test_search(flask_app, postgresql, user, conversion, mock_utils_make_tempdir
     assert flask_app.signals['convert-ebook'].send.call_args_list == expected_params
 
 
-def test_convert(flask_app, postgresql, user, conversion,
-                 ebook_fixture_azw3, mock_connect_s3, mock_subprocess_popen,
-                 mock_subprocess_check_call, mock_shutil_move, mock_utils_make_tempdir):
+def test_convert(flask_app, postgresql, user, ebook_fixture_azw3, mock_connect_s3,
+                 mock_subprocess_popen,  mock_subprocess_check_call, mock_shutil_move,
+                 mock_utils_make_tempdir):
+    conversion = Conversion(flask_app.config)
+
     converted_file_hash = 'eggsbacon'
     target_convert_format = 'mobi'
 
@@ -92,7 +97,9 @@ def test_convert(flask_app, postgresql, user, conversion,
     assert ebook is not None, 'format should exist with MD5 of {}'.format(converted_file_hash)
 
 
-def test_write_ebook_meta_epub(postgresql, conversion, user, ebook_fixture_epub, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
+def test_write_ebook_meta_epub(flask_app, postgresql, user, ebook_fixture_epub, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
+    conversion = Conversion(flask_app.config)
+
     # create test ebook data
     ebook = ebook_store.create_ebook(
         'Foundation', 'Isaac Asimove', user, ebook_fixture_epub
@@ -108,7 +115,9 @@ def test_write_ebook_meta_epub(postgresql, conversion, user, ebook_fixture_epub,
     assert '--identifier ogre_id:{}'.format(ebook.id) in mock_subprocess_check_output.call_args[0][0]
 
 
-def test_write_ebook_meta_pdf(postgresql, conversion, user, ebook_fixture_pdf, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
+def test_write_ebook_meta_pdf(flask_app, postgresql, user, ebook_fixture_pdf, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
+    conversion = Conversion(flask_app.config)
+
     # create test ebook data
     ebook = ebook_store.create_ebook(
         'The Sun is an Egg', 'Eggbert Yolker', user, ebook_fixture_pdf
@@ -125,7 +134,9 @@ def test_write_ebook_meta_pdf(postgresql, conversion, user, ebook_fixture_pdf, m
     assert 'tagged=' not in mock_subprocess_check_output.call_args[0][0]
 
 
-def test_write_ebook_meta_azw3(postgresql, conversion, user, ebook_fixture_azw3, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
+def test_write_ebook_meta_azw3(flask_app, postgresql, user, ebook_fixture_azw3, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
+    conversion = Conversion(flask_app.config)
+
     # create test ebook data
     ebook = ebook_store.create_ebook(
         "Andersen's Fairy Tales", 'H. C. Andersen', user, ebook_fixture_azw3
@@ -142,7 +153,9 @@ def test_write_ebook_meta_azw3(postgresql, conversion, user, ebook_fixture_azw3,
     assert 'tagged=' not in mock_subprocess_check_output.call_args[0][0]
 
 
-def test_write_ebook_meta_azw3_with_tags(postgresql, conversion, user, ebook_fixture_azw3, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
+def test_write_ebook_meta_azw3_with_tags(flask_app, postgresql, user, ebook_fixture_azw3, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
+    conversion = Conversion(flask_app.config)
+
     # include some tags in the source ebook fixture
     ebook_fixture_azw3['meta']['tags'] = 'tagged=bacon'
 

@@ -33,6 +33,7 @@ def amazon(app_config, logger):
         app_config.get('AWS_ADVERTISING_API_ASSOCIATE_TAG', None),
     )
 
+
 @pytest.yield_fixture(scope='function')
 def mock_amazon():
     m = mock.patch('ogreserver.models.amazon.bottlenose.Amazon')
@@ -43,6 +44,7 @@ def mock_amazon():
 @pytest.fixture(scope='session')
 def goodreads(app_config, logger):
     return GoodreadsAPI(logger, app_config.get('GOODREADS_API_KEY', None))
+
 
 @pytest.yield_fixture(scope='function')
 def mock_goodreads():

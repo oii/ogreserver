@@ -48,7 +48,6 @@ def query_ebook_metadata(ebook_id):
         app.logger.info('{} - Querying metadata for {}'.format(ebook, ebook.asin))
 
         am = AmazonAPI(
-            app.logger,
             app.config['AWS_ADVERTISING_API_ACCESS_KEY'],
             app.config['AWS_ADVERTISING_API_SECRET_KEY'],
             app.config['AWS_ADVERTISING_API_ASSOCIATE_TAG'],
@@ -88,7 +87,7 @@ def query_ebook_metadata(ebook_id):
             image_upload.delay(ebook.id)
 
         # query Goodreads API
-        gr = GoodreadsAPI(app.logger, app.config['GOODREADS_API_KEY'])
+        gr = GoodreadsAPI(app.config['GOODREADS_API_KEY'])
         gr_data = gr.search(
             isbn=ebook.isbn,
             author=ebook.author,

@@ -25,9 +25,8 @@ def search(flask_app):
 
 
 @pytest.fixture(scope='function')
-def amazon(app_config, logger):
+def amazon(app_config):
     return AmazonAPI(
-        logger,
         app_config.get('AWS_ADVERTISING_API_ACCESS_KEY', None),
         app_config.get('AWS_ADVERTISING_API_SECRET_KEY', None),
         app_config.get('AWS_ADVERTISING_API_ASSOCIATE_TAG', None),
@@ -42,8 +41,8 @@ def mock_amazon():
 
 
 @pytest.fixture(scope='session')
-def goodreads(app_config, logger):
-    return GoodreadsAPI(logger, app_config.get('GOODREADS_API_KEY', None))
+def goodreads(app_config):
+    return GoodreadsAPI(app_config.get('GOODREADS_API_KEY', None))
 
 
 @pytest.yield_fixture(scope='function')

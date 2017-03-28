@@ -12,8 +12,7 @@ from ..utils.generic import clean_string
 
 
 class GoodreadsAPI:
-    def __init__(self, logger, api_key):
-        self.logger = logger
+    def __init__(self, api_key):
         self.api_key = api_key
 
 

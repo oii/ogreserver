@@ -9,7 +9,8 @@ from ogreserver.models.conversion import Conversion
 from ogreserver.stores import ebooks as ebook_store
 
 
-def test_search(flask_app, postgresql, user, mock_utils_make_tempdir, ebook_db_fixture_azw3):
+@mock.patch('ogreserver.models.conversion.make_temp_directory')
+def test_search(mock_utils_make_tempdir, flask_app, postgresql, user, ebook_db_fixture_azw3):
     conversion = Conversion(flask_app.config)
 
     # mark test book as uploaded
@@ -41,9 +42,17 @@ def test_search(flask_app, postgresql, user, mock_utils_make_tempdir, ebook_db_f
     assert flask_app.signals['convert-ebook'].send.call_args_list == expected_params
 
 
-def test_convert(flask_app, postgresql, user, ebook_db_fixture_azw3, mock_connect_s3,
-                 mock_subprocess_popen,  mock_subprocess_check_call, mock_shutil_move,
-                 mock_utils_make_tempdir):
+@mock.patch('ogreserver.models.conversion.make_temp_directory')
+@mock.patch('ogreserver.models.conversion.shutil.move')
+@mock.patch('ogreserver.models.conversion.connect_s3')
+@mock.patch('ogreserver.models.conversion.subprocess.check_output')
+@mock.patch('ogreserver.models.conversion.subprocess.check_call')
+@mock.patch('ogreserver.models.conversion.subprocess.Popen')
+def test_convert(mock_subprocess_popen, mock_subprocess_check_call,
+                 mock_subprocess_check_output, mock_connect_s3, mock_shutil_move,
+                 mock_utils_make_tempdir, flask_app, postgresql, user,
+                 ebook_db_fixture_azw3):
+
     conversion = Conversion(flask_app.config)
 
     converted_file_hash = 'eggsbacon'
@@ -95,7 +104,10 @@ def test_convert(flask_app, postgresql, user, ebook_db_fixture_azw3, mock_connec
     assert ebook is not None, 'format should exist with MD5 of {}'.format(converted_file_hash)
 
 
-def test_write_ebook_meta_epub(flask_app, postgresql, user, ebook_db_fixture_epub, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
+@mock.patch('ogreserver.models.conversion.shutil.copy')
+@mock.patch('ogreserver.models.conversion.compute_md5')
+@mock.patch('ogreserver.models.conversion.subprocess.check_output')
+def test_write_ebook_meta_epub(mock_subprocess_check_output, mock_compute_md5, mock_shutil_copy, flask_app, postgresql, user, ebook_db_fixture_epub):
     conversion = Conversion(flask_app.config)
 
     # mock compute_md5 to return preset file hash
@@ -108,7 +120,10 @@ def test_write_ebook_meta_epub(flask_app, postgresql, user, ebook_db_fixture_epu
     assert '--identifier ogre_id:{}'.format(ebook_db_fixture_epub.id) in mock_subprocess_check_output.call_args[0][0]
 
 
-def test_write_ebook_meta_pdf(flask_app, postgresql, user, ebook_db_fixture_pdf, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
+@mock.patch('ogreserver.models.conversion.shutil.copy')
+@mock.patch('ogreserver.models.conversion.compute_md5')
+@mock.patch('ogreserver.models.conversion.subprocess.check_output')
+def test_write_ebook_meta_pdf(mock_subprocess_check_output, mock_compute_md5, mock_shutil_copy, flask_app, postgresql, user, ebook_db_fixture_pdf):
     conversion = Conversion(flask_app.config)
 
     # mock compute_md5 to return preset file hash
@@ -122,7 +137,10 @@ def test_write_ebook_meta_pdf(flask_app, postgresql, user, ebook_db_fixture_pdf,
     assert 'tagged=' not in mock_subprocess_check_output.call_args[0][0]
 
 
-def test_write_ebook_meta_azw3(flask_app, postgresql, user, ebook_db_fixture_azw3, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
+@mock.patch('ogreserver.models.conversion.shutil.copy')
+@mock.patch('ogreserver.models.conversion.compute_md5')
+@mock.patch('ogreserver.models.conversion.subprocess.check_output')
+def test_write_ebook_meta_azw3(mock_subprocess_check_output, mock_compute_md5, mock_shutil_copy, flask_app, postgresql, user, ebook_db_fixture_azw3):
     conversion = Conversion(flask_app.config)
 
     # mock compute_md5 to return preset file hash
@@ -136,7 +154,10 @@ def test_write_ebook_meta_azw3(flask_app, postgresql, user, ebook_db_fixture_azw
     assert 'tagged=' not in mock_subprocess_check_output.call_args[0][0]
 
 
-def test_write_ebook_meta_azw3_with_tags(flask_app, postgresql, user, ebook_fixture_azw3, mock_compute_md5, mock_subprocess_check_output, mock_shutil_copy):
+@mock.patch('ogreserver.models.conversion.shutil.copy')
+@mock.patch('ogreserver.models.conversion.compute_md5')
+@mock.patch('ogreserver.models.conversion.subprocess.check_output')
+def test_write_ebook_meta_azw3_with_tags(mock_subprocess_check_output, mock_compute_md5, mock_shutil_copy, flask_app, postgresql, user, ebook_fixture_azw3):
     conversion = Conversion(flask_app.config)
 
     # include some tags in the source ebook fixture

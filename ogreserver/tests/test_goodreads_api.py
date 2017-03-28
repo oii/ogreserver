@@ -6,6 +6,7 @@ import mock
 from ogreserver.models.goodreads import GoodreadsAPI
 
 
+@mock.patch('ogreserver.models.goodreads.requests')
 def test_isbn_search(mock_goodreads, get_data_fixtures):
     goodreads = GoodreadsAPI(None)
 
@@ -29,6 +30,7 @@ def test_isbn_search(mock_goodreads, get_data_fixtures):
     assert gr_data['authors'][0]['name'] == 'Max Brooks'
 
 
+@mock.patch('ogreserver.models.goodreads.requests')
 def test_isbn13_search1(mock_goodreads, get_data_fixtures):
     goodreads = GoodreadsAPI(None)
 
@@ -52,6 +54,7 @@ def test_isbn13_search1(mock_goodreads, get_data_fixtures):
     assert gr_data['authors'][0]['name'] == 'Max Brooks'
 
 
+@mock.patch('ogreserver.models.goodreads.requests')
 def test_isbn13_search2(mock_goodreads, get_data_fixtures):
     goodreads = GoodreadsAPI(None)
 
@@ -75,6 +78,7 @@ def test_isbn13_search2(mock_goodreads, get_data_fixtures):
     assert gr_data['authors'][0]['name'] == 'Anthony Ryan'
 
 
+@mock.patch('ogreserver.models.goodreads.requests')
 def test_author_title_search(mock_goodreads, get_data_fixtures):
     goodreads = GoodreadsAPI(None)
 
@@ -98,6 +102,7 @@ def test_author_title_search(mock_goodreads, get_data_fixtures):
     assert gr_data['authors'][0]['name'] == 'Richard K. Morgan'
 
 
+@mock.patch('ogreserver.models.goodreads.requests')
 def test_author_title_unicode(mock_goodreads, get_data_fixtures):
     goodreads = GoodreadsAPI(None)
 

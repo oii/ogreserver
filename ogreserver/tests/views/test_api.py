@@ -3,8 +3,9 @@ from __future__ import unicode_literals
 
 import collections
 import json
-
 from StringIO import StringIO
+
+import mock
 
 
 def test_get_definitions_list_of_lists(flask_app, ogreclient_auth_token):
@@ -41,7 +42,8 @@ def test_get_definitions_order(flask_app, ogreclient_auth_token):
     assert [k for k,v in defs.iteritems() if v[0] is True] == ['mobi', 'azw3', 'epub']
 
 
-def test_download_dedrm(flask_app, ogreclient_auth_token, mock_views_api_open):
+@mock.patch('ogreserver.views.api.open')
+def test_download_dedrm(mock_views_api_open, flask_app, ogreclient_auth_token):
     '''
     Test GET to /download-dedrm returns binary data
     '''
@@ -50,7 +52,8 @@ def test_download_dedrm(flask_app, ogreclient_auth_token, mock_views_api_open):
     assert resp.status_code == 302
 
 
-def test_confirm(flask_app, ogreclient_auth_token, mock_views_api_ebook_store):
+@mock.patch('ogreserver.views.api.ebook_store')
+def test_confirm(mock_views_api_ebook_store, flask_app, ogreclient_auth_token):
     '''
     Test POST to /confirm endpoint
     '''
@@ -71,7 +74,8 @@ def test_confirm(flask_app, ogreclient_auth_token, mock_views_api_ebook_store):
     assert json.loads(resp.data)['result'] == 'ok'
 
 
-def test_to_upload(flask_app, ogreclient_auth_token, mock_views_api_ebook_store):
+@mock.patch('ogreserver.views.api.ebook_store')
+def test_to_upload(mock_views_api_ebook_store, flask_app, ogreclient_auth_token):
     '''
     Test retrieve uploads from to /to-upload
     '''

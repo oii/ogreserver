@@ -1,9 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import mock
+
 from ogreserver.models.amazon import AmazonAPI
 
 
+@mock.patch('ogreserver.models.amazon.bottlenose.Amazon')
 def test_author_title_search1(mock_amazon, get_data_fixtures):
     amazon = AmazonAPI(None, None, None)
 
@@ -17,6 +20,7 @@ def test_author_title_search1(mock_amazon, get_data_fixtures):
     assert am_data is None
 
 
+@mock.patch('ogreserver.models.amazon.bottlenose.Amazon')
 def test_author_title_search2(mock_amazon, get_data_fixtures):
     amazon = AmazonAPI(None, None, None)
 
@@ -33,6 +37,7 @@ def test_author_title_search2(mock_amazon, get_data_fixtures):
     assert am_data['url'] == 'http://www.amazon.com/Black-Man-Richard-Morgan/dp/2352942322'
 
 
+@mock.patch('ogreserver.models.amazon.bottlenose.Amazon')
 def test_author_title_search3(mock_amazon, get_data_fixtures):
     amazon = AmazonAPI(None, None, None)
 
@@ -49,6 +54,7 @@ def test_author_title_search3(mock_amazon, get_data_fixtures):
     assert am_data['url'] == 'http://www.amazon.com/World-War-Oral-History-Zombie-ebook/dp/B000JMKQX0'
 
 
+@mock.patch('ogreserver.models.amazon.bottlenose.Amazon')
 def test_author_title_search4(mock_amazon, get_data_fixtures):
     amazon = AmazonAPI(None, None, None)
 
@@ -65,6 +71,7 @@ def test_author_title_search4(mock_amazon, get_data_fixtures):
     assert am_data['url'] == 'http://www.amazon.com/Altered-Carbon-Takeshi-Kovacs-Novels-ebook/dp/B000FBFMZ2'
 
 
+@mock.patch('ogreserver.models.amazon.bottlenose.Amazon')
 def test_invalid_asin_search(mock_amazon, get_data_fixtures):
     amazon = AmazonAPI(None, None, None)
 
@@ -83,6 +90,7 @@ def test_invalid_asin_search(mock_amazon, get_data_fixtures):
     assert am_data['url'] == 'http://www.amazon.com/World-War-Oral-History-Zombie-ebook/dp/B000JMKQX0'
 
 
+@mock.patch('ogreserver.models.amazon.bottlenose.Amazon')
 def test_valid_asin_search(mock_amazon, get_data_fixtures):
     amazon = AmazonAPI(None, None, None)
 
@@ -100,6 +108,7 @@ def test_valid_asin_search(mock_amazon, get_data_fixtures):
     assert am_data['url'] == 'http://www.amazon.com/World-War-Oral-History-Zombie-ebook/dp/B000JMKQX0'
 
 
+@mock.patch('ogreserver.models.amazon.bottlenose.Amazon')
 def test_author_title_unicode(mock_amazon, get_data_fixtures):
     amazon = AmazonAPI(None, None, None)
 

@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import copy
-import mock
 import os
 import pytest
 import yaml
@@ -21,90 +20,6 @@ def search(flask_app):
     yield search
     with flask_app.whoosh.writer() as writer:
         writer.mergetype = whoosh.writing.CLEAR
-
-
-@pytest.yield_fixture(scope='function')
-def mock_amazon():
-    m = mock.patch('ogreserver.models.amazon.bottlenose.Amazon')
-    yield m.start()
-    m.stop()
-
-
-@pytest.yield_fixture(scope='function')
-def mock_goodreads():
-    m = mock.patch('ogreserver.models.goodreads.requests')
-    yield m.start()
-    m.stop()
-
-
-@pytest.yield_fixture(scope='function')
-def mock_subprocess_popen(request):
-    m = mock.patch('ogreserver.models.conversion.subprocess.Popen')
-    yield m.start()
-    m.stop()
-
-
-@pytest.yield_fixture(scope='function')
-def mock_subprocess_check_call(request):
-    m = mock.patch('ogreserver.models.conversion.subprocess.check_call')
-    yield m.start()
-    m.stop()
-
-
-@pytest.yield_fixture(scope='function')
-def mock_subprocess_check_output(request):
-    m = mock.patch('ogreserver.models.conversion.subprocess.check_output')
-    yield m.start()
-    m.stop()
-
-
-@pytest.yield_fixture(scope='function')
-def mock_connect_s3(request):
-    m = mock.patch('ogreserver.models.conversion.connect_s3')
-    yield m.start()
-    m.stop()
-
-
-@pytest.yield_fixture(scope='function')
-def mock_compute_md5(request):
-    m = mock.patch('ogreserver.models.conversion.compute_md5')
-    yield m.start()
-    m.stop()
-
-
-@pytest.yield_fixture(scope='function')
-def mock_shutil_move(request):
-    m = mock.patch('ogreserver.models.conversion.shutil.move')
-    yield m.start()
-    m.stop()
-
-
-@pytest.yield_fixture(scope='function')
-def mock_shutil_copy(request):
-    m = mock.patch('ogreserver.models.conversion.shutil.copy')
-    yield m.start()
-    m.stop()
-
-
-@pytest.yield_fixture(scope='function')
-def mock_utils_make_tempdir(request):
-    m = mock.patch('ogreserver.models.conversion.make_temp_directory')
-    yield m.start()
-    m.stop()
-
-
-@pytest.yield_fixture(scope='function')
-def mock_views_api_open(request):
-    m = mock.patch('ogreserver.views.api.open', mock.mock_open(read_data='API open() data'))
-    yield m.start()
-    m.stop()
-
-
-@pytest.yield_fixture(scope='function')
-def mock_views_api_ebook_store(request):
-    m = mock.patch('ogreserver.views.api.ebook_store')
-    yield m.start()
-    m.stop()
 
 
 @pytest.fixture(scope='session')

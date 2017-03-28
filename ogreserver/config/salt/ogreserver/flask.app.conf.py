@@ -31,7 +31,8 @@ OGRECLIENT_VERSION = os.environ.get('OGRECLIENT_VERSION', '{{ pillar.get('ogrecl
 BROKER_URL = 'redis://localhost:6379'
 CELERY_ACCEPT_CONTENT = ['pickle']
 CELERY_TIMEZONE = '{{ pillar['timezone'] }}'
-
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
 
 # AWS config
 AWS_ACCESS_KEY_ID = "{{ pillar.get('aws_access_key', '') }}"

@@ -1,8 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from ogreserver.models.amazon import AmazonAPI
 
-def test_ranking1(amazon):
+
+def test_ranking1():
+    amazon = AmazonAPI(None, None, None)
+
     response_items = [
         {'url': 'http://www.amazon.com/Unter-Dieben-Roman-German-Edition-ebook/dp/B0076Q1IH0', 'asin': 'B0076Q1IH0', 'title': 'Unter Dieben: Roman (German Edition)', 'author': 'Douglas Hulick'},
         {'url': 'http://www.amazon.com/Among-Thieves-Tale-Kin-Book/dp/B006RGFVXW', 'asin': 'B006RGFVXW', 'title': 'Among Thieves: A Tale of the Kin, Book 1', 'author': 'Douglas Hulick'}
@@ -12,7 +16,9 @@ def test_ranking1(amazon):
     assert item['title'] == 'Among Thieves: A Tale of the Kin, Book 1'
 
 
-def test_ranking2(amazon):
+def test_ranking2():
+    amazon = AmazonAPI(None, None, None)
+
     response_items = [
         {'url': 'http://www.amazon.com/World-War-Oral-History-Zombie-ebook/dp/B000JMKQX0', 'asin': 'B000JMKQX0', 'title': 'World War Z: An Oral History of the Zombie War', 'author': 'Max Brooks'},
         {'url': 'http://www.amazon.com/World-War-Z-Italian-Edition-ebook/dp/B00DP48UGO', 'asin': 'B00DP48UGO', 'title': 'World War Z (Italian Edition)', 'author': 'Max Brooks'},
@@ -30,7 +36,9 @@ def test_ranking2(amazon):
     assert item['title'] == 'World War Z: An Oral History of the Zombie War'
 
 
-def test_ranking3(amazon):
+def test_ranking3():
+    amazon = AmazonAPI(None, None, None)
+
     response_items = [
         {'url': 'http://www.amazon.com/Altered-Carbon-Takeshi-Kovacs-Novels-ebook/dp/B000FBFMZ2', 'asin': 'B000FBFMZ2', 'title': 'Altered Carbon (Takeshi Kovacs Novels Book 1)', 'author': 'Richard K. Morgan'},
         {'url': 'http://www.amazon.com/Das-Unsterblichkeitsprogramm-Roman-German-Edition-ebook/dp/B004P1J3J4', 'asin': 'B004P1J3J4', 'title': 'Das Unsterblichkeitsprogramm: Roman (German Edition)', 'author': 'Richard Morgan'}

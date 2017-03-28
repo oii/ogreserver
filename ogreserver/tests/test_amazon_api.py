@@ -1,8 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from ogreserver.models.amazon import AmazonAPI
 
-def test_author_title_search1(mock_amazon, amazon, get_data_fixtures):
+
+def test_author_title_search1(mock_amazon, get_data_fixtures):
+    amazon = AmazonAPI(None, None, None)
+
     # load AmazonAPI response fixtures
     fixtures = get_data_fixtures(__file__, 'test_author_title_search1')
     mock_amazon.return_value.ItemSearch.side_effect = fixtures['mock_amazon_itemsearch']
@@ -13,7 +17,9 @@ def test_author_title_search1(mock_amazon, amazon, get_data_fixtures):
     assert am_data is None
 
 
-def test_author_title_search2(mock_amazon, amazon, get_data_fixtures):
+def test_author_title_search2(mock_amazon, get_data_fixtures):
+    amazon = AmazonAPI(None, None, None)
+
     # load AmazonAPI response fixtures
     fixtures = get_data_fixtures(__file__, 'test_author_title_search2')
     mock_amazon.return_value.ItemSearch.side_effect = fixtures['mock_amazon_itemsearch']
@@ -27,7 +33,9 @@ def test_author_title_search2(mock_amazon, amazon, get_data_fixtures):
     assert am_data['url'] == 'http://www.amazon.com/Black-Man-Richard-Morgan/dp/2352942322'
 
 
-def test_author_title_search3(mock_amazon, amazon, get_data_fixtures):
+def test_author_title_search3(mock_amazon, get_data_fixtures):
+    amazon = AmazonAPI(None, None, None)
+
     # load AmazonAPI response fixtures
     fixtures = get_data_fixtures(__file__, 'test_author_title_search3')
     mock_amazon.return_value.ItemSearch.side_effect = fixtures['mock_amazon_itemsearch']
@@ -41,7 +49,9 @@ def test_author_title_search3(mock_amazon, amazon, get_data_fixtures):
     assert am_data['url'] == 'http://www.amazon.com/World-War-Oral-History-Zombie-ebook/dp/B000JMKQX0'
 
 
-def test_author_title_search4(mock_amazon, amazon, get_data_fixtures):
+def test_author_title_search4(mock_amazon, get_data_fixtures):
+    amazon = AmazonAPI(None, None, None)
+
     # load AmazonAPI response fixtures
     fixtures = get_data_fixtures(__file__, 'test_author_title_search4')
     mock_amazon.return_value.ItemSearch.side_effect = fixtures['mock_amazon_itemsearch']
@@ -55,7 +65,9 @@ def test_author_title_search4(mock_amazon, amazon, get_data_fixtures):
     assert am_data['url'] == 'http://www.amazon.com/Altered-Carbon-Takeshi-Kovacs-Novels-ebook/dp/B000FBFMZ2'
 
 
-def test_invalid_asin_search(mock_amazon, amazon, get_data_fixtures):
+def test_invalid_asin_search(mock_amazon, get_data_fixtures):
+    amazon = AmazonAPI(None, None, None)
+
     # load AmazonAPI response fixtures
     fixtures = get_data_fixtures(__file__, 'test_invalid_asin_search')
     mock_amazon.return_value.ItemSearch.side_effect = fixtures['mock_amazon_itemsearch']
@@ -71,7 +83,9 @@ def test_invalid_asin_search(mock_amazon, amazon, get_data_fixtures):
     assert am_data['url'] == 'http://www.amazon.com/World-War-Oral-History-Zombie-ebook/dp/B000JMKQX0'
 
 
-def test_valid_asin_search(mock_amazon, amazon, get_data_fixtures):
+def test_valid_asin_search(mock_amazon, get_data_fixtures):
+    amazon = AmazonAPI(None, None, None)
+
     # load AmazonAPI response fixtures
     fixtures = get_data_fixtures(__file__, 'test_valid_asin_search')
     mock_amazon.return_value.ItemSearch.side_effect = fixtures['mock_amazon_itemsearch']
@@ -86,7 +100,9 @@ def test_valid_asin_search(mock_amazon, amazon, get_data_fixtures):
     assert am_data['url'] == 'http://www.amazon.com/World-War-Oral-History-Zombie-ebook/dp/B000JMKQX0'
 
 
-def test_author_title_unicode(mock_amazon, amazon, get_data_fixtures):
+def test_author_title_unicode(mock_amazon, get_data_fixtures):
+    amazon = AmazonAPI(None, None, None)
+
     # load AmazonAPI response fixtures
     fixtures = get_data_fixtures(__file__, 'test_author_title_search2')
     mock_amazon.return_value.ItemSearch.side_effect = fixtures['mock_amazon_itemsearch']

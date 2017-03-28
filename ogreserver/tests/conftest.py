@@ -9,7 +9,6 @@ import yaml
 
 import whoosh
 
-from ogreserver.models.amazon import AmazonAPI
 from ogreserver.models.goodreads import GoodreadsAPI
 from ogreserver.models.search import Search
 
@@ -22,15 +21,6 @@ def search(flask_app):
     yield search
     with flask_app.whoosh.writer() as writer:
         writer.mergetype = whoosh.writing.CLEAR
-
-
-@pytest.fixture(scope='function')
-def amazon(app_config):
-    return AmazonAPI(
-        app_config.get('AWS_ADVERTISING_API_ACCESS_KEY', None),
-        app_config.get('AWS_ADVERTISING_API_SECRET_KEY', None),
-        app_config.get('AWS_ADVERTISING_API_ASSOCIATE_TAG', None),
-    )
 
 
 @pytest.yield_fixture(scope='function')

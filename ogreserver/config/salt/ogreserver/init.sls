@@ -5,6 +5,7 @@ include:
   - closure-compiler
   - gunicorn
   - libsass
+  - ogreserver.create-ogrebot-user
   - postgres
   - nodejs
   - redis
@@ -27,7 +28,6 @@ extend:
   /etc/supervisor/conf.d/ogreserver.conf:
     file.managed:
       - context:
-          app_dir: {{ pillar['app_directory_name'] }}
           workers:
             high: 0
             low: 1
@@ -56,14 +56,20 @@ virtualenv:
     - require:
       - pkg: venv-dependencies
 
+/var/cache/ogre:
+  file.directory:
+    - user: {{ pillar['app_user'] }}
+    - group: {{ pillar['app_user'] }}
+
 app-virtualenv:
   virtualenv.managed:
-    - name: /srv/{{ pillar['app_directory_name'] }}
+    - name: /var/cache/ogre/venv
     - requirements: /srv/{{ pillar['app_directory_name'] }}/ogreserver/config/requirements.txt
     - user: {{ pillar['app_user'] }}
     - require:
       - pip: virtualenv
       - user: {{ pillar['app_user'] }}
+      - file: /var/cache/ogre
 
 # celerybeat schedule directory
 /var/celerybeat:
@@ -87,11 +93,12 @@ bower:
 
 bower-ogreserver-install:
   cmd.run:
-    - name: bower install --config.interactive=false
+    - name: bower install --config.interactive=false --config.directory=/var/cache/ogre/bower
     - cwd: /srv/{{ pillar['app_directory_name'] }}/ogreserver/static
     - user: {{ pillar['app_user'] }}
-    - unless: test -d /srv/{{ pillar['app_directory_name'] }}/ogreserver/static/bower_components
+    - unless: test -d /var/cache/ogre/bower
     - require:
+      - file: /var/cache/ogre
       - git: git-clone-app
 
 
@@ -138,7 +145,7 @@ flask-config:
 
 ogre-init:
   cmd.run:
-    - name: bin/python manage.py init_ogre
+    - name: /var/cache/ogre/venv/bin/python manage.py init_ogre
     - cwd: /srv/{{ pillar['app_directory_name'] }}
     - user: {{ pillar['app_user'] }}
     - require:

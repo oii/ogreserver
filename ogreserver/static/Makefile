@@ -23,16 +23,16 @@ js_prod:
 
 sass_dev:
 	@sassc -t expanded \
-		-I bower_components/foundation-sites/scss \
-		-I bower_components/motion-ui/src \
+		-I /var/cache/ogre/bower/foundation-sites/scss \
+		-I /var/cache/ogre/bower/motion-ui/src \
 		-I sass \
 		sass/app.scss \
 		dist/ogreserver.css
 
 sass_prod:
 	@sassc -t compressed \
-		-I bower_components/foundation-sites/scss \
-		-I bower_components/motion-ui/src \
+		-I /var/cache/ogre/bower/foundation-sites/scss \
+		-I /var/cache/ogre/bower/motion-ui/src \
 		-I sass \
 		sass/app.scss \
 		dist/ogreserver.css

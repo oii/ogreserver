@@ -1,1 +1,1 @@
-../bower_components/foundation-sites/js/foundation.core.js
+/var/cache/ogre/bower/foundation-sites/js/foundation.core.js

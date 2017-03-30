@@ -87,7 +87,7 @@ logs-chown:
 requirements-dev-install:
   pip.installed:
     - requirements: /srv/ogre/ogreserver/config/requirements-dev.txt
-    - bin_env: /srv/{{ pillar['app_directory_name'] }}
+    - bin_env: /var/cache/ogre/venv
     - user: {{ pillar['app_user'] }}
     - require:
       - virtualenv: app-virtualenv

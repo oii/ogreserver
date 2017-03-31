@@ -84,7 +84,7 @@ def query_ebook_metadata(ebook_id):
             ebook.title = am_data['title']
 
             # start task to upload Amazon image to S3
-            image_upload.delay(ebook.id)
+            image_upload.delay(ebook.id, am_data['image_url'])
 
         # query Goodreads API
         gr = GoodreadsAPI(app.config['GOODREADS_API_KEY'])
@@ -127,35 +127,26 @@ def query_ebook_metadata(ebook_id):
 
 
 @app.celery.task(queue='low')
-def image_upload(ebook_id):
+def image_upload(ebook_id, image_url):
     """
-    Upload book image to S3
+    Upload book image to S3. Images are named by ebook_id, which means they'll
+    appear in the frontend when available.
     """
     with app.app_context():
-        # initialise the DB connection in our fake app context
-        setup_db_session(app)
-
-        ebook = Ebook.query.get(ebook_id)
-
         # fetch remote image into temp directory
         with make_temp_directory() as tmpdir:
             try:
                 res = urllib.urlretrieve(
-                    ebook.provider_metadata['amazon']['image_url'],
-                    os.path.join(tmpdir, 'image_file')
+                    image_url, os.path.join(tmpdir, 'image_file')
                 )
             except KeyError:
-                app.logger.error('No image available: {}'.format(
-                    ebook.provider_metadata['amazon']['image_url']
-                ))
+                app.logger.error('No image available: {}'.format(image_url))
             except Exception as e:
-                app.logger.error('Failed retrieving image {}: {}'.format(
-                    ebook.provider_metadata['amazon']['image_url'], e
-                ))
+                app.logger.error('Failed retrieving image {}: {}'.format(image_url, e))
                 return
 
             # generate new S3 filename
-            filename = '{}-0.jpg'.format(ebook.id)
+            filename = '{}-0.jpg'.format(ebook_id)
 
             try:
                 # upload to S3

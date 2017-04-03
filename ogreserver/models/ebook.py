@@ -47,7 +47,8 @@ class Ebook(Base, TimestampMixin):
     versions = relationship(
         'Version',
         foreign_keys='[Version.ebook_id]',
-        back_populates='ebook'
+        back_populates='ebook',
+        passive_deletes=True
     )
 
     original_version_id = Column(
@@ -85,7 +86,10 @@ class Version(Base, TimestampMixin):
 
     id = Column(UUID, primary_key=True)
 
-    ebook_id = Column(String(32), ForeignKey('ebooks.id'))
+    ebook_id = Column(
+        String(32),
+        ForeignKey('ebooks.id', ondelete='CASCADE')
+    )
     ebook = relationship('Ebook', foreign_keys=[ebook_id], back_populates='versions')
 
     uploader_id = Column(Integer, ForeignKey('user.id'), nullable=False)
@@ -101,7 +105,8 @@ class Version(Base, TimestampMixin):
     formats = relationship(
         'Format',
         foreign_keys='[Format.version_id]',
-        back_populates='version'
+        back_populates='version',
+        passive_deletes=True
     )
 
     source_format_id = Column(
@@ -156,7 +161,9 @@ class Format(Base, TimestampMixin):
 
     file_hash = Column(String(32), primary_key=True)
 
-    version_id = Column(UUID, ForeignKey('versions.id'))
+    version_id = Column(
+        UUID, ForeignKey('versions.id', ondelete='CASCADE')
+    )
     version = relationship('Version', foreign_keys=[version_id], back_populates='formats')
 
     uploader_id = Column(Integer, ForeignKey('user.id'), nullable=False, index=True)

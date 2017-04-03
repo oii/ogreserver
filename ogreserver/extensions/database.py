@@ -11,7 +11,7 @@ from flask import json
 Base = declarative_base()
 
 
-def setup_db_session(app):
+def setup_db_session(app, expire_on_commit=True):
     if not hasattr(g, 'db_session'):
         # DB connection added to request globals via Flask.before_request()
         engine = create_engine(
@@ -21,6 +21,7 @@ def setup_db_session(app):
         )
         g.db_session = scoped_session(sessionmaker(autocommit=False,
                                                    autoflush=False,
+                                                   expire_on_commit=expire_on_commit,
                                                    bind=engine))
         Base.query = g.db_session.query_property()
 

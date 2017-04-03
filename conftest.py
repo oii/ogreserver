@@ -68,6 +68,11 @@ def app_config():
         'DIST_S3_BUCKET': 'ogre-testing',
         'DEDRM_VERSION': '0.0.1',
 
+        'EBOOK_CONTENT_TYPES': {
+            'azw3': 'application/vnd.amazon.ebook',
+            'epub': 'application/epub+zip',
+        },
+
         'EBOOK_DEFINITIONS': collections.OrderedDict([
             ('mobi', FormatConfig(True, False)),
             ('pdf', FormatConfig(False, True)),
@@ -77,6 +82,7 @@ def app_config():
 
         'EBOOK_FORMATS': ['egg', 'mobi', 'azw3'],
         'DOWNLOAD_LINK_EXPIRY': 10,
+        'NUM_EBOOKS_FOR_CONVERT': 1,
 
         'DB_HOST': 'localhost',
         'DB_USER': 'ogre',
@@ -172,13 +178,16 @@ def _postgresql(request, _flask_app):
         conn.execute(sql)
         conn.close()
 
+    # terminate any existing DB connections
+    terminate_db_connections(engine, 'test')
+
     # create a test database using sqlalchemy
     run_query('drop database if exists test')
     run_query('create database test')
 
     with _flask_app.test_request_context():
         # init app tables into test database
-        db_session = setup_db_session(_flask_app)
+        db_session = setup_db_session(_flask_app, expire_on_commit=False)
         create_tables(_flask_app)
 
         # create the ogrebot user

@@ -59,8 +59,6 @@ def app_config():
         'CELERY_DEFAULT_ROUTING_KEY': 'testing',
         'CELERY_DEFAULT_EXCHANGE': 'testing',
 
-        'CELERY_ALWAYS_EAGER': True,
-
         'AWS_ACCESS_KEY': '',
         'AWS_SECRET_KEY': '',
         'AWS_REGION': '',

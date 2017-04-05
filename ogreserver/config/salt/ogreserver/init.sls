@@ -5,13 +5,31 @@ include:
   - closure-compiler
   - gunicorn
   - libsass
+  - nodejs
+  - nginx.config
   - ogreserver.create-ogrebot-user
   - postgres
-  - nodejs
   - redis
 
 
 extend:
+  nginx:
+    service.running:
+      - watch:
+        - file: /etc/nginx/conf.d/http.conf
+        - file: /etc/nginx/proxy_params
+        - file: /etc/nginx/sites-enabled/{{ pillar['app_name'] }}.conf
+
+  nginx-app-config-80:
+    file.managed:
+      - context:
+          server_name: {{ grains['ip_interfaces']['eth0'][0] }}
+          root: /srv/ogre/ogreserver
+          static_dir: /static/
+          static_alias: /srv/ogre/ogreserver/static/dist/
+          upstream_host: {{ grains['ip_interfaces']['eth0'][0] }}
+          upstream_port: 8005
+
   gunicorn-config:
     file.managed:
       - context:

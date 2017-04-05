@@ -6,7 +6,6 @@ base:
 
   'G@env:prod or G@env:staging':
     - match: compound
-    - nginx.config
     - ogreserver.prod
 
   'env:dev':

@@ -8,13 +8,6 @@ include:
 
 
 extend:
-  nginx:
-    service.running:
-      - watch:
-        - file: /etc/nginx/conf.d/http.conf
-        - file: /etc/nginx/proxy_params
-        - file: /etc/nginx/sites-enabled/{{ pillar['app_name'] }}.conf
-
   {% for port in [80, 443] %}
   nginx-app-config-{{ port }}:
     file.managed:

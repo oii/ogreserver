@@ -4,6 +4,7 @@ Babel>2,<3
 boto>2.4,<3
 bottlenose>=1,<2
 celery==4.0.2
+datadog
 Flask==0.12
 Flask-Script==0.6.7
 Flask-Uploads==0.2.1

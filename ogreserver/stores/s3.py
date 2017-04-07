@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import re
 
+from datadog import statsd
 from flask import current_app as app
 from unidecode import unidecode
 
@@ -13,6 +14,7 @@ from ..utils.s3 import connect_s3
 from .. import exceptions
 
 
+@statsd.timed()
 def upload_ebook(ebook_id, file_hash, filepath, user, content_type=None):
     """
     Store an ebook on S3
@@ -57,6 +59,7 @@ def upload_ebook(ebook_id, file_hash, filepath, user, content_type=None):
     return True
 
 
+@statsd.timed()
 def _generate_filename(file_hash, author=None, title=None, fmt=None):
     """
     Generate the filename for a book on its way to S3
@@ -102,6 +105,7 @@ def _generate_filename(file_hash, author=None, title=None, fmt=None):
     return '{}.{}.{}'.format(authortitle, file_hash[0:8], fmt)
 
 
+@statsd.timed()
 def get_ebook_download_url(ebook_id, version_id=None, fmt=None, user=None):
     """
     Generate a download URL for the requested ebook

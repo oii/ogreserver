@@ -5,6 +5,7 @@ import uuid
 
 import dateutil.parser
 
+from datadog import statsd
 from flask import current_app as app, g
 from sqlalchemy.orm import contains_eager
 
@@ -25,6 +26,7 @@ def _load_ebook_query():
     )
 
 
+@statsd.timed()
 def load_ebook(ebook_id):
     """
     Load an ebook by id
@@ -37,6 +39,7 @@ def load_ebook(ebook_id):
     return query.filter(Ebook.id == ebook_id).one_or_none()
 
 
+@statsd.timed()
 def load_ebook_by_file_hash(file_hash):
     """
     Load an ebook object by a Format file_hash PK.
@@ -57,6 +60,7 @@ def load_ebook_by_file_hash(file_hash):
     return query.one_or_none()
 
 
+@statsd.timed()
 def load_ebook_by_original_file_hash(file_hash):
     """
     When an ebook is first uploaded, before OGRE has modified it at all, the file_hash
@@ -70,6 +74,7 @@ def load_ebook_by_original_file_hash(file_hash):
     return query.filter(Version.original_file_hash == file_hash).one_or_none()
 
 
+@statsd.timed()
 def load_ebook_by_authortitle(author, title):
     """
     Load an ebook by the author/title combination
@@ -86,6 +91,7 @@ def load_ebook_by_authortitle(author, title):
     ).one_or_none()
 
 
+@statsd.timed()
 def append_ebook_metadata(ebook, provider, metadata):
     """
     Append new metadata into an ebook from one of our providers
@@ -103,6 +109,7 @@ def append_ebook_metadata(ebook, provider, metadata):
     app.signals['ebook-updated'].send(ebook, ebook_id=ebook.id)
 
 
+@statsd.timed()
 def load_ebook_by_asin(asin):
     """
     Load an ebook by the ASIN
@@ -110,6 +117,7 @@ def load_ebook_by_asin(asin):
     return Ebook.query.filter_by(asin=asin).first()
 
 
+@statsd.timed()
 def load_ebook_by_isbn(isbn):
     """
     Load an ebook by the ISBN
@@ -117,6 +125,7 @@ def load_ebook_by_isbn(isbn):
     return Ebook.query.filter_by(isbn=isbn).first()
 
 
+@statsd.timed()
 def create_ebook(title, author, user, incoming):
     ebook_id = generate_ebook_id(author, title)
 
@@ -173,6 +182,7 @@ def create_ebook(title, author, user, incoming):
     return ebook
 
 
+@statsd.timed()
 def create_version(ebook, user, file_hash, fmt, size, dedrm):
     # default higher popularity if book has been decrypted by ogreclient;
     # due to better guarantee of provenance
@@ -215,6 +225,7 @@ def create_version(ebook, user, file_hash, fmt, size, dedrm):
     return version
 
 
+@statsd.timed()
 def create_format(version, file_hash, fmt, user=None, dedrm=None, ogreid_tagged=False, nocommit=False):
     new_format = {
         'file_hash': file_hash,
@@ -235,6 +246,7 @@ def create_format(version, file_hash, fmt, user=None, dedrm=None, ogreid_tagged=
     return format
 
 
+@statsd.timed()
 def increment_popularity(file_hash):
     """
     Increase an ebook version's popularity by one. Popularity is stored against
@@ -259,6 +271,7 @@ def increment_popularity(file_hash):
     g.db_session.commit()
 
 
+@statsd.timed()
 def append_owner(file_hash, user):
     """
     Append the current user to the list of owners of this particular file
@@ -273,6 +286,7 @@ def append_owner(file_hash, user):
     g.db_session.commit()
 
 
+@statsd.timed()
 def update_ebook_hash(current_file_hash, updated_file_hash):
     """
     Update a format with a new filehash (which is the primary key)
@@ -305,6 +319,7 @@ def update_ebook_hash(current_file_hash, updated_file_hash):
     return True
 
 
+@statsd.timed()
 def set_uploaded(file_hash, user, filename, isit=True):
     """
     Mark an ebook as having been uploaded to S3
@@ -317,6 +332,7 @@ def set_uploaded(file_hash, user, filename, isit=True):
     g.db_session.commit()
 
 
+@statsd.timed()
 def set_dedrm_flag(file_hash):
     """
     Mark a book as having had DRM removed
@@ -327,6 +343,7 @@ def set_dedrm_flag(file_hash):
     g.db_session.commit()
 
 
+@statsd.timed()
 def set_curated(ebook_id, state):
     """
     Mark a book as OGRE community curated
@@ -337,6 +354,7 @@ def set_curated(ebook_id, state):
     g.db_session.commit()
 
 
+@statsd.timed()
 def get_missing_books(user=None):
     """
     Query for books marked as not uploaded
@@ -357,6 +375,7 @@ def get_missing_books(user=None):
     return [f.file_hash for f in query.all()]
 
 
+@statsd.timed()
 def find_missing_formats(fmt, limit=None):
     """
     Find ebook versions missing supplied format. Ignores non-fiction ebooks.
@@ -397,6 +416,7 @@ def find_missing_formats(fmt, limit=None):
     return query.all()
 
 
+@statsd.timed()
 def get_best_ebook_filehash(ebook_id, version_id=None, fmt=None, user=None):
     """
     Get the file_hash for most appropriate format based on supplied params

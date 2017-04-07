@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 
-from flask import g
-
-from flask import Blueprint, render_template
+from flask import Blueprint, g, render_template
 from flask_login import login_required
 
 from .ebooks import listing

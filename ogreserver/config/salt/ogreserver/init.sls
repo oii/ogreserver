@@ -29,9 +29,11 @@ extend:
           static_alias: /srv/ogre/ogreserver/static/dist/
           upstream_host: {{ grains['ip_interfaces']['eth0'][0] }}
           upstream_port: 8005
+          stub_status: true
 
   gunicorn-config:
     file.managed:
+      - source: salt://ogreserver/gunicorn.conf.py
       - context:
           worker_class: gevent
           gunicorn_port: {{ pillar['gunicorn_port'] }}

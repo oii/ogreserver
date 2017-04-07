@@ -6,6 +6,8 @@ import datetime
 import json
 import os
 
+from datadog import statsd
+
 from flask import current_app as app
 from flask import Blueprint, jsonify, request, redirect, Response, abort
 from flask_security import current_user
@@ -24,6 +26,7 @@ bp_api = Blueprint('api', __name__, url_prefix='/api/v1')
 
 @bp_api.route('/definitions')
 @auth_token_required
+@statsd.timed()
 def get_definitions():
     '''
     Return the current ebook format definitions to the client
@@ -41,7 +44,10 @@ def get_definitions():
 
 @bp_api.route('/download-dedrm')
 @auth_token_required
+@statsd.timed()
 def download_dedrm():
+    statsd.increment('views.api.download_dedrm', 1)
+
     # supply the latest DRM tools to the client
     url = 'https://s3-{}.amazonaws.com/{}/dedrm-{}.tar.gz'.format(
         app.config['AWS_REGION'],
@@ -53,7 +59,10 @@ def download_dedrm():
 
 @bp_api.route('/post', methods=['POST'])
 @auth_token_required
+@statsd.timed()
 def post():
+    statsd.increment('views.api.post', 1)
+
     data = request.get_json()
 
     # stats log the upload
@@ -93,7 +102,10 @@ def post():
 
 @bp_api.route('/post-logs', methods=['POST'])
 @auth_token_required
+@statsd.timed()
 def post_logs():
+    statsd.increment('views.api.post_logs', 1)
+
     log_file_path = os.path.join(
         app.uploaded_logs.config.destination,
         '{}.{}.log'.format(
@@ -117,7 +129,10 @@ def post_logs():
 
 @bp_api.route('/upload-errord', methods=['POST'])
 @auth_token_required
+@statsd.timed()
 def upload_errord():
+    statsd.increment('views.api.upload_errord', 1)
+
     filename = '{}.{}.{}'.format(
         current_user.username,
         datetime.datetime.now().strftime("%Y%m%d-%H%M%S"),
@@ -130,7 +145,10 @@ def upload_errord():
 
 @bp_api.route('/confirm', methods=['POST'])
 @auth_token_required
+@statsd.timed()
 def confirm():
+    statsd.increment('views.api.confirm', 1)
+
     data = request.get_json()
 
     # update a file's md5 hash
@@ -151,7 +169,10 @@ def confirm():
 
 @bp_api.route('/to-upload', methods=['GET'])
 @auth_token_required
+@statsd.timed()
 def to_upload():
+    statsd.increment('views.api.to_upload', 1)
+
     # query books to upload and supply back to the client
     missing_books = ebook_store.get_missing_books(user=current_user)
 
@@ -160,7 +181,10 @@ def to_upload():
 
 @bp_api.route('/upload', methods=['POST'])
 @auth_token_required
+@statsd.timed()
 def upload():
+    statsd.increment('views.api.upload', 1)
+
     # log the upload
     app.logger.debug('UPLOAD {} {} {}'.format(
         current_user.username,
@@ -190,5 +214,6 @@ def upload():
 
 @bp_api.route('/slack', methods=['POST'])
 @slack_token_required
+@statsd.timed()
 def slack():
     return 'Hi {}'.format(request.form['user_name'])

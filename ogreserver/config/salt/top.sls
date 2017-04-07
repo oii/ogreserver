@@ -7,6 +7,7 @@ base:
   'G@env:prod or G@env:staging':
     - match: compound
     - ogreserver.prod
+    - datadog
 
   'env:dev':
     - match: grain

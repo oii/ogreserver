@@ -3,11 +3,13 @@ from __future__ import unicode_literals
 
 import datetime
 
-from flask import g
+from datadog import statsd
+from flask import current_app as app, g
 
 from ..models.ebook import SyncEvent
 
 
+@statsd.timed()
 def log(user, syncd_books_count, new_books_count):
     """
     Add entries to a log every time a user syncs from ogreclient

@@ -55,6 +55,10 @@ GOODREADS_API_KEY = "{{ pillar.get('goodreads_api_key', '') }}"
 # Slack integration token
 SLACK_TOKEN = "{{ pillar.get('slack_token', '') }}"
 
+# DataDog integration
+DATADOG_API_KEY = "{{ pillar.get('datadog_api_key', '') }}"
+DATADOG_APP_KEY = "{{ pillar.get('datadog_app_key', '') }}"
+#STATSD_USEMS = True
 
 # Where to store/serve ebooks
 {% if grains.get('virtual') == 'VMWare' %}

@@ -17,6 +17,7 @@ extend:
           upstream_gzip: true
           static_dir: /static/
           static_alias: /srv/ogre/ogreserver/static/dist/
+          stub_status: true
   {% endfor %}
 
   static-asset-compile:

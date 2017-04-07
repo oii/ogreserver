@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import os
 import urllib
 
+from datadog import statsd
 from flask import current_app as app, g
 from flask import render_template
 
@@ -32,6 +33,7 @@ from .utils.s3 import connect_s3
 
 
 @app.celery.task(queue='high', rate_limit='1/s')
+@statsd.timed()
 def query_ebook_metadata(ebook_id):
     """
     Set and validate ebook metadata, authors, title etc. by querying external APIs
@@ -125,6 +127,7 @@ def query_ebook_metadata(ebook_id):
 
 
 @app.celery.task(queue='low')
+@statsd.timed()
 def image_upload(ebook_id, image_url):
     """
     Upload book image to S3. Images are named by ebook_id, which means they'll
@@ -159,6 +162,7 @@ def image_upload(ebook_id, image_url):
 
 
 @app.celery.task(queue='high')
+@statsd.timed()
 def index_for_search(ebook_id):
     """
     Add ebook to the Whoosh search index
@@ -187,6 +191,7 @@ def index_for_search(ebook_id):
 
 
 @app.celery.task(queue='high')
+@statsd.timed()
 def upload_ebook(ebook_id, filename, file_hash, fmt, username):
     """
     Upload an ebook to S3
@@ -219,6 +224,7 @@ def upload_ebook(ebook_id, filename, file_hash, fmt, username):
 
 
 @app.celery.task(queue='low')
+@statsd.timed()
 def conversion_search():
     """
     Search for ebooks which are missing key formats epub & mobi
@@ -230,6 +236,7 @@ def conversion_search():
 
 
 @app.celery.task(queue='low')
+@statsd.timed()
 def convert(ebook_id, version_id, original_filename, dest_fmt):
     """
     Convert an ebook to other formats, currently mobi & epub
@@ -258,6 +265,7 @@ def convert(ebook_id, version_id, original_filename, dest_fmt):
 
 
 @app.celery.task(queue='high')
+@statsd.timed()
 def send_mail(recipient, subject, template, **context):
     """
     Send an email via Mailgun

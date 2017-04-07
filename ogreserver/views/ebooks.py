@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 
 import pyaml
 
+from datadog import statsd
 from flask import current_app as app
-
 from flask import g, Blueprint, make_response, request, redirect, url_for
 from flask_security.decorators import login_required
 from werkzeug.exceptions import abort
@@ -21,7 +21,10 @@ bp_ebooks = Blueprint('ebooks', __name__)
 @bp_ebooks.route('/list/', methods=['GET', 'POST'])
 @bp_ebooks.route('/list/<int:pagenum>/')
 @login_required
+@statsd.timed()
 def listing(pagenum=None):
+    statsd.increment('views.ebooks.listing', 1)
+
     if not pagenum:
         pagenum = int(request.args.get('pagenum', 1))
 
@@ -53,7 +56,10 @@ def listing(pagenum=None):
 
 @bp_ebooks.route('/list-fragment/')
 @login_required
+@statsd.timed()
 def listing_fragment():
+    statsd.increment('views.ebooks.listing_fragment', 1)
+
     pagenum = int(request.args['pagenum'])
 
     query_data = {
@@ -84,7 +90,10 @@ def listing_fragment():
 
 @bp_ebooks.route('/ebook/<ebook_id>/')
 @login_required
+@statsd.timed()
 def detail(ebook_id):
+    statsd.increment('views.ebooks.detail', 1)
+
     ebook = ebook_store.load_ebook(ebook_id)
 
     if ebook is None:
@@ -118,6 +127,9 @@ def detail(ebook_id):
 
 @bp_ebooks.route('/ebook/<ebook_id>/curated/<int:state>')
 @login_required
+@statsd.timed()
 def set_curated(ebook_id, state):
+    statsd.increment('views.ebooks.set_curated', 1)
+
     ebook_store.set_curated(ebook_id, state)
     return redirect(url_for('.detail', ebook_id=ebook_id))

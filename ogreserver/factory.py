@@ -88,6 +88,10 @@ def configure_extensions(app):
     from .extensions.json import init_json
     init_json(app)
 
+    # setup integration with DataDog
+    from .extensions.datadog import init_datadog
+    init_datadog(app)
+
 
 def register_blueprints(app):
     # import view blueprints and register with the Flask app

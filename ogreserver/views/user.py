@@ -32,7 +32,7 @@ def profile_edit(user_id):
     if g.user.id > 1 and g.user.id != user_id:
         raise Forbidden
 
-    form = ProfileEditForm(request.form, g.user)
+    form = ProfileEditForm(request.form, obj=g.user)
     if form.validate_on_submit():
         form.populate_obj(g.user)
         if g.user.preferred_ebook_format == '-':

@@ -18,5 +18,5 @@ def render_template(template, **context):
     Wrap Flask's render_template() function to add SearchForm() to every rendered template
     '''
     if 'search_form' not in context:
-        context['search_form'] = SearchForm(csrf_enabled=False)
+        context['search_form'] = SearchForm(meta={'csrf': False})
     return flask_render_template(template, **context)

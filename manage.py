@@ -126,34 +126,34 @@ def create_user(username, password, email, role='user', confirmed=False):
     """
     setup_db_session(app)
 
-    try:
-        # load a user
-        user = User.query.filter_by(username=username).first()
+    # check if user exists
+    user = User.query.filter_by(username=username).first()
+    if user:
         print 'User {} already exists'.format(username)
+        return
 
-    except ProgrammingError:
-        try:
-            # celery is required for flask_security as it imports tasks.py
-            app.celery = make_celery(app)
-            register_tasks(app)
+    try:
+        # celery is required for flask_security as it imports tasks.py
+        app.celery = make_celery(app)
+        register_tasks(app)
 
-            from ogreserver.extensions.flask_security import init_security
+        from ogreserver.extensions.flask_security import init_security
 
-            app.security = init_security(app)
-            user = app.security.datastore.create_user(
-                username=username, email=email, password=password
-            )
-            if confirmed:
-                from flask.ext.security.confirmable import confirm_user
-                confirm_user(user)
+        app.security = init_security(app)
+        user = app.security.datastore.create_user(
+            username=username, email=email, password=password
+        )
+        if confirmed:
+            from flask.ext.security.confirmable import confirm_user
+            confirm_user(user)
 
-            app.security.datastore.commit()
+        app.security.datastore.commit()
 
-            print "Created user {} with role '{}'".format(username, role)
+        print "Created user {} with role '{}'".format(username, role)
 
-        except IntegrityError:
-            print 'A user with this email address already exists'
-            sys.exit(1)
+    except IntegrityError:
+        print 'A user with this email address already exists'
+        sys.exit(1)
 
 
 @manager.command

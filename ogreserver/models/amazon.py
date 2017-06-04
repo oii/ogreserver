@@ -24,6 +24,7 @@ class AmazonAPI:
             str(access_key),
             str(secret_key),
             associate_tag,
+            Region='UK',
             MaxQPS=0.9
         )
 

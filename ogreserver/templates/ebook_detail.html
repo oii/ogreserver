@@ -119,18 +119,18 @@
 
 </div>
 
-{% if ebook.rawmeta %}
+{% if g.user.advanced %}
 <div class="row">
 
 	<fieldset>
 	<legend>Metadata</legend>
 		<p>
 			<strong>Amazon</strong>
-			<pre>{{ ebook_raw_meta.amazon }}</pre>
+			<pre>{{ ebook.provider_metadata.amazon }}</pre>
 		</p>
 		<p>
 			<strong>Goodreads</strong>
-			<pre>{{ ebook_raw_meta.goodreads }}</pre>
+			<pre>{{ ebook.provider_metadata.goodreads }}</pre>
 		</p>
 	</fieldset>
 

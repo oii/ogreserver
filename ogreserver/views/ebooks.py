@@ -106,22 +106,19 @@ def detail(ebook_id):
         ebook.id
     )
 
-    ebook_raw_meta = {}
-
     if g.user.advanced:
         # if user has advanced flag set on their profile,
         # render extra ebook metadata as YAML so it looks pretty
         for source in ('amazon', 'goodreads'):
             if source in ebook.provider_metadata:
-                ebook_raw_meta[source] = pyaml.dump(
+                ebook.provider_metadata[source] = pyaml.dump(
                     ebook.provider_metadata[source]
                 ).replace("'", '')
 
     return render_template(
         'ebook_detail.html',
         ebook=ebook,
-        ebook_image_url=ebook_image_url,
-        ebook_raw_meta=ebook_raw_meta
+        ebook_image_url=ebook_image_url
     )
 
 

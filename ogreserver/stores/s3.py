@@ -100,7 +100,8 @@ def _generate_filename(file_hash, author=None, title=None, fmt=None):
 
     # replace multiple underscores with a single
     # replace double tilde between author & title with double underscore
-    authortitle = re.sub('(~|_+)', '_', authortitle)
+    # remove trailing underscores
+    authortitle = re.sub('(~|_+)', '_', authortitle).rstrip('_')
 
     return '{}.{}.{}'.format(authortitle, file_hash[0:8], fmt)
 

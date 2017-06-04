@@ -36,6 +36,16 @@ def test_generate_filename_extended_name():
     assert filename == 'H_C_Hans_Christian_Andersen__Andersens_Fairy_Tales.38b3fc3a.epub'
 
 
+def test_generate_filename_extended_name_with_brackets():
+    filename = s3_store._generate_filename(
+        'c9850dc5a1d016816baa88ae86be627b',
+        author='Joe Abercrombie',
+        title='Half a War (Shattered Sea, #3)',
+        fmt='epub',
+    )
+    assert filename == 'Joe_Abercrombie__Half_a_War_Shattered_Sea_3.c9850dc5.epub'
+
+
 def test_generate_filename_transpose():
     # test unicode transcode
     filename = s3_store._generate_filename(

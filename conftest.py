@@ -59,6 +59,9 @@ def app_config():
         'CELERY_DEFAULT_ROUTING_KEY': 'testing',
         'CELERY_DEFAULT_EXCHANGE': 'testing',
 
+        'STATIC_BASE_URL': '',
+        'STATIC_S3_BUCKET': '',
+
         'AWS_ACCESS_KEY': '',
         'AWS_SECRET_KEY': '',
         'AWS_REGION': '',

@@ -35,7 +35,7 @@ def test_login_bad_creds(flask_app, user):
         }),
         content_type='application/json'
     )
-    assert result.status_code == 200
+    assert result.status_code == 400
     assert json.loads(result.data)['meta']['code'] == 400
     assert json.loads(result.data)['response']['errors']['password'][0] == 'Invalid password'
 
@@ -52,7 +52,7 @@ def test_login_without_email_address(flask_app, user):
         }),
         content_type='application/json'
     )
-    assert result.status_code == 200
+    assert result.status_code == 400
     assert json.loads(result.data)['meta']['code'] == 400
     assert json.loads(result.data)['response']['errors']['email'][0] == 'Email not provided'
 

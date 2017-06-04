@@ -43,6 +43,26 @@ def test_search(mock_utils_make_tempdir, flask_app, postgresql, user, ebook_db_f
 
 
 @mock.patch('ogreserver.models.conversion.make_temp_directory')
+def test_search_no_results_after_convert(mock_utils_make_tempdir, flask_app, postgresql, user, ebook_db_fixture_azw3):
+    conversion = Conversion(flask_app.config)
+
+    # mark test book as uploaded
+    ebook_store.set_uploaded(
+        ebook_db_fixture_azw3.versions[0].source_format.file_hash, user, filename='egg.pub'
+    )
+
+    # create extra formats mobi and egg for ebook_db_fixture_azw3
+    ebook_store.create_format(ebook_db_fixture_azw3.versions[0], 'f7025dd7', 'mobi', user=user)
+    ebook_store.create_format(ebook_db_fixture_azw3.versions[0], '96673ca3', 'egg', user=user)
+
+    # search for books which need converting; this sends convert signals
+    conversion.search()
+
+    # assert convert signal was sent twice, once for each missing format
+    assert flask_app.signals['convert-ebook'].send.call_count == 0
+
+
+@mock.patch('ogreserver.models.conversion.make_temp_directory')
 @mock.patch('ogreserver.models.conversion.shutil.move')
 @mock.patch('ogreserver.models.conversion.connect_s3')
 @mock.patch('ogreserver.models.conversion.subprocess.check_output')

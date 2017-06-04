@@ -2,10 +2,12 @@ O.G.R.E.
 ========
 
 [![Build Status](http://img.shields.io/travis/oii/ogre.svg?style=flat-square&branch=develop)][travis]
+[![CircleCI](https://img.shields.io/circleci/project/github/oii/ogre.svg)][circleci]
 [![Made By Oii](http://img.shields.io/badge/made%20by-oii-blue.svg?style=flat-square)][author]
 [![BSD License](http://img.shields.io/badge/license-BSD-red.svg?style=flat-square)][license]
 
 [travis]: http://travis-ci.org/oii/ogre
+[circleci]: https://circleci.com/gh/oii/ogre
 [author]: http://github.com/oii/ogre
 [license]: http://github.com/oii/ogre/blob/master/LICENSE
 

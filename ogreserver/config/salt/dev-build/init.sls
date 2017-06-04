@@ -1,6 +1,6 @@
 include:
   - closure-compiler
-  - create-ogre-user
+  - create-dev-user
   - dev-build.tmux
   - github
   - libsass
@@ -53,7 +53,7 @@ extend:
       - require:
         - supervisord: s3proxy-supervisor-service
 
-  create-ogre-user:
+  create-dev-user:
     cmd.run:
       - require:
         - virtualenv: app-virtualenv

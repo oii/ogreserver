@@ -111,7 +111,9 @@ def _flask_app(request, app_config):
             register_blueprints, register_signals
     from ogreserver.extensions.celery import register_tasks
 
-    app = create_app(app_config)
+    # mock out salt.client during tests
+    with mock.patch('ogreserver.factory.salt'):
+        app = create_app(app_config)
     app.testing = True
     app.celery = make_celery(app)
     register_tasks(app)

@@ -40,18 +40,6 @@ celerybeat.pid
 
 tests/ebooks/DRM.azw
 
-ogreclient/.Python
-ogreclient/bin/
-ogreclient/include/
-ogreclient/lib/
-ogreclient/pip-selfcheck.json
-ogreclient/share/
-
-bin/
-include/
-lib/
-local/
-share/
-src/
-pip-selfcheck.json
-pyvenv.cfg
+.venv
+.env
+.out

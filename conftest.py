@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import collections
+import contextlib
 import datetime
 import json
 import logging
@@ -17,7 +18,6 @@ from urlparse import urlparse
 import boto.exception
 import mock
 import pytest
-import virtualenvapi.manage
 
 from sqlalchemy import create_engine
 
@@ -315,14 +315,6 @@ def ebook_lib_path():
     return os.path.join(os.path.dirname(__file__), 'tests', 'ebooks')
 
 
-@pytest.fixture(scope='function')
-def virtualenv(tmpdir):
-    # create a virtualenv in a tmpdir; pytest will clean up for us
-    return virtualenvapi.manage.VirtualEnvironment(
-        os.path.join(tmpdir.strpath, 'ogreclient')
-    )
-
-
 @pytest.fixture
 def client_sync(request):
     '''
@@ -364,3 +356,17 @@ def s3bucket(app_config):
     for k in bucket.list():
         k.delete()
     s3.delete_bucket(bucket)
+
+
+@pytest.fixture(scope='session')
+def cd():
+    @contextlib.contextmanager
+    def inner_cd(new_path):
+        """ Context manager for changing the current working directory """
+        saved_path = os.getcwd()
+        try:
+            os.chdir(new_path)
+            yield new_path
+        finally:
+            os.chdir(saved_path)
+    return inner_cd

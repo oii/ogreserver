@@ -5,6 +5,8 @@ import os
 import pytest
 import shutil
 
+from virtualenvapi.manage import VirtualEnvironment
+
 from ogreclient.ogreclient.providers import LibProvider
 
 
@@ -28,3 +30,13 @@ def test_full_sync(ogreserver, rethinkdb, client_config, client_sync, tmpdir):
 
     # run ogreclient sync
     client_sync(client_config)
+
+
+@pytest.mark.integration
+def test_ogreclient_install(tmpdir, cd):
+    # change into ogreclient directory from project root
+    with cd(os.path.join(os.getcwd(), 'ogreclient')):
+        virtualenv = VirtualEnvironment(str(tmpdir))
+
+        # install ogreclient; exception raised if this fails in virtualenvapi
+        virtualenv.install('.')

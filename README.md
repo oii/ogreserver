@@ -3,6 +3,7 @@ O.G.R.E.
 
 [![Build Status](http://img.shields.io/travis/oii/ogre.svg?style=flat-square&branch=develop)][travis]
 [![CircleCI](https://img.shields.io/circleci/project/github/oii/ogre.svg)][circleci]
+[![Code Health](https://landscape.io/github/oii/ogre/dev/landscape.svg?style=flat)](https://landscape.io/github/oii/ogre/dev)
 [![Made By Oii](http://img.shields.io/badge/made%20by-oii-blue.svg?style=flat-square)][author]
 [![BSD License](http://img.shields.io/badge/license-BSD-red.svg?style=flat-square)][license]
 

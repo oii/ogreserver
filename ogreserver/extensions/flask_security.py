@@ -29,7 +29,7 @@ def init_security(app):
 # disable CSRF for the /login endpoint
 class ExtendedLoginForm(LoginForm):
     def __init__(self, *args, **kwargs):
-        kwargs['csrf_enabled'] = False
+        kwargs['meta'] = {'csrf': False}
         super(ExtendedLoginForm, self).__init__(*args, **kwargs)
 
 

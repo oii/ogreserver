@@ -1,13 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from flask_wtf import Form
+from flask_wtf import FlaskForm
 
 from wtforms import BooleanField, SelectField, validators
 from wtforms.fields.html5 import EmailField
 
 
-class ProfileEditForm(Form):
+class ProfileEditForm(FlaskForm):
     email = EmailField('Email Address', [validators.Required(), validators.Email()])
     preferred_ebook_format = SelectField(
         'Preferred Ebook Format',

@@ -251,7 +251,7 @@ def _create_user(request, _postgresql):
     return _user
 
 
-@pytest.fixture(scope='session')
+@pytest.yield_fixture(scope='function')
 def ogreclient_auth_token(_flask_app, user):
     client = _flask_app.test_client()
     result = client.post(
@@ -259,7 +259,8 @@ def ogreclient_auth_token(_flask_app, user):
         data=json.dumps({'email': user.email, 'password': user.username}),
         content_type='application/json'
     )
-    return json.loads(result.data)['response']['user']['authentication_token']
+    yield json.loads(result.data)['response']['user']['authentication_token']
+    client.get('/logout')
 
 
 @pytest.fixture(scope='session')

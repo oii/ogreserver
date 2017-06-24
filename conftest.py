@@ -94,10 +94,15 @@ def app_config():
         'UPLOADED_EBOOKS_DEST': 'uploads',
         'UPLOADED_LOGS_DEST': 'logs',
 
-        'SECURITY_PASSWORD_HASH': str('pbkdf2_sha256'),
+        # store passwords in plaintext during test runs
+        'SECURITY_PASSWORD_HASH': 'plaintext',
         'SECURITY_PASSWORD_SALT': 'test',
         'SECURITY_TOKEN_AUTHENTICATION_HEADER': 'Ogre-Key',
         'SECURITY_USER_IDENTITY_ATTRIBUTES': ['email', 'username'],
+
+        # override the flask-security HASHING_SCHEME for fast password hashes
+        'SECURITY_HASHING_SCHEMES': ['plaintext'],
+        'SECURITY_DEPRECATED_HASHING_SCHEMES': [],
     }
 
 

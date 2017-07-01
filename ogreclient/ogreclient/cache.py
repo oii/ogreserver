@@ -1,13 +1,10 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import json
 import os
 import sqlite3
 
-from .ebook_obj import EbookObject
-from .exceptions import OgreException, MissingFromCacheError, EbookIdDuplicateEbookError
-from .printer import CliPrinter
+from ogreclient.ebook_obj import EbookObject
+from ogreclient.exceptions import OgreException, MissingFromCacheError, EbookIdDuplicateEbookError
+from ogreclient.printer import CliPrinter
 
 __CACHEVERSION__ = 1
 

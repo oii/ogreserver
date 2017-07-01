@@ -1,14 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-import ConfigParser
+import configparser
 import json
 import os
 import platform
-from urlparse import urlunparse
+from urllib.parse import urlunparse
 
-from .providers import PROVIDERS, ProviderFactory
-from .utils import serialize_defs, deserialize_defs
+from ogreclient.providers import PROVIDERS, ProviderFactory
+from ogreclient.utils import serialize_defs, deserialize_defs
 
 
 def _get_config_dir():
@@ -21,7 +18,7 @@ def _get_config_dir():
 
 
 def write_config(conf):
-    cp = ConfigParser.RawConfigParser()
+    cp = configparser.SafeConfigParser()
 
     # general config section
     cp.add_section('config')
@@ -52,7 +49,7 @@ def write_config(conf):
         cp.add_section('definitions')
         cp.set('definitions', 'definitions', serialize_defs(conf['definitions']))
 
-    with open(os.path.join(conf['config_dir'], 'app.config'), 'wb') as f_config:
+    with open(os.path.join(conf['config_dir'], 'app.config'), 'w') as f_config:
         cp.write(f_config)
 
 
@@ -66,11 +63,11 @@ def read_config():
     if not os.path.exists(os.path.join(conf['config_dir'], 'app.config')):
         return conf
 
-    cp = ConfigParser.RawConfigParser()
+    cp = configparser.SafeConfigParser()
 
     try:
         cp.read(os.path.join(conf['config_dir'], 'app.config'))
-    except ConfigParser.ParsingError:
+    except configparser.ParsingError:
         # abort if config is broken
         return conf
 
@@ -81,7 +78,7 @@ def read_config():
 
     try:
         conf['calibre_ebook_meta_bin'] = cp.get('config', 'calibre_ebook_meta_bin')
-    except ConfigParser.NoSectionError:
+    except configparser.NoSectionError:
         # if calibre config not set, return early. In this case it's likely
         # app.config has been created externally by a script
         return conf
@@ -97,7 +94,7 @@ def read_config():
             conf['providers']['kindle'] = ProviderFactory.create(
                 'kindle', libpath=cp.get('kindle', 'libpath')
             )
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             conf['providers']['kindle'] = None
 
     # load ebook scan definitions

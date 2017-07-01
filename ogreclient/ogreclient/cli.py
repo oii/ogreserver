@@ -1,21 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import argparse
 import logging
 import os
 import sys
 
-from . import __version__
+from ogreclient import __title__, __version__
+from ogreclient.config import read_config
+from ogreclient.core import scan_and_show_stats, sync
+from ogreclient.ebook_obj import EbookObject
+from ogreclient.prereqs import setup_ogreclient
+from ogreclient.printer import CliPrinter
+from ogreclient.providers import PROVIDERS
 
-from .config import read_config
-from .core import scan_and_show_stats, sync
-from .ebook_obj import EbookObject
-from .prereqs import setup_ogreclient
-from .printer import CliPrinter
-from .providers import PROVIDERS
-
-from .exceptions import OgreException, OgreWarning, ConfigSetupError, \
+from ogreclient.exceptions import OgreException, OgreWarning, ConfigSetupError, \
         AuthDeniedError, AuthError, NoEbooksError, SyncError, UploadError
 
 
@@ -83,8 +79,8 @@ def parse_command_line(conf):
     # print the current sesame version
     parser.add_argument(
         '--version', action='version',
-        version='sesame {}'.format(__version__),
-        help='Print the current Sesame version')
+        version='{} {}'.format(__title__, __version__),
+        help='Print the current version')
 
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument(
@@ -147,7 +143,7 @@ def parse_command_line(conf):
 
     # set ogreserver params which apply to sync & scan
     for p in (psync, pscan):
-        for provider, data in PROVIDERS.iteritems():
+        for provider, data in PROVIDERS.items():
             if 'has_{}'.format(provider) in conf:
                 p.add_argument(
                     '--ignore-{}'.format(provider), action='store_true',
@@ -294,8 +290,3 @@ def run_sync(conf):
         prntr.error('Something went very wrong.', excp=e)
 
     return uploaded_count
-
-
-# entrypoint for pyinstaller
-if __name__ == '__main__':
-    entrypoint()

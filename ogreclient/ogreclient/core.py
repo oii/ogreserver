@@ -1,17 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-from __future__ import division
-
 import os
 import shutil
 
-from .ebook_obj import EbookObject
-from .utils import OgreConnection, deserialize_defs, make_temp_directory, retry
-from .printer import CliPrinter
-from .providers import LibProvider, PathsProvider
-from .dedrm import decrypt, DRM
+from ogreclient.ebook_obj import EbookObject
+from ogreclient.utils import OgreConnection, deserialize_defs, make_temp_directory, retry
+from ogreclient.printer import CliPrinter
+from ogreclient.providers import LibProvider, PathsProvider
+from ogreclient.dedrm import decrypt, DRM
 
-from .exceptions import RequestError, NoEbooksError, DuplicateEbookBaseError, \
+from ogreclient.exceptions import RequestError, NoEbooksError, DuplicateEbookBaseError, \
         ExactDuplicateEbookError, AuthortitleDuplicateEbookError, EbookIdDuplicateEbookError, \
         SyncError, UploadError, CorruptEbookError, FailedWritingMetaDataError, \
         FailedConfirmError, FailedDebugLogsError, MissingFromCacheError, OgreException, \
@@ -101,7 +97,7 @@ def scan_and_show_stats(config):
     errors = {}
 
     # iterate authortitle:EbookObject pairs
-    for key, e in ebooks_by_authortitle.iteritems():
+    for key, e in ebooks_by_authortitle.items():
         if e.format not in counts.keys():
             counts[e.format] = 1
         else:
@@ -122,10 +118,10 @@ def scan_and_show_stats(config):
 
     # add header to output table
     output = [('format', 'count')]
-    output += [(k,v) for k,v in counts.iteritems()]
+    output += [(k,v) for k,v in counts.items()]
     # add a separator row and the error counts
     output.append(('-', '-'))
-    output += [(k,v) for k,v in errors.iteritems()]
+    output += [(k,v) for k,v in errors.items()]
 
     # print table
     prntr.info(output, tabular=True, notime=True)
@@ -142,7 +138,7 @@ def scan_for_ebooks(config):
                 (os.path.join(root, filename), ext[1:], provider_name)
             )
 
-    for provider in config['providers'].itervalues():
+    for provider in config['providers'].values():
         # a LibProvider contains a single directory containing ebooks
         if isinstance(provider, LibProvider):
             if config['debug']:
@@ -273,7 +269,7 @@ def clean_all_drm(config, ebooks_by_authortitle, ebooks_by_filehash):
     prntr.info('Ebook directory is {}'.format(config['ebook_home']))
     prntr.info('Decrypting DRM..')
 
-    for authortitle, ebook_obj in ebooks_by_authortitle.iteritems():
+    for authortitle, ebook_obj in ebooks_by_authortitle.items():
         # skip if book already DRM free or marked skip
         if ebook_obj.drmfree is True or ebook_obj.skip is True:
             continue
@@ -378,7 +374,7 @@ def remove_drm_from_ebook(config, ebook_obj):
 def sync_with_server(config, connection, ebooks_by_authortitle):
     # serialize ebooks to dictionary for sending to ogreserver
     ebooks_for_sync = {}
-    for authortitle, ebook_obj in ebooks_by_authortitle.iteritems():
+    for authortitle, ebook_obj in ebooks_by_authortitle.items():
         # only send format is defined as is_valid_format
         if config['definitions'][ebook_obj.format][0] is True:
             ebooks_for_sync[authortitle] = ebook_obj.serialize()
@@ -407,7 +403,7 @@ def update_local_metadata(config, connection, ebooks_by_filehash, ebooks_to_upda
     success, failed = 0, 0
 
     # update any books with ogre_id supplied from ogreserver
-    for file_hash, item in ebooks_to_update.iteritems():
+    for file_hash, item in ebooks_to_update.items():
         ebook_obj = ebooks_by_filehash[file_hash]
 
         try:

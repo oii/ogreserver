@@ -1,11 +1,11 @@
-from __future__ import unicode_literals
-
 import base64
+import codecs
 import collections
 import contextlib
 import functools
 import hashlib
 import json
+import io
 import random
 import shutil
 import string
@@ -15,8 +15,8 @@ import tempfile
 import requests
 from requests.exceptions import ConnectionError, Timeout
 
-from .printer import CliPrinter
-from .exceptions import (OgreException, RequestError, AuthError, AuthDeniedError,
+from ogreclient.printer import CliPrinter
+from ogreclient.exceptions import (OgreException, RequestError, AuthError, AuthDeniedError,
                         OgreserverDownError)
 
 
@@ -194,7 +194,7 @@ def compute_md5(filepath, buf_size=524288):
 def make_temp_directory():
     temp_dir = tempfile.mkdtemp()
     try:
-        yield unicode(temp_dir)
+        yield str(temp_dir)
     except Exception as e:
         raise e
     finally:
@@ -211,20 +211,18 @@ def capture():
     Capture stdout/stderr into a string
     http://stackoverflow.com/a/10743550/425050
     """
-    import codecs
-    from cStringIO import StringIO
     oldout, olderr = sys.stdout, sys.stderr
     try:
         out = [
-            codecs.getwriter('utf8')(StringIO()),
-            codecs.getwriter('utf8')(StringIO()),
+            codecs.getwriter('utf8')(io.StringIO()),
+            codecs.getwriter('utf8')(io.StringIO()),
         ]
         sys.stdout, sys.stderr = out
         yield out
     finally:
         sys.stdout, sys.stderr = oldout, olderr
-        out[0] = out[0].getvalue().decode('utf-8')
-        out[1] = out[1].getvalue().decode('utf-8')
+        out[0] = out[0].getvalue()
+        out[1] = out[1].getvalue()
 
 
 def retry(times):
@@ -263,7 +261,7 @@ def enum(*sequential, **named):
 def serialize_defs(definitions):
     return json.dumps([
         [k, v.is_valid_format, v.is_non_fiction]
-        for k,v in definitions.iteritems()
+        for k,v in definitions.items()
     ])
 
 def deserialize_defs(data):

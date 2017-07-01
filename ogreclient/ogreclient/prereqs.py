@@ -1,24 +1,21 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import codecs
 import getpass
 import os
 import platform
 import subprocess
 import sys
-from urlparse import urlparse
+from urllib.parse import urlparse
 
-from .cache import Cache
-from .config import write_config
-from .core import get_definitions
-from .dedrm import download_dedrm
-from .definitions import OGRE_PROD_HOST
-from .exceptions import (ConfigSetupError, NoEbookSourcesFoundError, DeDrmNotAvailable,
-                         EbookHomeMissingError, CalibreNotAvailable)
-from .printer import CliPrinter
-from .providers import PROVIDERS, find_ebook_providers
-from .utils import OgreConnection
+from ogreclient.cache import Cache
+from ogreclient.config import write_config
+from ogreclient.core import get_definitions
+from ogreclient.dedrm import download_dedrm
+from ogreclient.definitions import OGRE_PROD_HOST
+from ogreclient.exceptions import (ConfigSetupError, NoEbookSourcesFoundError, DeDrmNotAvailable,
+                        EbookHomeMissingError, CalibreNotAvailable)
+from ogreclient.printer import CliPrinter
+from ogreclient.providers import PROVIDERS, find_ebook_providers
+from ogreclient.utils import OgreConnection
 
 
 prntr = CliPrinter.get_printer()
@@ -256,7 +253,7 @@ def setup_user_auth(args, conf):
     # 4.2) load username via readline
     if not username:
         prntr.info("Please enter your O.G.R.E. username, or press enter to use '{}':".format(getpass.getuser()))
-        ri = raw_input()
+        ri = input()
         if len(ri) > 0:
             username = ri
         else:

@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import datetime
 import logging
 import sys
@@ -218,7 +215,7 @@ class CliPrinterImpl:
             ))
 
             # handle multi-line extra text, display it nicely
-            if extra is not None and isinstance(extra, basestring):
+            if extra is not None and type(extra) is str:
                 if '\n' in extra:
                     extra = extra.split('\n')
 
@@ -386,7 +383,7 @@ class CliPrinterImpl:
         stacktrace = ''
 
         if hasattr(ex, 'inner_excp') and isinstance(ex.inner_excp, Exception):
-            inner_msg = unicode(ex.inner_excp)
+            inner_msg = str(ex.inner_excp)
 
         if self.level == logging.DEBUG:
             # extract and print the latest exception; which is good for printing

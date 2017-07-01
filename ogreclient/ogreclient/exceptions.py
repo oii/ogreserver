@@ -1,6 +1,4 @@
-from __future__ import unicode_literals
-
-from .printer import CoreException
+from ogreclient.printer import CoreException
 
 
 class OgreException(CoreException):
@@ -114,7 +112,7 @@ class EbookHomeUnavailableWarning(ProviderUnavailableBaseWarning):
 class DuplicateEbookBaseError(OgreWarning):
     def __init__(self, kind, ebook_obj, path2):
         super(DuplicateEbookBaseError, self).__init__(
-            u"Duplicate ebook found ({}) '{}':\n  {}\n  {}".format(kind, ebook_obj.path, path2)
+            "Duplicate ebook found ({}) '{}':\n  {}\n  {}".format(kind, ebook_obj.path, path2)
         )
 
 class ExactDuplicateEbookError(DuplicateEbookBaseError):

@@ -1,16 +1,13 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import json
 import os
 import shutil
 import subprocess
 import sys
 
-from urllib2 import HTTPError, URLError
+from urllib.error import HTTPError, URLError
 
-from .exceptions import RequestError, CorruptEbookError, FailedWritingMetaDataError, FailedConfirmError
-from .utils import compute_md5, id_generator, make_temp_directory
+from ogreclient.exceptions import RequestError, CorruptEbookError, FailedWritingMetaDataError, FailedConfirmError
+from ogreclient.utils import compute_md5, id_generator, make_temp_directory
 
 
 class EbookObject:
@@ -30,7 +27,7 @@ class EbookObject:
         self.meta = {'source': source}
         self.in_cache = False
 
-    def __unicode__(self):
+    def __str__(self):
         if self.meta:
             return '{} {} - {}.{}'.format(
                 self.meta['firstname'],
@@ -39,10 +36,7 @@ class EbookObject:
                 self.format
             )
         else:
-            return unicode(os.path.splitext(os.path.basename(self.path))[0])
-
-    def __str__(self):
-        return unicode(self).encode('utf-8')
+            return str(os.path.splitext(os.path.basename(self.path))[0])
 
 
     @property
@@ -146,9 +140,6 @@ class EbookObject:
         # initialize all the metadata we attempt to extract
         meta = {}
 
-        # modify behaviour for epub/mobi
-        fmt = os.path.splitext(self.path)[1]
-
         for line in extracted.splitlines():
             # extract the simple metadata
             for prop in ('title', 'publisher'):
@@ -167,7 +158,7 @@ class EbookObject:
                 # extract DeDRM tag and remove from list
                 if 'OGRE-DeDRM' in meta['tags']:
                     tags = meta['tags'].split(', ')
-                    for j in reversed(xrange(len(tags))):
+                    for j in reversed(range(len(tags))):
                         if 'OGRE-DeDRM' in tags[j]:
                             self.drmfree = True
                             del(tags[j])
@@ -176,7 +167,7 @@ class EbookObject:
                 # extract the ogre_id which may be embedded into the tags field
                 if 'ogre_id' in meta['tags']:
                     tags = meta['tags'].split(', ')
-                    for j in reversed(xrange(len(tags))):
+                    for j in reversed(range(len(tags))):
                         if 'ogre_id' in tags[j]:
                             meta['ebook_id'] = tags[j][8:].strip()
                             self.ebook_id = meta['ebook_id']
@@ -230,7 +221,7 @@ class EbookObject:
 
     @staticmethod
     def _parse_author(author):
-        if type(author) is not unicode:
+        if type(author) is bytes:
             # convert from UTF-8
             author = author.decode('utf8')
 

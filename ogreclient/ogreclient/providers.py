@@ -1,20 +1,17 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import os
 import platform
 import shutil
 import subprocess
 import urllib
-import urlparse
+from urllib.parse import urlparse
 
 from xml.dom import minidom
 
-from .exceptions import (ProviderBaseError, KindleProviderError, ADEProviderError,
+from ogreclient.exceptions import (ProviderBaseError, KindleProviderError, ADEProviderError,
                          ProviderUnavailableBaseWarning, KindleUnavailableWarning,
                          ADEUnavailableWarning, EbookHomeUnavailableWarning)
-from .printer import CliPrinter
-from .utils import make_temp_directory
+from ogreclient.printer import CliPrinter
+from ogreclient.utils import make_temp_directory
 
 
 prntr = CliPrinter.get_printer()

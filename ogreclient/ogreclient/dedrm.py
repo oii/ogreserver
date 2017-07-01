@@ -1,14 +1,11 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import importlib
 import os
 import subprocess
 
-from .exceptions import RequestError, DeDrmNotAvailable, DeDrmMissingError, \
-        DecryptionError, DecryptionFailed
-from .printer import CliPrinter
-from .utils import capture, enum, make_temp_directory, OgreConnection
+from ogreclient.exceptions import RequestError, DeDrmNotAvailable, DeDrmMissingError, \
+       DecryptionError, DecryptionFailed
+from ogreclient.printer import CliPrinter
+from ogreclient.utils import capture, enum, make_temp_directory, OgreConnection
 
 try:
     # import DeDRM libs, capturing anything that's shat out on STDOUT

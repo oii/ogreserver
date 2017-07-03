@@ -144,7 +144,7 @@ def scan_for_ebooks(config):
             if config['debug']:
                 prntr.info('Scanning {} in {}'.format(provider.friendly, provider.libpath))
 
-            for root, _, files in os.walk(provider.libpath):
+            for root, _, files in os.scandir(provider.libpath):
                 for filename in files:
                     _process_filename(filename, provider.friendly)
 

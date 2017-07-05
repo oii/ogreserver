@@ -1,11 +1,11 @@
 include:
+  - awscli
   - closure-compiler
   - create-dev-user
   - dev-build.tmux
   - github
   - libsass
   - logs
-  - ogreclient
   - s3proxy
 
 
@@ -70,7 +70,6 @@ extend:
       - createdb: true
       - superuser: true
 
-
 # make the logs readable by the login user
 logs-chown:
   file.directory:
@@ -86,7 +85,7 @@ logs-chown:
 # install extra dev reqs
 requirements-dev-install:
   pip.installed:
-    - requirements: /srv/ogre/ogreserver/config/requirements-dev.txt
+    - requirements: /srv/ogre/config/requirements-dev.txt
     - bin_env: /var/cache/ogre/venv
     - user: {{ pillar['app_user'] }}
     - require:

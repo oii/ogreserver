@@ -16,20 +16,23 @@ help:
 
 
 clean:
-	@rm -rf dist/ogreclient-* ogreclient.egg-info build dedrm
+	@rm -rf dist/ogreclient-* ogreclient.egg-info build
 
 dist: clean build-dedrm
 	python setup.py sdist --formats=gztar,zip
+
+build-dedrm:
+	@rm -rf /tmp/dedrm
+	git clone --branch ogre https://github.com/oii/DeDRM_tools.git /tmp/dedrm
+	cd /tmp/dedrm && \
+		python setup.py sdist
+	@mv /tmp/dedrm/dist/dedrm-*.tar.gz dist/
+	echo "DeDRM at $$(ls -1 dist/*.tar.gz)"
 
 release: dist
 	cd dist && \
 		$(AWSCLI) s3 cp . s3://ogre-dist-$(ENV)-$(AWS_DEFAULT_REGION) --recursive --exclude "*" --include "ogreclient-*" --acl=public-read
 	$(AWSCLI) s3 cp dedrm/dist/dedrm-*.tar.gz s3://ogre-dist-$(ENV)-$(AWS_DEFAULT_REGION) --acl=public-read
-
-build-dedrm:
-	git clone --branch ogre https://github.com/oii/DeDRM_tools.git dedrm
-	cd dedrm && \
-		python setup.py sdist
 
 clean-bitbar:
 	@rm -rf dist/BitBar*.{zip,app} dist/bitbar-bundler

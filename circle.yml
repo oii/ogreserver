@@ -19,7 +19,7 @@ dependencies:
     - ./s3proxy --properties s3proxy.conf:
           background: true
   post:
-    - pip install -q -r ogreserver/config/requirements.txt -r ogreserver/config/requirements-dev.txt
+    - pip install -q -r config/requirements.txt -r config/requirements-dev.txt
 
 test:
   override:

@@ -13,10 +13,10 @@ extend:
     file.managed:
       - context:
           server_name: {{ pillar['dns'][grains['env']] }}
-          root: /srv/ogre/ogreserver
+          root: /srv/ogre
           upstream_gzip: true
           static_dir: /static/
-          static_alias: /srv/ogre/ogreserver/static/dist/
+          static_alias: /srv/ogre/static/dist/
           stub_status: true
   {% endfor %}
 
@@ -53,7 +53,7 @@ gevent:
 # install extra production reqs
 requirements-prod-install:
   pip.installed:
-    - requirements: /srv/ogre/ogreserver/config/requirements-prod.txt
+    - requirements: /srv/ogre/config/requirements-prod.txt
     - bin_env: /var/cache/ogre/venv
     - user: {{ pillar['app_user'] }}
     - require:
@@ -62,10 +62,10 @@ requirements-prod-install:
       - cmd: ogre-init
 
 # symlink files so they're available statically via nginx
-/srv/ogre/ogreserver/robots.txt:
+/srv/ogre/robots.txt:
   file.symlink:
-    - target: /srv/ogre/ogreserver/static/robots.txt
+    - target: /srv/ogre/static/robots.txt
 
-/srv/ogre/ogreserver/install:
+/srv/ogre/install:
   file.symlink:
     - target: /srv/ogre/script/install

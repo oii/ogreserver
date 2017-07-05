@@ -12,10 +12,10 @@ curl --silent -o /tmp/sesame.sh https://raw.githubusercontent.com/mafrosis/sesam
 chmod +x /tmp/sesame.sh
 
 # fetch default_vars
-curl --silent -o /etc/ogre/default_vars.sls "https://raw.githubusercontent.com/oii/ogre/${GIT_REVISION}/ogreserver/config/pillar/default_vars.sls"
+curl --silent -o /etc/ogre/default_vars.sls "https://raw.githubusercontent.com/oii/ogre/${GIT_REVISION}/config/pillar/default_vars.sls"
 
 # fetch encrypted prod_vars
-curl --silent -o /tmp/prod_vars.sesame "https://raw.githubusercontent.com/oii/ogre/${GIT_REVISION}/ogreserver/config/pillar/prod_vars.sesame"
+curl --silent -o /tmp/prod_vars.sesame "https://raw.githubusercontent.com/oii/ogre/${GIT_REVISION}/config/pillar/prod_vars.sesame"
 
 if [[ $? -gt 0 ]]; then
 	echo 'Encrypted pillar not found on Github'

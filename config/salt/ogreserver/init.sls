@@ -24,9 +24,9 @@ extend:
     file.managed:
       - context:
           server_name: {{ grains['ip_interfaces']['eth0'][0] }}
-          root: /srv/ogre/ogreserver
+          root: /srv/ogre
           static_dir: /static/
-          static_alias: /srv/ogre/ogreserver/static/dist/
+          static_alias: /srv/ogre/static/dist/
           upstream_host: {{ grains['ip_interfaces']['eth0'][0] }}
           upstream_port: 8005
           stub_status: true
@@ -40,7 +40,7 @@ extend:
 
   app-virtualenv:
     virtualenv.managed:
-      - requirements: /srv/{{ pillar['app_directory_name'] }}/ogreserver/config/requirements.txt
+      - requirements: /srv/{{ pillar['app_directory_name'] }}/config/requirements.txt
       - require:
         - pkg: pip-dependencies-extra
         - git: git-clone-app
@@ -84,7 +84,7 @@ virtualenv:
 app-virtualenv:
   virtualenv.managed:
     - name: /var/cache/ogre/venv
-    - requirements: /srv/{{ pillar['app_directory_name'] }}/ogreserver/config/requirements.txt
+    - requirements: /srv/{{ pillar['app_directory_name'] }}/config/requirements.txt
     - user: {{ pillar['app_user'] }}
     - require:
       - pip: virtualenv

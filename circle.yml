@@ -23,7 +23,7 @@ dependencies:
 
 test:
   override:
-    - py.test -m 'not requires_calibre' -s tests/ ogreclient/ ogreserver/
+    - py.test -m 'not requires_calibre' -s tests/ ogreserver/
 
 #notify:
 #  webhooks:

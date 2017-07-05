@@ -1,10 +1,13 @@
-.PHONY: help clean dist build-dedrm clean-bitbar fetch-bitbar package-bitbar push-bitbar-s3
+.PHONY: help clean dist pyinstaller build-dedrm clean-bitbar fetch-bitbar package-bitbar push-bitbar-s3
 
 AWS_ACCESS_KEY_ID?=error
 AWS_SECRET_ACCESS_KEY?=error
 AWS_DEFAULT_REGION?=local
 ENV?=dev
 AWSCLI?=/usr/local/bin/aws
+
+VERSION:=$$(python setup.py --version)
+PYTHON35?=$$HOME/.pyenv/versions/3.5.3/bin/python
 
 
 help:
@@ -16,7 +19,8 @@ help:
 
 
 clean:
-	@rm -rf dist/ogreclient-* ogreclient.egg-info build
+	@rm -rf ogreclient.egg-info build
+	@find . -name "*.spec" -delete
 
 dist: clean build-dedrm
 	python setup.py sdist --formats=gztar,zip
@@ -28,6 +32,22 @@ build-dedrm:
 		python setup.py sdist
 	@mv /tmp/dedrm/dist/dedrm-*.tar.gz dist/
 	echo "DeDRM at $$(ls -1 dist/*.tar.gz)"
+
+pyinstaller: dist
+	$(PYTHON35) -m venv /tmp/build
+	source /tmp/build/bin/activate && \
+		pip install 'pyinstaller>3.2,<3.3' && \
+		pip install "dist/ogreclient-$(VERSION).tar.gz" && \
+		pip install 'dist/dedrm-6.5.4.tar.gz' && \
+		echo "Building ogreclient $(VERSION)" && \
+		pyinstaller \
+			--clean \
+			--noconfirm \
+			--onefile \
+			--hidden-import=queue \
+			--name ogre-$(VERSION) \
+			ogreclient/cli.py
+	@rm -rf build
 
 release: dist
 	cd dist && \

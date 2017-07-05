@@ -300,3 +300,8 @@ def run_sync(conf):
         prntr.error('Something went very wrong.', excp=e)
 
     return uploaded_count
+
+
+# entrypoint for pyinstaller
+if __name__ == '__main__':
+    entrypoint()

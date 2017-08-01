@@ -5,10 +5,10 @@ import ftfy
 
 from flask import current_app as app
 
-from ..stores import ebooks as ebook_store
-from ..utils.ebooks import generate_ebook_id
+from .stores import ebooks as ebook_store
+from .utils.ebooks import generate_ebook_id
 
-from .. import exceptions
+from . import exceptions
 
 
 def update_library(ebooks, user):

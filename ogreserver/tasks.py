@@ -20,12 +20,12 @@ from .extensions.whoosh import init_whoosh
 
 from .exceptions import (ConversionFailedError, EbookNotFoundOnS3Error, S3DatastoreError,
                          AmazonHttpError)
-from .models.amazon import AmazonAPI
-from .models.conversion import Conversion
+from .conversion import Conversion
+from .search import Search
 from .models.ebook import Ebook, Version
-from .models.goodreads import GoodreadsAPI
-from .models.search import Search
 from .models.user import User
+from .sources.amazon import AmazonAPI
+from .sources.goodreads import GoodreadsAPI
 from .stores import ebooks as ebook_store
 from .stores import s3 as s3_store
 from .utils.generic import make_temp_directory

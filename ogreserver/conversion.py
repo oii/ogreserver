@@ -7,11 +7,11 @@ import subprocess
 
 from flask import current_app as app
 
-from ..exceptions import ConversionFailedError, EbookNotFoundOnS3Error
-from ..stores import ebooks as ebook_store
-from ..utils.ebooks import compute_md5, id_generator
-from ..utils.generic import make_temp_directory
-from ..utils.s3 import connect_s3
+from .exceptions import ConversionFailedError, EbookNotFoundOnS3Error
+from .stores import ebooks as ebook_store
+from .utils.ebooks import compute_md5, id_generator
+from .utils.generic import make_temp_directory
+from .utils.s3 import connect_s3
 
 
 class Conversion:

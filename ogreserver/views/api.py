@@ -17,9 +17,9 @@ from flask_uploads import UploadNotAllowed
 from ..decorators import slack_token_required
 from ..exceptions import SameHashSuppliedOnUpdateError
 from ..models.reputation import Reputation
-from ..models.sync import update_library
 from ..stores import ebooks as ebook_store
 from ..stores import events as event_store
+from ..sync import update_library
 
 bp_api = Blueprint('api', __name__, url_prefix='/api/v1')
 

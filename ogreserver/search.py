@@ -6,7 +6,7 @@ import math
 from whoosh.query import Every, And, Term
 from whoosh.qparser import MultifieldParser, OrGroup, FuzzyTermPlugin
 
-from ..exceptions import NoMoreResultsError
+from .exceptions import NoMoreResultsError
 
 
 class Search:

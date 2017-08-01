@@ -11,7 +11,7 @@ from werkzeug.exceptions import abort
 
 from ..exceptions import NoMoreResultsError
 from ..forms.search import SearchForm
-from ..models.search import Search
+from ..search import Search
 from ..stores import ebooks as ebook_store
 from ..utils.flask import render_template
 

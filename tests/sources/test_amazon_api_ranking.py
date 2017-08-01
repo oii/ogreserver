@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from ogreserver.models.amazon import AmazonAPI
+from ogreserver.sources.amazon import AmazonAPI
 
 
 def test_ranking1():

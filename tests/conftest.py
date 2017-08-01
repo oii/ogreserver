@@ -24,7 +24,7 @@ from ogreserver.extensions.database import setup_db_session, create_tables
 from ogreserver.utils.s3 import connect_s3
 from ogreserver.models.ebook import Ebook, Version, Format
 from ogreserver.models.user import User
-from ogreserver.models.search import Search
+from ogreserver.search import Search
 from ogreserver.stores import ebooks as ebook_store
 
 import fixtures

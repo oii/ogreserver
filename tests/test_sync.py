@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from ogreserver.models.ebook import Ebook, Version
-from ogreserver.models.sync import update_library
+from ogreserver.sync import update_library
 from ogreserver.stores import ebooks as ebook_store
 
 

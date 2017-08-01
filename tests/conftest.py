@@ -8,11 +8,9 @@ import datetime
 import json
 import logging
 import os
-import platform
 import random
 import shutil
 import string
-import subprocess
 import threading
 import yaml
 
@@ -264,34 +262,6 @@ def ogreclient_auth_token(_flask_app, user):
     )
     yield json.loads(result.data)['response']['user']['authentication_token']
     client.get('/logout')
-
-
-@pytest.fixture(scope='session')
-def calibre_ebook_meta_bin():
-    calibre_ebook_meta_bin = None
-
-    if platform.system() == 'Darwin':
-        # hardcoded path
-        if not calibre_ebook_meta_bin and os.path.exists('/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-meta'):
-            calibre_ebook_meta_bin = '/Applications/calibre.app/Contents/console.app/Contents/MacOS/ebook-meta'
-
-        # hardcoded path for pre-v2 calibre
-        if not calibre_ebook_meta_bin and os.path.exists('/Applications/calibre.app/Contents/MacOS/ebook-meta'):
-            calibre_ebook_meta_bin = '/Applications/calibre.app/Contents/MacOS/ebook-meta'
-    else:
-        try:
-            # locate calibre's binaries with shell
-            calibre_ebook_meta_bin = subprocess.check_output('which ebook-meta', shell=True).strip()
-        except subprocess.CalledProcessError:
-            pass
-
-    return calibre_ebook_meta_bin
-
-
-@pytest.fixture(scope='session')
-def ebook_lib_path():
-    # path where conftest.py resides + '/ebooks'
-    return os.path.join(os.path.dirname(__file__), 'tests', 'ebooks')
 
 
 @pytest.fixture

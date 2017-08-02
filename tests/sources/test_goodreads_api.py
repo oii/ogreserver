@@ -5,24 +5,22 @@ import mock
 
 from ogreserver.sources.goodreads import GoodreadsAPI
 
+import fixtures
 
-@mock.patch('ogreserver.sources.goodreads.requests')
-def test_isbn_search(mock_goodreads, get_data_fixtures):
+
+def test_isbn_search():
     goodreads = GoodreadsAPI(None)
 
-    side_effects = []
-
-    # load GoodreadsAPI response fixtures
-    for f in get_data_fixtures(__file__, 'test_isbn_search'):
-        m = mock.Mock()
-        m.status_code = 200
-        m.text = f
-        side_effects.append(m)
-
-    mock_goodreads.get.side_effect = side_effects
+    # mock the external calls to Goodreads API
+    goodreads._get_book_id_by_isbn = mock.Mock()
+    goodreads._get_book_id_by_isbn.return_value = 8908
+    goodreads._get_book = mock.Mock()
+    goodreads._get_book.return_value = fixtures.GOODREADS_BOOK_DATA_0307346609
+    goodreads._get_author = mock.Mock()
+    goodreads._get_author.return_value = fixtures.GOODREADS_AUTHOR_DATA_0307346609
 
     # search ISBN on goodreads
-    gr_data = goodreads.search('0307346609')
+    gr_data = goodreads.search(isbn='0307346609')
     assert gr_data['isbn'] == '0307346609'
     assert gr_data['isbn13'] == '9780307346605'
     assert gr_data['title'] == 'World War Z: An Oral History of the Zombie War'
@@ -30,68 +28,16 @@ def test_isbn_search(mock_goodreads, get_data_fixtures):
     assert gr_data['authors'][0]['name'] == 'Max Brooks'
 
 
-@mock.patch('ogreserver.sources.goodreads.requests')
-def test_isbn13_search1(mock_goodreads, get_data_fixtures):
+def test_author_title_search():
     goodreads = GoodreadsAPI(None)
 
-    side_effects = []
-
-    # load GoodreadsAPI response fixtures
-    for f in get_data_fixtures(__file__, 'test_isbn13_search1'):
-        m = mock.Mock()
-        m.status_code = 200
-        m.text = f
-        side_effects.append(m)
-
-    mock_goodreads.get.side_effect = side_effects
-
-    # search ISBN13 on goodreads
-    gr_data = goodreads.search('9780307346605')
-    assert gr_data['isbn'] == '0307346609'
-    assert gr_data['isbn13'] == '9780307346605'
-    assert gr_data['title'] == 'World War Z: An Oral History of the Zombie War'
-    assert len(gr_data['authors']) == 1
-    assert gr_data['authors'][0]['name'] == 'Max Brooks'
-
-
-@mock.patch('ogreserver.sources.goodreads.requests')
-def test_isbn13_search2(mock_goodreads, get_data_fixtures):
-    goodreads = GoodreadsAPI(None)
-
-    side_effects = []
-
-    # load GoodreadsAPI response fixtures
-    for f in get_data_fixtures(__file__, 'test_isbn13_search2'):
-        m = mock.Mock()
-        m.status_code = 200
-        m.text = f
-        side_effects.append(m)
-
-    mock_goodreads.get.side_effect = side_effects
-
-    # search ISBN13 on goodreads
-    gr_data = goodreads.search('9781405525961')
-    assert gr_data['isbn'] == '1405525967'
-    assert gr_data['isbn13'] == '9781405525961'
-    assert gr_data['title'] == "Blood Song (Raven's Shadow, #1)"
-    assert len(gr_data['authors']) == 1
-    assert gr_data['authors'][0]['name'] == 'Anthony Ryan'
-
-
-@mock.patch('ogreserver.sources.goodreads.requests')
-def test_author_title_search(mock_goodreads, get_data_fixtures):
-    goodreads = GoodreadsAPI(None)
-
-    side_effects = []
-
-    # load GoodreadsAPI response fixtures
-    for f in get_data_fixtures(__file__, 'test_author_title_search'):
-        m = mock.Mock()
-        m.status_code = 200
-        m.text = f
-        side_effects.append(m)
-
-    mock_goodreads.get.side_effect = side_effects
+    # mock the external calls to Goodreads API
+    goodreads._get_book_id_by_author_title = mock.Mock()
+    goodreads._get_book_id_by_author_title.return_value = 40445
+    goodreads._get_book = mock.Mock()
+    goodreads._get_book.return_value = fixtures.GOODREADS_BOOK_DATA_MORGAN_ALTERED_CARBON
+    goodreads._get_author = mock.Mock()
+    goodreads._get_author.return_value = fixtures.GOODREADS_AUTHOR_DATA_MORGAN_ALTERED_CARBON
 
     # search author, title on goodreads
     gr_data = goodreads.search(author='Richard Morgan', title='Altered Carbon (GOLLANCZ S.F.)')
@@ -103,24 +49,13 @@ def test_author_title_search(mock_goodreads, get_data_fixtures):
 
 
 @mock.patch('ogreserver.sources.goodreads.requests')
-def test_author_title_unicode(mock_goodreads, get_data_fixtures):
-    goodreads = GoodreadsAPI(None)
+def test_get_book(mock_goodreads):
+    goodreads = GoodreadsAPI("nEJqQiErsyBDPudiOYovmA")
 
-    side_effects = []
-
-    # load GoodreadsAPI response fixtures
-    for f in get_data_fixtures(__file__, 'test_author_title_search'):
-        m = mock.Mock()
-        m.status_code = 200
-        m.text = f
-        side_effects.append(m)
-
-    mock_goodreads.get.side_effect = side_effects
+    mock_goodreads.get.return_value = mock.Mock(status_code=200, text=fixtures.GOODREADS_BOOK_QUERY_8908)
 
     # search author, title on goodreads
-    gr_data = goodreads.search(author='Richard Morgan', title='Altered Carbon (GOLLANCZ S.F.)')
+    gr_data = goodreads._get_book(book_id=8908)
     assert type(gr_data['isbn']) is unicode
     assert type(gr_data['isbn13']) is unicode
     assert type(gr_data['title']) is unicode
-    assert len(gr_data['authors']) == 1
-    assert type(gr_data['authors'][0]['name']) is unicode

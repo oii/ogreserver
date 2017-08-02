@@ -55,11 +55,24 @@ class GoodreadsAPI:
         return tree
 
 
+    def _get_book_id_by_isbn(self, isbn):
+        return int(self._query('book/isbn_to_id', isbn))
+
+
+    def _get_book_id_by_author_title(self, author, title):
+        # query Goodreads
+        tree = self._query('search', '{} {}'.format(author or '', title or ''))
+
+        # extract first result from Goodread's search
+        book = tree.find('search').find('results').findall('work')[0].find('best_book')
+        return int(book.find('id').text)
+
+
     @handle_http_error(GoodreadsAPIError)
     def search(self, author=None, title=None, isbn=None, retry=0):
         if isbn is not None:
             try:
-                book_id = self._query('book/isbn_to_id', isbn)
+                book_id = self._get_book_id_by_isbn(isbn)
 
             except GoodreadsBookNotFoundError:
                 # tidy up the author/title fields and try again
@@ -69,11 +82,7 @@ class GoodreadsAPI:
         else:
             try:
                 # query Goodreads
-                tree = self._query('search', '{} {}'.format(author or '', title or ''))
-
-                # extract first result from Goodread's search
-                book = tree.find('search').find('results').findall('work')[0].find('best_book')
-                book_id = int(book.find('id').text)
+                book_id = self._get_book_id_by_author_title(author, title)
 
             except ValueError:
                 raise GoodreadsAPIError(
@@ -91,14 +100,14 @@ class GoodreadsAPI:
         output = {}
 
         # retrieve further detailed info from Goodreads
-        book_data = self.get_book(book_id)
+        book_data = self._get_book(book_id)
         output.update(book_data)
 
         output['authors'] = []
 
         # extract the author ids
         for author_id in book_data['authors']:
-            author_data = self.get_author(author_id)
+            author_data = self._get_author(author_id)
             output['authors'].append(author_data)
 
         # convert everything to unicode
@@ -111,12 +120,12 @@ class GoodreadsAPI:
 
     def _try_field(self, obj, field_name):
         try:
-            return obj.find(field_name).text
+            return obj.find(field_name).text.decode('utf8')
         except AttributeError:
             pass
 
 
-    def get_book(self, book_id):
+    def _get_book(self, book_id):
         xml = self._query('book/show', book_id)
         book = xml.find('book')
 
@@ -160,7 +169,7 @@ class GoodreadsAPI:
         return output
 
 
-    def get_author(self, author_id):
+    def _get_author(self, author_id):
         xml = self._query('author/show', author_id)
         author = xml.find('author')
 

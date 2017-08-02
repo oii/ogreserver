@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import datetime
+
 
 EBOOK_FIXTURE_1 = {
     'dedrm': True,
@@ -54,6 +56,7 @@ EBOOK_FIXTURE_3 = {
     },
     'size': 746218
 }
+
 
 AMAZON_TEST_AUTHOR_TITLE_SEARCH_NO_MATCHES_ITEMSEARCH_NOMATCH = """<?xml version="1.0" ?>
 <ItemSearchResponse xmlns="http://webservices.amazon.com/AWSECommerceService/2013-08-01">
@@ -359,4 +362,249 @@ AMAZON_TEST_VALID_ASIN_SEARCH_ITEMSEARCH = """<?xml version="1.0" ?>
         </Request>
     </Items>
 </ItemLookupResponse>
+"""
+
+
+GOODREADS_BOOK_DATA_0307346609 = {
+    'asin': None,
+    'isbn': '0307346609',
+    'description': 'The Zombie War came unthinkably close to eradicating humanity.',
+    'isbn13': '9780307346605',
+    'title': 'World War Z: An Oral History of the Zombie War',
+    'publisher': 'Crown',
+    'average_rating': '4.01',
+    'authors': [5791],
+    'image_url': 'https://images.gr-assets.com/books/1386328204m/8908.jpg',
+    'publication_date': datetime.date(2006, 9, 12),
+    'link': 'https://www.goodreads.com/book/show/8908.World_War_Z',
+    'num_pages': '342'
+}
+
+GOODREADS_AUTHOR_DATA_0307346609 = {
+    'born_at': None,
+    'hometown': 'New York City',
+    'small_image_url': 'https://images.gr-assets.com/authors/1334340170p2/5791.jpg',
+    'name': 'Max Brooks',
+    'died_at': None
+}
+
+GOODREADS_BOOK_DATA_MORGAN_ALTERED_CARBON = {
+    'asin': None,
+    'isbn': '0345457692',
+    'description': 'It\'s the twenty-fifth century, and advances in technology have redefined life itself.',
+    'isbn13': '9780345457691',
+    'title': 'Altered Carbon (Takeshi Kovacs, #1)',
+    'publisher': 'Del Rey Books',
+    'average_rating': '4.10',
+    'authors': [16496],
+    'image_url': 'https://images.gr-assets.com/books/1387128955m/40445.jpg',
+    'publication_date': datetime.date(2006, 2, 28),
+    'link': 'https://www.goodreads.com/book/show/40445.Altered_Carbon',
+    'num_pages': '526'
+}
+
+GOODREADS_AUTHOR_DATA_MORGAN_ALTERED_CARBON = {
+    'born_at': '1965/09/24',
+    'hometown': 'London, England',
+    'small_image_url': 'https://images.gr-assets.com/authors/1175224722p2/16496.jpg',
+    'name': 'Richard K. Morgan',
+    'died_at': None
+}
+
+GOODREADS_BOOK_QUERY_8908 = """<?xml version="1.0" encoding="UTF-8"?>
+<GoodreadsResponse>
+    <Request>
+        <authentication>true</authentication>
+        <key><![CDATA[nEJqQiErsyBDPudiOYovmA]]></key>
+        <method><![CDATA[book_show]]></method>
+    </Request>
+    <book>
+        <id>8908</id>
+        <title><![CDATA[World War Z: An Oral History of the Zombie War]]></title>
+        <isbn><![CDATA[0307346609]]></isbn>
+        <isbn13><![CDATA[9780307346605]]></isbn13>
+        <asin />
+        <kindle_asin><![CDATA[B00YLR2FW4]]></kindle_asin>
+        <marketplace_id><![CDATA[A1F83G8C2ARO7P]]></marketplace_id>
+        <country_code><![CDATA[GB]]></country_code>
+        <image_url>https://images.gr-assets.com/books/1386328204m/8908.jpg</image_url>
+        <small_image_url>https://images.gr-assets.com/books/1386328204s/8908.jpg</small_image_url>
+        <publication_year>2006</publication_year>
+        <publication_month>9</publication_month>
+        <publication_day>12</publication_day>
+        <publisher>Crown</publisher>
+        <language_code>en-US</language_code>
+        <is_ebook>false</is_ebook>
+        <description><![CDATA[The Zombie War came unthinkably close to eradicating humanity.]]></description>
+        <work>
+            <id type="integer">817</id>
+            <books_count type="integer">135</books_count>
+            <best_book_id type="integer">8908</best_book_id>
+            <reviews_count type="integer">551208</reviews_count>
+            <ratings_sum type="integer">1376532</ratings_sum>
+            <ratings_count type="integer">343616</ratings_count>
+            <text_reviews_count type="integer">22356</text_reviews_count>
+            <original_publication_year type="integer">2006</original_publication_year>
+            <original_publication_month type="integer" nil="true" />
+            <original_publication_day type="integer" nil="true" />
+            <original_title>World War Z: An Oral History of the Zombie War</original_title>
+            <original_language_id type="integer" nil="true" />
+            <media_type>book</media_type>
+            <rating_dist>5:129860|4:121064|3:65243|2:19798|1:7651|total:343616</rating_dist>
+            <desc_user_id type="integer">2830758</desc_user_id>
+            <default_chaptering_book_id type="integer" nil="true" />
+            <default_description_language_code nil="true" />
+        </work>
+        <average_rating>4.01</average_rating>
+        <num_pages><![CDATA[342]]></num_pages>
+        <format><![CDATA[Hardcover]]></format>
+        <edition_information />
+        <ratings_count><![CDATA[311616]]></ratings_count>
+        <text_reviews_count><![CDATA[18958]]></text_reviews_count>
+        <url><![CDATA[https://www.goodreads.com/book/show/8908.World_War_Z]]></url>
+        <link><![CDATA[https://www.goodreads.com/book/show/8908.World_War_Z]]></link>
+        <authors>
+            <author>
+                <id>5791</id>
+                <name>Max Brooks</name>
+                <role />
+                <image_url nophoto="false">
+<![CDATA[https://images.gr-assets.com/authors/1334340170p5/5791.jpg]]>
+</image_url>
+                <small_image_url nophoto="false">
+<![CDATA[https://images.gr-assets.com/authors/1334340170p2/5791.jpg]]>
+</small_image_url>
+                <link><![CDATA[https://www.goodreads.com/author/show/5791.Max_Brooks]]></link>
+                <average_rating>3.97</average_rating>
+                <ratings_count>449486</ratings_count>
+                <text_reviews_count>27394</text_reviews_count>
+            </author>
+        </authors>
+        <reviews_widget>
+      <![CDATA[
+        <style>
+  #goodreads-widget {
+    font-family: georgia, serif;
+    padding: 18px 0;
+    width:565px;
+  }
+  #goodreads-widget h1 {
+    font-weight:normal;
+    font-size: 16px;
+    border-bottom: 1px solid #BBB596;
+    margin-bottom: 0;
+  }
+  #goodreads-widget a {
+    text-decoration: none;
+    color:#660;
+  }
+  iframe{
+    background-color: #fff;
+  }
+  #goodreads-widget a:hover { text-decoration: underline; }
+  #goodreads-widget a:active {
+    color:#660;
+  }
+  #gr_footer {
+    width: 100%;
+    border-top: 1px solid #BBB596;
+    text-align: right;
+  }
+  #goodreads-widget .gr_branding{
+    color: #382110;
+    font-size: 11px;
+    text-decoration: none;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+</style>
+<div id="goodreads-widget">
+  <div id="gr_header"><h1><a rel="nofollow" href="https://www.goodreads.com/book/show/8908.World_War_Z">World War Z Reviews</a></h1></div>
+  <iframe id="the_iframe" src="https://www.goodreads.com/api/reviews_widget_iframe?did=DEVELOPER_ID&amp;format=html&amp;isbn=0307346609&amp;links=660&amp;min_rating=&amp;review_back=fff&amp;stars=000&amp;text=000" width="565" height="400" frameborder="0"></iframe>
+  <div id="gr_footer">
+    <a class="gr_branding" target="_blank" rel="nofollow" href="https://www.goodreads.com/book/show/8908.World_War_Z?utm_medium=api&amp;utm_source=reviews_widget">Reviews from Goodreads.com</a>
+  </div>
+</div>
+
+      ]]>
+    </reviews_widget>
+        <popular_shelves>
+            <shelf name="to-read" count="31064" />
+        </popular_shelves>
+        <book_links>
+            <book_link>
+                <id>8</id>
+                <name>Libraries</name>
+                <link>https://www.goodreads.com/book_link/follow/8</link>
+            </book_link>
+        </book_links>
+        <buy_links>
+            <buy_link>
+                <id>1</id>
+                <name>Amazon</name>
+                <link>https://www.goodreads.com/book_link/follow/1</link>
+            </buy_link>
+        </buy_links>
+        <series_works />
+        <public_document>
+            <id>19575</id>
+            <document_url>
+          https://s3.amazonaws.com/compressed.photo.goodreads.com/documents/1331146541books/8908.pdf
+        </document_url>
+        </public_document>
+        <similar_books>
+            <book>
+                <id>8429687</id>
+                <title><![CDATA[Deadline (Newsflesh Trilogy, #2)]]></title>
+                <title_without_series>Deadline</title_without_series>
+                <link><![CDATA[https://www.goodreads.com/book/show/8429687-deadline]]></link>
+                <small_image_url><![CDATA[https://images.gr-assets.com/books/1408500444s/8429687.jpg]]></small_image_url>
+                <image_url><![CDATA[https://images.gr-assets.com/books/1408500444m/8429687.jpg]]></image_url>
+                <num_pages>584</num_pages>
+                <work>
+                    <id>13292985</id>
+                </work>
+                <isbn>031608106X</isbn>
+                <isbn13>9780316081061</isbn13>
+                <average_rating>4.10</average_rating>
+                <ratings_count>20108</ratings_count>
+                <publication_year>2011</publication_year>
+                <publication_month>6</publication_month>
+                <publication_day>1</publication_day>
+                <authors>
+                    <author>
+                        <id>3153776</id>
+                        <name>Mira Grant</name>
+                        <link><![CDATA[https://www.goodreads.com/author/show/3153776.Mira_Grant]]></link>
+                    </author>
+                </authors>
+            </book>
+            <book>
+                <id>1085771</id>
+                <title><![CDATA[The Walking Dead, Vol. 07: The Calm Before]]></title>
+                <title_without_series><![CDATA[The Walking Dead, Vol. 07: The Calm Before]]></title_without_series>
+                <link><![CDATA[https://www.goodreads.com/book/show/1085771.The_Walking_Dead_Vol_07]]></link>
+                <small_image_url><![CDATA[https://images.gr-assets.com/books/1289097173s/1085771.jpg]]></small_image_url>
+                <image_url><![CDATA[https://images.gr-assets.com/books/1289097173m/1085771.jpg]]></image_url>
+                <num_pages>136</num_pages>
+                <work>
+                    <id>1072542</id>
+                </work>
+                <isbn>1582408289</isbn>
+                <isbn13>9781582408286</isbn13>
+                <average_rating>4.27</average_rating>
+                <ratings_count>17464</ratings_count>
+                <publication_year>2010</publication_year>
+                <publication_month>11</publication_month>
+                <publication_day>9</publication_day>
+                <authors>
+                    <author>
+                        <id>12425</id>
+                        <name>Robert Kirkman</name>
+                        <link><![CDATA[https://www.goodreads.com/author/show/12425.Robert_Kirkman]]></link>
+                    </author>
+                </authors>
+            </book>
+        </similar_books>
+    </book>
+</GoodreadsResponse>
 """

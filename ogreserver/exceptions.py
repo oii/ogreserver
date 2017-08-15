@@ -60,10 +60,13 @@ class NoMoreResultsError(OgreException):
     pass
 
 
-class APIAccessDenied(OgreException):
+class APIBaseError(OgreException):
     pass
 
-class AmazonAPIError(OgreException):
+class APIAccessDenied(APIBaseError):
+    pass
+
+class AmazonAPIError(APIBaseError):
     pass
 
 class AmazonItemNotAccessibleError(AmazonAPIError):
@@ -75,7 +78,7 @@ class AmazonNoMatchesError(AmazonAPIError):
 class AmazonHttpError(AmazonAPIError):
     pass
 
-class GoodreadsAPIError(OgreException):
+class GoodreadsAPIError(APIBaseError):
     pass
 
 class GoodreadsBookNotFoundError(OgreException):

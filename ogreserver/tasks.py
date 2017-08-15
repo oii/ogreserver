@@ -19,7 +19,7 @@ from .extensions.database import setup_db_session
 from .extensions.whoosh import init_whoosh
 
 from .exceptions import (ConversionFailedError, EbookNotFoundOnS3Error, S3DatastoreError,
-                         AmazonHttpError)
+                         APIBaseError)
 from .conversion import Conversion
 from .search import Search
 from .models.ebook import Ebook, Version
@@ -32,7 +32,12 @@ from .utils.generic import make_temp_directory
 from .utils.s3 import connect_s3
 
 
-@app.celery.task(queue='high', rate_limit='1/s')
+@app.celery.task(
+    queue='high',
+    rate_limit='1/s',
+    autoretry_for=(APIBaseError,),
+    retry_kwargs={'max_retries': 3}
+)
 @statsd.timed()
 def query_ebook_metadata(ebook_id):
     """
@@ -54,21 +59,13 @@ def query_ebook_metadata(ebook_id):
         match_threshold=app.config.get('AMAZON_FUZZ_THRESHOLD', 50)
     )
 
-    try:
-        # query Amazon affiliate API first
-        am_data = am.search(
-            asin=ebook.asin,
-            author=ebook.author,
-            title=ebook.title
-        )
-        app.logger.debug('{} {}'.format(ebook, am_data))
-
-    except AmazonHttpError:
-        # retry the current task
-        query_ebook_metadata.retry(
-            countdown=1, max_retries=3, throw=False, **{'ebook_id': ebook.id}
-        )
-        return
+    # query Amazon affiliate API first
+    am_data = am.search(
+        asin=ebook.asin,
+        author=ebook.author,
+        title=ebook.title
+    )
+    app.logger.debug('{} {}'.format(ebook, am_data))
 
     if am_data:
         app.logger.info('{} - Amazon data for ASIN {}'.format(ebook, am_data['asin']))

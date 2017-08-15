@@ -11,6 +11,11 @@ from .exceptions import APIAccessDenied
 
 
 def handle_http_error(excp):
+    """
+    Capture urllib2.HTTPError and instead raise the `excp` passed to the decorator.
+
+    In the case of a 403, raise APIAccessDenied with `excp` as the inner_exception.
+    """
     def decorator(f):
         @functools.wraps(f)
         def wrapped(*args, **kwargs):

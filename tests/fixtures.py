@@ -608,3 +608,149 @@ GOODREADS_BOOK_QUERY_8908 = """<?xml version="1.0" encoding="UTF-8"?>
     </book>
 </GoodreadsResponse>
 """
+
+
+GOOGLE_BOOKS_ISBN_0307346609 = {
+    'totalItems': 1,
+    'kind': 'books#volumes',
+    'items': [{
+        'kind': 'books#volume',
+        'volumeInfo': {
+            'publisher': 'Crown Pub',
+            'subtitle': 'An Oral History of the Zombie War',
+            'description': 'An account of the decade-long conflict between humankind and hordes of the predatory undead.',
+            'language': 'en',
+            'publishedDate': '2006',
+            'readingModes': {
+                'text': False,
+                'image': False
+            },
+            'previewLink': 'http://books.google.co.uk/books?id=BW1lAAAAMAAJ&dq=isbn:0307346609&hl=&cd=1&source=gbs_api',
+            'title': 'World War Z',
+            'printType': 'BOOK',
+            'canonicalVolumeLink': 'https://books.google.com/books/about/World_War_Z.html?hl=&id=BW1lAAAAMAAJ',
+            'pageCount': 342,
+            'maturityRating': 'NOT_MATURE',
+            'contentVersion': '0.1.1.0.preview.0',
+            'industryIdentifiers': [{
+                'identifier': 'UOM:39015064727020',
+                'type': 'OTHER'
+            }],
+            'imageLinks': {
+                'smallThumbnail': 'http://books.google.com/books/content?id=BW1lAAAAMAAJ&printsec=frontcover&img=1&zoom=5&source=gbs_api',
+                'thumbnail': 'http://books.google.com/books/content?id=BW1lAAAAMAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api'
+            },
+            'authors': ['Max Brooks'],
+            'ratingsCount': 3827,
+            'allowAnonLogging': False,
+            'infoLink': 'http://books.google.co.uk/books?id=BW1lAAAAMAAJ&dq=isbn:0307346609&hl=&source=gbs_api',
+            'categories': ['Fiction'],
+            'averageRating': 3.5
+        },
+        'searchInfo': {
+            'textSnippet': 'An account of the decade-long conflict between humankind and hordes of the predatory undead is told from the perspective of dozens of survivors who describe in their own words the epic human battle for survival.'
+        },
+        'saleInfo': {
+            'country': 'GB',
+            'saleability': 'NOT_FOR_SALE',
+            'isEbook': False
+        },
+        'etag': 'JZdiu+0/+7Q',
+        'accessInfo': {
+            'webReaderLink': 'http://play.google.com/books/reader?id=BW1lAAAAMAAJ&hl=&printsec=frontcover&source=gbs_api',
+            'publicDomain': False,
+            'embeddable': False,
+            'country': 'GB',
+            'textToSpeechPermission': 'ALLOWED',
+            'pdf': {'isAvailable': False},
+            'quoteSharingAllowed': False,
+            'viewability': 'NO_PAGES',
+            'epub': {'isAvailable': False},
+            'accessViewStatus': 'NONE'
+        },
+        'id': 'BW1lAAAAMAAJ',
+        'selfLink': 'https://www.googleapis.com/books/v1/volumes/BW1lAAAAMAAJ'
+    }],
+}
+
+
+GOOGLE_BOOKS__SEARCH_SINGLE_RESULT = [
+    {
+        'publisher': 'Crown Pub',
+        'identifiers': {
+            'etag': 'JZdiu+0/+7Q',
+            'id': 'BW1lAAAAMAAJ'
+        },
+        'num_pages': 342,
+        'description': 'An account of the decade-long conflict between humankind and hordes of the predatory undead.',
+        'title': 'World War Z: An Oral History of the Zombie War',
+        'link': 'https://books.google.com/books/about/World_War_Z.html?hl=&id=BW1lAAAAMAAJ',
+        'authors': ['Max Brooks'],
+        'categories': ['Fiction'],
+        'image_url': 'http://books.google.com/books/content?id=BW1lAAAAMAAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api',
+        'average_rating': 3.5
+    }
+]
+
+
+GOOGLE_BOOKS__SEARCH_MULTIPLE_RESULTS = [
+    {
+        'publisher': 'Del Rey',
+        'identifiers': {
+            'etag': 'qerBNGUlWVg',
+            'id': '2jJcAwAAQBAJ'
+        },
+        'num_pages': 656,
+        'description': 'Joe Abercrombie\u2019s Best Served Cold meets George R. R. Martin\u2019s A Game of Thrones in the final novel in Richard K. Morgan\u2019s epic A Land Fit for Heroes trilogy',
+        'title': 'The Dark Defiles',
+        'link': 'https://books.google.com/books/about/The_Dark_Defiles.html?hl=&id=2jJcAwAAQBAJ',
+        'authors': ['Richard K. Morgan'],
+        'categories': ['Fiction'],
+        'image_url': 'http://books.google.com/books/content?id=2jJcAwAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api',
+        'average_rating': 4.0
+    },{
+        'publisher': 'Hachette UK',
+        'identifiers': {
+            'etag': 'Ka8iBkh9XYM',
+            'id': '5ajHAAAAQBAJ'
+        },
+        'num_pages': 2000,
+        'description': u"Richard Morgan blazed onto the SF scene in 2002 with ALTERED CARBON.",
+        'title': 'The Complete SF Collection',
+        'link': 'https://market.android.com/details?id=book-5ajHAAAAQBAJ',
+        'authors': ['Richard Morgan'],
+        'categories': ['Fiction'],
+        'image_url': 'http://books.google.com/books/content?id=5ajHAAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api',
+        'average_rating': None
+    },{
+        'publisher': None,
+        'identifiers': {
+            'etag': 'dxixv9NGSLE',
+            'id': 'ArgBAAAAQAAJ'
+        },
+        'num_pages': None,
+        'description': None,
+        'title': 'Raymond de Monthault: the lord marcher',
+        'link': 'https://market.android.com/details?id=book-ArgBAAAAQAAJ',
+        'authors': ['Richard Williams Morgan'],
+        'categories': None,
+        'image_url': 'http://books.google.com/books/content?id=ArgBAAAAQAAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api',
+        'average_rating': None
+    },{
+        'publisher': 'Outlet',
+        'identifiers': {
+            'etag': 'hcq4xkf1Hic',
+            'id': 'ehVmWh68JoQC'
+        },
+        'num_pages': 384,
+        'description': 'Describes Colonial American society and traces the development of the Revolutionary War',
+        'title': 'The American heritage history of the American Revolution',
+        'link': 'https://books.google.com/books/about/The_American_heritage_history_of_the_Ame.html?hl=&id=ehVmWh68JoQC',
+        'authors': ['Bruce Lancaster',
+        'John Harold Plumb',
+        'Richard M. Ketchum'],
+        'categories': ['History'],
+        'image_url': 'http://books.google.com/books/content?id=ehVmWh68JoQC&printsec=frontcover&img=1&zoom=1&source=gbs_api',
+        'average_rating': None
+    }
+]

@@ -130,6 +130,7 @@ class AmazonAPI:
         choices = {'{} {}'.format(item['author'], item['title']):item for item in items}
         results = fuzz.extract(term, choices.keys(), scorer=token_set_ratio)
 
+        # abort if best match is below threshold
         if results[0][1] < self.match_threshold:
             raise AmazonNoMatchesError
 

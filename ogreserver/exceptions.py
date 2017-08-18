@@ -83,3 +83,12 @@ class GoodreadsAPIError(APIBaseError):
 
 class GoodreadsBookNotFoundError(OgreException):
     pass
+
+class GoogleAPIError(APIBaseError):
+    pass
+
+class GoogleHttpError(GoogleAPIError):
+    pass
+
+class GoogleNoMatchesError(GoogleAPIError):
+    pass

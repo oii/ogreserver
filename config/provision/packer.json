@@ -24,7 +24,8 @@
 		"environment_vars": [
 			"GIT_REVISION={{ user `git_revision` }}",
 			"SALT_VERSION={{ user `salt_version` }}",
-			"SESAME_PASSWORD={{ user `sesame_password` }}"
+			"SESAME_PASSWORD={{ user `sesame_password` }}",
+			"DEBUG={{ user `debug` }}"
 		],
 		"execute_command": "{{ .Vars }} sudo -E bash '{{ .Path }}'",
 		"scripts": [

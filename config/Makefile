@@ -9,6 +9,7 @@ help:
 
 ENV?=staging
 SALT_VERSION?=v2016.3.5
+DEBUG?=false
 
 # current HEAD commit ref
 BUILD_TAG:=$$(git log -1 --abbrev-commit --oneline | cut -d' ' -f1)
@@ -41,6 +42,7 @@ build: _check-commits-ahead _check-local
 		-var git_revision=$(BUILD_TAG) \
 		-var sesame_password=$(SESAME_PASSWORD) \
 		-var salt_version=$(SALT_VERSION) \
+		-var debug=$(DEBUG) \
 		packer.json
 
 up:

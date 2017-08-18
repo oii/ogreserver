@@ -1,6 +1,7 @@
 #!/bin/bash -eux
 
 GIT_REVISION=${GIT_REVISION:-master}
+DEBUG=${DEBUG:-false}
 
 mkdir /etc/ogre
 cd /etc/ogre || exit 2
@@ -14,8 +15,18 @@ chmod +x /tmp/sesame.sh
 # fetch default_vars
 curl --silent -o /etc/ogre/default_vars.sls "https://raw.githubusercontent.com/oii/ogreserver/${GIT_REVISION}/config/pillar/default_vars.sls"
 
+if [[ $DEBUG == true ]]; then
+	echo "https://raw.githubusercontent.com/oii/ogreserver/${GIT_REVISION}/config/pillar/default_vars.sls"
+	cat /etc/ogre/default_vars.sls
+fi
+
 # fetch encrypted prod_vars
 curl --silent -o /tmp/prod_vars.sesame "https://raw.githubusercontent.com/oii/ogreserver/${GIT_REVISION}/config/pillar/prod_vars.sesame"
+
+if [[ $DEBUG == true ]]; then
+	echo "https://raw.githubusercontent.com/oii/ogreserver/${GIT_REVISION}/config/pillar/prod_vars.sesame"
+	cat /tmp/prod_vars.sesame
+fi
 
 if [[ $? -gt 0 ]]; then
 	echo 'Encrypted pillar not found on Github'

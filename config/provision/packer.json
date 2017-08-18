@@ -4,8 +4,9 @@
 		"git_revision": "dev-{{ timestamp }}",
 		"salt_version": "v2015.8.11",
 		"sesame_password": "{{ env `SESAME_PASSWORD` }}",
-		"source_ami": "ami-ff0e758c",
-		"env": "prod"
+		"source_ami": "ami-402f1a33",
+		"env": "prod",
+		"debug": "true"
 	},
 	"builders": [{
 		"type": "amazon-ebs",

@@ -49,10 +49,10 @@ def test_author_title_search():
 
 
 @mock.patch('ogreserver.sources.goodreads.requests')
-def test_get_book(mock_goodreads):
+def test_get_book(mock_requests):
     goodreads = GoodreadsAPI("nEJqQiErsyBDPudiOYovmA")
 
-    mock_goodreads.get.return_value = mock.Mock(status_code=200, text=fixtures.GOODREADS_BOOK_QUERY_8908)
+    mock_requests.get.return_value = mock.Mock(status_code=200, text=fixtures.GOODREADS_BOOK_QUERY_8908)
 
     # search author, title on goodreads
     gr_data = goodreads._get_book(book_id=8908)

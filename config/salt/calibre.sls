@@ -1,8 +1,8 @@
 calibre-install:
   archive.extracted:
     - name: /opt/calibre
-    - source: https://s3-eu-west-1.amazonaws.com/calibre-binary-mirror/calibre-2.80.0-x86_64.txz
-    - source_hash: sha1=730ed279581b9546b18580fef671894702645076
+    - source: https://s3-eu-west-1.amazonaws.com/calibre-binary-mirror/calibre-3.2.1-x86_64.txz
+    - source_hash: sha1=ed754309762208a9ba6dcbc02974e2a7dfb1588c
     - archive_format: tar
   cmd.wait:
     - name: /opt/calibre/calibre_postinstall

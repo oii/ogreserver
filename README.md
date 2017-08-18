@@ -59,3 +59,22 @@ a virtualenv:
 And run a sync to your VM:
 
     ogre --ogreserver 172.16.8.128:8005
+
+
+Calibre
+-------
+
+Calibre is required for `ogreserver`. New calibre releases are suppied via Github, but unfortunately
+old releases are removed when a new one arrives. To that end, a new calibre release is pushed to S3
+periodically and `ogreserver` retrieves it from there.
+
+See the salt state [calibre.sls](./config/salt/calibre.sls).
+
+Download a latest release and push:
+
+    curl -L -O https://github.com/kovidgoyal/calibre/releases/download/v3.2.1/calibre-3.2.1-x86_64.txz
+    aws s3 cp calibre-3.2.1-x86_64.txz s3://calibre-binary-mirror/ --acl=public-read
+
+Get the sha1sum (required by salt's `file.managed`):
+
+    sha1sum calibre-3.2.1-x86_64.txz

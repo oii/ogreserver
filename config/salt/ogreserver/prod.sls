@@ -2,7 +2,6 @@ include:
   - create-app-user
   - hostname.cloud-init
   - mysql.prod
-  - newrelic
   - nginx.acme-ssl
   - ogreserver
 
@@ -28,7 +27,6 @@ extend:
     supervisord.running:
       - require:
         - service: redis
-        - file: newrelic-config
 
   create-app-user:
     user.present:

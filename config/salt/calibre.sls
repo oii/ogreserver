@@ -1,12 +1,13 @@
 calibre-install:
   archive.extracted:
     - name: /opt/calibre
-    - source: https://s3-eu-west-1.amazonaws.com/calibre-binary-mirror/calibre-3.2.1-x86_64.txz
-    - source_hash: sha1=ed754309762208a9ba6dcbc02974e2a7dfb1588c
+    - source: https://s3-eu-west-1.amazonaws.com/calibre-binary-mirror/calibre-3.6.0-x86_64.txz
+    - source_hash: sha1=c14765495a4d58da7fc35e5f3eefcedaa7cfee59
     - archive_format: tar
-  cmd.wait:
-    - name: /opt/calibre/calibre_postinstall
-    - watch:
+
+/opt/calibre/calibre_postinstall; true:
+  cmd.run:
+    - onchanges:
       - archive: calibre-install
 
 # required packages for ebook-meta & ebook-convert

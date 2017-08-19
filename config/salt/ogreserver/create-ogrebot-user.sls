@@ -6,4 +6,4 @@ create-ogrebot-user:
     - unless: /var/cache/ogre/venv/bin/python manage.py create_user ogrebot null null --test
     - user: {{ pillar['app_user'] }}
     - require:
-      - postgres_privileges: {{ pillar['db_user'] }}
+      - cmd: ogre-init

@@ -5,7 +5,7 @@
 app_name: ogreserver
 
 # github repo to clone
-app_repo: oii/ogre
+app_repo: oii/ogreserver
 app_repo_rev: dev
 
 # supervisor program name (defaults to app_name)

@@ -1,7 +1,6 @@
 include:
   - create-app-user
   - hostname.cloud-init
-  - mysql.prod
   - nginx.acme-ssl
   - ogreserver
 

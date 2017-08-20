@@ -14,22 +14,8 @@ else
   curl -L http://bootstrap.saltstack.org | bash -s -- -P git "${SALT_VERSION}" | grep -v copying | grep -v byte-compiling
 fi
 
-echo '==> Installing git, pip and pygit2'
-apt-get install -y git python-pip build-essential cmake python-dev libffi-dev libssl-dev
+echo '==> Installing git and pip'
+apt-get install -y git python-pip python-dev
 
-# install libgit2 from source
-git clone --branch v0.24.1 git://github.com/libgit2/libgit2.git /opt/libgit2
-cd /opt/libgit2 || exit 1
-mkdir build && cd build || exit 1
-cmake ..
-cmake --build .
-cmake --build . --target install
-
-# update shared lib cache
-ldconfig
-
-# install pygit2
-pip install -U cffi pip pygit2==0.24.1
-
-# cleanup
-apt-get remove -y libffi-dev libssl-dev
+# update pip
+pip install -U pip

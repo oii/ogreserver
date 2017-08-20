@@ -26,7 +26,7 @@ resource "null_resource" "provision-staging" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo salt-call state.sls create-ogre-user"
+      "sudo salt-call state.sls create-dev-user"
     ]
   }
 }

@@ -58,6 +58,7 @@ extend:
       - require:
         - virtualenv: app-virtualenv
         - cmd: ogre-init
+        - postgres_privileges: {{ pillar['db_user'] }}
 
   create-ogrebot-user:
     cmd.run:

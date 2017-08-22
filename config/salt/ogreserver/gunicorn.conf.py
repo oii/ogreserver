@@ -3,7 +3,7 @@
 # Gunicorn config for {{ app_name }}
 #################################################
 
-bind = '{{ gunicorn_host }}:8005'
+bind = '{{ gunicorn_host }}:{{ gunicorn_port }}'
 worker_class = '{{ worker_class }}'
 
 # configure number of gunicorn workers

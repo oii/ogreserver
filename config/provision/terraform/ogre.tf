@@ -1,5 +1,16 @@
+terraform {
+  version = "~> 0.1"
+
+  backend "s3" {
+    region = "eu-west-1"
+    bucket = "ogre-terraform"
+    key    = "s3-buckets"
+  }
+}
+
 provider "aws" {
   region = "${var.region}"
+  version = "~> 0.1"
 }
 
 resource "aws_security_group" "default" {

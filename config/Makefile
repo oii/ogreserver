@@ -8,7 +8,7 @@ help:
 
 
 ENV?=staging
-SALT_VERSION?=v2016.3.5
+SALT_VERSION?=v2016.3.7
 DEBUG?=false
 
 # current HEAD commit ref
@@ -49,6 +49,8 @@ up:
 	@echo "Deploying $(LATEST_AMI)"
 	@echo "-----"
 	@cd provision/$(ENV) && \
+		terraform init && \
+		terraform get && \
 		terraform apply -var ami=$(LATEST_AMI)
 
 destroy:

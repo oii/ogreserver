@@ -17,7 +17,7 @@ def ogreclient():
     statsd.increment('views.download.ogreclient', 1)
 
     # supply the latest DRM tools to the client
-    url = 'https://s3-{}.amazonaws.com/{}/ogreclient-{}.zip'.format(
+    url = 'https://s3-{}.amazonaws.com/{}/ogre-{}'.format(
         app.config['AWS_REGION'],
         app.config['DIST_S3_BUCKET'].format(app.config['env']),
         app.config['OGRECLIENT_VERSION']

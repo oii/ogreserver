@@ -19,46 +19,13 @@ function install_homebrew {
   fi
 }
 
-# optionally install into a virtualenv
-if [[ $1 == --venv ]]; then
-  if [[ ! -z $2 ]]; then
-    VENV=$2
-  else
-    VENV=ogreclient
-  fi
-else
-  VENV=''
-fi
-
 if [[ $(uname) =~ (.*)Darwin(.*) ]]; then
   install_homebrew
-
-  if ! command pip &>/dev/null; then
-    echo "${BLUE}==> Installing/Updating Python${RESET}"
-    brew install python
-  fi
 
   if ! command ebook-meta &>/dev/null; then
     echo "${BLUE}==> Installing Calibre${RESET}"
     brew cask install calibre
   fi
-
-  if [[ ! -z $VENV ]]; then
-    # create a venv if it does not exist
-    if [[ ! -d "$HOME/.virtualenvs/$VENV/bin" ]]; then
-      echo "${BLUE}==> Installing virtualenv:${RESET}"
-      pip install virtualenv
-      echo "${BLUE}==> Creating a virtualenv:${RESET}"
-      mkdir ~/.virtualenvs
-      virtualenv ~/.virtualenvs/$VENV
-    fi
-
-    # shellcheck source=/dev/null
-    source ~/.virtualenvs/$VENV/bin/activate
-  fi
-
-  echo "${BLUE}==> Upgrading pip:${RESET}"
-  pip install -U pip
 
   echo "${BLUE}==> Installing OGRE from ${OGRE_HOST}:${RESET}"
   curl -o /tmp/ogreclient.zip -L -k "$OGRE_HOST/download/ogreclient"

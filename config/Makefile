@@ -17,9 +17,6 @@ BUILD_TAG:=$$(git log -1 --abbrev-commit --oneline | cut -d' ' -f1)
 # number of commits HEAD is ahead of remote on current branch
 COMMITS_AHEAD:=$$(git rev-list --count --left-right 'HEAD...@{upstream}' | cut -d$$'\t' -f1)
 
-# retrieve the most recent AMI from EC2
-LATEST_AMI:=$$(aws ec2 describe-images --filters "Name=tag:app,Values=ogre" | jq -r '.Images | sort_by(.Name) | reverse[] | .ImageId' | head -1)
-
 
 _check-local:
 ifndef SESAME_PASSWORD
@@ -46,12 +43,10 @@ build: _check-commits-ahead _check-local
 		packer.json
 
 up:
-	@echo "Deploying $(LATEST_AMI)"
-	@echo "-----"
-	@cd provision/$(ENV) && \
+	cd provision/$(ENV) && \
 		terraform init && \
 		terraform get && \
-		terraform apply -var ami=$(LATEST_AMI)
+		terraform apply
 
 destroy:
 	@cd provision/$(ENV) && \

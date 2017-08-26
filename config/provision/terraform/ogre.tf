@@ -13,6 +13,18 @@ provider "aws" {
   version = "~> 0.1"
 }
 
+data "aws_ami" "ecs_ami" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["ogre-*"]
+  }
+
+  # OGRE account number
+  owners = ["444922420956"]
+}
+
 resource "aws_security_group" "default" {
   name = "ogre ${var.env}"
 
@@ -50,7 +62,7 @@ resource "aws_security_group" "default" {
 }
 
 resource "aws_instance" "ogre-ec2" {
-  ami = "${var.ami}"
+  ami = "${data.aws_ami.ecs_ami.id}"
   instance_type = "${var.size}"
 
   security_groups = ["${aws_security_group.default.name}"]

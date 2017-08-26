@@ -5,8 +5,6 @@ variable "AWS_SECRET_KEY" {
 variable "region" {
   default = "eu-west-1"
 }
-variable "ami" {
-}
 variable "size" {
   default = "t2.medium"
 }

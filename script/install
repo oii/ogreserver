@@ -27,9 +27,10 @@ if [[ $(uname) =~ (.*)Darwin(.*) ]]; then
     brew cask install calibre
   fi
 
+  # install OGRE directly into /usr/local/bin
   echo "${BLUE}==> Installing OGRE from ${OGRE_HOST}:${RESET}"
-  curl -o /tmp/ogreclient.zip -L -k "$OGRE_HOST/download/ogreclient"
-  pip install -U /tmp/ogreclient.zip
+  curl -q -o /usr/local/bin/ogre -L -k "$OGRE_HOST/download/ogreclient"
+  sudo chmod +x /usr/local/bin/ogre
 
   if [[ -z $(system_profiler SPApplicationsDataType | awk '/Kindle.app/ {print $2}') ]]; then
     echo "${BLUE}==> Kindle for Mac is missing:${RESET}"

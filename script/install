@@ -19,6 +19,19 @@ function install_homebrew {
   fi
 }
 
+function install_kindle_osx {
+  echo "${BLUE}==> Installing Kindle for Mac${RESET}"
+  curl -q -o /tmp/kindle.dmg -L https://s3.amazonaws.com/kindleformac/44182/KindleForMac-44182.dmg
+  VOLUME=$(hdiutil mount /tmp/kindle.dmg | awk '/disk1(.*)Apple_HFS/ {print $3}')
+  cp -R "$VOLUME/Kindle.app" /Applications
+  umount "$VOLUME"
+}
+
+function version {
+  echo "$@" | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }';
+}
+
+
 if [[ $(uname) =~ (.*)Darwin(.*) ]]; then
   install_homebrew
 
@@ -32,9 +45,25 @@ if [[ $(uname) =~ (.*)Darwin(.*) ]]; then
   curl -q -o /usr/local/bin/ogre -L -k "$OGRE_HOST/download/ogreclient"
   sudo chmod +x /usr/local/bin/ogre
 
-  if [[ -z $(system_profiler SPApplicationsDataType | awk '/Kindle.app/ {print $2}') ]]; then
-    echo "${BLUE}==> Kindle for Mac is missing:${RESET}"
-    brew cask install kindle
+  # find Kindle for Mac
+  KINDLE_APP="$(system_profiler SPApplicationsDataType | awk '/Kindle.app/ {print $2}')"
+
+  if [[ -z $KINDLE_APP ]]; then
+    # kindle is missing
+    install_kindle_osx
+
+  else
+    # determine kindle version
+    KINDLE_VERSION="$(plutil -p "$KINDLE_APP/Contents/Info.plist" | awk '/CFBundleShortVersionString/ {print substr($3, 2, length($3)-2)}')"
+
+    echo "==> Kindle version $KINDLE_VERSION found"
+
+    if [[ $(version "$KINDLE_VERSION") -ge $(version "1.17.1") ]]; then
+      # reinstall lower Kindle version
+      echo "${BLUE}==> Version 1.17.1 or lower required.. Reinstalling${RESET}"
+      sudo rm -rf "$KINDLE_APP"
+      install_kindle_osx
+    fi
   fi
 
   if ! ls /Applications/BitBar* >/dev/null 2>&1; then

@@ -178,6 +178,7 @@ def index_for_search(ebook_id):
             'is_curated': ebook.is_curated,
             'is_fiction': not ebook.is_non_fiction,
         })
+        app.logger.info('Indexed: {} - {}'.format(ebook.author, ebook.title))
 
     except whoosh.writing.LockError:
         # if index is unavailable try again in 10 secs
